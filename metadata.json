@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix 22h30 27-9 LỚP HỌC HẠNH PHÚC",
+  "description": "Hệ thống quản lý lớp học hạnh phúc: tích điểm xu thi đua, vòng quay may mắn, cuộn phim gọi tên, sơ đồ lớp 3D, điểm danh, đồng hồ đếm ngược, cảnh báo chống ồn và đổi quà tặng.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

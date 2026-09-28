@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    background-color: #f6f8fc;
+  }
+}
+
+/* 3D Classroom Spatial Perspectives */
+.perspective-classroom {
+  perspective: 1200px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.classroom-3d-stage {
+  transform: rotateX(24deg) rotateZ(0deg) scale(0.96);
+  transform-origin: 50% 20%;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.desk-3d-shadow {
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Dynamic Interactive Hover Zoom-To Effects */
+.hover-zoom-card {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.hover-zoom-card:hover {
+  transform: translateY(-5px) scale(1.025);
+  box-shadow: 0 20px 35px -10px rgba(99, 102, 241, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+  border-color: rgba(99, 102, 241, 0.5);
+  z-index: 10;
+}
+
+.hover-zoom-btn {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+  cursor: pointer;
+}
+.hover-zoom-btn:hover {
+  transform: translateY(-2.5px) scale(1.055);
+  box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.38);
+  filter: brightness(1.03);
+}
+.hover-zoom-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.hover-zoom-desk {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.hover-zoom-desk:hover {
+  transform: translateY(-6px) scale(1.07);
+  box-shadow: 0 20px 35px -6px rgba(59, 130, 246, 0.3), 0 8px 16px -3px rgba(15, 23, 42, 0.1);
+  border-color: #2563eb;
+  z-index: 30;
+}
+
+.hover-zoom-badge {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-zoom-badge:hover {
+  transform: scale(1.12);
+}
+
+.hover-zoom-interactive {
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+.hover-zoom-interactive:hover {
+  transform: translateY(-3px) scale(1.035);
+  box-shadow: 0 12px 25px -5px rgba(15, 23, 42, 0.12);
+}
+
+.hover-zoom-glow {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hover-zoom-glow:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.45);
+}
+
+/* Custom crisp scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Robust A4 Print Rules for Timetable, Student List & Reports */
+#app-print-portal {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+  @page landscape-mode {
+    size: A4 landscape;
+    margin: 6mm;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  body.app-is-printing > #root {
+    display: none !important;
+  }
+
+  body.app-is-printing > #app-print-portal {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    visibility: visible !important;
+  }
+
+  body.app-is-printing > #app-print-portal * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Fallback in case class is omitted */
+  body:not(.app-is-printing) #printable-timetable,
+  body:not(.app-is-printing) #printable-student-list {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    background: white !important;
+    visibility: visible !important;
+  }
+
+  .no-print,
+  button,
+  nav,
+  aside,
+  header {
+    display: none !important;
+  }
+}
+
+/* High-Impact Attention Grabbing Zoom Pulse (20s Noise Alert - phóng to thu nhỏ nhanh trong 20s) */
+@keyframes rapidPulseZoom {
+  0% {
+    transform: scale(0.84);
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
+  }
+  50% {
+    transform: scale(1.24);
+    filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.95));
+  }
+  100% {
+    transform: scale(0.84);
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
+  }
+}
+
+.animate-rapid-pulse-zoom {
+  animation: rapidPulseZoom 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) infinite;
+}
+
+@keyframes clapBounce {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.35) rotate(-18deg);
+  }
+  50% {
+    transform: scale(0.9) rotate(0deg);
+  }
+  75% {
+    transform: scale(1.35) rotate(18deg);
+  }
+}
+
+.animate-clap-bounce {
+  animation: clapBounce 0.35s ease-in-out infinite;
+}
