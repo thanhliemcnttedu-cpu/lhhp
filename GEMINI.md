@@ -96,13 +96,21 @@ Sử dụng các lệnh sau để kích hoạt quy trình tác chiến chuyên s
 
 ## Hướng dẫn tùy chỉnh & Quy tắc Bất Khả Xâm Phạm
 
-### 🛡️ QUY TẮC CỐT LÕI: KHÔNG LÀM ẢNH HƯỞNG ĐẾN CÁC CHỨC NĂNG CŨ
+### 🛡️ QUY TẮC CỐT LÕI: KHÔNG LÀM ẢNH HƯỞNG ĐẾN CÁC CHỨC NĂNG CŨ & BẢO TOÀN DỮ LIỆU
 - **File quy tắc**: `.agent/rules/backward-compatibility.md`
 - **Nguyên tắc**: 
   1. Mọi cải tiến, bổ sung cơ sở dữ liệu (Supabase), backend, tối ưu hiệu năng hoặc thêm tính năng mới **TUYỆT ĐỐI KHÔNG ĐƯỢC LÀM GIÁN ĐOẠN, THAY ĐỔI TIÊU CỰC HOẶC HỎNG** bất kỳ chức năng, giao diện và luồng nghiệp vụ hiện tại.
   2. Bắt buộc sử dụng kiến trúc **Adapter / Provider Pattern**: Giữ nguyên toàn bộ Public API và giao diện của các component/view, chỉ mở rộng hoặc ủy quyền ở tầng dữ liệu bên dưới.
   3. Bắt buộc có cơ chế **Fallback 3 lớp**: Supabase Cloud ➡️ Local JSON Server ➡️ LocalStorage. Ứng dụng phải luôn chạy trơn tru ngay cả khi offline hoặc chưa điền API Key.
-  4. Trước khi bàn giao bất kỳ thay đổi nào, phải xác nhận kiểm thử không có lỗi type/lint (`npm run lint`) và 16 view vẫn hoạt động chuẩn xác 100%.
+  4. **BẢO TOÀN DỮ LIỆU TUYỆT ĐỐI (Zero Data Loss Protocol)**: Khi đồng bộ nâng cấp tính năng phần mềm lên web GitHub, **CHỈ NÂNG CẤP MÃ NGUỒN (Code, UI, Logic)**. Tuyệt đối **KHÔNG ĐƯỢC ĐÈ HOẶC LÀM MẤT** dữ liệu thông tin lớp học, học sinh, ảnh đại diện, điểm số của các giáo viên trên GitHub. Dù trên localhost máy lập trình chỉ có 1 lớp demo 30 học sinh, còn trên web GitHub đang lưu 30 lớp với hàng nghìn học sinh thì toàn bộ 30 lớp đó phải được bảo toàn 100%. Bắt buộc sử dụng cơ chế **Non-Destructive Smart Merge** trước khi đồng bộ cơ sở dữ liệu.
+  5. Trước khi bàn giao bất kỳ thay đổi nào, phải xác nhận kiểm thử không có lỗi type/lint (`npm run lint`) và 16 view vẫn hoạt động chuẩn xác 100%.
+
+### 🚀 QUY TRÌNH BÀN GIAO & ĐỒNG BỘ GITHUB (Local-First Verification Gate)
+1. **Kiểm tra & Báo cáo trên Localhost**: Sau khi hoàn thành điều chỉnh code và kiểm tra kỹ thuật (`npm run lint`, dev server), agent báo cáo kết quả và giữ nguyên ứng dụng trên môi trường `localhost:3000` để người dùng trải nghiệm thực tế.
+2. **CẤM Tự Ý Push lên GitHub**: Tuyệt đối KHÔNG tự ý chạy lệnh git commit và git push lên GitHub khi người dùng chưa trực tiếp kiểm tra và xác nhận.
+3. **Câu hỏi chuẩn mực bắt buộc**: Ở cuối mỗi báo cáo hoàn thành công việc trên localhost, agent luôn hỏi người dùng bằng câu hỏi chuẩn:
+   > *"Mọi nội dung đã được điều chỉnh xong trên localhost, hãy test kiểm tra. Bạn có muốn thực hiện đồng bộ lên web GitHub hay không?"*
+4. **Xác nhận mới Push**: Chỉ khi người dùng chạy thử nghiệm trên localhost thấy ưng ý và trả lời đồng ý, agent mới tiến hành commit và push lên GitHub.
 
 ---
 *Được tạo bởi Antigravity IDE*

@@ -18,7 +18,7 @@ export const GithubSyncModal: React.FC<GithubSyncModalProps> = ({
 }) => {
   const [gitStatus, setGitStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState<'push' | 'pull' | 'checkpoint' | 'save' | null>(null);
+  const [actionLoading, setActionLoading] = useState<'push' | 'pull' | 'checkpoint' | 'save' | 'code-upgrade' | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Form states - Pre-filled with user repository
@@ -127,6 +127,26 @@ export const GithubSyncModal: React.FC<GithubSyncModalProps> = ({
       }
     } catch (err: any) {
       setActionMessage({ type: 'error', text: err?.message || 'Lỗi khi tạo checkpoint.' });
+    }
+    setActionLoading(null);
+  };
+
+  const handlePushCodeUpgradeNow = async () => {
+    setActionLoading('code-upgrade');
+    setActionMessage(null);
+    try {
+      const res = await databaseService.pushCodeUpgrade();
+      if (res.success) {
+        setActionMessage({
+          type: 'success',
+          text: res.message || 'Đã nâng cấp tính năng phần mềm lên GitHub thành công! Toàn bộ 30 lớp học và dữ liệu giáo viên trên GitHub được bảo toàn tuyệt đối 100%.'
+        });
+        await fetchStatus();
+      } else {
+        setActionMessage({ type: 'error', text: res.message });
+      }
+    } catch (err: any) {
+      setActionMessage({ type: 'error', text: err?.message || 'Lỗi kết nối khi nâng cấp tính năng.' });
     }
     setActionLoading(null);
   };
@@ -248,6 +268,33 @@ export const GithubSyncModal: React.FC<GithubSyncModalProps> = ({
                 </p>
               )}
             </div>
+          </div>
+
+          {/* 🛡️ TÍNH NĂNG BẢO TOÀN DỮ LIỆU ĐỘC QUYỀN: NÂNG CẤP CHỈ CODE */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-950 text-white shadow-md space-y-2.5 border border-indigo-500/40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-emerald-400" />
+                <span className="text-xs font-black uppercase text-amber-300 tracking-wide">
+                  BẢO TOÀN DỮ LIỆU TUYỆT ĐỐI KHI NÂNG CẤP PHẦN MỀM
+                </span>
+              </div>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/40 font-bold uppercase tracking-wider">
+                Zero Data Loss
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Chỉ đồng bộ các bản nâng cấp tính năng, giao diện, logic mới của phần mềm lên GitHub. Hoàn toàn <strong>KHÔNG</strong> đè hoặc làm mất dữ liệu của các tài khoản giáo viên (kể cả khi trên web GitHub đang lưu 30 lớp với hàng nghìn học sinh, còn localhost chỉ có 1 lớp chạy thử).
+            </p>
+            <button
+              type="button"
+              onClick={handlePushCodeUpgradeNow}
+              disabled={actionLoading !== null}
+              className="w-full mt-1 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-xs uppercase flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+            >
+              <UploadCloud className={`w-4 h-4 ${actionLoading === 'code-upgrade' ? 'animate-bounce' : ''}`} />
+              <span>{actionLoading === 'code-upgrade' ? 'ĐANG NÂNG CẤP MÃ NGUỒN...' : '🚀 NÂNG CẤP TÍNH NĂNG CODE LÊN GITHUB (BẢO TOÀN 100% DATA)'}</span>
+            </button>
           </div>
 
           {/* Quick Action Buttons */}

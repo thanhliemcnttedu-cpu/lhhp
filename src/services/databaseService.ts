@@ -1130,6 +1130,20 @@ export const databaseService = {
     }
   },
 
+  // 🚀 NÂNG CẤP TÍNH NĂNG PHẦN MỀM LÊN GITHUB (BẢO TOÀN 100% DỮ LIỆU GIÁO VIÊN TRÊN GITHUB)
+  async pushCodeUpgrade(commitMessage?: string): Promise<{ success: boolean; message: string; timestamp?: number }> {
+    try {
+      const res = await fetch('/api/github/push-code-upgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: commitMessage })
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Lỗi kết nối khi nâng cấp tính năng lên GitHub.' };
+    }
+  },
+
   async pullFromGithub(): Promise<{ success: boolean; message: string; timestamp?: number }> {
     try {
       const res = await fetch('/api/github/pull', {

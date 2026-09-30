@@ -70,20 +70,22 @@ export const DEFAULT_CORE_SUBJECTS: Subject[] = [
 ];
 
 export const INITIAL_SUBJECTS: Subject[] = [
+  // 7 môn học mặc định cốt lõi dành cho Giáo viên chủ nhiệm (GVCN)
   { id: 'sub-general', name: 'GHI CHUNG / NỀ NẾP', icon: 'Star', color: '#F59E0B', enabled: true, isDefault: true },
   { id: 'sub-toan', name: 'TOÁN', icon: 'Calculator', color: '#3B82F6', enabled: true, isDefault: true },
   { id: 'sub-tiengviet', name: 'TIẾNG VIỆT', icon: 'BookOpen', color: '#EF4444', enabled: true, isDefault: true },
-  { id: 'sub-tienganh', name: 'TIẾNG ANH', icon: 'Globe', color: '#8B5CF6', enabled: true },
-  { id: 'sub-tnxh', name: 'TN & XÃ HỘI', icon: 'Compass', color: '#10B981', enabled: true },
-  { id: 'sub-khoahoc', name: 'KHOA HỌC', icon: 'Atom', color: '#06B6D4', enabled: true },
-  { id: 'sub-lichsu', name: 'LỊCH SỬ & ĐỊA LÝ', icon: 'Map', color: '#F97316', enabled: true },
-  { id: 'sub-tinhoc', name: 'TIN HỌC', icon: 'Monitor', color: '#6366F1', enabled: true },
-  { id: 'sub-congnghe', name: 'CÔNG NGHỆ', icon: 'Cpu', color: '#14B8A6', enabled: true },
-  { id: 'sub-mythuat', name: 'MĨ THUẬT', icon: 'Palette', color: '#EC4899', enabled: true },
-  { id: 'sub-amnhac', name: 'ÂM NHẠC', icon: 'Music', color: '#A855F7', enabled: true },
-  { id: 'sub-gdtc', name: 'GIÁO DỤC THỂ CHẤT', icon: 'Activity', color: '#3B82F6', enabled: true },
-  { id: 'sub-daoduc', name: 'ĐẠO ĐỨC', icon: 'Heart', color: '#E11D48', enabled: true },
-  { id: 'sub-trainghiem', name: 'HOẠT ĐỘNG TRẢI NGHIỆM', icon: 'Sparkles', color: '#F59E0B', enabled: true }
+  { id: 'sub-daoduc', name: 'ĐẠO ĐỨC', icon: 'Heart', color: '#E11D48', enabled: true, isDefault: true },
+  { id: 'sub-tnxh', name: 'TN & XÃ HỘI', icon: 'Compass', color: '#10B981', enabled: true, isDefault: true },
+  { id: 'sub-lichsu', name: 'LỊCH SỬ & ĐỊA LÝ', icon: 'Map', color: '#F97316', enabled: true, isDefault: true },
+  { id: 'sub-khoahoc', name: 'KHOA HỌC', icon: 'Atom', color: '#06B6D4', enabled: true, isDefault: true },
+  // Các môn học chuyên biệt / bộ môn (Giáo viên có thể tự do bật/tắt hoặc thêm mới theo nhu cầu)
+  { id: 'sub-tienganh', name: 'TIẾNG ANH', icon: 'Globe', color: '#8B5CF6', enabled: false },
+  { id: 'sub-tinhoc', name: 'TIN HỌC', icon: 'Monitor', color: '#6366F1', enabled: false },
+  { id: 'sub-congnghe', name: 'CÔNG NGHỆ', icon: 'Cpu', color: '#14B8A6', enabled: false },
+  { id: 'sub-mythuat', name: 'MĨ THUẬT', icon: 'Palette', color: '#EC4899', enabled: false },
+  { id: 'sub-amnhac', name: 'ÂM NHẠC', icon: 'Music', color: '#A855F7', enabled: false },
+  { id: 'sub-gdtc', name: 'GIÁO DỤC THỂ CHẤT', icon: 'Activity', color: '#3B82F6', enabled: false },
+  { id: 'sub-trainghiem', name: 'HOẠT ĐỘNG TRẢI NGHIỆM', icon: 'Sparkles', color: '#F59E0B', enabled: false }
 ];
 
 export const INITIAL_CRITERIA: PointCriterion[] = [

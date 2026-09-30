@@ -315,8 +315,17 @@ export function saveDatabase(data: DatabaseSchema): boolean {
 
   const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
   try {
-    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+    const jsonStr = JSON.stringify(data, null, 2);
+    fs.writeFileSync(tempFile, jsonStr, 'utf-8');
     fs.renameSync(tempFile, DB_FILE);
+
+    // Tự động sao lưu an toàn một bản dự phòng tại data/backups
+    try {
+      const backupDir = path.join(DATA_DIR, 'backups');
+      if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+      fs.writeFileSync(path.join(backupDir, 'classroom_database_backup_latest.json'), jsonStr, 'utf-8');
+    } catch (_) {}
+
     return true;
   } catch (err) {
     console.error('Lỗi khi ghi dữ liệu vào database:', err);
@@ -325,6 +334,145 @@ export function saveDatabase(data: DatabaseSchema): boolean {
     } catch (_) {}
     return false;
   }
+}
+
+/**
+ * 🛡️ HỆ THỐNG HỢP NHẤT DỮ LIỆU THÔNG MINH (NON-DESTRUCTIVE SMART MERGE)
+ * Bảo toàn 100% dữ liệu: Không bao giờ xóa lớp học, học sinh, ảnh đại diện hay cấu hình cá nhân hóa.
+ * Ngăn chặn tình trạng 1 lớp ở localhost ghi đè làm mất 30 lớp học và hàng nghìn học sinh trên GitHub!
+ */
+export function smartMergeDatabase(localDb: DatabaseSchema, remoteDb: DatabaseSchema): DatabaseSchema {
+  if (!remoteDb || !Array.isArray(remoteDb.users)) {
+    return localDb;
+  }
+  if (!localDb || !Array.isArray(localDb.users)) {
+    return remoteDb;
+  }
+
+  const merged: DatabaseSchema = {
+    version: remoteDb.version || localDb.version || '2.0.0',
+    appName: remoteDb.appName || localDb.appName,
+    lastSync: new Date().toISOString(),
+    users: [],
+    userData: {},
+    auditLogs: [],
+    systemSettings: {
+      ...(remoteDb.systemSettings || {}),
+      ...(localDb.systemSettings || {})
+    }
+  };
+
+  // 1. Hợp nhất danh sách Tài khoản Người dùng (Users): Ưu tiên giữ lại 100% tài khoản thật từ Remote
+  const userMap = new Map<string, UserAccountServer>();
+  for (const u of (remoteDb.users || [])) {
+    userMap.set(u.username.toLowerCase(), { ...u });
+  }
+  for (const u of (localDb.users || [])) {
+    const key = u.username.toLowerCase();
+    if (!userMap.has(key)) {
+      userMap.set(key, { ...u });
+    } else {
+      const existing = userMap.get(key)!;
+      userMap.set(key, {
+        ...existing,
+        // Giữ ảnh avatar & tên thật từ remote nếu local chỉ là tên mặc định
+        fullName: existing.fullName || u.fullName,
+        avatar: existing.avatar || u.avatar,
+        schoolName: existing.schoolName || u.schoolName,
+        lastLoginAt: Math.max(existing.lastLoginAt || 0, u.lastLoginAt || 0),
+        status: u.status || existing.status || 'active'
+      });
+    }
+  }
+  merged.users = Array.from(userMap.values());
+
+  // 2. Hợp nhất Dữ liệu Lớp học & Học sinh của từng Giáo viên (UserData): CỐT LÕI BẢO TOÀN
+  merged.userData = {};
+  // Nạp 100% dữ liệu giáo viên từ Remote (bao gồm toàn bộ 30 lớp và học sinh trên GitHub)
+  for (const [uname, uData] of Object.entries(remoteDb.userData || {})) {
+    merged.userData[uname.toLowerCase()] = JSON.parse(JSON.stringify(uData));
+  }
+
+  // Hợp nhất có chọn lọc với dữ liệu từ Local
+  for (const [uname, localUData] of Object.entries(localDb.userData || {})) {
+    const key = uname.toLowerCase();
+    const remoteUData = merged.userData[key];
+
+    if (!remoteUData) {
+      // Giáo viên này chỉ có ở local -> thêm vào
+      merged.userData[key] = JSON.parse(JSON.stringify(localUData));
+    } else {
+      // Giáo viên có ở cả remote và local -> Hợp nhất sâu (Deep Merge), tuyệt đối không đè mất lớp cũ
+      const mergedClassesMap = new Map<string, any>();
+      for (const c of (remoteUData.classes || [])) {
+        mergedClassesMap.set(c.id, { ...c });
+      }
+      for (const c of (localUData.classes || [])) {
+        if (mergedClassesMap.has(c.id)) {
+          const ex = mergedClassesMap.get(c.id);
+          mergedClassesMap.set(c.id, {
+            ...ex,
+            ...c,
+            // Giữ lại ảnh đại diện lớp, slogan cá nhân hóa từ remote nếu có
+            avatar: ex.avatar || c.avatar,
+            slogan: ex.slogan || c.slogan,
+            teacherName: ex.teacherName || c.teacherName
+          });
+        } else {
+          mergedClassesMap.set(c.id, { ...c });
+        }
+      }
+
+      // Hợp nhất học sinh: Giữ lại 100% học sinh từ remote
+      const mergedStudentsMap = new Map<string, any>();
+      for (const s of (remoteUData.students || [])) {
+        mergedStudentsMap.set(s.id, { ...s });
+      }
+      for (const s of (localUData.students || [])) {
+        if (mergedStudentsMap.has(s.id)) {
+          const ex = mergedStudentsMap.get(s.id);
+          mergedStudentsMap.set(s.id, {
+            ...ex,
+            ...s,
+            // Giữ ảnh đại diện học sinh, điểm số cao nhất
+            avatar: ex.avatar || s.avatar,
+            points: Math.max(ex.points || 0, s.points || 0)
+          });
+        } else {
+          mergedStudentsMap.set(s.id, { ...s });
+        }
+      }
+
+      merged.userData[key] = {
+        ...remoteUData,
+        ...localUData,
+        classes: Array.from(mergedClassesMap.values()),
+        students: Array.from(mergedStudentsMap.values()),
+        // Bảo toàn thông tin hồ sơ giáo viên (tên, avatar, trường)
+        teacherProfile: {
+          ...(remoteUData.teacherProfile || {}),
+          ...(localUData.teacherProfile || {}),
+          name: remoteUData.teacherProfile?.name || localUData.teacherProfile?.name,
+          avatar: remoteUData.teacherProfile?.avatar || localUData.teacherProfile?.avatar
+        },
+        updatedAt: Math.max(Number(remoteUData.updatedAt) || 0, Number(localUData.updatedAt) || 0, Date.now())
+      };
+    }
+  }
+
+  // 3. Hợp nhất Nhật ký Audit Logs (giữ tối đa 500 bản ghi mới nhất)
+  const logMap = new Map<string, any>();
+  for (const log of (remoteDb.auditLogs || [])) {
+    logMap.set(log.id, log);
+  }
+  for (const log of (localDb.auditLogs || [])) {
+    logMap.set(log.id, log);
+  }
+  merged.auditLogs = Array.from(logMap.values())
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, 500);
+
+  return merged;
 }
 
 // User Operations
@@ -683,22 +831,76 @@ export function syncAdminClassroomData(classes: any[], students: any[]): { succe
       teacherName: c.teacherName || t.fullName
     }));
 
+    // 🛡️ BẢO TOÀN DỮ LIỆU: Nếu danh sách đồng bộ không có lớp nào của giáo viên này,
+    // TUYỆT ĐỐI KHÔNG xóa dữ liệu hiện có của họ!
+    if (tClasses.length === 0) {
+      continue;
+    }
+
     const tClassIds = new Set(tClasses.map(c => c.id));
     const tStudents = students.filter(s => tClassIds.has(s.classId));
 
     if (!db.userData[tUser]) {
-      db.userData[tUser] = {};
+      db.userData[tUser] = { classes: [], students: [], updatedAt: now };
     }
 
-    db.userData[tUser].classes = tClasses;
-    db.userData[tUser].students = tStudents;
+    // Hợp nhất cộng dồn theo ID lớp, không xóa các lớp khác của giáo viên
+    const existingClasses = Array.isArray(db.userData[tUser].classes) ? db.userData[tUser].classes : [];
+    const classMap = new Map<string, any>();
+    for (const ec of existingClasses) {
+      classMap.set(ec.id, ec);
+    }
+    for (const tc of tClasses) {
+      const ex = classMap.get(tc.id);
+      classMap.set(tc.id, {
+        ...ex,
+        ...tc,
+        teacherUsername: t.username,
+        teacherRole: t.role,
+        teacherName: tc.teacherName || ex?.teacherName || t.fullName
+      });
+    }
+
+    // Hợp nhất học sinh theo ID
+    const existingStudents = Array.isArray(db.userData[tUser].students) ? db.userData[tUser].students : [];
+    const studentMap = new Map<string, any>();
+    for (const es of existingStudents) {
+      studentMap.set(es.id, es);
+    }
+    for (const ts of tStudents) {
+      const ex = studentMap.get(ts.id);
+      studentMap.set(ts.id, {
+        ...ex,
+        ...ts
+      });
+    }
+
+    db.userData[tUser].classes = Array.from(classMap.values());
+    db.userData[tUser].students = Array.from(studentMap.values());
     db.userData[tUser].updatedAt = now;
   }
 
-  // Save snapshot to admin as well
+  // Hợp nhất snapshot cho admin (giữ nguyên toàn bộ các lớp của các giáo viên khác)
+  const adminClassesMap = new Map<string, any>();
+  for (const ac of (db.userData['admin']?.classes || [])) {
+    adminClassesMap.set(ac.id, ac);
+  }
+  for (const c of classes) {
+    adminClassesMap.set(c.id, { ...(adminClassesMap.get(c.id) || {}), ...c });
+  }
+
+  const adminStudentsMap = new Map<string, any>();
+  for (const as of (db.userData['admin']?.students || [])) {
+    adminStudentsMap.set(as.id, as);
+  }
+  for (const s of students) {
+    adminStudentsMap.set(s.id, { ...(adminStudentsMap.get(s.id) || {}), ...s });
+  }
+
   db.userData['admin'] = {
-    classes,
-    students,
+    ...(db.userData['admin'] || {}),
+    classes: Array.from(adminClassesMap.values()),
+    students: Array.from(adminStudentsMap.values()),
     updatedAt: now
   };
 

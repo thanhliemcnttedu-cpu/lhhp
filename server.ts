@@ -35,7 +35,8 @@ import {
   configureGitRemote,
   scheduleAutoGitCheckpoint,
   pushToGithub,
-  pullFromGithub
+  pullFromGithub,
+  pushCodeUpgradeOnly
 } from './server/gitSync';
 import {
   isSupabaseConfigured,
@@ -533,10 +534,21 @@ app.post('/api/github/config', async (req, res) => {
   }
 });
 
-// Đẩy dữ liệu trực tiếp lên GitHub
+// Đẩy dữ liệu trực tiếp lên GitHub (đã có Safe Pre-Merge bảo toàn 100% dữ liệu)
 app.post('/api/github/push', async (_req, res) => {
   try {
     const result = await pushToGithub();
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message });
+  }
+});
+
+// 🚀 NÂNG CẤP CHỈ CODE LÊN GITHUB (BẢO TOÀN 100% DATABASE LỚP HỌC CỦA GIÁO VIÊN TRÊN GITHUB)
+app.post('/api/github/push-code-upgrade', async (req, res) => {
+  try {
+    const msg = req.body?.message || 'feat(upgrade): nang cap tinh nang va giao dien phan mem';
+    const result = await pushCodeUpgradeOnly(msg);
     return res.json(result);
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err?.message });

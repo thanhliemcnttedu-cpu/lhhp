@@ -177,14 +177,14 @@ export const InfographicView: React.FC = () => {
     setSeatingTransform(prev => ({
       ...prev,
       width: config.orientation === 'landscape' ? 1040 : 760,
-      minHeight: config.orientation === 'landscape' ? 480 : 680,
+      minHeight: config.orientation === 'landscape' ? 580 : 780,
       isAutoWidth: true,
       isAutoHeight: true,
       scaleX: 1.0,
       scaleY: 1.0,
       offsetX: 0,
       offsetY: 0,
-      rowSpacing: config.orientation === 'landscape' ? 10 : 13
+      rowSpacing: config.orientation === 'landscape' ? 12 : 16
     }));
     confetti({ particleCount: 40, spread: 60, origin: { y: 0.5 } });
   };
@@ -192,24 +192,24 @@ export const InfographicView: React.FC = () => {
   // Seating Diagram Layout & Transform State (kéo dãn ngang, dãn dọc, thiết đặt số kích thước cụ thể, kéo di chuyển căn chỉnh vị trí trên trang)
   const [seatingTransform, setSeatingTransform] = useState<{
     width: number;        // width in px (default 760)
-    minHeight: number;    // height in px (default 680 để vừa khít Trang 2 A4, không để giấy thừa)
+    minHeight: number;    // height in px (default 780-800 để vừa khít Trang 2 A4, không để giấy thừa)
     isAutoWidth: boolean; // auto 100%
     isAutoHeight: boolean;// auto height
     scaleX: number;       // dãn ngang (0.5 to 2.0, default 1.0)
     scaleY: number;       // dãn dọc (0.5 to 2.0, default 1.0)
     offsetX: number;      // px shift left/right (-400 to +400, default 0)
     offsetY: number;      // px shift up/down (-300 to +600, default 0)
-    rowSpacing: number;   // row spacing gap in px (default 12)
+    rowSpacing: number;   // row spacing gap in px (default 16)
   }>({
     width: 760,
-    minHeight: 680,
+    minHeight: 780,
     isAutoWidth: true,
     isAutoHeight: true,
     scaleX: 1.0,
     scaleY: 1.0,
     offsetX: 0,
     offsetY: 0,
-    rowSpacing: 12
+    rowSpacing: 16
   });
 
   const [isSeatingTransformPanelOpen, setIsSeatingTransformPanelOpen] = useState<boolean>(true);
@@ -729,7 +729,7 @@ export const InfographicView: React.FC = () => {
   // Render Exact Seating Chart from SƠ ĐỒ LỚP (Nguyên bản sơ đồ đã tạo, cho phép kéo dãn ngang/dọc/cả 2, nhập số kích thước cụ thể, kéo di chuyển vị trí)
   const renderSeatingChartComponent = () => {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 flex-1 flex flex-col justify-between h-full">
         {/* THANH ĐIỀU KHIỂN KÍCH THƯỚC & VỊ TRÍ SƠ ĐỒ (Hiện khi ở Chế độ Thiết kế) */}
         {isEditMode && (
           <div className="no-print no-pdf bg-slate-900 text-white rounded-2xl p-3.5 shadow-xl border border-indigo-500/40 space-y-3 animate-in fade-in">
@@ -761,14 +761,14 @@ export const InfographicView: React.FC = () => {
                   type="button"
                   onClick={() => setSeatingTransform({
                     width: 760,
-                    minHeight: 520,
+                    minHeight: config.orientation === 'landscape' ? 580 : 780,
                     isAutoWidth: true,
                     isAutoHeight: true,
                     scaleX: 1.0,
                     scaleY: 1.0,
                     offsetX: 0,
                     offsetY: 0,
-                    rowSpacing: 8
+                    rowSpacing: config.orientation === 'landscape' ? 10 : 16
                   })}
                   className="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                   title="Khôi phục về kích thước chuẩn ban đầu"
@@ -782,6 +782,24 @@ export const InfographicView: React.FC = () => {
             {/* Quick stretch buttons */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Kéo dãn nhanh:</span>
+              <button
+                type="button"
+                onClick={() => setSeatingTransform({
+                  width: 760,
+                  minHeight: config.orientation === 'landscape' ? 580 : 800,
+                  isAutoWidth: true,
+                  isAutoHeight: true,
+                  scaleX: 1.0,
+                  scaleY: 1.0,
+                  offsetX: 0,
+                  offsetY: 0,
+                  rowSpacing: config.orientation === 'landscape' ? 10 : 16
+                })}
+                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 text-[10px] font-black shadow-xs flex items-center gap-1 cursor-pointer"
+                title="Tự động mở rộng và dàn đều toàn bộ sơ đồ kín hết chiều cao và chiều rộng trang A4"
+              >
+                <span>👑 Dàn Đều Vừa Khít Trang A4</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setSeatingTransform(prev => ({ ...prev, isAutoWidth: true, scaleX: 1.0 }))}
@@ -1066,23 +1084,26 @@ export const InfographicView: React.FC = () => {
           </div>
         )}
 
-        {/* KHUNG SƠ ĐỒ CHỖ NGỒI (Áp dụng Transform & Kéo dãn trực tiếp) */}
+        {/* KHUNG SƠ ĐỒ CHỖ NGỒI (Áp dụng Transform & Dàn đều vừa khít Trang 2 A4) */}
         <div 
-          className="relative transition-all duration-75"
+          className="relative transition-all duration-75 flex-1 flex flex-col justify-between w-full h-full"
           style={{
             transform: `translate(${seatingTransform.offsetX}px, ${seatingTransform.offsetY}px) scale(${seatingTransform.scaleX}, ${seatingTransform.scaleY})`,
             transformOrigin: 'top center',
             width: seatingTransform.isAutoWidth ? '100%' : `${seatingTransform.width}px`,
             maxWidth: '100%',
-            margin: '0 auto'
+            margin: '0 auto',
+            flex: 1
           }}
         >
           {/* SƠ ĐỒ GỐC NGUYÊN BẢN */}
           <div 
             ref={seatingDiagramRef}
-            className={`p-4 rounded-2xl ${seatingStyleConfig.wrap} shadow-sm space-y-3 relative group select-none`}
+            className={`p-3.5 sm:p-4 rounded-2xl ${seatingStyleConfig.wrap} shadow-sm space-y-2.5 sm:space-y-3 relative group select-none flex-1 flex flex-col justify-between w-full h-full`}
             style={{
-              minHeight: seatingTransform.isAutoHeight ? undefined : `${seatingTransform.minHeight}px`
+              minHeight: seatingTransform.isAutoHeight 
+                ? (config.orientation === 'landscape' ? '580px' : '780px') 
+                : `${seatingTransform.minHeight}px`
             }}
           >
             {/* THANH KÉO DI CHUYỂN VỊ TRÍ SƠ ĐỒ TRÊN TRANG (MOVE HANDLE) */}
@@ -1148,9 +1169,9 @@ export const InfographicView: React.FC = () => {
               </div>
             </div>
 
-            {/* LƯỚI CÁC DÃY BÀN & CHỖ NGỒI HỌC SINH (NGUYÊN BẢN TỪ MỤC SƠ ĐỒ LỚP) */}
+            {/* LƯỚI CÁC DÃY BÀN & CHỖ NGỒI HỌC SINH (NGUYÊN BẢN TỪ MỤC SƠ ĐỒ LỚP - DÀN ĐỀU 100% CHIỀU CAO TRANG) */}
             <div 
-              className="grid gap-2.5 pt-1"
+              className="grid gap-2.5 sm:gap-3 pt-1 flex-1 items-stretch"
               style={{
                 gridTemplateColumns: `repeat(${seatingColumns}, minmax(0, 1fr))`
               }}
@@ -1158,7 +1179,7 @@ export const InfographicView: React.FC = () => {
               {Array.from({ length: seatingColumns }).map((_, colIdx) => {
                 const colDeskCount = deskCountsPerColumn[colIdx] || 4;
                 return (
-                  <div key={colIdx} className="space-y-2 p-2 rounded-xl bg-white/80 border border-slate-200 shadow-2xs">
+                  <div key={colIdx} className="space-y-2 p-2 sm:p-2.5 rounded-xl bg-white/85 border border-slate-200 shadow-2xs flex flex-col justify-between flex-1">
                     {/* Column Badge */}
                     <div className={`text-center py-1 text-[10px] font-black rounded-lg flex items-center justify-between px-2 ${seatingStyleConfig.badge}`}>
                       <span>DÃY {colIdx + 1}</span>
@@ -1167,7 +1188,7 @@ export const InfographicView: React.FC = () => {
 
                     {/* Rows for this column with dynamic row spacing */}
                     <div 
-                      className="flex flex-col"
+                      className="flex-1 flex flex-col justify-between pt-0.5"
                       style={{ gap: `${seatingTransform.rowSpacing}px` }}
                     >
                       {Array.from({ length: colDeskCount }).map((_, rIdx) => {
@@ -1180,17 +1201,17 @@ export const InfographicView: React.FC = () => {
                         const sR = classStudents.find(s => s.id === sRId);
 
                         return (
-                          <div key={rIdx} className={`p-1.5 rounded-xl border ${seatingStyleConfig.desk} shadow-2xs space-y-1`}>
+                          <div key={rIdx} className={`p-1.5 sm:p-2 rounded-xl border ${seatingStyleConfig.desk} shadow-2xs space-y-1 flex flex-col justify-between flex-1`}>
                             {/* Desk Header Badge */}
-                            <div className="flex items-center justify-between text-[8px] font-black text-slate-500 px-1 border-b border-slate-200/60 pb-0.5">
+                            <div className="flex items-center justify-between text-[8px] sm:text-[8.5px] font-black text-slate-500 px-1 border-b border-slate-200/60 pb-0.5">
                               <span className="text-amber-800">BÀN {deskNumber}</span>
                               <span>Hàng {rIdx + 1}</span>
                             </div>
 
                             {/* 2 Chỗ ngồi: Ghế Trái & Ghế Phải (Chỉ hiển thị Ảnh Avatar & Họ và Tên, KHÔNG hiển thị xu) */}
-                            <div className="grid grid-cols-2 gap-1.5">
+                            <div className="grid grid-cols-2 gap-1.5 flex-1 items-stretch">
                               {/* Ghế Trái */}
-                              <div className={`p-1 rounded-lg border text-center flex flex-col items-center justify-center transition-all ${
+                              <div className={`p-1 sm:p-1.5 rounded-lg border text-center flex flex-col items-center justify-center transition-all ${
                                 sL ? 'bg-white border-amber-200 shadow-2xs' : 'border-dashed border-slate-200 bg-slate-50/60'
                               }`}>
                                 {sL ? (
@@ -1198,25 +1219,25 @@ export const InfographicView: React.FC = () => {
                                     <img
                                       src={sL.avatar}
                                       alt={sL.name}
-                                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5"
+                                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100&auto=format&fit=crop&q=80';
                                       }}
                                     />
-                                    <span className="text-[9px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5" title={sL.name}>
+                                    <span className="text-[9px] sm:text-[9.5px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5" title={sL.name}>
                                       {sL.name}
                                     </span>
                                   </>
                                 ) : (
                                   <div className="py-1 text-center text-slate-400">
-                                    <Users className="w-3 h-3 mx-auto opacity-40 mb-0.5" />
+                                    <Users className="w-3.5 h-3.5 mx-auto opacity-40 mb-0.5" />
                                     <span className="text-[8px] font-medium">Ghế Trái</span>
                                   </div>
                                 )}
                               </div>
 
                               {/* Ghế Phải */}
-                              <div className={`p-1 rounded-lg border text-center flex flex-col items-center justify-center transition-all ${
+                              <div className={`p-1 sm:p-1.5 rounded-lg border text-center flex flex-col items-center justify-center transition-all ${
                                 sR ? 'bg-white border-amber-200 shadow-2xs' : 'border-dashed border-slate-200 bg-slate-50/60'
                               }`}>
                                 {sR ? (
@@ -1224,18 +1245,18 @@ export const InfographicView: React.FC = () => {
                                     <img
                                       src={sR.avatar}
                                       alt={sR.name}
-                                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5"
+                                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100&auto=format&fit=crop&q=80';
                                       }}
                                     />
-                                    <span className="text-[9px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5" title={sR.name}>
+                                    <span className="text-[9px] sm:text-[9.5px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5" title={sR.name}>
                                       {sR.name}
                                     </span>
                                   </>
                                 ) : (
                                   <div className="py-1 text-center text-slate-400">
-                                    <Users className="w-3 h-3 mx-auto opacity-40 mb-0.5" />
+                                    <Users className="w-3.5 h-3.5 mx-auto opacity-40 mb-0.5" />
                                     <span className="text-[8px] font-medium">Ghế Phải</span>
                                   </div>
                                 )}
@@ -1244,8 +1265,8 @@ export const InfographicView: React.FC = () => {
 
                             {/* Tựa ghế gỗ 3D dưới bàn */}
                             <div className="flex justify-around px-2 pt-0.5">
-                              <div className="w-6 h-1 rounded-b bg-[#c5a880] border border-[#a38054]/50"></div>
-                              <div className="w-6 h-1 rounded-b bg-[#c5a880] border border-[#a38054]/50"></div>
+                              <div className="w-7 h-1.5 rounded-b bg-[#c5a880] border border-[#a38054]/50"></div>
+                              <div className="w-7 h-1.5 rounded-b bg-[#c5a880] border border-[#a38054]/50"></div>
                             </div>
                           </div>
                         );
@@ -1958,7 +1979,7 @@ export const InfographicView: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className={`flex-1 flex flex-col justify-between ${
+          <div className={`flex-1 flex flex-col justify-between w-full h-full ${
             pageDensity === 'compact' ? 'gap-1.5' : pageDensity === 'spacious' ? 'gap-4' : 'gap-2.5 sm:gap-3'
           }`}>
             {pageLayers.map(layer => {
@@ -1968,6 +1989,8 @@ export const InfographicView: React.FC = () => {
                   key={layer.id}
                   className={`transition-all duration-200 ${widthClass} mx-auto ${
                     layer.type === 'signatures' ? 'mt-auto' : ''
+                  } ${
+                    layer.type === 'seating' ? 'flex-1 flex flex-col justify-between w-full h-full' : ''
                   } ${
                     isEditMode ? 'p-1 rounded-2xl border-2 border-dashed border-indigo-300/80 hover:border-indigo-500 my-1' : ''
                   }`}

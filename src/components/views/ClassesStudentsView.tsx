@@ -440,16 +440,35 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     confetti({ particleCount: 25, spread: 40 });
   };
 
+  // Danh sách môn học chuẩn giáo viên chủ nhiệm thường dạy (Toán, Tiếng Việt, Đạo Đức, TN&XH, Lịch sử & Địa lí, Khoa học + Ghi chung/Nề nếp)
+  const isHomeroomSubject = (name: string) => {
+    const n = name.trim().toLowerCase();
+    return [
+      'ghi chung / nề nếp',
+      'toán',
+      'tiếng việt',
+      'đạo đức',
+      'tn & xã hội',
+      'tự nhiên & xã hội',
+      'tự nhiên và xã hội',
+      'lịch sử & địa lý',
+      'lịch sử & địa lí',
+      'lịch sử và địa lý',
+      'lịch sử và địa lí',
+      'khoa học'
+    ].includes(n);
+  };
+
   const handleApplyOnlyCoreSubjects = () => {
     const coreIds = subjects
-      .filter(s => s.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(s.name.trim().toLowerCase()))
+      .filter(s => s.isDefault || isHomeroomSubject(s.name))
       .map(s => s.id);
     setAppliedSubjects(coreIds);
     confetti({ particleCount: 25, spread: 40 });
   };
 
   const handleResetDefaultSubjects = () => {
-    if (confirm('Khôi phục danh sách môn học chuẩn theo hệ thống (bao gồm GHI CHUNG / NỀ NẾP, TOÁN, TIẾNG VIỆT)?')) {
+    if (confirm('Khôi phục danh sách môn học chuẩn theo hệ thống (bao gồm các môn cốt lõi của GVCN: Toán, Tiếng Việt, Đạo Đức, TN&XH, Lịch sử & Địa lí, Khoa học...)?')) {
       resetDefaultSubjects();
       confetti({ particleCount: 30, spread: 50 });
     }
@@ -1354,23 +1373,23 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </button>
             </div>
 
-            {/* Scrolling list of applied subjects */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5">
+            {/* Danh sách môn học đang áp dụng: Sắp xếp tự động thành 2 dòng khi nhiều môn, không cuộn ngang */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1 pb-0.5">
               {appliedSubjects.map((sub) => {
                 const isSelected = activeEvalSubject === sub.name;
-                const isCore = sub.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(sub.name.trim().toLowerCase());
+                const isCore = sub.isDefault || isHomeroomSubject(sub.name);
                 return (
                   <button
                     key={sub.id}
                     onClick={() => setActiveEvalSubject(sub.name)}
-                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 hover-zoom-btn uppercase ${
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 hover-zoom-btn uppercase cursor-pointer ${
                       isSelected
                         ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-600/30 scale-102 font-black ring-2 ring-indigo-400'
                         : 'bg-white text-indigo-900 border border-indigo-100 hover:bg-indigo-50 hover:border-indigo-300 font-bold'
                     }`}
                   >
-                    <span className="w-2 h-2 rounded-full ring-2 ring-white/60" style={{ backgroundColor: sub.color || '#3B82F6' }} />
-                    <span>{sub.name}</span>
+                    <span className="w-2 h-2 rounded-full ring-2 ring-white/60 shrink-0" style={{ backgroundColor: sub.color || '#3B82F6' }} />
+                    <span className="whitespace-nowrap">{sub.name}</span>
                     {isCore && <span className="text-[9px] text-amber-300 font-black">★</span>}
                   </button>
                 );
@@ -1937,13 +1956,13 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       {/* MODAL: CẤU HÌNH NHẬN XU & MÔN HỌC ĐÁNH GIÁ (User Request: "CẤU HÌNH NHẬN XU") */}
       {/* ========================================================================= */}
       {isSubjectConfigOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-2xl w-full p-6 space-y-5 max-h-[92vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-4xl lg:max-w-5xl w-full p-5 sm:p-6 space-y-4 max-h-[94vh] flex flex-col justify-between overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-indigo-100">
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-100">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 flex items-center justify-center font-black shadow-md shadow-amber-500/25">
-                  <Settings className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 flex items-center justify-center font-black shadow-md shadow-amber-500/25">
+                  <Settings className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-indigo-950 uppercase tracking-tight">
@@ -1959,269 +1978,262 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   setIsSubjectConfigOpen(false);
                   setEditingSubject(null);
                 }}
-                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* 3 MÔN MẶC ĐỊNH BẮT BUỘC HỆ THỐNG (User Requirement: GHI CHUNG / NỀ NẾP, TOÁN, TIẾNG VIỆT) */}
-            <div className="p-4 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">👑</span>
-                  <span className="text-xs font-black text-amber-950 uppercase tracking-wide">
-                    3 MÔN MẶC ĐỊNH HỆ THỐNG (BẮT BUỘC & CỐT LÕI):
+            {/* BỐ CỤC 2 CỘT GỌN GÀNG - HẠN CHẾ PHẢI CUỘN CHUỘT (User Request) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+              {/* CỘT TRÁI (md:col-span-5): MÔN MẶC ĐỊNH GVCN, THIẾT LẬP NHANH & THÊM MỚI */}
+              <div className="md:col-span-5 space-y-3">
+                {/* 1. MÔN MẶC ĐỊNH GIÁO VIÊN CHỦ NHIỆM */}
+                <div className="p-3 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">👑</span>
+                      <span className="text-[11px] font-black text-amber-950 uppercase tracking-wide">
+                        MÔN MẶC ĐỊNH GVCN THƯỜNG DẠY:
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-black text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded-full border border-amber-300">
+                      Cốt lõi tiểu học
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-amber-800 font-semibold leading-tight">
+                    Mặc định: Toán, Tiếng Việt, Đạo Đức, TN&XH, Lịch sử & Địa lí, Khoa học & Ghi chung / Nề nếp.
+                  </p>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {[
+                      { name: 'GHI CHUNG / NỀ NẾP', color: '#F59E0B' },
+                      { name: 'TOÁN', color: '#3B82F6' },
+                      { name: 'TIẾNG VIỆT', color: '#EF4444' },
+                      { name: 'ĐẠO ĐỨC', color: '#E11D48' },
+                      { name: 'TN & XÃ HỘI', color: '#10B981' },
+                      { name: 'LỊCH SỬ & ĐỊA LÝ', color: '#F97316' },
+                      { name: 'KHOA HỌC', color: '#06B6D4' }
+                    ].map(c => (
+                      <span
+                        key={c.name}
+                        className="px-2 py-0.5 rounded-lg bg-white/90 border border-amber-200 text-[10px] font-bold text-slate-800 flex items-center gap-1 shadow-2xs"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c.color }} />
+                        <span>{c.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. THIẾT LẬP NHANH MÔN ÁP DỤNG CHO LỚP */}
+                <div className="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-100 space-y-2">
+                  <span className="text-[11px] font-black text-indigo-950 uppercase tracking-wide flex items-center gap-1.5">
+                    <CheckSquare className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>THIẾT LẬP NHANH ÁP DỤNG CHO LỚP:</span>
                   </span>
-                </div>
-                <span className="text-[10px] font-black text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full border border-amber-300">
-                  Chuẩn thi đua
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                {[
-                  { name: 'GHI CHUNG / NỀ NẾP', icon: '⭐', color: '#F59E0B', desc: 'Chuyên cần, kỷ luật, việc tốt' },
-                  { name: 'TOÁN', icon: '🔢', color: '#3B82F6', desc: 'Học tập, tính toán, tư duy' },
-                  { name: 'TIẾNG VIỆT', icon: '📖', color: '#EF4444', desc: 'Đọc, viết, chính tả, ngữ văn' },
-                ].map((core) => {
-                  const subObj = subjects.find(s => s.name.trim().toLowerCase() === core.name.toLowerCase());
-                  const isEnabled = subObj ? subObj.enabled !== false : true;
-                  return (
-                    <div 
-                      key={core.name}
-                      className="p-2.5 bg-white/90 rounded-xl border border-amber-200 flex flex-col justify-between space-y-1 shadow-2xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span>{core.icon}</span>
-                          <span className="text-xs font-black text-slate-800 truncate">{core.name}</span>
-                        </div>
-                        <span className={`w-2.5 h-2.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-medium">{core.desc}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* THAO TÁC NHANH DANH SÁCH MÔN ÁP DỤNG CHO LỚP HIỆN TẠI (User Requirement: Thiết lập danh sách môn học áp dụng) */}
-            <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 space-y-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-xs font-black text-indigo-950 uppercase tracking-wide flex items-center gap-1.5">
-                  <CheckSquare className="w-4 h-4 text-indigo-600" />
-                  <span>THIẾT LẬP NHANH MÔN ÁP DỤNG CHO LỚP ({appliedSubjects.length} / {subjects.length} môn):</span>
-                </span>
-                <span className="text-[11px] font-bold text-indigo-700">
-                  {appliedSubjects.length === subjects.length ? 'Đang áp dụng toàn bộ môn' : `Đang bật ${appliedSubjects.length} môn`}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={handleApplyAllSubjects}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all hover-zoom-btn uppercase shadow-xs cursor-pointer"
-                >
-                  ✓ Áp Dụng Tất Cả ({subjects.length} môn)
-                </button>
-                <button
-                  type="button"
-                  onClick={handleApplyOnlyCoreSubjects}
-                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black transition-all hover-zoom-btn uppercase shadow-xs cursor-pointer"
-                  title="Chỉ áp dụng 3 môn cốt lõi: GHI CHUNG / NỀ NẾP, TOÁN, TIẾNG VIỆT"
-                >
-                  ⚡ Chỉ Dùng 3 Môn Mặc Định
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetDefaultSubjects}
-                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all hover-zoom-btn uppercase cursor-pointer"
-                  title="Khôi phục danh sách môn chuẩn theo quy định hệ thống"
-                >
-                  🔄 Khôi Phục Danh Mục Gốc
-                </button>
-              </div>
-            </div>
-
-            {/* FORM THÊM MÔN HỌC MỚI (User Requirement: Thêm môn học) */}
-            <form onSubmit={handleAddNewSubject} className="p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100/90 space-y-3">
-              <span className="text-xs font-black text-indigo-950 uppercase tracking-wider block flex items-center gap-1.5">
-                <Plus className="w-3.5 h-3.5 text-indigo-600" />
-                <span>+ THÊM MÔN HỌC MỚI VÀO HỆ THỐNG:</span>
-              </span>
-
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-                <input
-                  type="text"
-                  placeholder="Nhập tên môn học mới (VD: Tiếng Anh, Tin học, Đạo đức, Mĩ thuật...)"
-                  value={newSubjectName}
-                  onChange={(e) => setNewSubjectName(e.target.value)}
-                  className="sm:col-span-8 px-3.5 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  required
-                />
-
-                <div className="sm:col-span-4 flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={newSubjectColor}
-                    onChange={(e) => setNewSubjectColor(e.target.value)}
-                    className="w-10 h-10 rounded-xl border border-indigo-200 cursor-pointer p-0.5 bg-white shrink-0"
-                    title="Chọn màu sắc nhận diện môn học"
-                  />
-                  <button
-                    type="submit"
-                    className="flex-1 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs hover-zoom-btn flex items-center justify-center gap-1 uppercase cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Thêm</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Color swatches preset */}
-              <div className="flex items-center gap-1.5 pt-1">
-                <span className="text-[11px] font-bold text-slate-500">Màu gợi ý:</span>
-                {['#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'].map(c => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setNewSubjectColor(c)}
-                    className={`w-5 h-5 rounded-full border transition-transform hover:scale-125 ${newSubjectColor === c ? 'ring-2 ring-indigo-500 scale-110' : 'border-white'}`}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-              </div>
-            </form>
-
-            {/* DANH SÁCH MÔN HỌC & THIẾT LẬP BẬT/TẮT ÁP DỤNG CHO LỚP (User Requirement: Sửa, xóa, thiết lập áp dụng) */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-indigo-950 uppercase tracking-wider block">
-                  Danh Sách Môn Học ({subjects.length} môn) • Tick chọn môn áp dụng cho lớp:
-                </span>
-                <span className="text-[11px] font-bold text-slate-500">
-                  {appliedSubjects.length} môn đang kích hoạt
-                </span>
-              </div>
-
-              <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                {subjects.map((sub) => {
-                  const isEnabled = sub.enabled !== false;
-                  const isCore = sub.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(sub.name.trim().toLowerCase());
-                  return (
-                    <div
-                      key={sub.id}
-                      className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                        isEnabled
-                          ? 'bg-white border-indigo-100 shadow-2xs hover-zoom-interactive'
-                          : 'bg-slate-50 border-slate-200 opacity-60'
-                      }`}
-                    >
-                      {/* Checkbox bật/tắt áp dụng cho lớp */}
-                      <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isEnabled}
-                            onChange={() => toggleSubjectApplied(sub.id)}
-                            className="w-4 h-4 rounded-md text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                          />
-                          <span className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: sub.color || '#3B82F6' }} />
-                          <span className={`text-xs font-black ${isEnabled ? 'text-indigo-950' : 'text-slate-500 line-through'}`}>
-                            {sub.name}
-                          </span>
-                        </label>
-
-                        {isCore && (
-                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black">
-                            👑 Mặc định
-                          </span>
-                        )}
-
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          isEnabled ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-200 text-slate-600'
-                        }`}>
-                          {isEnabled ? 'Đang áp dụng' : 'Tạm tắt cho lớp'}
-                        </span>
-                      </div>
-
-                      {/* Action buttons: Sửa, Xóa */}
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setEditingSubject(sub)}
-                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
-                          title="Chỉnh sửa tên và màu sắc môn học"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (isCore) {
-                              if (confirm(`Môn "${sub.name}" là một trong 3 môn mặc định hệ thống. Bạn có chắc chắn muốn xóa không? (Bạn vẫn có thể khôi phục lại bất kỳ lúc nào)`)) {
-                                deleteSubject(sub.id);
-                              }
-                            } else {
-                              if (confirm(`Xóa vĩnh viễn môn học "${sub.name}"?`)) {
-                                deleteSubject(sub.id);
-                              }
-                            }
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-                          title="Xóa môn học khỏi hệ thống"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* FORM SỬA MÔN HỌC (User Requirement: Sửa môn học) */}
-            {editingSubject && (
-              <form onSubmit={handleSaveEditSubject} className="p-4 bg-amber-50/80 border-2 border-amber-300 rounded-2xl space-y-3 animate-in fade-in">
-                <span className="text-xs font-black text-amber-950 uppercase tracking-wide block">
-                  ✏️ Chỉnh Sửa Môn Học: {editingSubject.name}
-                </span>
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-                  <input
-                    type="text"
-                    value={editingSubject.name}
-                    onChange={(e) => setEditingSubject({ ...editingSubject, name: e.target.value })}
-                    className="w-full sm:flex-1 px-3.5 py-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                    placeholder="Tên môn học"
-                    required
-                  />
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <input
-                      type="color"
-                      value={editingSubject.color || '#3B82F6'}
-                      onChange={(e) => setEditingSubject({ ...editingSubject, color: e.target.value })}
-                      className="w-9 h-9 rounded-xl border border-amber-300 cursor-pointer p-0.5 bg-white shrink-0"
-                      title="Màu sắc nhận diện"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 pt-0.5">
                     <button
-                      type="submit"
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs hover-zoom-btn uppercase cursor-pointer"
+                      type="button"
+                      onClick={handleApplyAllSubjects}
+                      className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black transition-all hover-zoom-btn uppercase shadow-xs cursor-pointer text-center"
+                      title="Áp dụng tất cả các môn có trong hệ thống"
                     >
-                      Lưu Thay Đổi
+                      ✓ Tất Cả ({subjects.length})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setEditingSubject(null)}
-                      className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                      onClick={handleApplyOnlyCoreSubjects}
+                      className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black transition-all hover-zoom-btn uppercase shadow-xs cursor-pointer text-center"
+                      title="Chỉ áp dụng các môn GVCN thường dạy (Toán, TV, Đạo đức, TNXH, LS&ĐL, Khoa học...)"
                     >
-                      Hủy
+                      ⚡ Mặc Định GVCN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetDefaultSubjects}
+                      className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-[10px] font-bold transition-all hover-zoom-btn uppercase cursor-pointer text-center"
+                      title="Khôi phục danh sách môn chuẩn hệ thống"
+                    >
+                      🔄 Danh Mục Gốc
                     </button>
                   </div>
                 </div>
-              </form>
-            )}
+
+                {/* 3. FORM THÊM MÔN HỌC MỚI */}
+                <form onSubmit={handleAddNewSubject} className="p-3 bg-indigo-50/40 rounded-2xl border border-indigo-100/90 space-y-2">
+                  <span className="text-[11px] font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>+ THÊM MÔN HỌC MỚI VÀO HỆ THỐNG:</span>
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Tên môn mới (VD: Tiếng Anh, Tin học...)"
+                      value={newSubjectName}
+                      onChange={(e) => setNewSubjectName(e.target.value)}
+                      className="flex-1 px-3 py-1.5 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      required
+                    />
+                    <input
+                      type="color"
+                      value={newSubjectColor}
+                      onChange={(e) => setNewSubjectColor(e.target.value)}
+                      className="w-8 h-8 rounded-xl border border-indigo-200 cursor-pointer p-0.5 bg-white shrink-0"
+                      title="Chọn màu sắc nhận diện"
+                    />
+                    <button
+                      type="submit"
+                      className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs hover-zoom-btn uppercase cursor-pointer shrink-0"
+                    >
+                      + Thêm
+                    </button>
+                  </div>
+
+                  {/* Bảng màu gợi ý */}
+                  <div className="flex items-center gap-1 pt-0.5">
+                    <span className="text-[10px] font-bold text-slate-500">Màu gợi ý:</span>
+                    {['#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'].map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setNewSubjectColor(c)}
+                        className={`w-4 h-4 rounded-full border transition-transform hover:scale-125 ${newSubjectColor === c ? 'ring-2 ring-indigo-500 scale-110' : 'border-white'}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </form>
+
+                {/* 4. FORM SỬA MÔN HỌC (NẾU CÓ CHỌN) */}
+                {editingSubject && (
+                  <form onSubmit={handleSaveEditSubject} className="p-3 bg-amber-50/90 border-2 border-amber-300 rounded-2xl space-y-2 animate-in fade-in">
+                    <span className="text-[11px] font-black text-amber-950 uppercase tracking-wide block">
+                      ✏️ Chỉnh Sửa Môn: {editingSubject.name}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingSubject.name}
+                        onChange={(e) => setEditingSubject({ ...editingSubject, name: e.target.value })}
+                        className="flex-1 px-3 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        placeholder="Tên môn học"
+                        required
+                      />
+                      <input
+                        type="color"
+                        value={editingSubject.color || '#3B82F6'}
+                        onChange={(e) => setEditingSubject({ ...editingSubject, color: e.target.value })}
+                        className="w-8 h-8 rounded-xl border border-amber-300 cursor-pointer p-0.5 bg-white shrink-0"
+                        title="Màu sắc"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs hover-zoom-btn uppercase cursor-pointer shrink-0"
+                      >
+                        Lưu
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingSubject(null)}
+                        className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl cursor-pointer shrink-0"
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+
+              {/* CỘT PHẢI (md:col-span-7): DANH SÁCH MÔN HỌC & BẬT/TẮT ÁP DỤNG */}
+              <div className="md:col-span-7 space-y-2 bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-indigo-950 uppercase tracking-wider block">
+                    Danh Sách Môn Học ({subjects.length} môn) • Tick chọn áp dụng:
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    {appliedSubjects.length} môn đang kích hoạt
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
+                  {subjects.map((sub) => {
+                    const isEnabled = sub.enabled !== false;
+                    const isCore = sub.isDefault || isHomeroomSubject(sub.name);
+                    return (
+                      <div
+                        key={sub.id}
+                        className={`flex items-center justify-between p-2 sm:p-2.5 rounded-xl border transition-all ${
+                          isEnabled
+                            ? 'bg-white border-indigo-100 shadow-2xs hover-zoom-interactive'
+                            : 'bg-slate-50 border-slate-200 opacity-60'
+                        }`}
+                      >
+                        {/* Checkbox bật/tắt áp dụng cho lớp */}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <label className="flex items-center gap-2 cursor-pointer min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={isEnabled}
+                              onChange={() => toggleSubjectApplied(sub.id)}
+                              className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                            />
+                            <span className="w-3 h-3 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: sub.color || '#3B82F6' }} />
+                            <span className={`text-xs font-black truncate ${isEnabled ? 'text-indigo-950' : 'text-slate-500 line-through'}`}>
+                              {sub.name}
+                            </span>
+                          </label>
+
+                          {isCore && (
+                            <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black shrink-0">
+                              👑 GVCN
+                            </span>
+                          )}
+
+                          <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded shrink-0 hidden sm:inline-block ${
+                            isEnabled ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-200 text-slate-600'
+                          }`}>
+                            {isEnabled ? 'Áp dụng' : 'Tạm tắt'}
+                          </span>
+                        </div>
+
+                        {/* Action buttons: Sửa, Xóa */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setEditingSubject(sub)}
+                            className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            title="Chỉnh sửa tên và màu sắc môn học"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isCore) {
+                                if (confirm(`Môn "${sub.name}" là một trong các môn mặc định GVCN. Bạn có chắc chắn muốn xóa không? (Bạn vẫn có thể khôi phục lại bất kỳ lúc nào)`)) {
+                                  deleteSubject(sub.id);
+                                }
+                              } else {
+                                if (confirm(`Xóa vĩnh viễn môn học "${sub.name}"?`)) {
+                                  deleteSubject(sub.id);
+                                }
+                              }
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Xóa môn học khỏi hệ thống"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
 
             {/* Footer */}
             <div className="flex items-center justify-between pt-3 border-t border-indigo-100">
@@ -2234,7 +2246,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   setIsSubjectConfigOpen(false);
                   setEditingSubject(null);
                 }}
-                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/25 hover-zoom-btn uppercase cursor-pointer"
+                className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/25 hover-zoom-btn uppercase cursor-pointer"
               >
                 Xong & Áp Dụng Cho Lớp
               </button>
@@ -3806,20 +3818,26 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         </div>
       )}
 
-      {/* MODAL: SỬA HỌC SINH */}
+      {/* MODAL: SỬA HỌC SINH (Layout 2 cột ngang hiển thị đầy đủ trên màn hình, không phải cuộn chuột) */}
       {editingStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-3xl lg:max-w-4xl w-full p-5 sm:p-6 space-y-3.5 animate-in fade-in zoom-in-95 duration-150 max-h-[95vh] flex flex-col justify-between overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-2.5 border-b border-indigo-100">
               <div>
-                <h3 className="text-base font-black text-indigo-950">Sửa Thông Tin Học Sinh</h3>
-                <p className="text-xs text-indigo-700 mt-0.5">Chỉnh sửa họ tên, ngày sinh, giới tính và điểm xu</p>
+                <h3 className="text-base font-black text-indigo-950 flex items-center gap-2">
+                  <span>✏️ Sửa Thông Tin Học Sinh</span>
+                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                    STT {editingStudent.stt || '–'}
+                  </span>
+                </h3>
+                <p className="text-xs text-indigo-700 mt-0.5 font-medium">Chỉnh sửa họ tên, ngày sinh, giới tính, số xu và chức vụ cán bộ lớp</p>
               </div>
               <button 
                 onClick={() => setEditingStudent(null)}
-                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -3847,168 +3865,188 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 playCoinSound();
                 syncDatabaseNow();
               }}
-              className="space-y-4"
+              className="space-y-3.5"
             >
-              {/* Student Avatar Editor in Edit Modal */}
-              <div className="flex items-center gap-4 p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl">
-                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-indigo-200 bg-white shrink-0 shadow-xs relative">
-                  <img
-                    src={editingStudent.avatar}
-                    alt={editingStudent.name}
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-black text-indigo-950">Ảnh đại diện học sinh</div>
-                  <p className="text-[11px] text-indigo-600">Đổi ảnh chụp thật hoặc căn chỉnh khung hình</p>
-                  <button
-                    type="button"
-                    onClick={() => setAvatarEditingStudent(editingStudent)}
-                    className="mt-1.5 px-3 py-1 bg-white hover:bg-indigo-50 border border-indigo-300 rounded-xl text-xs font-bold text-indigo-700 flex items-center gap-1.5 transition-colors shadow-2xs hover-zoom-btn"
-                  >
-                    <Camera className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Thu phóng & Cắt ảnh</span>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Lớp học ({classes.length} lớp):
-                </label>
-                <select
-                  value={editingStudent.classId}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, classId: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
-                >
-                  {classes.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.grade}) {c.teacherName ? `• ${c.teacherName}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Họ và tên *</label>
-                <input
-                  type="text"
-                  value={editingStudent.name}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Ngày tháng năm sinh</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: 15/09/2016"
-                  value={editingStudent.birthDate || ''}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, birthDate: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Giới tính</label>
-                  <select
-                    value={editingStudent.gender}
-                    onChange={(e) => setEditingStudent({ ...editingStudent, gender: e.target.value as 'Nam' | 'Nữ' })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
-                  >
-                    <option value="Nam">Nam</option>
-                    <option value="Nữ">Nữ</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Tổ</label>
-                  <select
-                    value={editingStudent.group || 'Tổ 1'}
-                    onChange={(e) => setEditingStudent({ ...editingStudent, group: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
-                  >
-                    {['Tổ 1', 'Tổ 2', 'Tổ 3', 'Tổ 4'].map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Số xu thi đua</label>
-                  <input
-                    type="number"
-                    value={editingStudent.points}
-                    onChange={(e) => setEditingStudent({ ...editingStudent, points: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-amber-900"
-                  />
-                </div>
-              </div>
-
-              {/* Chức vụ cán bộ lớp (Tối đa 3 chức vụ) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <Crown className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Chức vụ cán bộ lớp (Tối đa 3)</span>
-                  </label>
-                  <span className="text-[11px] font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
-                    Đã chọn: {editingRoles.length}/3
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-1.5 p-2 bg-slate-50 rounded-2xl border border-slate-200 max-h-36 overflow-y-auto">
-                  {OFFICER_ROLE_OPTIONS.map((opt) => {
-                    const isSelected = editingRoles.includes(opt.value);
-                    return (
+              {/* BỐ CỤC 2 CỘT NGANG: HIỂN THỊ ĐẦY ĐỦ TRÊN MÀN HÌNH KHÔNG PHẢI CUỘN CHUỘT */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                {/* CỘT TRÁI (md:col-span-6): THÔNG TIN CƠ BẢN & ẢNH ĐẠI DIỆN */}
+                <div className="md:col-span-6 space-y-2.5">
+                  {/* Khối Ảnh đại diện học sinh */}
+                  <div className="flex items-center gap-3 p-2.5 bg-gradient-to-r from-indigo-50/80 to-purple-50/50 border border-indigo-100 rounded-2xl">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-indigo-200 bg-white shrink-0 shadow-xs relative">
+                      <img
+                        src={editingStudent.avatar}
+                        alt={editingStudent.name}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-black text-indigo-950 truncate">Ảnh đại diện học sinh</div>
+                      <p className="text-[10.5px] text-indigo-600">Đổi ảnh thật hoặc căn chỉnh khung hình</p>
                       <button
-                        key={opt.value}
                         type="button"
-                        onClick={() => {
-                          if (isSelected) {
-                            setEditingRoles(prev => prev.filter(r => r !== opt.value));
-                          } else {
-                            if (editingRoles.length >= 3) {
-                              alert('Mỗi học sinh chỉ được đảm nhiệm tối đa 3 chức vụ!');
-                              return;
-                            }
-                            setEditingRoles(prev => [...prev, opt.value]);
-                          }
-                        }}
-                        className={`p-2 rounded-xl text-[11px] font-bold text-left transition-all flex items-center justify-between truncate ${
-                          isSelected
-                            ? 'bg-indigo-600 text-white font-black shadow-xs'
-                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50/50'
-                        }`}
+                        onClick={() => setAvatarEditingStudent(editingStudent)}
+                        className="mt-1 px-2.5 py-1 bg-white hover:bg-indigo-50 border border-indigo-300 rounded-lg text-[11px] font-bold text-indigo-700 flex items-center gap-1 transition-colors shadow-2xs hover-zoom-btn cursor-pointer"
                       >
-                        <span className="truncate">{opt.icon} {opt.label}</span>
-                        {isSelected && <span className="text-xs ml-1 font-black">✓</span>}
+                        <Camera className="w-3 h-3 text-indigo-600" />
+                        <span>Thu phóng & Cắt ảnh</span>
                       </button>
-                    );
-                  })}
+                    </div>
+                  </div>
+
+                  {/* Lớp học */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-0.5">
+                      Lớp học ({classes.length} lớp):
+                    </label>
+                    <select
+                      value={editingStudent.classId}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, classId: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {classes.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.grade}) {c.teacherName ? `• ${c.teacherName}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Họ và tên */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-0.5">Họ và tên học sinh *</label>
+                    <input
+                      type="text"
+                      value={editingStudent.name}
+                      onChange={(e) => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Nhập họ và tên học sinh..."
+                      required
+                    />
+                  </div>
+
+                  {/* Ngày sinh & Giới tính xếp cùng 1 hàng */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-0.5 flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-indigo-600" />
+                        <span>Ngày sinh</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="VD: 15/09/2016"
+                        value={editingStudent.birthDate || ''}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, birthDate: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-0.5">Giới tính</label>
+                      <select
+                        value={editingStudent.gender}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, gender: e.target.value as 'Nam' | 'Nữ' })}
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                      >
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Tổ & Số xu thi đua xếp cùng 1 hàng */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-0.5">Tổ</label>
+                      <select
+                        value={editingStudent.group || 'Tổ 1'}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, group: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                      >
+                        {['Tổ 1', 'Tổ 2', 'Tổ 3', 'Tổ 4'].map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-0.5">Số xu thi đua</label>
+                      <input
+                        type="number"
+                        value={editingStudent.points}
+                        onChange={(e) => setEditingStudent({ ...editingStudent, points: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-amber-900"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* CỘT PHẢI (md:col-span-6): CHỨC VỤ CÁN BỘ LỚP */}
+                <div className="md:col-span-6 flex flex-col justify-between bg-slate-50/80 p-3 rounded-2xl border border-slate-200">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-[11px] font-black text-slate-800 flex items-center gap-1.5 uppercase">
+                        <Crown className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Chức vụ cán bộ lớp (Tối đa 3)</span>
+                      </label>
+                      <span className="text-[10px] font-black text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-full border border-indigo-200">
+                        Đã chọn: {editingRoles.length}/3
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {OFFICER_ROLE_OPTIONS.map((opt) => {
+                        const isSelected = editingRoles.includes(opt.value);
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setEditingRoles(prev => prev.filter(r => r !== opt.value));
+                              } else {
+                                if (editingRoles.length >= 3) {
+                                  alert('Mỗi học sinh chỉ được đảm nhiệm tối đa 3 chức vụ!');
+                                  return;
+                                }
+                                setEditingRoles(prev => [...prev, opt.value]);
+                              }
+                            }}
+                            className={`p-2 rounded-xl text-[11px] font-bold text-left transition-all flex items-center justify-between truncate cursor-pointer ${
+                              isSelected
+                                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-black shadow-xs ring-1 ring-indigo-400'
+                                : 'bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50/60'
+                            }`}
+                          >
+                            <span className="truncate">{opt.icon} {opt.label}</span>
+                            {isSelected && <span className="text-xs ml-1 font-black shrink-0">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-500 mt-2 font-medium italic">
+                    * Bấm chọn để gán chức vụ cho học sinh (Ví dụ: Lớp trưởng, Tổ trưởng tổ 1, Ban văn nghệ...).
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              {/* FOOTER ACTIONS */}
+              <div className="flex items-center justify-end gap-2 pt-2.5 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingStudent(null)}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
                 >
-                  Hủy
+                  Hủy Bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/20 hover-zoom-btn"
+                  className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/20 hover-zoom-btn cursor-pointer uppercase"
                 >
-                  Lưu Thay Đổi
+                  Lưu Thông Tin Học Sinh
                 </button>
               </div>
             </form>
