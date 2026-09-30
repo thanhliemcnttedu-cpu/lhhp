@@ -7,7 +7,8 @@ import {
   Settings, Download, Save, Check, Globe,
   Printer, Image as ImageIcon, Sparkles, RefreshCw,
   Edit2, Eye, LayoutGrid, CheckCircle2, ChevronRight,
-  BookOpen, Star, HelpCircle, FileSpreadsheet, AlertTriangle
+  BookOpen, Star, HelpCircle, FileSpreadsheet, AlertTriangle,
+  ArrowUp, ArrowDown, Upload, Pencil, X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { 
@@ -20,6 +21,7 @@ import {
 } from '../modals/TimetableSlotPickerModal';
 import { exportElementToPdf, downloadPrintableHtml } from '../../utils/printHelper';
 import { playDeductSound } from '../../utils/audio';
+import { SubjectTeacherTimetableView } from './schedule/SubjectTeacherTimetableView';
 
 export const DAYS_OF_WEEK = [
   { day: 2, label: 'Thứ Hai', short: 'T2', badgeColor: 'bg-sky-500 text-white', pastelBg: 'bg-sky-50 border-sky-200 text-sky-900', icon: '☀️' },
@@ -136,14 +138,15 @@ const TEMPLATES: TemplateMeta[] = [
 
 interface ScheduleLinksViewProps {
   defaultTab?: 'schedule' | 'links';
+  onNavigate?: (view: any) => void;
 }
 
-export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab = 'schedule' }) => {
+export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab = 'schedule', onNavigate }) => {
   const { 
     classes, activeClassId, setActiveClassId,
     timetable, timetableConfig, setTimetableConfig, 
-    updateTimetableSlot, quickLinks, addQuickLink, deleteQuickLink,
-    teacherProfile, subjects
+    updateTimetableSlot, quickLinks, addQuickLink, deleteQuickLink, updateQuickLink, reorderQuickLinks,
+    teacherProfile, subjects, teacherRole, subjectTeacherConfig
   } = useClassroom();
 
   const [activeTab, setActiveTab] = useState<'schedule' | 'links'>(defaultTab);
@@ -151,6 +154,7 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
   const [saveToast, setSaveToast] = useState(false);
   const [isExportingImage, setIsExportingImage] = useState(false);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [subjectScheduleMode, setSubjectScheduleMode] = useState<'subject_overall' | 'class_detail'>('subject_overall');
 
   // Active Template
   const [selectedTemplate, setSelectedTemplate] = useState<TimetableTemplateId>(() => {
@@ -202,6 +206,13 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
     };
   });
 
+  // Sync selectedClassId with activeClassId when switched from other views
+  useEffect(() => {
+    if (activeClassId && activeClassId !== selectedClassId) {
+      setSelectedClassId(activeClassId);
+    }
+  }, [activeClassId]);
+
   // Sync display settings when class changes
   useEffect(() => {
     if (selectedClass) {
@@ -239,6 +250,17 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
   const [linkUrl, setLinkUrl] = useState('');
   const [linkCategory, setLinkCategory] = useState('Học liệu số');
   const [linkDescription, setLinkDescription] = useState('');
+  const [linkIconUrl, setLinkIconUrl] = useState('');
+
+  // Edit link state
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [editLinkTitle, setEditLinkTitle] = useState('');
+  const [editLinkUrl, setEditLinkUrl] = useState('');
+  const [editLinkCategory, setEditLinkCategory] = useState('');
+  const [editLinkDescription, setEditLinkDescription] = useState('');
+  const [editLinkIconUrl, setEditLinkIconUrl] = useState('');
+  const linkFileInputRef = useRef<HTMLInputElement>(null);
+  const editLinkFileInputRef = useRef<HTMLInputElement>(null);
 
   const timetableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -425,13 +447,71 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
       title: linkTitle.trim(),
       url: validUrl,
       category: linkCategory,
-      description: linkDescription.trim()
+      description: linkDescription.trim(),
+      iconUrl: linkIconUrl.trim() || undefined
     });
 
     setLinkTitle('');
     setLinkUrl('');
     setLinkDescription('');
+    setLinkIconUrl('');
     setIsAddLinkOpen(false);
+  };
+
+  // Open Edit Link Modal
+  const handleOpenEditLink = (link: typeof quickLinks[0]) => {
+    setEditingLinkId(link.id);
+    setEditLinkTitle(link.title);
+    setEditLinkUrl(link.url);
+    setEditLinkCategory(link.category);
+    setEditLinkDescription(link.description || '');
+    setEditLinkIconUrl(link.iconUrl || '');
+  };
+
+  // Save Edit Link
+  const handleSaveEditLink = () => {
+    if (!editingLinkId || !editLinkTitle.trim() || !editLinkUrl.trim()) return;
+    let validUrl = editLinkUrl.trim();
+    if (!validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
+      validUrl = 'https://' + validUrl;
+    }
+    updateQuickLink(editingLinkId, {
+      title: editLinkTitle.trim(),
+      url: validUrl,
+      category: editLinkCategory,
+      description: editLinkDescription.trim(),
+      iconUrl: editLinkIconUrl.trim() || undefined
+    });
+    setEditingLinkId(null);
+  };
+
+  // Reorder Links
+  const handleMoveLink = (index: number, direction: 'up' | 'down') => {
+    const newLinks = [...quickLinks];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newLinks.length) return;
+    [newLinks[index], newLinks[targetIndex]] = [newLinks[targetIndex], newLinks[index]];
+    reorderQuickLinks(newLinks);
+  };
+
+  // Handle file upload for link icon (converts to base64)
+  const handleLinkIconFileUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'add' | 'edit') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ảnh quá lớn. Vui lòng chọn ảnh dưới 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      if (target === 'add') {
+        setLinkIconUrl(result);
+      } else {
+        setEditLinkIconUrl(result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -444,11 +524,11 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight">
-                Thời Khóa Biểu Nghệ Thuật & Kho Học Liệu
+              <h2 className="text-xl sm:text-2xl font-black text-indigo-950 tracking-tight uppercase">
+                THỜI KHÓA BIỂU NGHỆ THUẬT & KHO HỌC LIỆU
               </h2>
-              <p className="text-xs text-indigo-600/90 font-bold mt-0.5">
-                Đa dạng mẫu trình bày (Cầu vồng, Chim công, Bảng phấn, Mây trời, Thẻ 3D) • In ấn A4 & Tải ảnh
+              <p className="text-xs text-indigo-600/90 font-bold mt-0.5 uppercase">
+                ĐA DẠNG MẪU TRÌNH BÀY (CẦU VỒNG, CHIM CÔNG, BẢNG PHẤN, MÂY TRỜI, THẺ 3D) • IN ẤN A4 & TẢI ẢNH
               </p>
             </div>
           </div>
@@ -458,26 +538,26 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
         <div className="flex items-center bg-indigo-50/70 p-1.5 rounded-2xl border border-indigo-100">
           <button
             onClick={() => setActiveTab('schedule')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 hover-zoom-btn ${
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 hover-zoom-btn uppercase ${
               activeTab === 'schedule' 
                 ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/25' 
                 : 'text-indigo-900 hover:text-indigo-950 hover:bg-white/60'
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>Mẫu Thời Khóa Biểu</span>
+            <span>MẪU THỜI KHÓA BIỂU</span>
           </button>
 
           <button
             onClick={() => setActiveTab('links')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 hover-zoom-btn ${
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 hover-zoom-btn uppercase ${
               activeTab === 'links' 
                 ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/25' 
                 : 'text-indigo-900 hover:text-indigo-950 hover:bg-white/60'
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>Kho Liên Kết Bài Dạy ({quickLinks.length})</span>
+            <span>KHO LIÊN KẾT BÀI DẠY ({quickLinks.length})</span>
           </button>
         </div>
       </div>
@@ -494,7 +574,45 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
       {/* ========================================================================= */}
       {activeTab === 'schedule' && (
         <div className="space-y-6">
-          
+          {/* Sub-mode switcher for Subject Teachers */}
+          {teacherRole === 'subject' && (
+            <div className="bg-white p-3.5 rounded-2xl border border-emerald-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-black text-emerald-950 uppercase">CHẾ ĐỘ XEM THỜI KHÓA BIỂU:</span>
+                <span className="text-slate-500 font-semibold">Giáo viên bộ môn ({classes.length} lớp phụ trách)</span>
+              </div>
+              <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+                <button
+                  onClick={() => setSubjectScheduleMode('subject_overall')}
+                  className={`px-3 py-1.5 rounded-lg font-black text-xs transition-all uppercase flex items-center gap-1.5 ${
+                    subjectScheduleMode === 'subject_overall'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span>💻</span>
+                  <span>TKB BỘ MÔN ({classes.length} LỚP)</span>
+                </button>
+                <button
+                  onClick={() => setSubjectScheduleMode('class_detail')}
+                  className={`px-3 py-1.5 rounded-lg font-black text-xs transition-all uppercase flex items-center gap-1.5 ${
+                    subjectScheduleMode === 'class_detail'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span>🎨</span>
+                  <span>XEM MẪU NGHỆ THUẬT TỪNG LỚP</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {teacherRole === 'subject' && subjectScheduleMode === 'subject_overall' ? (
+            <SubjectTeacherTimetableView onNavigate={onNavigate || (setActiveTab as any)} />
+          ) : (
+            <>
           {/* Class Selector Bar */}
           {classes.length > 1 && (
             <div className="bg-white p-3.5 rounded-2xl border border-indigo-100/90 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -2068,6 +2186,8 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
             )}
 
           </div>
+          </>
+          )}
         </div>
       )}
 
@@ -2085,7 +2205,6 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
                 Lưu trữ các website giáo án điện tử, bài tập, slide PowerPoint để truy cập một chạm khi giảng dạy
               </p>
             </div>
-
             <button
               onClick={() => setIsAddLinkOpen(true)}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-black text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn self-start sm:self-auto"
@@ -2095,46 +2214,42 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
             </button>
           </div>
 
+          {quickLinks.length === 0 && (
+            <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+              <Globe className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm font-bold text-slate-600">Chưa có liên kết nào</p>
+              <p className="text-xs text-slate-400 mt-1">Bấm "Thêm liên kết mới" để bắt đầu</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {quickLinks.map(link => (
-              <div
-                key={link.id}
-                className="bg-white rounded-3xl border border-indigo-100 p-5 shadow-2xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between hover-zoom-card"
-              >
+            {quickLinks.map((link, index) => (
+              <div key={link.id} className="bg-white rounded-3xl border border-indigo-100 p-5 shadow-2xs hover:border-indigo-300 hover:shadow-md transition-all flex flex-col justify-between hover-zoom-card">
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg">
-                      {link.category}
-                    </span>
-                    <button
-                      onClick={() => deleteQuickLink(link.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                      title="Xóa liên kết"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg">{link.category}</span>
+                    <div className="flex items-center gap-0.5">
+                      <button onClick={() => handleMoveLink(index, 'up')} disabled={index === 0} className={`p-1 rounded-lg transition-colors ${index === 0 ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`} title="Di chuyển lên"><ArrowUp className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => handleMoveLink(index, 'down')} disabled={index === quickLinks.length - 1} className={`p-1 rounded-lg transition-colors ${index === quickLinks.length - 1 ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`} title="Di chuyển xuống"><ArrowDown className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => handleOpenEditLink(link)} className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Chỉnh sửa"><Pencil className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => deleteQuickLink(link.id)} className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Xóa"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
                   </div>
-
-                  <h4 className="text-sm font-black text-slate-900 mt-2.5 line-clamp-1">
-                    {link.title}
-                  </h4>
-                  {link.description && (
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                      {link.description}
-                    </p>
-                  )}
-                  <p className="text-[11px] font-mono text-indigo-500/80 truncate mt-2 font-semibold">
-                    {link.url}
-                  </p>
+                  <div className="flex items-center gap-3 mt-3">
+                    {link.iconUrl ? (
+                      <img src={link.iconUrl} alt={link.title} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-xs shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><Globe className="w-5 h-5" /></div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-sm font-black text-slate-900 line-clamp-1">{link.title}</h4>
+                      {link.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{link.description}</p>}
+                    </div>
+                  </div>
+                  <p className="text-[11px] font-mono text-indigo-500/80 truncate mt-2 font-semibold">{link.url}</p>
                 </div>
-
                 <div className="mt-4 pt-3 border-t border-slate-100">
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-2.5 px-3 rounded-xl text-xs font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-all flex items-center justify-center gap-1.5 hover-zoom-btn"
-                  >
+                  <a href={link.url} target="_blank" rel="noreferrer" className="w-full py-2.5 px-3 rounded-xl text-xs font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-all flex items-center justify-center gap-1.5 hover-zoom-btn">
                     <span>Mở truy cập ngay</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -2143,43 +2258,26 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
             ))}
           </div>
 
-          {/* Modal: Add Quick Link */}
+          {/* Modal: Add Quick Link (Upgraded with Image) */}
           {isAddLinkOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
               <div className="bg-white rounded-3xl shadow-xl border border-slate-200 max-w-md w-full p-6 animate-in zoom-in-95 duration-150">
-                <h3 className="text-base font-bold text-slate-800 mb-4">Thêm liên kết trực tuyến mới</h3>
-                <form onSubmit={handleAddLinkSubmit} className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-bold text-slate-800">Thêm liên kết trực tuyến mới</h3>
+                  <button onClick={() => setIsAddLinkOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg"><X className="w-4 h-4 text-slate-400" /></button>
+                </div>
+                <form onSubmit={handleAddLinkSubmit} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Tên liên kết / Tài liệu</label>
-                    <input
-                      type="text"
-                      placeholder="Ví dụ: Bài giảng PowerPoint Hành Trang Số..."
-                      value={linkTitle}
-                      onChange={(e) => setLinkTitle(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold"
-                      required
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Tên liên kết *</label>
+                    <input type="text" placeholder="Ví dụ: Bài giảng PowerPoint..." value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold" required />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Đường dẫn URL</label>
-                    <input
-                      type="text"
-                      placeholder="https://..."
-                      value={linkUrl}
-                      onChange={(e) => setLinkUrl(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono"
-                      required
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Đường dẫn URL *</label>
+                    <input type="text" placeholder="https://..." value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" required />
                   </div>
-
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Danh mục</label>
-                    <select
-                      value={linkCategory}
-                      onChange={(e) => setLinkCategory(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold"
-                    >
+                    <select value={linkCategory} onChange={(e) => setLinkCategory(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold">
                       <option value="Học liệu số">Học liệu số</option>
                       <option value="Luyện tập & Đề thi">Luyện tập & Đề thi</option>
                       <option value="Trò chơi & Quiz">Trò chơi & Quiz</option>
@@ -2187,34 +2285,83 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
                       <option value="Video bài học">Video bài học</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi chú thêm</label>
-                    <textarea
-                      rows={2}
-                      placeholder="Mô tả tóm tắt nội dung..."
-                      value={linkDescription}
-                      onChange={(e) => setLinkDescription(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
-                    />
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ảnh / Logo (tùy chọn)</label>
+                    <div className="flex items-center gap-2">
+                      <input type="text" placeholder="Dán link ảnh..." value={linkIconUrl} onChange={(e) => setLinkIconUrl(e.target.value)} className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" />
+                      <input ref={linkFileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleLinkIconFileUpload(e, 'add')} />
+                      <button type="button" onClick={() => linkFileInputRef.current?.click()} className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold flex items-center gap-1 shrink-0"><Upload className="w-3 h-3" /><span>Tải lên</span></button>
+                    </div>
+                    {linkIconUrl && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <img src={linkIconUrl} alt="preview" className="w-8 h-8 rounded-lg object-cover border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <button type="button" onClick={() => setLinkIconUrl('')} className="text-[10px] text-rose-500 font-bold hover:underline">Xóa ảnh</button>
+                      </div>
+                    )}
                   </div>
-
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi chú</label>
+                    <textarea rows={2} placeholder="Mô tả nội dung..." value={linkDescription} onChange={(e) => setLinkDescription(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+                  </div>
                   <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddLinkOpen(false)}
-                      className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs"
-                    >
-                      Lưu liên kết
-                    </button>
+                    <button type="button" onClick={() => setIsAddLinkOpen(false)} className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
+                    <button type="submit" className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs">Lưu liên kết</button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {/* Modal: Edit Quick Link */}
+          {editingLinkId && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+              <div className="bg-white rounded-3xl shadow-xl border border-slate-200 max-w-md w-full p-6 animate-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-bold text-slate-800 flex items-center gap-2"><Pencil className="w-4 h-4 text-amber-500" /> Chỉnh sửa liên kết</h3>
+                  <button onClick={() => setEditingLinkId(null)} className="p-1 hover:bg-slate-100 rounded-lg"><X className="w-4 h-4 text-slate-400" /></button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Tên liên kết *</label>
+                    <input type="text" value={editLinkTitle} onChange={(e) => setEditLinkTitle(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-bold" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Đường dẫn URL *</label>
+                    <input type="text" value={editLinkUrl} onChange={(e) => setEditLinkUrl(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Danh mục</label>
+                    <select value={editLinkCategory} onChange={(e) => setEditLinkCategory(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold">
+                      <option value="Học liệu số">Học liệu số</option>
+                      <option value="Luyện tập & Đề thi">Luyện tập & Đề thi</option>
+                      <option value="Trò chơi & Quiz">Trò chơi & Quiz</option>
+                      <option value="Giáo án & Slide">Giáo án & Slide</option>
+                      <option value="Video bài học">Video bài học</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ảnh / Logo</label>
+                    <div className="flex items-center gap-2">
+                      <input type="text" placeholder="Dán link ảnh..." value={editLinkIconUrl} onChange={(e) => setEditLinkIconUrl(e.target.value)} className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono" />
+                      <input ref={editLinkFileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleLinkIconFileUpload(e, 'edit')} />
+                      <button type="button" onClick={() => editLinkFileInputRef.current?.click()} className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl text-xs font-bold flex items-center gap-1 shrink-0"><Upload className="w-3 h-3" /><span>Tải lên</span></button>
+                    </div>
+                    {editLinkIconUrl && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <img src={editLinkIconUrl} alt="preview" className="w-8 h-8 rounded-lg object-cover border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <button type="button" onClick={() => setEditLinkIconUrl('')} className="text-[10px] text-rose-500 font-bold hover:underline">Xóa ảnh</button>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Ghi chú</label>
+                    <textarea rows={2} value={editLinkDescription} onChange={(e) => setEditLinkDescription(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs" />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button type="button" onClick={() => setEditingLinkId(null)} className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
+                    <button type="button" onClick={handleSaveEditLink} className="px-4 py-2 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl shadow-xs flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /><span>Lưu thay đổi</span></button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

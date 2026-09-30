@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Volume2, VolumeX, ShieldAlert, Mic, MicOff, 
-  Bell, AlertTriangle, Maximize2, Minimize2, CheckCircle2, Clock, X, Sparkles
+  Bell, AlertTriangle, Maximize2, Minimize2, CheckCircle2, Clock, X, Sparkles, RefreshCw, Sliders
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { playNoiseAlertSound, playDeductSound, playCoinSound, playApplauseSound } from '../../utils/audio';
+import { 
+  playLoudAlertSound, 
+  playStopNowAlertSound, 
+  playApplauseWithHappyMusic20s, 
+  playDeductSound, 
+  playCoinSound,
+  playLoudAlertSound20s,
+  playStopNowAlertSound20s,
+  playShhAlertSound20s
+} from '../../utils/audio';
 
 interface AttentionAlert {
   type: 'shh' | 'loud' | 'stop' | 'great';
@@ -25,6 +34,10 @@ export const NoiseMeterView: React.FC = () => {
   const [lastAlertTime, setLastAlertTime] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
 
+  // Simulation mode (chế độ mô phỏng khi chưa cấp quyền mic hoặc máy không có mic)
+  const [isSimulating, setIsSimulating] = useState(false);
+  const simIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Silence timer (Đếm ngược im lặng)
   const [silenceSecondsLeft, setSilenceSecondsLeft] = useState<number | null>(null);
   const [activeDuration, setActiveDuration] = useState<number>(10);
@@ -34,6 +47,7 @@ export const NoiseMeterView: React.FC = () => {
   const [activeAttentionAlert, setActiveAttentionAlert] = useState<AttentionAlert | null>(null);
   const [attentionSecondsLeft, setAttentionSecondsLeft] = useState<number>(20);
   const attentionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const happyMusicControlRef = useRef<{ stop: () => void } | null>(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -55,10 +69,14 @@ export const NoiseMeterView: React.FC = () => {
 
   // 4 Instant Alerts: Phóng to thu nhỏ nhanh trong 20s để gây sự chú ý của học sinh
   const triggerAlert = (type: 'shh' | 'loud' | 'stop' | 'great') => {
-    // Clear any existing attention countdown
+    // Clear any existing attention countdown and audio
     if (attentionTimerRef.current) {
       clearInterval(attentionTimerRef.current);
       attentionTimerRef.current = null;
+    }
+    if (happyMusicControlRef.current) {
+      happyMusicControlRef.current.stop();
+      happyMusicControlRef.current = null;
     }
 
     let alertData: AttentionAlert;
@@ -70,7 +88,10 @@ export const NoiseMeterView: React.FC = () => {
         icon: '🤫',
         theme: 'amber'
       };
-      if (hasSound) playDeductSound();
+      // Âm thanh liên tục 20 giây cho IM LẶNG NÀO (chuông nhắc nhở nhẹ nhàng lặp lại)
+      if (hasSound) {
+        happyMusicControlRef.current = playShhAlertSound20s();
+      }
     } else if (type === 'loud') {
       alertData = {
         type: 'loud',
@@ -79,7 +100,10 @@ export const NoiseMeterView: React.FC = () => {
         icon: '📢',
         theme: 'orange'
       };
-      if (hasSound) playNoiseAlertSound();
+      // Âm thanh liên tục 20 giây cho LỚP QUÁ ỒN (chuông cảnh báo âm thanh tăng dần lặp lại)
+      if (hasSound) {
+        happyMusicControlRef.current = playLoudAlertSound20s();
+      }
     } else if (type === 'stop') {
       alertData = {
         type: 'stop',
@@ -88,7 +112,10 @@ export const NoiseMeterView: React.FC = () => {
         icon: '🛑',
         theme: 'rose'
       };
-      if (hasSound) playNoiseAlertSound();
+      // Âm thanh liên tục 20 giây cho DỪNG LẠI NGAY (còi báo dừng sắc bén lặp lại)
+      if (hasSound) {
+        happyMusicControlRef.current = playStopNowAlertSound20s();
+      }
     } else {
       alertData = {
         type: 'great',
@@ -97,19 +124,18 @@ export const NoiseMeterView: React.FC = () => {
         icon: '👏',
         theme: 'emerald'
       };
-      // Hiệu ứng vỗ tay (Applause effect) theo yêu cầu người dùng
+      // TUYỆT VỜI VỖ TAY: âm thanh vỗ tay kèm nhạc vui nhộn trong 20 giây
       if (hasSound) {
-        playApplauseSound();
+        happyMusicControlRef.current = playApplauseWithHappyMusic20s();
       }
       confetti({
-        particleCount: 80,
+        particleCount: 90,
         spread: 100,
         origin: { y: 0.5 }
       });
-      // Fire second wave
       setTimeout(() => {
         confetti({
-          particleCount: 60,
+          particleCount: 70,
           spread: 120,
           origin: { y: 0.4 }
         });
@@ -125,24 +151,28 @@ export const NoiseMeterView: React.FC = () => {
       remaining -= 1;
       setAttentionSecondsLeft(remaining);
 
-      // Repeat celebratory applause or reminder sounds occasionally
-      if (type === 'great' && remaining % 5 === 0 && remaining > 0) {
-        if (hasSound) {
-          playApplauseSound();
-          playCoinSound();
-        }
-        confetti({ particleCount: 35, spread: 80, origin: { y: 0.55 } });
+      // Repeat celebratory confetti wave
+      if (type === 'great' && remaining % 4 === 0 && remaining > 0) {
+        confetti({ particleCount: 45, spread: 85, origin: { y: 0.55 } });
       }
 
       if (remaining <= 0) {
         if (attentionTimerRef.current) clearInterval(attentionTimerRef.current);
         attentionTimerRef.current = null;
+        if (happyMusicControlRef.current) {
+          happyMusicControlRef.current.stop();
+          happyMusicControlRef.current = null;
+        }
         setActiveAttentionAlert(null);
       }
     }, 1000);
   };
 
   const handleDismissAttentionAlert = () => {
+    if (happyMusicControlRef.current) {
+      happyMusicControlRef.current.stop();
+      happyMusicControlRef.current = null;
+    }
     if (attentionTimerRef.current) {
       clearInterval(attentionTimerRef.current);
       attentionTimerRef.current = null;
@@ -176,41 +206,60 @@ export const NoiseMeterView: React.FC = () => {
   const startMic = async () => {
     try {
       setMicError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      stopSimulation();
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setMicError('Trình duyệt của bạn chưa hỗ trợ giao diện Microphone trực tiếp. Bạn có thể sử dụng Chế độ Mô phỏng bên dưới để thử nghiệm.');
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }, 
+        video: false 
+      });
       streamRef.current = stream;
 
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const audioCtx = new AudioCtx();
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
       audioContextRef.current = audioCtx;
 
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.5;
       source.connect(analyser);
       analyserRef.current = analyser;
 
       setIsListening(true);
 
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
+      const bufferLength = analyser.fftSize;
+      const timeDataArray = new Uint8Array(bufferLength);
 
       const checkVolume = () => {
-        analyser.getByteFrequencyData(dataArray);
-        let sum = 0;
+        analyser.getByteTimeDomainData(timeDataArray);
+        let sumSquares = 0;
         for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
+          const normalizedVal = (timeDataArray[i] - 128) / 128;
+          sumSquares += normalizedVal * normalizedVal;
         }
-        const avg = sum / bufferLength;
-        const normalized = Math.min(100, Math.round((avg / 128) * 100));
-        setNoiseLevel(normalized);
+        const rms = Math.sqrt(sumSquares / bufferLength);
+        // Sensitive mapping from RMS to 0 - 100 dB
+        const currentDb = Math.min(100, Math.max(0, Math.round(rms * 260)));
+        setNoiseLevel(currentDb);
 
-        if (normalized >= threshold) {
+        if (currentDb >= threshold) {
           const now = Date.now();
           if (now - lastAlertTime > 4000) {
             setLastAlertTime(now);
             if (hasSound) {
-              playNoiseAlertSound();
+              playLoudAlertSound();
             }
           }
         }
@@ -219,9 +268,15 @@ export const NoiseMeterView: React.FC = () => {
       };
 
       checkVolume();
-    } catch (err) {
-      console.error(err);
-      setMicError('Không thể truy cập Microphone. Vui lòng cấp quyền Microphone trên trình duyệt.');
+    } catch (err: any) {
+      console.error('Microphone access error:', err);
+      if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+        setMicError('Trình duyệt đang chặn quyền Microphone của trang web. Vui lòng bấm vào biểu tượng Ổ khóa 🔒 hoặc Cài đặt trên thanh địa chỉ URL, chọn "Cho phép Microphone" (Allow) rồi bấm Bật micro lại.');
+      } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
+        setMicError('Không tìm thấy thiết bị Microphone trên máy tính của bạn. Bạn có thể sử dụng Chế độ Mô phỏng bên dưới để thử nghiệm.');
+      } else {
+        setMicError(`Không thể bật Micro (${err?.message || 'Quyền bị từ chối'}). Vui lòng cấp quyền Microphone trên trình duyệt hoặc sử dụng Chế độ Mô Phỏng.`);
+      }
       setIsListening(false);
     }
   };
@@ -230,16 +285,69 @@ export const NoiseMeterView: React.FC = () => {
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
     }
     if (audioContextRef.current) {
       audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
     }
     setIsListening(false);
     setNoiseLevel(0);
   };
 
+  // Simulation mode logic
+  const startSimulation = () => {
+    stopMic();
+    setMicError(null);
+    setIsSimulating(true);
+    const base = 30;
+    simIntervalRef.current = setInterval(() => {
+      const randomJitter = Math.floor(Math.random() * 22) - 11;
+      const spike = Math.random() < 0.08 ? 38 : 0;
+      const newDb = Math.min(100, Math.max(12, base + randomJitter + spike));
+      setNoiseLevel(newDb);
+
+      if (newDb >= threshold) {
+        const now = Date.now();
+        if (now - lastAlertTime > 4000) {
+          setLastAlertTime(now);
+          if (hasSound) {
+            playLoudAlertSound();
+          }
+        }
+      }
+    }, 300);
+  };
+
+  const stopSimulation = () => {
+    if (simIntervalRef.current) {
+      clearInterval(simIntervalRef.current);
+      simIntervalRef.current = null;
+    }
+    setIsSimulating(false);
+    setNoiseLevel(0);
+  };
+
+  const triggerTestNoiseSpike = () => {
+    setNoiseLevel(82);
+    if (hasSound) {
+      playLoudAlertSound();
+    }
+  };
+
   useEffect(() => {
-    return () => stopMic();
+    return () => {
+      stopMic();
+      stopSimulation();
+      if (happyMusicControlRef.current) {
+        happyMusicControlRef.current.stop();
+        happyMusicControlRef.current = null;
+      }
+      if (attentionTimerRef.current) {
+        clearInterval(attentionTimerRef.current);
+        attentionTimerRef.current = null;
+      }
+    };
   }, []);
 
   return (
@@ -251,34 +359,34 @@ export const NoiseMeterView: React.FC = () => {
             <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
               <ShieldAlert className="w-4 h-4" />
             </div>
-            <h2 className="text-base md:text-lg font-black text-slate-900">
-              Công Cụ Chống Ồn Lớp Học
+            <h2 className="text-base md:text-lg font-black text-slate-900 uppercase">
+              CÔNG CỤ CHỐNG ỒN LỚP HỌC
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Bấm cảnh báo tức thì, đếm ngược im lặng, hoặc dùng microphone phát hiện tiếng ồn tự động.
+          <p className="text-xs text-slate-500 mt-1 uppercase">
+            BẤM CẢNH BÁO TỨC THÌ, ĐẾM NGƯỢC IM LẶNG, HOẶC DÙNG MICROPHONE PHÁT HIỆN TIẾNG ỒN TỰ ĐỘNG.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setHasSound(!hasSound)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all hover-zoom-btn ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 border transition-all hover-zoom-btn uppercase ${
               hasSound 
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                 : 'bg-slate-100 text-slate-500 border-slate-200'
             }`}
           >
             {hasSound ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-            <span>{hasSound ? 'Có âm thanh' : 'Tắt âm thanh'}</span>
+            <span>{hasSound ? 'CÓ ÂM THANH' : 'TẮT ÂM THANH'}</span>
           </button>
 
           <button
             onClick={toggleFullscreen}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 hover-zoom-btn"
+            className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 hover-zoom-btn uppercase"
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            <span>Toàn màn hình</span>
+            <span>TOÀN MÀN HÌNH</span>
           </button>
         </div>
       </div>
@@ -461,74 +569,192 @@ export const NoiseMeterView: React.FC = () => {
         </div>
       </div>
 
-      {/* Panel 3: Phát Hiện Tiếng Ồn Tự Động (Microphone) matching PDF Page 23 */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-4 hover-zoom-card">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Mic className="w-4 h-4 text-blue-600" />
-            <h3 className="text-sm font-bold text-slate-900">
-              Phát Hiện Tiếng Ồn Tự Động (Microphone)
-            </h3>
+      {/* Panel 3: Phát Hiện Tiếng Ồn Tự Động (Microphone) */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs space-y-5 hover-zoom-card">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold ${
+              isListening ? 'bg-emerald-100 text-emerald-700 animate-pulse' : isSimulating ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-600'
+            }`}>
+              <Mic className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-900 flex items-center gap-2">
+                <span>Phát Hiện Tiếng Ồn Tự Động (Microphone)</span>
+                {isListening && (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    Đang nghe trực tiếp
+                  </span>
+                )}
+                {isSimulating && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black uppercase">
+                    Đang mô phỏng (Demo)
+                  </span>
+                )}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Tự động đo âm lượng lớp học thời gian thực và phát cảnh báo khi vượt ngưỡng cho phép.
+              </p>
+            </div>
           </div>
 
-          {isListening ? (
-            <button
-              onClick={stopMic}
-              className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 hover-zoom-btn"
-            >
-              <MicOff className="w-3.5 h-3.5" />
-              <span>Tắt micro</span>
-            </button>
-          ) : (
-            <button
-              onClick={startMic}
-              className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-500/25 flex items-center gap-1.5 hover-zoom-btn"
-            >
-              <Mic className="w-3.5 h-3.5" />
-              <span>Bật micro</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {isListening ? (
+              <button
+                type="button"
+                onClick={stopMic}
+                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 hover-zoom-btn"
+              >
+                <MicOff className="w-3.5 h-3.5" />
+                <span>Tắt micro</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startMic}
+                className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-500/25 flex items-center gap-1.5 hover-zoom-btn"
+              >
+                <Mic className="w-3.5 h-3.5" />
+                <span>Bật micro</span>
+              </button>
+            )}
+
+            {isSimulating ? (
+              <button
+                type="button"
+                onClick={stopSimulation}
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold hover-zoom-btn"
+              >
+                Dừng mô phỏng
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startSimulation}
+                className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 hover-zoom-btn"
+                title="Bật mô phỏng tiếng ồn giả lập (thích hợp khi máy không có micro hoặc đang bị chặn quyền)"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Chế độ mô phỏng</span>
+              </button>
+            )}
+          </div>
         </div>
 
+        {/* Error notification & instruction */}
         {micError && (
-          <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl">
-            {micError}
+          <div className="p-4 bg-amber-50 border-2 border-amber-300 text-amber-900 text-xs rounded-2xl space-y-2">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="font-extrabold text-amber-900">{micError}</div>
+                <div className="text-amber-800 leading-relaxed">
+                  💡 <strong>Cách xử lý:</strong> Nhấp vào biểu tượng <strong>Ổ khóa 🔒</strong> hoặc <strong>Cài đặt trang web</strong> bên trái thanh địa chỉ trình duyệt &gt; Tìm mục <strong>Microphone</strong> &gt; Chọn <strong>Cho phép (Allow)</strong> rồi bấm nút thử lại bên dưới.
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-1 pl-6">
+              <button
+                type="button"
+                onClick={startMic}
+                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1 hover-zoom-btn"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Thử lại bật micro</span>
+              </button>
+              <button
+                type="button"
+                onClick={startSimulation}
+                className="px-3 py-1.5 rounded-lg bg-white border border-amber-400 hover:bg-amber-100 text-amber-900 font-bold text-xs flex items-center gap-1 hover-zoom-btn"
+              >
+                <Sparkles className="w-3 h-3 text-amber-600" />
+                <span>Dùng chế độ mô phỏng ngay</span>
+              </button>
+            </div>
           </div>
         )}
 
-        {isListening ? (
-          <div className="space-y-3 pt-2">
+        {(isListening || isSimulating) ? (
+          <div className="space-y-4 pt-1">
             <div className="flex items-center justify-between text-xs font-bold">
-              <span className="text-slate-600">Mức âm lượng hiện tại:</span>
-              <span className={`font-mono text-base ${noiseLevel >= threshold ? 'text-rose-600' : 'text-slate-800'}`}>
-                {noiseLevel} dB
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Mức âm lượng hiện tại:</span>
+                <span className={`font-mono text-lg font-black ${noiseLevel >= threshold ? 'text-rose-600 animate-pulse' : 'text-slate-800'}`}>
+                  {noiseLevel} dB
+                </span>
+                {noiseLevel >= threshold && (
+                  <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black animate-bounce">
+                    ⚠️ QUÁ NGƯỠNG CHO PHÉP!
+                  </span>
+                )}
+              </div>
+
+              {(isListening || isSimulating) && (
+                <button
+                  type="button"
+                  onClick={triggerTestNoiseSpike}
+                  className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold hover-zoom-btn"
+                  title="Thử tạo tiếng ồn 82dB để kiểm tra cảnh báo"
+                >
+                  ⚡ Thử tạo tiếng ồn (82 dB)
+                </button>
+              )}
             </div>
 
-            <div className="h-4 bg-slate-100 rounded-full overflow-hidden relative">
+            {/* Level Bar */}
+            <div className="h-5 bg-slate-100 rounded-full overflow-hidden relative shadow-inner">
               <div 
-                className="absolute top-0 bottom-0 w-1 bg-rose-600 z-10"
+                className="absolute top-0 bottom-0 w-1.5 bg-rose-700 z-10 shadow-sm"
                 style={{ left: `${threshold}%` }}
-                title="Ngưỡng cảnh báo"
+                title={`Ngưỡng cảnh báo: ${threshold} dB`}
               />
               <div 
-                className={`h-full rounded-full transition-all duration-100 ${
-                  noiseLevel >= threshold ? 'bg-rose-500' : 'bg-emerald-500'
+                className={`h-full rounded-full transition-all duration-150 ${
+                  noiseLevel >= threshold ? 'bg-gradient-to-r from-amber-500 to-rose-600' : 'bg-gradient-to-r from-emerald-400 to-teal-500'
                 }`}
                 style={{ width: `${noiseLevel}%` }}
               />
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-400">
+            {/* Scale Legends */}
+            <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold">
               <span>0 dB (Yên lặng)</span>
-              <span>Ngưỡng cảnh báo: {threshold} dB</span>
+              <span className="font-bold text-rose-600">Ngưỡng báo động: {threshold} dB</span>
               <span>100 dB (Rất ồn)</span>
+            </div>
+
+            {/* Threshold Slider control */}
+            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-slate-700 font-bold">
+                <Sliders className="w-4 h-4 text-indigo-600" />
+                <span>Điều chỉnh độ nhạy ngưỡng tiếng ồn:</span>
+                <span className="font-mono text-indigo-600 font-black">{threshold} dB</span>
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-64">
+                <span className="text-[10px] text-slate-400">40 dB</span>
+                <input
+                  type="range"
+                  min="40"
+                  max="90"
+                  value={threshold}
+                  onChange={(e) => setThreshold(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+                <span className="text-[10px] text-slate-400">90 dB</span>
+              </div>
             </div>
           </div>
         ) : (
-          <p className="text-xs text-slate-400 text-center py-4">
-            Bật micro để phát hiện tiếng ồn tự động và hiển thị mức độ thời gian thực.
-          </p>
+          <div className="text-center py-6 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <Mic className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-xs font-bold text-slate-700">
+              Bật Micro hoặc Chế độ Mô phỏng để bắt đầu phát hiện tiếng ồn tự động.
+            </p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              Hệ thống sẽ đo âm lượng âm thanh theo chuẩn dB và tự động phát âm thanh cảnh báo khi lớp quá ồn.
+            </p>
+          </div>
         )}
       </div>
     </div>

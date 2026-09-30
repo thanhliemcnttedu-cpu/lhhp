@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, X, ZoomIn, ZoomOut, Check, Move, RotateCw, RotateCcw, Sparkles } from 'lucide-react';
+import { Upload, X, ZoomIn, ZoomOut, Check, Move, RotateCw, RotateCcw, Sparkles, Loader2 } from 'lucide-react';
 import { compressImage } from '../../utils/imageCompressor';
 
 export const CLASS_AVATARS_PRESET = [
@@ -17,28 +17,35 @@ interface ClassAvatarEditorModalProps {
   isOpen: boolean;
   classNameTitle: string;
   currentAvatar: string;
+  originalAvatar?: string;
   currentScale?: number;
   currentPosition?: { x: number; y: number };
   colorTheme?: string;
   onClose: () => void;
-  onSave: (avatarUrl: string, scale: number, position: { x: number; y: number }) => void;
+  onSave: (avatarUrl: string, scale: number, position: { x: number; y: number }, originalUrl?: string) => void;
 }
 
 export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
   isOpen,
   classNameTitle,
   currentAvatar,
+  originalAvatar,
   currentScale = 1,
   currentPosition = { x: 0, y: 0 },
   colorTheme = '#6366F1',
   onClose,
   onSave
 }) => {
-  const [selectedAvatar, setSelectedAvatar] = useState(currentAvatar);
+  // Ưu tiên dùng originalAvatar (ảnh chất lượng cao ban đầu) để khi chỉnh sửa lại không bị giảm độ phân giải
+  const initialSource = originalAvatar || currentAvatar;
+  const [selectedAvatar, setSelectedAvatar] = useState(initialSource);
+  const [sourceOriginalUrl, setSourceOriginalUrl] = useState(initialSource);
   const [scale, setScale] = useState(currentScale);
   const [position, setPosition] = useState(currentPosition);
   const [rotation, setRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
   const dragStartRef = useRef<{ startX: number; startY: number; posX: number; posY: number }>({
     startX: 0,
     startY: 0,
@@ -50,33 +57,40 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
   const previewBoxRef = useRef<HTMLDivElement>(null);
   const imageElementRef = useRef<HTMLImageElement>(null);
 
-  // Sync state whenever modal opens with new props
+  // Đồng bộ state mỗi khi mở modal với props mới
   useEffect(() => {
     if (isOpen) {
-      setSelectedAvatar(currentAvatar);
+      const src = originalAvatar || currentAvatar;
+      setSelectedAvatar(src);
+      setSourceOriginalUrl(src);
       setScale(currentScale || 1);
       setPosition(currentPosition || { x: 0, y: 0 });
       setRotation(0);
+      setIsSaving(false);
     }
-  }, [isOpen, currentAvatar, currentScale, currentPosition]);
+  }, [isOpen, currentAvatar, originalAvatar, currentScale, currentPosition]);
 
   if (!isOpen) return null;
 
+  // Xử lý upload ảnh mới: Đảm bảo độ nét siêu cao (2048x1536, chất lượng 0.94) để zoom lên 350% vẫn sắc nét từng chi tiết
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        const compressedBase64 = await compressImage(file, 800, 600, 0.88);
-        setSelectedAvatar(compressedBase64);
+        const highResBase64 = await compressImage(file, 2048, 1536, 0.94);
+        setSelectedAvatar(highResBase64);
+        setSourceOriginalUrl(highResBase64);
         setScale(1);
         setPosition({ x: 0, y: 0 });
         setRotation(0);
       } catch (err) {
-        console.error('Lỗi khi nén ảnh lớp:', err);
+        console.error('Lỗi khi nén ảnh lớp, chuyển sang đọc trực tiếp file:', err);
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
-            setSelectedAvatar(event.target.result as string);
+            const rawBase64 = event.target.result as string;
+            setSelectedAvatar(rawBase64);
+            setSourceOriginalUrl(rawBase64);
             setScale(1);
             setPosition({ x: 0, y: 0 });
             setRotation(0);
@@ -113,7 +127,7 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
     setIsDragging(false);
   };
 
-  // Touch support for mobile / touch screens
+  // Hỗ trợ cảm ứng trên thiết bị di động / màn hình cảm ứng
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
       setIsDragging(true);
@@ -150,76 +164,108 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
     setRotation(prev => (prev + 90) % 360);
   };
 
-  // Canvas export to generate crisp cropped image
+  // Canvas export: Cắt chuẩn xác từng pixel theo đúng góc nhìn preview và xuất Full HD sắc nét
   const handleConfirmAndCrop = () => {
-    // If it's a vector SVG from DiceBear or no canvas needed, we still export cleanly
     const img = imageElementRef.current;
     const container = previewBoxRef.current;
 
+    // Nếu là vector SVG từ DiceBear thì không cần crop qua canvas
     if (!img || !container || selectedAvatar.includes('api.dicebear.com')) {
-      onSave(selectedAvatar, scale, position);
+      onSave(selectedAvatar, scale, position, sourceOriginalUrl);
       onClose();
       return;
     }
 
     try {
+      setIsSaving(true);
+      const containerRect = container.getBoundingClientRect();
+      const cw = containerRect.width;
+      const ch = containerRect.height;
+
+      if (cw <= 0 || ch <= 0) {
+        onSave(selectedAvatar, scale, position, sourceOriginalUrl);
+        onClose();
+        return;
+      }
+
+      // Tỷ lệ khung hình của container preview
+      const boxAspect = cw / ch;
+
+      // Độ phân giải cao cho banner lớp học (1600px Full HD, tỷ lệ đồng nhất 100% với container preview)
+      const targetWidth = 1600;
+      const targetHeight = Math.round(targetWidth / boxAspect);
+
       const canvas = document.createElement('canvas');
-      const targetWidth = 600;
-      const targetHeight = 400;
       canvas.width = targetWidth;
       canvas.height = targetHeight;
       const ctx = canvas.getContext('2d');
 
       if (ctx) {
+        // Nền trắng tinh khiết
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-        ctx.save();
-        // Translate to center
-        ctx.translate(targetWidth / 2, targetHeight / 2);
-        // Apply rotation
-        ctx.rotate((rotation * Math.PI) / 180);
-        // Apply scale
-        ctx.scale(scale, scale);
+        // Kích thước thật của ảnh gốc
+        const naturalWidth = img.naturalWidth || cw;
+        const naturalHeight = img.naturalHeight || ch;
+        const imgAspect = naturalWidth / naturalHeight;
 
-        // Account for container aspect vs canvas aspect
-        const containerRect = container.getBoundingClientRect();
-        const ratioX = targetWidth / containerRect.width;
-        const ratioY = targetHeight / containerRect.height;
-        ctx.translate(position.x * ratioX, position.y * ratioY);
-
-        // Draw image centered
-        const naturalWidth = img.naturalWidth || 600;
-        const naturalHeight = img.naturalHeight || 400;
-        const aspect = naturalWidth / naturalHeight;
-
+        // Tính kích thước vẽ cơ sở theo CSS object-cover trên Canvas
         let drawW = targetWidth;
-        let drawH = targetWidth / aspect;
+        let drawH = targetWidth / imgAspect;
         if (drawH < targetHeight) {
           drawH = targetHeight;
-          drawW = targetHeight * aspect;
+          drawW = targetHeight * imgAspect;
         }
 
+        // Hệ số phóng đại từ màn hình container lên canvas (độ nét cao)
+        const k = targetWidth / cw;
+
+        ctx.save();
+        // 1. Dời gốc tọa độ về tâm của Canvas
+        ctx.translate(targetWidth / 2, targetHeight / 2);
+
+        // 2. Dời tiếp theo khoảng cách kéo chuột của người dùng (ở hệ tọa độ màn hình nhân với tỷ lệ k, ĐỘC LẬP VỚI SCALE)
+        ctx.translate(position.x * k, position.y * k);
+
+        // 3. Xoay quanh tâm
+        if (rotation !== 0) {
+          ctx.rotate((rotation * Math.PI) / 180);
+        }
+
+        // 4. Phóng to quanh tâm
+        ctx.scale(scale, scale);
+
+        // 5. Cấu hình làm mịn cao cấp của trình duyệt để ảnh sắc nét nhất
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // 6. Vẽ ảnh với tâm tại (0, 0)
         ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
         ctx.restore();
 
-        const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        onSave(croppedDataUrl, 1, { x: 0, y: 0 });
+        // Xuất ảnh chất lượng cao 0.94 (đảm bảo cực nét, dung lượng tối ưu ~120KB-160KB)
+        const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.94);
+        
+        // Lưu ảnh crop mới với scale = 1, position = {0,0} và lưu ảnh gốc sourceOriginalUrl để chỉnh sửa lại sau này
+        onSave(croppedDataUrl, 1, { x: 0, y: 0 }, sourceOriginalUrl);
         onClose();
         return;
       }
     } catch (err) {
       console.warn('Canvas crop fallback:', err);
+    } finally {
+      setIsSaving(false);
     }
 
     // Fallback save with scale & position
-    onSave(selectedAvatar, scale, position);
+    onSave(selectedAvatar, scale, position, sourceOriginalUrl);
     onClose();
   };
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/65 backdrop-blur-xs p-3 md:p-6 animate-in fade-in duration-150 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-3 md:p-6 animate-in fade-in duration-150 overflow-y-auto"
       onMouseUp={handleMouseUp}
       onTouchEnd={handleTouchEnd}
     >
@@ -254,12 +300,12 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-5 md:p-6 space-y-5">
-          {/* Large Preview Stage */}
+        <div className="p-5 md:p-6 space-y-4">
+          {/* Large Preview Stage (Khung Banner chuẩn tỷ lệ 16:8 - 2:1 đồng bộ tuyệt đối với Thẻ lớp học) */}
           <div className="flex flex-col items-center">
             <div 
               ref={previewBoxRef}
-              className="relative w-full max-w-md h-56 md:h-64 rounded-3xl overflow-hidden shadow-lg border-4 bg-slate-950 cursor-grab active:cursor-grabbing select-none transition-shadow"
+              className="relative w-full max-w-lg aspect-[16/8] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl border-4 bg-slate-950 cursor-grab active:cursor-grabbing select-none transition-shadow"
               style={{ borderColor: colorTheme }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -279,23 +325,41 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
                 draggable={false}
               />
 
-              {/* Grid Guide Overlay */}
-              <div className="absolute inset-0 border-2 border-dashed border-white/40 rounded-2xl pointer-events-none" />
+              {/* Lưới căn chỉnh 1/3 (Rule of Thirds) & Khung hướng dẫn */}
+              <div className="absolute inset-0 pointer-events-none">
+                {/* 2 đường kẻ ngang */}
+                <div className="absolute left-0 right-0 top-1/3 border-b border-white/20 border-dashed" />
+                <div className="absolute left-0 right-0 top-2/3 border-b border-white/20 border-dashed" />
+                {/* 2 đường kẻ dọc */}
+                <div className="absolute top-0 bottom-0 left-1/3 border-r border-white/20 border-dashed" />
+                <div className="absolute top-0 bottom-0 left-2/3 border-r border-white/20 border-dashed" />
+                {/* 4 góc canh nét */}
+                <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-amber-300 rounded-tl-sm" />
+                <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-amber-300 rounded-tr-sm" />
+                <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-amber-300 rounded-bl-sm" />
+                <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-amber-300 rounded-br-sm" />
+              </div>
               
               {/* Badge instruction */}
-              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-black/70 text-white text-[11px] font-bold px-3 py-1 rounded-full pointer-events-none flex items-center gap-1.5 backdrop-blur-xs shadow-md">
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-black/75 text-white text-[11px] font-bold px-3 py-1 rounded-full pointer-events-none flex items-center gap-1.5 backdrop-blur-xs shadow-md">
                 <Move className="w-3 h-3 text-amber-400" />
                 <span>Nhấp & kéo ảnh để chỉnh góc nhìn đẹp nhất</span>
               </div>
 
+              {/* Top Banner info */}
+              <div className="absolute top-2.5 left-2.5 bg-black/65 text-amber-300 text-[10px] font-black uppercase px-2 py-0.5 rounded-lg pointer-events-none backdrop-blur-xs flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>TỈ LỆ BANNER 2:1 (FULL HD)</span>
+              </div>
+
               {/* Zoom & Rotation indicator */}
-              <div className="absolute top-2.5 right-2.5 bg-black/65 text-white text-[10px] font-mono px-2 py-0.5 rounded-lg pointer-events-none backdrop-blur-xs">
+              <div className="absolute top-2.5 right-2.5 bg-black/65 text-white text-[10px] font-mono px-2 py-0.5 rounded-lg pointer-events-none backdrop-blur-xs font-bold">
                 {Math.round(scale * 100)}% {rotation !== 0 ? `• ${rotation}°` : ''}
               </div>
             </div>
 
             {/* Quick action buttons row below preview */}
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2 mt-3 flex-wrap justify-center">
               <button
                 type="button"
                 onClick={handleRotate}
@@ -336,13 +400,13 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
             </div>
 
             {/* Zoom Slider Control */}
-            <div className="w-full max-w-md mt-4 p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+            <div className="w-full max-w-lg mt-3 p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
               <div className="flex items-center justify-between text-xs font-black text-slate-700">
                 <span className="flex items-center gap-1.5">
                   <ZoomIn className="w-4 h-4 text-indigo-600" />
                   <span>ĐIỀU CHỈNH ĐỘ PHÓNG TO / THU NHỎ (ZOOM):</span>
                 </span>
-                <span className="font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
+                <span className="font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200 font-bold">
                   {Math.round(scale * 100)}%
                 </span>
               </div>
@@ -377,7 +441,7 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
           </div>
 
           {/* Upload Button from Computer */}
-          <div className="space-y-2">
+          <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-700">
                 Tải ảnh mới từ máy tính:
@@ -411,6 +475,7 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
                     type="button"
                     onClick={() => {
                       setSelectedAvatar(av.url);
+                      setSourceOriginalUrl(av.url);
                       setScale(1);
                       setPosition({ x: 0, y: 0 });
                       setRotation(0);
@@ -433,17 +498,28 @@ export const ClassAvatarEditorModal: React.FC<ClassAvatarEditorModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
+            disabled={isSaving}
+            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors disabled:opacity-50"
           >
             Hủy bỏ
           </button>
           <button
             type="button"
             onClick={handleConfirmAndCrop}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-md shadow-indigo-600/20 hover-zoom-btn transition-all"
+            disabled={isSaving}
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-md shadow-indigo-600/20 hover-zoom-btn transition-all disabled:opacity-70"
           >
-            <Check className="w-4 h-4" />
-            <span>Lưu & Cập Nhật Ảnh Lớp</span>
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Đang xử lý & Lưu ảnh...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Lưu & Cập Nhật Ảnh Lớp</span>
+              </>
+            )}
           </button>
         </div>
       </div>

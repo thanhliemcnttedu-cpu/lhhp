@@ -52,7 +52,8 @@ export async function exportElementToPdf(
 
     const pageWidth = orientation === 'landscape' ? 297 : 210;
     const pageHeight = orientation === 'landscape' ? 210 : 297;
-    const margin = 8;
+    // Tinh chỉnh lề in ấn sắc nét (6mm), tối ưu tỷ lệ A4 không để giấy thừa
+    const margin = 6;
     const printableWidth = pageWidth - margin * 2;
     const printableHeight = pageHeight - margin * 2;
 
@@ -67,11 +68,16 @@ export async function exportElementToPdf(
     const imgWidth = img.naturalWidth || el.offsetWidth || 1;
     const imgHeight = img.naturalHeight || el.offsetHeight || 1;
     const aspectRatio = imgWidth / imgHeight;
+    const targetAspect = printableWidth / printableHeight;
 
     let renderWidth = printableWidth;
     let renderHeight = renderWidth / aspectRatio;
 
-    if (renderHeight > printableHeight) {
+    // Tự động căn chuẩn nếu tỷ lệ khung gần khớp với khổ A4 (sai lệch < 7%) để vừa khít 100% không thừa giấy
+    if (Math.abs(aspectRatio - targetAspect) / targetAspect < 0.07) {
+      renderWidth = printableWidth;
+      renderHeight = printableHeight;
+    } else if (renderHeight > printableHeight) {
       renderHeight = printableHeight;
       renderWidth = renderHeight * aspectRatio;
     }
@@ -107,6 +113,59 @@ export async function exportElementToPdf(
 }
 
 /**
+ * Directly exports an HTML element to a high-resolution PNG image file.
+ * Handles both 'portrait' and 'landscape' synthesized formats with 2x retina clarity.
+ */
+export async function exportElementToImagePng(
+  elementIdOrElement: string | HTMLElement,
+  fileName = 'Bao_Cao_Tong_Hop.png',
+  orientation: 'portrait' | 'landscape' = 'landscape',
+  title = 'Báo Cáo Điểm Danh Tổng Hợp'
+): Promise<boolean> {
+  const el = typeof elementIdOrElement === 'string'
+    ? document.getElementById(elementIdOrElement)
+    : elementIdOrElement;
+
+  if (!el) {
+    console.error(`Không tìm thấy phần tử để xuất ảnh PNG:`, elementIdOrElement);
+    return false;
+  }
+
+  try {
+    const dataUrl = await toPng(el, {
+      quality: 1,
+      pixelRatio: 2, // High resolution for clear Vietnamese typography and tables
+      backgroundColor: '#ffffff',
+      filter: (node) => {
+        if (node instanceof HTMLElement) {
+          if (
+            node.classList.contains('no-print') || 
+            node.classList.contains('no-pdf') || 
+            node.classList.contains('no-png') ||
+            node.classList.contains('no-export')
+          ) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+
+    const finalFileName = fileName.endsWith('.png') ? fileName : `${fileName}.png`;
+    const link = document.createElement('a');
+    link.download = finalFileName;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return true;
+  } catch (err) {
+    console.error('Lỗi khi xuất file ảnh PNG:', err);
+    return false;
+  }
+}
+
+/**
  * Exports multiple HTML elements as sequential pages in a single A4 PDF file.
  * Perfect for 2-page or multi-page A4 Infographics and student rosters.
  */
@@ -137,7 +196,8 @@ export async function exportMultipleElementsToPdf(
 
     const pageWidth = orientation === 'landscape' ? 297 : 210;
     const pageHeight = orientation === 'landscape' ? 210 : 297;
-    const margin = 8;
+    // Tinh chỉnh lề in ấn sắc nét (6mm), tối ưu tỷ lệ A4 không để giấy thừa
+    const margin = 6;
     const printableWidth = pageWidth - margin * 2;
     const printableHeight = pageHeight - margin * 2;
 
@@ -171,11 +231,16 @@ export async function exportMultipleElementsToPdf(
       const imgWidth = img.naturalWidth || el.offsetWidth || 1;
       const imgHeight = img.naturalHeight || el.offsetHeight || 1;
       const aspectRatio = imgWidth / imgHeight;
+      const targetAspect = printableWidth / printableHeight;
 
       let renderWidth = printableWidth;
       let renderHeight = renderWidth / aspectRatio;
 
-      if (renderHeight > printableHeight) {
+      // Tự động căn chuẩn nếu tỷ lệ khung gần khớp với khổ A4 (sai lệch < 7%) để vừa khít 100% không thừa giấy
+      if (Math.abs(aspectRatio - targetAspect) / targetAspect < 0.07) {
+        renderWidth = printableWidth;
+        renderHeight = printableHeight;
+      } else if (renderHeight > printableHeight) {
         renderHeight = printableHeight;
         renderWidth = renderHeight * aspectRatio;
       }

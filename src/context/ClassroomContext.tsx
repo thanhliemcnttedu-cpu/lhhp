@@ -1,81 +1,35 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import JSZip from 'jszip';
 import { 
   Classroom, Student, Subject, PointCriterion, PointTransaction, 
   Reward, RewardRedemption, DailyAttendance, TimetableSlot, 
   TimetableConfig, QuickLink, TeacherProfile, AttendanceStatus,
   SeatingColumnsCount, TeacherDeskPosition, DoorPosition, BlackboardPosition,
-  BoardingStatus, DailyBoardingMeal, AppUserRole, TeacherAccount, AdminAccount,
-  QuestionBank, QuestionItem, RegisteredTeacher
+  DeskNumberingOrder, BoardingStatus, DailyBoardingMeal,
+  TeacherRole, SubjectTimetableSlot, SubjectTeacherConfig, InitSubjectClassItem,
+  UserAccount, UserRole, UserClassroomData, QuestionItem
 } from '../types';
+import { generateStudentsForClass } from '../utils/studentGenerator';
 import { 
   INITIAL_CLASSES, INITIAL_STUDENTS_CLASS_4A1, INITIAL_SUBJECTS, 
   INITIAL_CRITERIA, INITIAL_REWARDS, INITIAL_TIMETABLE, 
-  INITIAL_QUICK_LINKS, DEFAULT_TEACHER, INITIAL_QUESTION_BANKS,
-  INITIAL_REGISTERED_TEACHERS
+  INITIAL_QUICK_LINKS, DEFAULT_TEACHER, DEFAULT_CORE_SUBJECTS,
+  DEFAULT_SUBJECT_TEACHER_CONFIG, INITIAL_SUBJECT_TIMETABLE, PRESET_SUBJECT_CLASS_NAMES,
+  SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE, SAMPLE_SUBJECT_CLASSES_BY_IMAGE
 } from '../data/initialData';
 import { playCoinSound, playDeductSound } from '../utils/audio';
-import { 
-  ensureDriveTree, saveJsonToDrive, readJsonFromDrive, 
-  listFilesInFolder, logoutGoogle, getCachedAccessToken, setCachedAccessToken, initAuth
-} from '../services/googleDriveService';
+import { DEFAULT_QUESTIONS, loadQuizBank } from '../utils/quizParser';
+import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX } from '../services/databaseService';
 
 interface ClassroomContextType {
-  // Role & Auth
-  currentRole: AppUserRole | null;
-  setCurrentRole: (role: AppUserRole | null) => void;
-  teacherAccount: TeacherAccount | null;
-  adminAccount: AdminAccount | null;
-  isRoleModalOpen: boolean;
-  setRoleModalOpen: (open: boolean) => void;
-  loginAsTeacher: (user: any, token: string) => Promise<void>;
-  loginTeacherWithCredentials: (username: string, password: string) => { success: boolean; message?: string };
-  loginAsAdmin: (username: string, password: string) => { success: boolean; message?: string };
-  logoutRole: () => Promise<void>;
-
-  // Registered Teachers Management (Admin control)
-  registeredTeachers: RegisteredTeacher[];
-  addRegisteredTeacher: (teacher: Omit<RegisteredTeacher, 'id' | 'registeredAt'>) => void;
-  updateRegisteredTeacher: (id: string, data: Partial<RegisteredTeacher>) => void;
-  deleteRegisteredTeacher: (id: string) => void;
-  approveTeacher: (id: string, classId?: string) => void;
-  rejectTeacher: (id: string) => void;
-  resetTeacherPassword: (id: string, newPassword?: string) => void;
-
-  // Admin Impersonation (View as teacher of any class and back)
-  isImpersonating: boolean;
-  adminImpersonateClass: (classId: string) => void;
-  exitImpersonation: () => void;
-
-  // Google Drive Sync
-  isDriveSyncing: boolean;
-  driveSyncStatus: string;
-  syncToDriveNow: () => Promise<{ success: boolean; message: string }>;
-  loadFromDriveNow: () => Promise<{ success: boolean; message: string }>;
-
-  // 30-Day Cycle Alert & Month Reset
-  cycleStartDate: string;
-  daysIntoCycle: number;
-  is30DayAlertDue: boolean;
-  isAlertDismissed: boolean;
-  dismiss30DayAlert: () => void;
-  resetMonthlyStatistics: () => void;
-  exportFullSystemJson: () => void;
-
-  // Question Banks for Calling & Quiz
-  questionBanks: QuestionBank[];
-  addQuestionBank: (bank: Omit<QuestionBank, 'id' | 'createdAt'>) => void;
-  updateQuestionBank: (id: string, bank: Partial<QuestionBank>) => void;
-  deleteQuestionBank: (id: string) => void;
-  addQuestionToBank: (bankId: string, question: Omit<QuestionItem, 'id'>) => void;
-  deleteQuestionFromBank: (bankId: string, questionId: string) => void;
-
   classes: Classroom[];
   activeClassId: string;
   setActiveClassId: (id: string) => void;
   addClass: (cls: Omit<Classroom, 'id'>) => void;
   updateClass: (id: string, cls: Partial<Classroom>) => void;
   deleteClass: (id: string) => void;
+  bulkDeleteClasses: (ids: string[]) => void;
+  bulkUpdateClasses: (ids: string[], updates: Partial<Classroom>) => void;
   deleteAllClasses: () => void;
 
   students: Student[];
@@ -83,13 +37,18 @@ interface ClassroomContextType {
   addStudent: (student: Omit<Student, 'id' | 'points' | 'stt'>) => void;
   updateStudent: (id: string, data: Partial<Student>) => void;
   deleteStudent: (id: string) => void;
+  bulkDeleteStudents: (studentIds: string[]) => void;
   clearClassStudents: (classId: string) => void;
-  bulkAddStudents: (students: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string }>) => void;
+  bulkAddStudents: (students: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }>) => void;
+  resetStudentsCoins: (studentIds?: string[], classId?: string) => void;
 
   subjects: Subject[];
   addSubject: (name: string, color?: string, icon?: string) => void;
   updateSubject: (id: string, data: Partial<Subject>) => void;
   deleteSubject: (id: string) => void;
+  toggleSubjectApplied: (id: string, enabled?: boolean) => void;
+  setAppliedSubjects: (subjectIds: string[]) => void;
+  resetDefaultSubjects: () => void;
 
   criteria: PointCriterion[];
   addCriterion: (crit: Omit<PointCriterion, 'id'>) => void;
@@ -97,8 +56,6 @@ interface ClassroomContextType {
   transactions: PointTransaction[];
   awardPoints: (studentIds: string[], amount: number, reason: string, subjectName?: string) => void;
   deductPoints: (studentIds: string[], amount: number, reason: string, subjectName?: string) => void;
-  resetStudentPoints: (studentIds: string[]) => void;
-  bulkSetPoints: (studentIds: string[], points: number, reason?: string, subjectName?: string) => void;
 
   rewards: Reward[];
   addReward: (reward: Omit<Reward, 'id'>) => void;
@@ -109,6 +66,11 @@ interface ClassroomContextType {
 
   seatingColumns: SeatingColumnsCount;
   setSeatingColumns: (cols: SeatingColumnsCount) => void;
+  deskCountsPerColumn: number[];
+  setDeskCountsPerColumn: (counts: number[]) => void;
+  updateDeskCountForColumn: (colIndex: number, count: number) => void;
+  deskNumberingOrder: DeskNumberingOrder;
+  setDeskNumberingOrder: (order: DeskNumberingOrder) => void;
   teacherDeskPos: TeacherDeskPosition;
   setTeacherDeskPos: (pos: TeacherDeskPosition) => void;
   doorPos: DoorPosition;
@@ -135,12 +97,35 @@ interface ClassroomContextType {
   setTimetableConfig: (config: TimetableConfig) => void;
   updateTimetableSlot: (day: number, session: 'morning' | 'afternoon', period: number, subject: string, classId?: string) => void;
 
+  // Vai trò giáo viên & Quản lý nhiều lớp của Giáo viên bộ môn (User request)
+  teacherRole: TeacherRole;
+  setTeacherRole: (role: TeacherRole) => void;
+  subjectTeacherConfig: SubjectTeacherConfig;
+  updateSubjectTeacherConfig: (cfg: Partial<SubjectTeacherConfig>) => void;
+  subjectTimetable: SubjectTimetableSlot[];
+  updateSubjectTimetableSlot: (slot: Omit<SubjectTimetableSlot, 'id'> & { id?: string }) => void;
+  deleteSubjectTimetableSlot: (id: string) => void;
+  clearSubjectTimetable: () => void;
+  seedSample20SubjectClasses: () => void;
+  loadSampleTimetableByImage: (autoCreateClasses?: boolean) => void;
+  initSubjectClasses: (items: InitSubjectClassItem[], replaceExisting?: boolean) => void;
+  applySubjectTimetableSlots: (slots: SubjectTimetableSlot[]) => void;
+
   quickLinks: QuickLink[];
   addQuickLink: (link: Omit<QuickLink, 'id'>) => void;
   deleteQuickLink: (id: string) => void;
+  updateQuickLink: (id: string, data: Partial<Omit<QuickLink, 'id'>>) => void;
+  reorderQuickLinks: (links: QuickLink[]) => void;
 
   teacherProfile: TeacherProfile;
   updateTeacherProfile: (profile: Partial<TeacherProfile>) => void;
+
+  // Kho câu hỏi độc lập & Infographic lưu trực tuyến theo tài khoản
+  quizBank: QuestionItem[];
+  setQuizBank: React.Dispatch<React.SetStateAction<QuestionItem[]>>;
+  updateQuizBank: (questions: QuestionItem[]) => void;
+  infographicConfig: any;
+  updateInfographicConfig: (cfg: any) => void;
 
   exportBackupJson: () => void;
   importBackupJson: (file: File) => Promise<boolean>;
@@ -148,343 +133,852 @@ interface ClassroomContextType {
   importBackupZip: (file: File) => Promise<boolean>;
   resetToDefaultData: () => void;
   clearAllData: () => void;
+
+  // Quản lý người dùng, phân quyền & Cơ sở dữ liệu đồng bộ
+  currentUser: UserAccount | null;
+  allUsers: UserAccount[];
+  allTeachers: UserAccount[];
+  loginUser: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  logoutUser: () => void;
+  switchUserAccount: (username: string) => Promise<boolean>;
+  refreshUsersList: () => Promise<void>;
+  logUserActivity: (actionType: string, description: string, details?: any) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  isAccountManagerOpen: boolean;
+  setIsAccountManagerOpen: (open: boolean) => void;
+  isGithubModalOpen: boolean;
+  setIsGithubModalOpen: (open: boolean) => void;
+  dbSyncStatus: 'synced' | 'syncing' | 'offline';
+  lastDbSyncTime: string;
+  syncDatabaseNow: (overrideStudents?: any, overrideClasses?: any) => Promise<void>;
+  isAdmin: boolean;
+  isHomeroom: boolean;
+  isSubject: boolean;
 }
 
 const ClassroomContext = createContext<ClassroomContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'lop_hoc_hanh_phuc_state_v3';
-
-const safeLocalStorageSet = (key: string, value: string) => {
-  try {
-    localStorage.setItem(key, value);
-  } catch (err) {
-    console.warn(`localStorage save warning for ${key}:`, err);
-  }
-};
-
 export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 1. Initial State from localStorage or defaults
-  const [classes, setClasses] = useState<Classroom[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_classes');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error(e);
+  // 0. User Authentication & Independent Workspace
+  // Mặc định khi truy cập lần đầu tiên hoặc quá 300 phút: yêu cầu đăng nhập lại
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    if (!databaseService.isSessionValid()) {
+      return null;
     }
-    return INITIAL_CLASSES;
+    return databaseService.getCurrentUser();
+  });
+  const [allUsers, setAllUsers] = useState<UserAccount[]>(FALLBACK_USERS);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(() => {
+    return !databaseService.isSessionValid();
+  });
+  const [isAccountManagerOpen, setIsAccountManagerOpen] = useState(false);
+  const [isGithubModalOpen, setIsGithubModalOpen] = useState(false);
+  const [dbSyncStatus, setDbSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
+  const [lastDbSyncTime, setLastDbSyncTime] = useState<string>(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   });
 
-  const [activeClassId, setActiveClassId] = useState<string>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_activeClassId');
-    if (saved && saved.trim() !== '') return saved;
-    return 'class-4a1';
-  });
+  const currentUserRef = useRef<UserAccount | null>(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
-  const [students, setStudents] = useState<Student[]>(() => {
+  // Flag to prevent echo loops when remote updates are applied
+  const isApplyingRemoteUpdateRef = useRef(false);
+
+  // Purge any legacy browser localStorage to ensure zero data stored in user browser
+  useEffect(() => {
+    databaseService.purgeLocalStorageUserData();
+  }, []);
+
+  // 1. Initial In-Memory State (Authoritative data is fetched directly from Server)
+  const [classes, setClasses] = useState<Classroom[]>(INITIAL_CLASSES);
+  const [activeClassId, setActiveClassId] = useState<string>('class-4a1');
+  const [students, setStudents] = useState<Student[]>(() => INITIAL_STUDENTS_CLASS_4A1.map(s => ({
+    ...s,
+    subjectPoints: { 'GHI CHUNG / NỀ NẾP': s.points }
+  })));
+
+  // Always retain the latest synchronous references to avoid stale closure updates
+  const studentsRef = useRef<Student[]>(students);
+  const classesRef = useRef<Classroom[]>(classes);
+  useEffect(() => {
+    studentsRef.current = students;
+  }, [students]);
+  useEffect(() => {
+    classesRef.current = classes;
+  }, [classes]);
+
+  // ⚡ Instant synchronization across browser tabs and windows via local BroadcastChannel
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) return;
     try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_students');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      const bc = new BroadcastChannel('lop_hoc_realtime_local');
+      bc.onmessage = (event) => {
+        const msg = event.data;
+        if (msg && msg.type === 'STUDENT_UPDATED' && msg.studentId && msg.studentData) {
+          setStudents(prev => {
+            const next = prev.map(s => s.id === msg.studentId ? { ...s, ...msg.studentData } : s);
+            studentsRef.current = next;
+            return next;
+          });
+        } else if (msg && msg.type === 'CLASS_UPDATED' && msg.classId && msg.classData) {
+          setClasses(prev => {
+            const next = prev.map(c => c.id === msg.classId ? { ...c, ...msg.classData } : c);
+            classesRef.current = next;
+            return next;
+          });
+        }
+      };
+      return () => {
+        bc.close();
+      };
+    } catch (_) {}
+  }, []);
+
+  const [subjects, setSubjects] = useState<Subject[]>(INITIAL_SUBJECTS);
+  const [criteria, setCriteria] = useState<PointCriterion[]>(INITIAL_CRITERIA);
+  const [transactions, setTransactions] = useState<PointTransaction[]>([]);
+  const [rewards, setRewards] = useState<Reward[]>(INITIAL_REWARDS);
+  const [redemptions, setRedemptions] = useState<RewardRedemption[]>([]);
+  const [seatingColumns, setSeatingColumnsState] = useState<SeatingColumnsCount>(4);
+  const [deskCountsPerColumn, setDeskCountsPerColumn] = useState<number[]>([4, 4, 4, 4]);
+  const [deskNumberingOrder, setDeskNumberingOrder] = useState<DeskNumberingOrder>('vertical');
+
+  const setSeatingColumns = (cols: SeatingColumnsCount) => {
+    setSeatingColumnsState(cols);
+    setDeskCountsPerColumn(prev => {
+      const next = [...prev];
+      while (next.length < cols) {
+        next.push(4);
       }
-    } catch (e) {
-      console.error(e);
-    }
-    return INITIAL_STUDENTS_CLASS_4A1;
-  });
+      return next.slice(0, cols);
+    });
+  };
 
-  const [subjects, setSubjects] = useState<Subject[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_subjects');
-    return saved ? JSON.parse(saved) : INITIAL_SUBJECTS;
-  });
+  const updateDeskCountForColumn = (colIndex: number, count: number) => {
+    const clamped = Math.max(1, Math.min(8, count));
+    setDeskCountsPerColumn(prev => {
+      const next = [...prev];
+      while (next.length <= colIndex) {
+        next.push(4);
+      }
+      next[colIndex] = clamped;
+      return next;
+    });
+  };
 
-  const [criteria, setCriteria] = useState<PointCriterion[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_criteria');
-    return saved ? JSON.parse(saved) : INITIAL_CRITERIA;
-  });
-
-  const [transactions, setTransactions] = useState<PointTransaction[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [rewards, setRewards] = useState<Reward[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_rewards');
-    return saved ? JSON.parse(saved) : INITIAL_REWARDS;
-  });
-
-  const [redemptions, setRedemptions] = useState<RewardRedemption[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_redemptions');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [seatingColumns, setSeatingColumns] = useState<SeatingColumnsCount>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_seatingColumns');
-    return saved ? (parseInt(saved) as SeatingColumnsCount) : 2;
-  });
-
-  const [teacherDeskPos, setTeacherDeskPos] = useState<TeacherDeskPosition>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_teacherDeskPos');
-    return (saved as TeacherDeskPosition) || 'left';
-  });
-
-  const [doorPos, setDoorPos] = useState<DoorPosition>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_doorPos');
-    return (saved as DoorPosition) || 'right';
-  });
-
-  const [blackboardPos, setBlackboardPos] = useState<BlackboardPosition>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_blackboardPos');
-    return (saved as BlackboardPosition) || 'center';
-  });
-
+  const [teacherDeskPos, setTeacherDeskPos] = useState<TeacherDeskPosition>('left');
+  const [doorPos, setDoorPos] = useState<DoorPosition>('right');
+  const [blackboardPos, setBlackboardPos] = useState<BlackboardPosition>('center');
   const [seatingAssignments, setSeatingAssignments] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_seatingAssignments');
-    if (saved) return JSON.parse(saved);
-    // Initial placement for class 4A1: 2 columns, 4 rows, 2 seats each = 16 desks
     const initialMap: Record<string, string> = {};
     INITIAL_STUDENTS_CLASS_4A1.slice(0, 16).forEach((s, idx) => {
-      const col = Math.floor(idx / 8); // 0 or 1
-      const rowInCol = Math.floor((idx % 8) / 2); // 0, 1, 2, 3
-      const sub = idx % 2; // 0 or 1
+      const col = Math.floor(idx / 8);
+      const rowInCol = Math.floor((idx % 8) / 2);
+      const sub = idx % 2;
       initialMap[`${col}-${rowInCol}-${sub}`] = s.id;
     });
     return initialMap;
   });
+  const [attendanceRecords, setAttendanceRecords] = useState<DailyAttendance[]>([]);
+  const [boardingRecords, setBoardingRecords] = useState<DailyBoardingMeal[]>([]);
+  const [timetableConfig, setTimetableConfig] = useState<TimetableConfig>({ morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false });
+  const [timetable, setTimetable] = useState<TimetableSlot[]>(INITIAL_TIMETABLE);
+  const [quickLinks, setQuickLinks] = useState<QuickLink[]>(INITIAL_QUICK_LINKS);
+  const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEFAULT_TEACHER);
 
-  const [attendanceRecords, setAttendanceRecords] = useState<DailyAttendance[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_attendance');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [boardingRecords, setBoardingRecords] = useState<DailyBoardingMeal[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_boarding');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [timetableConfig, setTimetableConfig] = useState<TimetableConfig>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_timetableConfig');
-    return saved ? JSON.parse(saved) : { morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false };
-  });
-
-  const [timetable, setTimetable] = useState<TimetableSlot[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_timetable');
-    return saved ? JSON.parse(saved) : INITIAL_TIMETABLE;
-  });
-
-  const [quickLinks, setQuickLinks] = useState<QuickLink[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_quickLinks');
-    return saved ? JSON.parse(saved) : INITIAL_QUICK_LINKS;
-  });
-
-  const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_teacherProfile');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.name) return parsed;
-      }
-    } catch (e) {
-      console.error(e);
+  // Vai trò giáo viên (homeroom = Chủ nhiệm, subject = Bộ môn)
+  const [teacherRole, setTeacherRoleState] = useState<TeacherRole>(() => {
+    if (currentUser && currentUser.role !== 'admin') {
+      return currentUser.role === 'subject' ? 'subject' : 'homeroom';
     }
-    return DEFAULT_TEACHER;
+    return 'homeroom';
   });
 
-  // ---------------------------------------------------------------------------
-  // ROLE & AUTHENTICATION STATES (Teacher with Google / Admin with Tanuyen@2026)
-  // ---------------------------------------------------------------------------
-  const [currentRole, setCurrentRole] = useState<AppUserRole | null>(() => {
-    return (localStorage.getItem(STORAGE_KEY + '_currentRole') as AppUserRole) || null;
+  const setTeacherRole = (role: TeacherRole) => {
+    if (currentUser && currentUser.role !== 'admin') {
+      const fixed = currentUser.role === 'subject' ? 'subject' : 'homeroom';
+      setTeacherRoleState(fixed);
+      return;
+    }
+    setTeacherRoleState(role);
+  };
+
+  const [subjectTeacherConfig, setSubjectTeacherConfig] = useState<SubjectTeacherConfig>(DEFAULT_SUBJECT_TEACHER_CONFIG);
+  const updateSubjectTeacherConfig = (cfg: Partial<SubjectTeacherConfig>) => {
+    setSubjectTeacherConfig(prev => ({ ...prev, ...cfg }));
+  };
+
+  const [subjectTimetable, setSubjectTimetable] = useState<SubjectTimetableSlot[]>(INITIAL_SUBJECT_TIMETABLE);
+  const [quizBank, setQuizBank] = useState<QuestionItem[]>(DEFAULT_QUESTIONS);
+  const updateQuizBank = (questions: QuestionItem[]) => {
+    setQuizBank(questions);
+  };
+
+  const [infographicConfig, setInfographicConfig] = useState<any>(null);
+  const updateInfographicConfig = (cfg: any) => {
+    setInfographicConfig(cfg);
+  };
+
+  // Helper to construct complete dataset snapshot
+  const getCurrentUserData = (): UserClassroomData => ({
+    classes,
+    activeClassId,
+    students,
+    subjects,
+    criteria,
+    transactions,
+    rewards,
+    redemptions,
+    seatingColumns,
+    deskCountsPerColumn,
+    deskNumberingOrder,
+    teacherDeskPos,
+    doorPos,
+    blackboardPos,
+    seatingAssignments,
+    attendanceRecords,
+    boardingRecords,
+    timetable,
+    timetableConfig,
+    teacherRole,
+    subjectTeacherConfig,
+    subjectTimetable,
+    quickLinks,
+    teacherProfile,
+    quizBank,
+    infographicConfig
   });
 
-  const [teacherAccount, setTeacherAccount] = useState<TeacherAccount | null>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_teacherAccount');
-    return saved ? JSON.parse(saved) : null;
-  });
+  // Helper to apply dataset snapshot into state hooks
+  const applyUserClassroomData = (data: Partial<UserClassroomData>) => {
+    if (data.classes && Array.isArray(data.classes)) {
+      setClasses(data.classes);
+    }
+    if (data.activeClassId) {
+      setActiveClassId(data.activeClassId);
+    }
+    if (data.students && Array.isArray(data.students)) {
+      setStudents(data.students);
+    }
+    if (data.subjects && Array.isArray(data.subjects) && data.subjects.length > 0) {
+      setSubjects(data.subjects);
+    }
+    if (data.criteria && Array.isArray(data.criteria)) {
+      setCriteria(data.criteria);
+    }
+    if (data.transactions && Array.isArray(data.transactions)) {
+      setTransactions(data.transactions);
+    }
+    if (data.rewards && Array.isArray(data.rewards)) {
+      setRewards(data.rewards);
+    }
+    if (data.redemptions && Array.isArray(data.redemptions)) {
+      setRedemptions(data.redemptions);
+    }
+    if (data.seatingColumns) {
+      setSeatingColumns(data.seatingColumns);
+    }
+    if (data.deskCountsPerColumn && Array.isArray(data.deskCountsPerColumn)) {
+      setDeskCountsPerColumn(data.deskCountsPerColumn);
+    }
+    if (data.deskNumberingOrder) {
+      setDeskNumberingOrder(data.deskNumberingOrder);
+    }
+    if (data.teacherDeskPos) {
+      setTeacherDeskPos(data.teacherDeskPos);
+    }
+    if (data.doorPos) {
+      setDoorPos(data.doorPos);
+    }
+    if (data.blackboardPos) {
+      setBlackboardPos(data.blackboardPos);
+    }
+    if (data.seatingAssignments) {
+      setSeatingAssignments(data.seatingAssignments);
+    }
+    if (data.attendanceRecords && Array.isArray(data.attendanceRecords)) {
+      setAttendanceRecords(data.attendanceRecords);
+    }
+    if (data.boardingRecords && Array.isArray(data.boardingRecords)) {
+      setBoardingRecords(data.boardingRecords);
+    }
+    if (data.timetable && Array.isArray(data.timetable)) {
+      setTimetable(data.timetable);
+    }
+    if (data.timetableConfig) {
+      setTimetableConfig(data.timetableConfig);
+    }
+    if (data.teacherRole) {
+      setTeacherRoleState(data.teacherRole);
+    }
+    if (data.subjectTeacherConfig) {
+      setSubjectTeacherConfig(data.subjectTeacherConfig);
+    }
+    if (data.subjectTimetable && Array.isArray(data.subjectTimetable)) {
+      setSubjectTimetable(data.subjectTimetable);
+    }
+    if (data.quickLinks && Array.isArray(data.quickLinks)) {
+      setQuickLinks(data.quickLinks);
+    }
+    if (data.teacherProfile) {
+      setTeacherProfile(data.teacherProfile);
+    }
+    if (data.quizBank && Array.isArray(data.quizBank)) {
+      setQuizBank(data.quizBank);
+    }
+    if (data.infographicConfig) {
+      setInfographicConfig(data.infographicConfig);
+    }
+  };
 
-  const [adminAccount, setAdminAccount] = useState<AdminAccount | null>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_adminAccount');
-    return saved ? JSON.parse(saved) : null;
-  });
+  // Helper to build initial independent default data for a user
+  const buildDefaultDataForUser = (user: UserAccount): UserClassroomData => {
+    if (user.role === 'subject') {
+      // Yêu cầu: Mặc định tài khoản giáo viên bộ môn sẽ có 1 lớp demo là lớp 3A1 với 20 học sinh
+      const demoClass3A1: Classroom = {
+        id: 'class-sub-3a1',
+        name: '3A1',
+        grade: 'Khối 3',
+        color: '#3B82F6',
+        academicYear: '2026–2027',
+        teacherName: user.fullName || 'Nguyễn Thanh Liêm',
+        avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=SubClass_3A1&backgroundColor=3b82f6',
+        slogan: 'Lớp 3A1 • Học tập hăng say, rèn luyện chăm chỉ'
+      };
+      const subClasses: Classroom[] = [demoClass3A1];
 
-  const [isRoleModalOpen, setRoleModalOpen] = useState<boolean>(() => {
-    const savedRole = localStorage.getItem(STORAGE_KEY + '_currentRole');
-    return !savedRole;
-  });
+      const allSubStudents: Student[] = generateStudentsForClass(
+        'class-sub-3a1',
+        '3A1',
+        20,
+        'Khối 3',
+        user.subjectName || 'Tin học'
+      );
 
-  // Google Drive Sync State
-  const [isDriveSyncing, setIsDriveSyncing] = useState(false);
-  const [driveSyncStatus, setDriveSyncStatus] = useState<string>('Sẵn sàng');
+      const profile: TeacherProfile = {
+        name: user.fullName || 'NGUYỄN THANH LIÊM',
+        role: 'GIÁO VIÊN BỘ MÔN',
+        teachingSubject: user.subjectName || 'Tin học',
+        schoolName: user.schoolName || 'Trường Tiểu học số 1 Tân Uyên',
+        avatar: user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=ThayNguyenThanhLiem&backgroundColor=b6e3f4',
+        phone: user.phone || '0888358363',
+        zalo: user.phone || '0888358363',
+        academicYear: '2026–2027'
+      };
 
-  // 30-Day Cycle Alert State
-  const [cycleStartDate, setCycleStartDate] = useState<string>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_cycleStartDate');
-    if (saved) return saved;
-    // Default: 30 days cycle baseline
-    const d = new Date();
-    d.setDate(d.getDate() - 3); // 3 days into cycle
-    const iso = d.toISOString().split('T')[0];
-    safeLocalStorageSet(STORAGE_KEY + '_cycleStartDate', iso);
-    return iso;
-  });
+      const cfg: SubjectTeacherConfig = {
+        ...DEFAULT_SUBJECT_TEACHER_CONFIG,
+        subjectName: user.subjectName || 'Tin học',
+        teacherDisplayName: user.fullName || 'Nguyễn Thanh Liêm'
+      };
 
-  const [isAlertDismissed, setIsAlertDismissed] = useState(false);
+      return {
+        classes: subClasses,
+        activeClassId: subClasses[0]?.id || 'class-sub-3a1',
+        students: allSubStudents,
+        subjects: INITIAL_SUBJECTS,
+        criteria: INITIAL_CRITERIA,
+        transactions: [],
+        rewards: INITIAL_REWARDS,
+        redemptions: [],
+        seatingColumns: 4,
+        deskCountsPerColumn: [4, 4, 4, 4],
+        deskNumberingOrder: 'vertical',
+        teacherDeskPos: 'left',
+        doorPos: 'right',
+        blackboardPos: 'center',
+        seatingAssignments: {},
+        attendanceRecords: [],
+        boardingRecords: [],
+        timetable: INITIAL_TIMETABLE,
+        timetableConfig: { morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false },
+        teacherRole: 'subject',
+        subjectTeacherConfig: cfg,
+        subjectTimetable: SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE,
+        quickLinks: INITIAL_QUICK_LINKS,
+        teacherProfile: profile,
+        quizBank: [...DEFAULT_QUESTIONS],
+        infographicConfig: null
+      };
+    }
 
-  // Question Banks for Random Call & Classroom Quiz
-  const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY + '_questionBanks');
-    return saved ? JSON.parse(saved) : INITIAL_QUESTION_BANKS;
-  });
+    const homeroomClass: Classroom = {
+      id: `class-${(user.assignedClassName || '4a1').toLowerCase().replace(/\s+/g, '')}`,
+      name: user.assignedClassName || '4A1',
+      grade: 'Khối 4',
+      color: '#3B82F6',
+      academicYear: '2026–2027',
+      teacherName: user.fullName || 'NGUYỄN THỊ HOA',
+      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
+      slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng'
+    };
 
-  // Registered Teachers Management (Admin control)
-  const [registeredTeachers, setRegisteredTeachers] = useState<RegisteredTeacher[]>(() => {
+    const initialStds = user.username.toLowerCase() === 'gvcn4a1'
+      ? INITIAL_STUDENTS_CLASS_4A1
+      : generateStudentsForClass(homeroomClass.id, homeroomClass.name, 32, 'Khối 4', 'GHI CHUNG / NỀ NẾP');
+
+    const profile: TeacherProfile = {
+      ...DEFAULT_TEACHER,
+      name: user.fullName || DEFAULT_TEACHER.name,
+      role: 'GIÁO VIÊN CHỦ NHIỆM',
+      teachingSubject: 'Giáo viên chủ nhiệm',
+      phone: user.phone || DEFAULT_TEACHER.phone,
+      zalo: user.phone || DEFAULT_TEACHER.zalo,
+      schoolName: user.schoolName || DEFAULT_TEACHER.schoolName,
+      avatar: user.avatar || DEFAULT_TEACHER.avatar
+    };
+
+    return {
+      classes: [homeroomClass],
+      activeClassId: homeroomClass.id,
+      students: initialStds.map(s => ({
+        ...s,
+        subjectPoints: s.subjectPoints || { 'GHI CHUNG / NỀ NẾP': s.points || 0 }
+      })),
+      subjects: INITIAL_SUBJECTS,
+      criteria: INITIAL_CRITERIA,
+      transactions: [],
+      rewards: INITIAL_REWARDS,
+      redemptions: [],
+      seatingColumns: 4,
+      deskCountsPerColumn: [4, 4, 4, 4],
+      deskNumberingOrder: 'vertical',
+      teacherDeskPos: 'left',
+      doorPos: 'right',
+      blackboardPos: 'center',
+      seatingAssignments: {},
+      attendanceRecords: [],
+      boardingRecords: [],
+      timetable: INITIAL_TIMETABLE,
+      timetableConfig: { morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false },
+      teacherRole: 'homeroom',
+      subjectTeacherConfig: DEFAULT_SUBJECT_TEACHER_CONFIG,
+      subjectTimetable: SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE,
+      quickLinks: INITIAL_QUICK_LINKS,
+      teacherProfile: profile,
+      quizBank: [...DEFAULT_QUESTIONS],
+      infographicConfig: null
+    };
+  };
+
+  // Refresh users from database
+  const refreshUsersList = async () => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY + '_registeredTeachers');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((t: any) => ({
-            ...t,
-            username: t.username || (t.email ? t.email.split('@')[0] : 'gv_' + (t.id ? t.id.slice(-4) : 'user')),
-            password: t.password || '123456'
-          }));
+      const uList = await databaseService.getUsers();
+      if (Array.isArray(uList) && uList.length > 0) {
+        setAllUsers(uList);
+      }
+    } catch (_) {}
+  };
+
+  // Helper ghi nhật ký thao tác trực tuyến vào audit log
+  const logUserActivity = (actionType: string, description: string, details?: any) => {
+    const user = currentUserRef.current;
+    if (!user) return;
+    databaseService.addAuditLog({
+      username: user.username,
+      userFullName: user.fullName,
+      role: user.role,
+      actionType,
+      description,
+      details
+    });
+  };
+
+  // Multi-browser synchronization refs
+  const isRemoteDataLoadedRef = useRef(false);
+  const lastRemoteTimestampRef = useRef<number>(0);
+  const remoteUpdateLockUntilRef = useRef<number>(0);
+
+  const markRemoteUpdateActive = (durationMs = 1200) => {
+    isApplyingRemoteUpdateRef.current = true;
+    remoteUpdateLockUntilRef.current = Date.now() + durationMs;
+    setTimeout(() => {
+      if (Date.now() >= remoteUpdateLockUntilRef.current) {
+        isApplyingRemoteUpdateRef.current = false;
+      }
+    }, durationMs + 50);
+  };
+
+  // Load user data on startup or when currentUser changes
+  useEffect(() => {
+    refreshUsersList();
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      isRemoteDataLoadedRef.current = false;
+      return;
+    }
+
+    isRemoteDataLoadedRef.current = false;
+
+    const initUserData = async () => {
+      setDbSyncStatus('syncing');
+      try {
+        if (currentUser.role === 'admin') {
+          // Admin Unified Sync: load all classes and students from all teachers
+          const adminAll = await databaseService.getAdminAllData();
+          if (adminAll && Array.isArray(adminAll.classes)) {
+            markRemoteUpdateActive(1200);
+            lastRemoteTimestampRef.current = adminAll.timestamp || Date.now();
+            setClasses(adminAll.classes);
+            setStudents(adminAll.students);
+            if (adminAll.classes.length > 0) {
+              setActiveClassId(prev => {
+                const exists = adminAll.classes.some(c => c.id === prev);
+                return exists ? prev : adminAll.classes[0].id;
+              });
+            }
+          }
+        } else {
+          const savedData = await databaseService.loadUserData(currentUser.username);
+          if (savedData) {
+            markRemoteUpdateActive(1200);
+            lastRemoteTimestampRef.current = savedData.updatedAt || Date.now();
+            applyUserClassroomData(savedData);
+          } else {
+            // If no data saved for this user yet, seed initial default and save to DB
+            const initialData = buildDefaultDataForUser(currentUser);
+            markRemoteUpdateActive(1200);
+            applyUserClassroomData(initialData);
+            await databaseService.saveUserData(currentUser.username, initialData);
+            lastRemoteTimestampRef.current = Date.now();
+          }
+        }
+        isRemoteDataLoadedRef.current = true;
+        setDbSyncStatus('synced');
+        const now = new Date();
+        setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+      } catch (err) {
+        console.warn('Initial data load warning:', err);
+        setDbSyncStatus('offline');
+        // Still allow editing if offline
+        isRemoteDataLoadedRef.current = true;
+      }
+    };
+
+    initUserData();
+  }, [currentUser?.username]);
+
+  // ⚡ Live Real-time Continuous Multi-computer / Multi-browser Synchronization via SSE
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const unsubscribe = databaseService.subscribeRealtimeUpdates(currentUser.username, async (event) => {
+      try {
+        if (currentUser.role === 'admin') {
+          const adminAll = await databaseService.getAdminAllData();
+          if (adminAll && Array.isArray(adminAll.classes)) {
+            markRemoteUpdateActive(1200);
+            lastRemoteTimestampRef.current = adminAll.timestamp || Date.now();
+            setClasses(adminAll.classes);
+            setStudents(adminAll.students);
+            setDbSyncStatus('synced');
+            const now = new Date();
+            setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+          }
+        } else {
+          const target = event.username?.toLowerCase();
+          const me = currentUser.username.toLowerCase();
+          if (!target || target === me || target === 'all' || target === 'admin' || event.targetUsername === me) {
+            const fresh = await databaseService.loadUserData(currentUser.username);
+            if (fresh) {
+              markRemoteUpdateActive(1200);
+              lastRemoteTimestampRef.current = fresh.updatedAt || Date.now();
+              applyUserClassroomData(fresh);
+              setDbSyncStatus('synced');
+              const now = new Date();
+              setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Realtime event handler error:', err);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [currentUser?.username, currentUser?.role]);
+
+  // Real-time Multi-browser & Multi-tab sync polling (Fallback layer)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let isChecking = false;
+    const checkRemoteChanges = async () => {
+      if (!isRemoteDataLoadedRef.current || isChecking) return;
+      if (Date.now() < remoteUpdateLockUntilRef.current) return;
+      isChecking = true;
+      try {
+        if (currentUser.role === 'admin') {
+          const adminAll = await databaseService.getAdminAllData();
+          if (adminAll && adminAll.timestamp && adminAll.timestamp > (lastRemoteTimestampRef.current + 50)) {
+            markRemoteUpdateActive(1200);
+            lastRemoteTimestampRef.current = adminAll.timestamp;
+            setClasses(adminAll.classes);
+            setStudents(adminAll.students);
+            setDbSyncStatus('synced');
+            const now = new Date();
+            setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+          }
+        } else {
+          const remote = await databaseService.loadUserData(currentUser.username);
+          if (remote && remote.updatedAt && remote.updatedAt > (lastRemoteTimestampRef.current + 50)) {
+            markRemoteUpdateActive(1200);
+            lastRemoteTimestampRef.current = remote.updatedAt;
+            applyUserClassroomData(remote);
+            setDbSyncStatus('synced');
+            const now = new Date();
+            setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+          }
+        }
+      } catch (_) {
+        // silent
+      } finally {
+        isChecking = false;
+      }
+    };
+
+    // Polling every 2.5 seconds
+    const pollInterval = setInterval(checkRemoteChanges, 2500);
+
+    // Sync immediately when tab gains focus
+    const onFocus = () => {
+      checkRemoteChanges();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [currentUser?.username]);
+
+  // Kiểm tra thời hạn phiên đăng nhập 300 phút liên tục
+  useEffect(() => {
+    const sessionTimer = setInterval(() => {
+      if (!databaseService.isSessionValid()) {
+        if (currentUserRef.current) {
+          console.warn('Phiên làm việc 300 phút đã kết thúc. Vui lòng đăng nhập lại.');
+          logoutUser();
+        } else {
+          setIsAuthModalOpen(true);
         }
       }
-    } catch (e) {
-      console.error(e);
+    }, 20000); // 20 giây kiểm tra một lần
+
+    return () => clearInterval(sessionTimer);
+  }, []);
+
+  // Debounced auto-save & database synchronization (Super-fast 200ms debounce with remote echo protection)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
     }
-    return INITIAL_REGISTERED_TEACHERS;
-  });
 
-  // Admin Impersonation State (Admin viewing class as teacher)
-  const [isImpersonating, setIsImpersonating] = useState<boolean>(() => {
-    return localStorage.getItem(STORAGE_KEY + '_isImpersonating') === 'true';
-  });
+    // Do NOT auto-save if remote data is still loading
+    if (!isRemoteDataLoadedRef.current || !currentUser) return;
 
-  // 2. Persist to localStorage safely
-  useEffect(() => {
-    if (currentRole) safeLocalStorageSet(STORAGE_KEY + '_currentRole', currentRole);
-    else localStorage.removeItem(STORAGE_KEY + '_currentRole');
-  }, [currentRole]);
+    // Do NOT auto-save if this state update was triggered by receiving data from server (breaks echo loops)
+    if (Date.now() < remoteUpdateLockUntilRef.current || isApplyingRemoteUpdateRef.current) {
+      return;
+    }
 
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_registeredTeachers', JSON.stringify(registeredTeachers));
-  }, [registeredTeachers]);
+    setDbSyncStatus('syncing');
+    const timer = setTimeout(() => {
+      const nowTs = Date.now();
+      lastRemoteTimestampRef.current = nowTs;
 
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_isImpersonating', isImpersonating ? 'true' : 'false');
-  }, [isImpersonating]);
+      if (currentUser.role === 'admin') {
+        databaseService.syncAdminAllData(classes, students).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }, 200);
 
-  useEffect(() => {
-    if (teacherAccount) safeLocalStorageSet(STORAGE_KEY + '_teacherAccount', JSON.stringify(teacherAccount));
-    else localStorage.removeItem(STORAGE_KEY + '_teacherAccount');
-  }, [teacherAccount]);
+    return () => clearTimeout(timer);
+  }, [
+    classes, activeClassId, students, subjects, criteria, transactions,
+    rewards, redemptions, seatingColumns, deskCountsPerColumn, deskNumberingOrder,
+    teacherDeskPos, doorPos, blackboardPos, seatingAssignments, attendanceRecords,
+    boardingRecords, timetable, timetableConfig, teacherRole, subjectTeacherConfig,
+    subjectTimetable, quickLinks, teacherProfile, quizBank, infographicConfig,
+    currentUser?.username
+  ]);
 
-  useEffect(() => {
-    if (adminAccount) safeLocalStorageSet(STORAGE_KEY + '_adminAccount', JSON.stringify(adminAccount));
-    else localStorage.removeItem(STORAGE_KEY + '_adminAccount');
-  }, [adminAccount]);
+  // User Auth Actions
+  const loginUser = async (username: string, password: string): Promise<{ success: boolean; message?: string }> => {
+    // 1. Save current workspace before switching if logged in
+    if (currentUser) {
+      const currentData = getCurrentUserData();
+      await databaseService.saveUserData(currentUser.username, currentData);
+    }
 
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_cycleStartDate', cycleStartDate);
-  }, [cycleStartDate]);
+    // 2. Perform login
+    const res = await databaseService.login(username, password);
+    if (res.success && res.user) {
+      const newUser = res.user;
+      setCurrentUser(newUser);
 
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_questionBanks', JSON.stringify(questionBanks));
-  }, [questionBanks]);
+      // Ghi nhật ký đăng nhập
+      databaseService.addAuditLog({
+        username: newUser.username,
+        userFullName: newUser.fullName,
+        role: newUser.role,
+        actionType: 'OTHER',
+        description: `Đăng nhập vào hệ thống (${newUser.fullName})`
+      });
 
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_classes', JSON.stringify(classes));
-  }, [classes]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_activeClassId', activeClassId);
-  }, [activeClassId]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_students', JSON.stringify(students));
-  }, [students]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_subjects', JSON.stringify(subjects));
-  }, [subjects]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_criteria', JSON.stringify(criteria));
-  }, [criteria]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_transactions', JSON.stringify(transactions));
-  }, [transactions]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_rewards', JSON.stringify(rewards));
-  }, [rewards]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_redemptions', JSON.stringify(redemptions));
-  }, [redemptions]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_seatingColumns', JSON.stringify(seatingColumns));
-  }, [seatingColumns]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_teacherDeskPos', teacherDeskPos);
-  }, [teacherDeskPos]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_doorPos', doorPos);
-  }, [doorPos]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_blackboardPos', blackboardPos);
-  }, [blackboardPos]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_seatingAssignments', JSON.stringify(seatingAssignments));
-  }, [seatingAssignments]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_attendance', JSON.stringify(attendanceRecords));
-  }, [attendanceRecords]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_boarding', JSON.stringify(boardingRecords));
-  }, [boardingRecords]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_timetableConfig', JSON.stringify(timetableConfig));
-  }, [timetableConfig]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_timetable', JSON.stringify(timetable));
-  }, [timetable]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_quickLinks', JSON.stringify(quickLinks));
-  }, [quickLinks]);
-  useEffect(() => {
-    safeLocalStorageSet(STORAGE_KEY + '_teacherProfile', JSON.stringify(teacherProfile));
-  }, [teacherProfile]);
+      // Gán vai trò chính xác theo tài khoản được phân quyền (GVCN / GVBM)
+      if (newUser.role === 'homeroom') {
+        setTeacherRoleState('homeroom');
+      } else if (newUser.role === 'subject') {
+        setTeacherRoleState('subject');
+      }
+
+      // 3. Load target user's workspace
+      const targetData = await databaseService.loadUserData(newUser.username);
+      if (targetData) {
+        applyUserClassroomData(targetData);
+      } else {
+        const defaultData = buildDefaultDataForUser(newUser);
+        applyUserClassroomData(defaultData);
+        await databaseService.saveUserData(newUser.username, defaultData);
+      }
+
+      await refreshUsersList();
+      return { success: true, message: res.message };
+    }
+    return { success: false, message: res.message };
+  };
+
+  const logoutUser = () => {
+    // Save current data & record logout
+    if (currentUser) {
+      databaseService.addAuditLog({
+        username: currentUser.username,
+        userFullName: currentUser.fullName,
+        role: currentUser.role,
+        actionType: 'OTHER',
+        description: `Đăng xuất khỏi hệ thống (${currentUser.fullName})`
+      });
+      const currentData = getCurrentUserData();
+      databaseService.saveUserData(currentUser.username, currentData);
+    }
+    databaseService.logout();
+    setCurrentUser(null);
+    setIsAuthModalOpen(true);
+  };
+
+  const switchUserAccount = async (username: string): Promise<boolean> => {
+    // Yêu cầu: Tài khoản giáo viên chủ nhiệm và giáo viên bộ môn không thể chuyển đổi qua lại với các tài khoản khác
+    // mà bắt buộc phải đăng xuất và đăng nhập với tài khoản được gán đúng vai trò.
+    // Chỉ tài khoản quản trị (admin) mới có chức năng xem toàn bộ thông tin và chuyển đổi qua lại.
+    if (currentUser?.role !== 'admin') {
+      console.warn('Tài khoản giáo viên không thể chuyển đổi nhanh sang tài khoản khác. Vui lòng đăng xuất để đăng nhập.');
+      return false;
+    }
+
+    const targetUser = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!targetUser) return false;
+
+    // 1. Save current workspace
+    if (currentUser) {
+      const currentData = getCurrentUserData();
+      await databaseService.saveUserData(currentUser.username, currentData);
+    }
+
+    // 2. Switch current user
+    setCurrentUser(targetUser);
+    localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(targetUser));
+    databaseService.touchSession();
+
+    // 3. Load target data
+    const targetData = await databaseService.loadUserData(targetUser.username);
+    if (targetData) {
+      applyUserClassroomData(targetData);
+    } else {
+      const defaultData = buildDefaultDataForUser(targetUser);
+      applyUserClassroomData(defaultData);
+      await databaseService.saveUserData(targetUser.username, defaultData);
+    }
+
+    return true;
+  };
+
+  const syncDatabaseNow = async (overrideStudents?: any, overrideClasses?: any): Promise<void> => {
+    if (!currentUser) return;
+    // Release any anti-echo locks immediately so user-triggered sync always wins
+    isApplyingRemoteUpdateRef.current = false;
+    remoteUpdateLockUntilRef.current = 0;
+
+    const curStudents = Array.isArray(overrideStudents)
+      ? overrideStudents
+      : (studentsRef.current.length > 0 ? studentsRef.current : students);
+    const curClasses = Array.isArray(overrideClasses)
+      ? overrideClasses
+      : (classesRef.current.length > 0 ? classesRef.current : classes);
+    const nowTs = Date.now();
+    lastRemoteTimestampRef.current = nowTs;
+
+    setDbSyncStatus('syncing');
+    if (currentUser.role === 'admin') {
+      const ok = await databaseService.syncAdminAllData(curClasses, curStudents);
+      setDbSyncStatus(ok ? 'synced' : 'offline');
+    } else {
+      const payload: UserClassroomData = {
+        ...getCurrentUserData(),
+        classes: curClasses,
+        students: curStudents,
+        updatedAt: nowTs
+      };
+      const ok = await databaseService.saveUserData(currentUser.username, payload);
+      setDbSyncStatus(ok ? 'synced' : 'offline');
+    }
+    const now = new Date();
+    setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+  };
 
   // Auto-heal activeClassId if it becomes invalid or empty when classes exist
-  // Yêu cầu: Lớp phụ trách thêm mục Non (none) tức là chưa phân cấp quản lý lớp nào.
-  // Tài khoản nào được phân quyền quản lý lớp nào thì được thao tác hiển thị với lớp đó, còn nếu không khi đăng nhập sẽ không hiển thị lớp.
-  const isTeacherUnassigned = currentRole === 'teacher' && (!teacherAccount?.assignedClassId || teacherAccount.assignedClassId === 'none');
-
-  const effectiveActiveClassId = isTeacherUnassigned
-    ? ''
-    : (currentRole === 'teacher' && teacherAccount?.assignedClassId && classes.some(c => c.id === teacherAccount.assignedClassId))
-    ? teacherAccount.assignedClassId
-    : (activeClassId && classes.some(c => c.id === activeClassId))
+  const effectiveActiveClassId = activeClassId && classes.some(c => c.id === activeClassId)
     ? activeClassId
     : (classes[0]?.id || '');
 
   useEffect(() => {
-    if (isTeacherUnassigned) {
-      if (activeClassId !== '') setActiveClassId('');
-    } else if (currentRole === 'teacher' && teacherAccount?.assignedClassId && teacherAccount.assignedClassId !== 'none') {
-      if (activeClassId !== teacherAccount.assignedClassId) {
-        setActiveClassId(teacherAccount.assignedClassId);
-      }
-    } else if (classes.length > 0 && (!activeClassId || !classes.some(c => c.id === activeClassId))) {
+    if (classes.length > 0 && (!activeClassId || !classes.some(c => c.id === activeClassId))) {
       setActiveClassId(classes[0].id);
     }
-  }, [classes, activeClassId, currentRole, teacherAccount, isTeacherUnassigned]);
+  }, [classes, activeClassId]);
 
   // Derived students for active class
-  const currentClassStudents = !effectiveActiveClassId
-    ? []
-    : students
-        .filter(s => s.classId === effectiveActiveClassId)
-        .sort((a, b) => a.stt - b.stt);
+  const currentClassStudents = students
+    .filter(s => s.classId === (effectiveActiveClassId || activeClassId))
+    .sort((a, b) => a.stt - b.stt);
 
   // Class methods
   const addClass = (cls: Omit<Classroom, 'id'>) => {
@@ -492,13 +986,64 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const newCls: Classroom = { ...cls, id: newId };
     setClasses(prev => [...prev, newCls]);
     setActiveClassId(newId);
+    logUserActivity('CREATE_CLASS', `Mở thêm lớp học mới: ${newCls.name} (${newCls.grade || ''})`, { classId: newId, name: newCls.name });
   };
 
   const updateClass = (id: string, updated: Partial<Classroom>) => {
-    setClasses(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c));
+    // Release anti-echo locks immediately so user actions always take precedence
+    isApplyingRemoteUpdateRef.current = false;
+    remoteUpdateLockUntilRef.current = 0;
+
+    const currentList = classesRef.current.length > 0 ? classesRef.current : classes;
+    const nextClasses = currentList.map(c => c.id === id ? { ...c, ...updated } : c);
+    setClasses(nextClasses);
+    classesRef.current = nextClasses;
+
+    const target = nextClasses.find(c => c.id === id) || ({} as Classroom);
+    logUserActivity('UPDATE_CLASS', `Chỉnh sửa thông tin lớp: ${updated.name || target?.name || id}`);
+
+    const nowTs = Date.now();
+    lastRemoteTimestampRef.current = nowTs;
+
+    // Immediate database synchronization
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (currentUser.role === 'admin') {
+        databaseService.updateAdminClass(target).catch(() => {});
+        databaseService.syncAdminAllData(nextClasses, studentsRef.current.length > 0 ? studentsRef.current : students).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          classes: nextClasses,
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
+
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('lop_hoc_realtime_local');
+        bc.postMessage({ type: 'CLASS_UPDATED', classId: id, classData: updated, timestamp: nowTs });
+        bc.close();
+      }
+    } catch (_) {}
   };
 
   const deleteClass = (id: string) => {
+    const target = classes.find(c => c.id === id);
     const remaining = classes.filter(c => c.id !== id);
     setClasses(remaining);
     if (activeClassId === id) {
@@ -515,6 +1060,62 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
       return next;
     });
+    // Clean up timetable slots for deleted class (Requirement 2 synchronization)
+    const targetNameLower = (target?.name || '').toLowerCase().trim();
+    setSubjectTimetable(prev => prev.filter(slot => {
+      if (slot.classId === id) return false;
+      if (targetNameLower && slot.className.toLowerCase().trim() === targetNameLower) return false;
+      return true;
+    }));
+    logUserActivity('DELETE_CLASS', `Xóa lớp học: ${target?.name || id}`, { classId: id, name: target?.name });
+  };
+
+  const bulkDeleteClasses = (ids: string[]) => {
+    if (!ids || ids.length === 0) return;
+    const targetSet = new Set(ids);
+    const targetClasses = classes.filter(c => targetSet.has(c.id));
+    const targetNamesLower = new Set(targetClasses.map(c => c.name.toLowerCase().trim()));
+
+    const remaining = classes.filter(c => !targetSet.has(c.id));
+    setClasses(remaining);
+
+    if (targetSet.has(activeClassId)) {
+      setActiveClassId(remaining.length > 0 ? remaining[0].id : '');
+    }
+
+    // Clean up students belonging to deleted classes
+    setStudents(prev => prev.filter(s => !targetSet.has(s.classId)));
+
+    // Clean up seating
+    setSeatingAssignments(prev => {
+      const next = { ...prev };
+      const studentIdsToDelete = new Set(students.filter(s => targetSet.has(s.classId)).map(s => s.id));
+      Object.keys(next).forEach(k => {
+        if (studentIdsToDelete.has(next[k])) delete next[k];
+      });
+      return next;
+    });
+
+    // Clean up timetable slots for deleted classes (Requirement 2 synchronization)
+    setSubjectTimetable(prev => prev.filter(slot => {
+      if (targetSet.has(slot.classId)) return false;
+      if (targetNamesLower.has(slot.className.toLowerCase().trim())) return false;
+      return true;
+    }));
+
+    // Clean up attendance & boarding records
+    setAttendanceRecords(prev => prev.filter(r => !targetSet.has(r.classId)));
+    setBoardingRecords(prev => prev.filter(r => !targetSet.has(r.classId)));
+
+    const deletedNames = targetClasses.map(c => c.name).join(', ');
+    logUserActivity('DELETE_CLASS', `Xóa đồng loạt ${ids.length} lớp học: ${deletedNames}`, { classIds: ids });
+  };
+
+  const bulkUpdateClasses = (ids: string[], updates: Partial<Classroom>) => {
+    if (!ids || ids.length === 0) return;
+    const targetSet = new Set(ids);
+    setClasses(prev => prev.map(c => targetSet.has(c.id) ? { ...c, ...updates } : c));
+    logUserActivity('UPDATE_CLASS', `Cập nhật thông tin đồng loạt cho ${ids.length} lớp học`, { classIds: ids, updates });
   };
 
   const deleteAllClasses = () => {
@@ -524,6 +1125,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSeatingAssignments({});
     setAttendanceRecords([]);
     setBoardingRecords([]);
+    setSubjectTimetable([]);
+    logUserActivity('DELETE_CLASS', 'Xóa toàn bộ danh sách lớp học');
   };
 
   // Student methods
@@ -539,13 +1142,66 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       avatarPosition: st.avatarPosition || { x: 0, y: 0 }
     };
     setStudents(prev => [...prev, newStudent]);
+    const currentClass = classes.find(c => c.id === activeClassId);
+    logUserActivity('ADD_STUDENT', `Thêm mới học sinh: ${newStudent.name} (STT ${newStt}) vào lớp ${currentClass?.name || ''}`);
   };
 
   const updateStudent = (id: string, data: Partial<Student>) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
+    // Release anti-echo locks immediately so user actions always take precedence
+    isApplyingRemoteUpdateRef.current = false;
+    remoteUpdateLockUntilRef.current = 0;
+
+    const currentList = studentsRef.current.length > 0 ? studentsRef.current : students;
+    const nextStudents = currentList.map(s => s.id === id ? { ...s, ...data } : s);
+    setStudents(nextStudents);
+    studentsRef.current = nextStudents;
+
+    const targetStudent = nextStudents.find(s => s.id === id) || ({} as Student);
+    logUserActivity('UPDATE_STUDENT', `Chỉnh sửa thông tin học sinh: ${data.name || targetStudent.name || id}`);
+
+    const nowTs = Date.now();
+    lastRemoteTimestampRef.current = nowTs;
+
+    // Immediate database synchronization to Server & Supabase Cloud
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (currentUser.role === 'admin') {
+        databaseService.updateAdminStudent(targetStudent).catch(() => {});
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
+
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('lop_hoc_realtime_local');
+        bc.postMessage({ type: 'STUDENT_UPDATED', studentId: id, studentData: data, timestamp: nowTs });
+        bc.close();
+      }
+    } catch (_) {}
   };
 
   const deleteStudent = (id: string) => {
+    const st = students.find(s => s.id === id);
+    const currentClass = classes.find(c => c.id === st?.classId);
     setStudents(prev => prev.filter(s => s.id !== id));
     // also clean up seating assignment
     setSeatingAssignments(prev => {
@@ -555,9 +1211,27 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
       return next;
     });
+    logUserActivity('DELETE_STUDENT', `Xóa học sinh: ${st?.name || id} khỏi lớp ${currentClass?.name || ''}`);
+  };
+
+  const bulkDeleteStudents = (studentIds: string[]) => {
+    if (studentIds.length === 0) return;
+    const idSet = new Set(studentIds);
+    const currentClass = classes.find(c => c.id === activeClassId);
+    setStudents(prev => prev.filter(s => !idSet.has(s.id)));
+    setSeatingAssignments(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => {
+        if (idSet.has(next[k])) delete next[k];
+      });
+      return next;
+    });
+    logUserActivity('DELETE_STUDENT', `Xóa ${studentIds.length} học sinh khỏi lớp ${currentClass?.name || ''}`);
   };
 
   const clearClassStudents = (classId: string) => {
+    const targetClass = classes.find(c => c.id === classId);
+    const count = students.filter(s => s.classId === classId).length;
     setStudents(prev => prev.filter(s => s.classId !== classId));
     setSeatingAssignments(prev => {
       const next = { ...prev };
@@ -567,13 +1241,29 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
       return next;
     });
+    logUserActivity('DELETE_STUDENT', `Xóa toàn bộ ${count} học sinh của lớp ${targetClass?.name || classId}`);
   };
 
-  const bulkAddStudents = (items: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string }>) => {
+  const resetStudentsCoins = (studentIds?: string[], classId?: string) => {
+    const targetClassId = classId || activeClassId;
+    setStudents(prev => prev.map(s => {
+      if (s.classId !== targetClassId) return s;
+      if (studentIds && studentIds.length > 0 && !studentIds.includes(s.id)) return s;
+      return { ...s, points: 0, subjectPoints: {} };
+    }));
+    logUserActivity('AWARD_POINTS', 'Đặt lại điểm xu về 0 cho học sinh');
+  };
+
+  const bulkAddStudents = (items: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }>) => {
     const currentList = students.filter(s => s.classId === activeClassId);
     let startStt = currentList.length + 1;
 
     const newItems: Student[] = items.map((item, idx) => {
+      const roles = item.roles && item.roles.length > 0
+        ? item.roles.slice(0, 3)
+        : (item.role ? item.role.split(/[•,;\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 3) : []);
+      const roleStr = roles.join(' • ') || item.role || '';
+
       return {
         id: `hs-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
         classId: activeClassId,
@@ -585,24 +1275,36 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         avatarScale: 1,
         avatarPosition: { x: 0, y: 0 },
         points: 0,
+        subjectPoints: {},
         group: item.group || `Tổ ${Math.floor(idx / 8) + 1}`,
-        role: item.role || ''
+        role: roleStr,
+        roles
       };
     });
 
     setStudents(prev => [...prev, ...newItems]);
+    const currentClass = classes.find(c => c.id === activeClassId);
+    logUserActivity('BATCH_STUDENTS', `Thêm mới danh sách ${newItems.length} học sinh vào lớp ${currentClass?.name || ''}`);
   };
 
-  // Subjects
+  // Subjects (Cấu hình nhận xu: Thêm, sửa, xóa, thiết lập áp dụng cho lớp/giáo viên)
   const addSubject = (name: string, color = '#3B82F6', icon = 'BookOpen') => {
-    if (!name.trim()) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
     const newSub: Subject = {
       id: `sub-${Date.now()}`,
-      name: name.trim(),
+      name: trimmed,
       color,
-      icon
+      icon,
+      enabled: true,
+      isDefault: false
     };
-    setSubjects(prev => [...prev, newSub]);
+    setSubjects(prev => {
+      if (prev.some(s => s.name.trim().toLowerCase() === trimmed.toLowerCase())) {
+        return prev;
+      }
+      return [...prev, newSub];
+    });
   };
 
   const updateSubject = (id: string, data: Partial<Subject>) => {
@@ -611,6 +1313,27 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const deleteSubject = (id: string) => {
     setSubjects(prev => prev.filter(s => s.id !== id));
+  };
+
+  const toggleSubjectApplied = (id: string, enabled?: boolean) => {
+    setSubjects(prev => prev.map(s => {
+      if (s.id === id) {
+        return { ...s, enabled: enabled !== undefined ? enabled : !s.enabled };
+      }
+      return s;
+    }));
+  };
+
+  const setAppliedSubjects = (subjectIds: string[]) => {
+    const idSet = new Set(subjectIds);
+    setSubjects(prev => prev.map(s => ({
+      ...s,
+      enabled: idSet.has(s.id)
+    })));
+  };
+
+  const resetDefaultSubjects = () => {
+    setSubjects([...INITIAL_SUBJECTS]);
   };
 
   // Criteria
@@ -622,13 +1345,14 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCriteria(prev => [...prev, newCrit]);
   };
 
-  // Points Award / Deduct
+  // Points Award / Deduct (Lưu theo học sinh và theo môn, không làm mất tổng xu hiện tại)
   const awardPoints = (studentIds: string[], amount: number, reason: string, subjectName?: string) => {
     if (studentIds.length === 0 || amount <= 0) return;
     playCoinSound();
 
     const timestamp = Date.now();
     const newTxns: PointTransaction[] = [];
+    const targetSubject = (subjectName && subjectName.trim()) ? subjectName.trim() : 'GHI CHUNG / NỀ NẾP';
 
     setStudents(prev => prev.map(s => {
       if (studentIds.includes(s.id)) {
@@ -639,15 +1363,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           classId: s.classId,
           amount,
           reason,
-          subjectName,
+          subjectName: targetSubject,
           timestamp
         });
-        return { ...s, points: s.points + amount };
+        const currentSubPoints = s.subjectPoints || (s.points > 0 ? { 'GHI CHUNG / NỀ NẾP': s.points } : {});
+        const oldXu = currentSubPoints[targetSubject] || 0;
+        return { 
+          ...s, 
+          points: s.points + amount,
+          subjectPoints: {
+            ...currentSubPoints,
+            [targetSubject]: oldXu + amount
+          }
+        };
       }
       return s;
     }));
 
     setTransactions(prev => [...newTxns, ...prev]);
+    logUserActivity('AWARD_POINTS', `Cộng ${amount} xu cho ${studentIds.length} học sinh (Lý do: ${reason}, Môn: ${targetSubject})`);
   };
 
   const deductPoints = (studentIds: string[], amount: number, reason: string, subjectName?: string) => {
@@ -656,6 +1390,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const timestamp = Date.now();
     const newTxns: PointTransaction[] = [];
+    const targetSubject = (subjectName && subjectName.trim()) ? subjectName.trim() : 'GHI CHUNG / NỀ NẾP';
 
     setStudents(prev => prev.map(s => {
       if (studentIds.includes(s.id)) {
@@ -666,65 +1401,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           classId: s.classId,
           amount: -amount,
           reason,
-          subjectName,
+          subjectName: targetSubject,
           timestamp
         });
-        return { ...s, points: s.points - amount };
+        const currentSubPoints = s.subjectPoints || (s.points > 0 ? { 'GHI CHUNG / NỀ NẾP': s.points } : {});
+        const oldXu = currentSubPoints[targetSubject] || 0;
+        return { 
+          ...s, 
+          points: Math.max(0, s.points - amount),
+          subjectPoints: {
+            ...currentSubPoints,
+            [targetSubject]: Math.max(0, oldXu - amount)
+          }
+        };
       }
       return s;
     }));
 
     setTransactions(prev => [...newTxns, ...prev]);
-  };
-
-  const resetStudentPoints = (studentIds: string[]) => {
-    if (studentIds.length === 0) return;
-    const timestamp = Date.now();
-    const newTxns: PointTransaction[] = [];
-    setStudents(prev => prev.map(s => {
-      if (studentIds.includes(s.id)) {
-        if (s.points !== 0) {
-          newTxns.push({
-            id: `tx-${timestamp}-${s.id}`,
-            studentId: s.id,
-            studentName: s.name,
-            classId: s.classId,
-            amount: -s.points,
-            reason: 'Xóa điểm xu về 0',
-            timestamp
-          });
-        }
-        return { ...s, points: 0 };
-      }
-      return s;
-    }));
-    if (newTxns.length > 0) {
-      setTransactions(prev => [...newTxns, ...prev]);
-    }
-  };
-
-  const bulkSetPoints = (studentIds: string[], targetPoints: number, reason = 'Gán điểm xu đồng loạt', subjectName?: string) => {
-    if (studentIds.length === 0) return;
-    const timestamp = Date.now();
-    const newTxns: PointTransaction[] = [];
-    setStudents(prev => prev.map(s => {
-      if (studentIds.includes(s.id)) {
-        const diff = targetPoints - s.points;
-        newTxns.push({
-          id: `tx-${timestamp}-${s.id}`,
-          studentId: s.id,
-          studentName: s.name,
-          classId: s.classId,
-          amount: diff,
-          reason,
-          subjectName,
-          timestamp
-        });
-        return { ...s, points: targetPoints };
-      }
-      return s;
-    }));
-    setTransactions(prev => [...newTxns, ...prev]);
+    logUserActivity('AWARD_POINTS', `Trừ ${amount} xu của ${studentIds.length} học sinh (Lý do: ${reason}, Môn: ${targetSubject})`);
   };
 
   // Rewards
@@ -830,17 +1525,34 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     const newMap: Record<string, string> = {};
-    const cols = seatingColumns; // 2 or 3
-    const rows = 5; // 5 rows
-    const desksPerRowPerCol = 2; // 2 seats per desk
-
+    const cols = seatingColumns;
     let idx = 0;
-    for (let r = 0; r < rows; r++) {
+
+    if (deskNumberingOrder === 'horizontal') {
+      const maxRows = Math.max(...deskCountsPerColumn.slice(0, cols), 4);
+      for (let r = 0; r < maxRows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const colLimit = deskCountsPerColumn[c] || 4;
+          if (r < colLimit) {
+            for (let sub = 0; sub < 2; sub++) {
+              if (idx < list.length) {
+                newMap[`${c}-${r}-${sub}`] = list[idx].id;
+                idx++;
+              }
+            }
+          }
+        }
+      }
+    } else {
+      // 'vertical' (THEO DỌC)
       for (let c = 0; c < cols; c++) {
-        for (let sub = 0; sub < desksPerRowPerCol; sub++) {
-          if (idx < list.length) {
-            newMap[`${c}-${r}-${sub}`] = list[idx].id;
-            idx++;
+        const colLimit = deskCountsPerColumn[c] || 4;
+        for (let r = 0; r < colLimit; r++) {
+          for (let sub = 0; sub < 2; sub++) {
+            if (idx < list.length) {
+              newMap[`${c}-${r}-${sub}`] = list[idx].id;
+              idx++;
+            }
           }
         }
       }
@@ -971,6 +1683,161 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
+  // Subject Teacher Methods (User request: Sắp TKB nhiều lớp dùng chung học kì / thời điểm)
+  const updateSubjectTimetableSlot = (slotData: Omit<SubjectTimetableSlot, 'id'> & { id?: string }) => {
+    const id = slotData.id || `sbj-${slotData.day}-${slotData.session}-${slotData.period}-${Date.now()}`;
+    const newSlot: SubjectTimetableSlot = { ...slotData, id };
+    setSubjectTimetable(prev => {
+      const filtered = prev.filter(s => !(s.day === newSlot.day && s.session === newSlot.session && s.period === newSlot.period));
+      return [...filtered, newSlot];
+    });
+  };
+
+  const deleteSubjectTimetableSlot = (slotId: string) => {
+    setSubjectTimetable(prev => prev.filter(s => s.id !== slotId));
+  };
+
+  const clearSubjectTimetable = () => {
+    setSubjectTimetable([]);
+  };
+
+  const seedSample20SubjectClasses = () => {
+    const classNames = PRESET_SUBJECT_CLASS_NAMES;
+    const newClassesList: Classroom[] = [...classes];
+    const newStudentsList: Student[] = [...students];
+
+    classNames.forEach((cName, idx) => {
+      let existingClass = newClassesList.find(c => c.name.trim().toLowerCase() === cName.trim().toLowerCase());
+      const classId = existingClass ? existingClass.id : `class-${cName.toLowerCase()}`;
+      
+      if (!existingClass) {
+        const gradeNum = cName.charAt(0);
+        existingClass = {
+          id: classId,
+          name: cName,
+          grade: `Khối ${gradeNum}`,
+          color: ['#3B82F6', '#EC4899', '#06B6D4', '#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][idx % 8],
+          academicYear: teacherProfile.academicYear || '2026–2027',
+          teacherName: `GVCN Lớp ${cName}`,
+          slogan: `Tập thể ${cName} chăm ngoan, đoàn kết, say mê Tin học!`,
+          avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=Class${cName}&backgroundColor=3b82f6`
+        };
+        newClassesList.push(existingClass);
+      }
+
+      const hasStudents = newStudentsList.some(s => s.classId === classId);
+      if (!hasStudents) {
+        const SAMPLE_NAMES = [
+          'Nguyễn Văn An', 'Trần Thị Ngọc Ánh', 'Lê Gia Bảo', 'Phạm Minh Châu', 'Hoàng Quốc Cường',
+          'Vũ Mai Dung', 'Đặng Tuấn Đạt', 'Bùi Thùy Dương', 'Đỗ Tiến Đức', 'Hồ Mỹ Hạnh',
+          'Ngô Đức Huy', 'Dương Thu Hương', 'Lâm Tuấn Kiệt', 'Phan Thảo Linh', 'Võ Minh Long',
+          'Mai Khánh Ly', 'Trịnh Hoàng Nam', 'Lý Kim Ngân', 'Đoàn Hải Phong', 'Đinh Hồng Phúc'
+        ];
+        SAMPLE_NAMES.forEach((name, sIdx) => {
+          const gender: 'Nam' | 'Nữ' = sIdx % 2 === 0 ? 'Nam' : 'Nữ';
+          const points = Math.floor(Math.random() * 25) + 5;
+          newStudentsList.push({
+            id: `hs-${classId}-${sIdx + 1}`,
+            classId: classId,
+            stt: sIdx + 1,
+            name: `${name}`,
+            birthDate: `1${(sIdx % 9) + 1}/0${(sIdx % 8) + 1}/2016`,
+            gender,
+            avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${cName}-${sIdx}&backgroundColor=b6e3f4`,
+            avatarScale: 1,
+            avatarPosition: { x: 0, y: 0 },
+            points,
+            subjectPoints: {
+              'Tin học': points,
+              'GHI CHUNG / NỀ NẾP': 5
+            },
+            group: `Tổ ${(sIdx % 4) + 1}`,
+            role: sIdx === 0 ? 'LỚP TRƯỞNG' : (sIdx === 1 ? 'LỚP PHÓ HỌC TẬP' : undefined),
+            roles: sIdx === 0 ? ['LỚP TRƯỞNG'] : (sIdx === 1 ? ['LỚP PHÓ HỌC TẬP'] : [])
+          });
+        });
+      }
+    });
+
+    setClasses(newClassesList);
+    setStudents(newStudentsList);
+    setSubjectTimetable(SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE);
+    if (!newClassesList.some(c => c.id === activeClassId)) {
+      setActiveClassId(newClassesList[0].id);
+    }
+  };
+
+  const loadSampleTimetableByImage = (autoCreateClasses: boolean = true) => {
+    setSubjectTimetable(SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE);
+    updateSubjectTeacherConfig({
+      subjectName: 'Tin học',
+      teacherDisplayName: 'Nguyễn Thanh Liêm',
+      semester: 'I',
+      effectiveStartDate: '05/9/2026',
+      morningPeriods: 4,
+      afternoonPeriods: 3
+    });
+
+    if (autoCreateClasses) {
+      initSubjectClasses(SAMPLE_SUBJECT_CLASSES_BY_IMAGE, false);
+    }
+  };
+
+  const initSubjectClasses = (items: InitSubjectClassItem[], replaceExisting: boolean = false) => {
+    let newClassesList: Classroom[] = replaceExisting ? [] : [...classes];
+    let newStudentsList: Student[] = replaceExisting ? [] : [...students];
+
+    const currentSubjectName = subjectTeacherConfig.subjectName || 'TIN HỌC';
+
+    items.forEach((item, idx) => {
+      const trimmedName = item.name.trim();
+      if (!trimmedName) return;
+
+      const grade = item.grade || (trimmedName.match(/\d+/) ? `Khối ${trimmedName.match(/\d+/)![0]}` : 'Khối 4');
+      const classId = `class-${trimmedName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
+      // Check if class already exists
+      const existingClassIdx = newClassesList.findIndex(
+        c => c.id === classId || c.name.trim().toLowerCase() === trimmedName.toLowerCase()
+      );
+      
+      const classObj: Classroom = {
+        id: classId,
+        name: trimmedName,
+        grade,
+        color: ['#3B82F6', '#EC4899', '#06B6D4', '#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][idx % 8],
+        academicYear: teacherProfile.academicYear || '2026–2027',
+        teacherName: item.teacherName || `GVCN Lớp ${trimmedName}`,
+        slogan: item.slogan || `Tập thể ${trimmedName} chăm ngoan, đoàn kết, học tốt môn ${currentSubjectName}!`,
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=Class${trimmedName}&backgroundColor=3b82f6`
+      };
+
+      if (existingClassIdx >= 0) {
+        newClassesList[existingClassIdx] = classObj;
+      } else {
+        newClassesList.push(classObj);
+      }
+
+      // Generate students
+      const studentCount = Math.max(1, Math.min(item.studentCount || 32, 60));
+      // Remove any existing students of this class
+      newStudentsList = newStudentsList.filter(s => s.classId !== classId);
+      
+      const generated = generateStudentsForClass(classId, trimmedName, studentCount, grade, currentSubjectName);
+      newStudentsList.push(...generated);
+    });
+
+    setClasses(newClassesList);
+    setStudents(newStudentsList);
+    if (newClassesList.length > 0) {
+      setActiveClassId(newClassesList[0].id);
+    }
+  };
+
+  const applySubjectTimetableSlots = (slots: SubjectTimetableSlot[]) => {
+    setSubjectTimetable(slots);
+  };
+
   // Quick Links
   const addQuickLink = (link: Omit<QuickLink, 'id'>) => {
     const newLink: QuickLink = {
@@ -984,71 +1851,29 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setQuickLinks(prev => prev.filter(l => l.id !== id));
   };
 
+  const updateQuickLink = (id: string, data: Partial<Omit<QuickLink, 'id'>>) => {
+    setQuickLinks(prev => prev.map(l => l.id === id ? { ...l, ...data } : l));
+  };
+
+  const reorderQuickLinks = (newLinks: QuickLink[]) => {
+    setQuickLinks(newLinks);
+  };
+
   // Teacher Profile
   const updateTeacherProfile = (data: Partial<TeacherProfile>) => {
     setTeacherProfile(prev => ({ ...prev, ...data }));
   };
 
   // Backup & Restore
-  // Yêu cầu: Đối với tài khoản giáo viên sau khi đăng nhập chỉ tải được thông tin data file .JSON của lớp mình
-  // Còn tài khoản quản trị khi tải file data .JSON sẽ tải thông tin toàn bộ cả trường chi tiết đầy đủ.
   const exportBackupJson = () => {
-    const today = new Date().toISOString().slice(0, 10);
-    const isTeacher = currentRole === 'teacher';
-
-    if (isTeacher) {
-      const targetClassId = teacherAccount?.assignedClassId || activeClassId;
-      const targetClass = classes.find(c => c.id === targetClassId) || classes[0];
-      const classStudents = students.filter(s => s.classId === targetClassId);
-      const classStudentIds = classStudents.map(s => s.id);
-
-      const teacherClassBackup = {
-        exportType: 'TEACHER_CLASS_DATA',
-        version: '2.0.0',
-        exportedAt: new Date().toISOString(),
-        role: 'teacher',
-        teacher: teacherProfile,
-        classInfo: targetClass,
-        classes: targetClass ? [targetClass] : classes,
-        activeClassId: targetClassId,
-        students: classStudents,
-        subjects,
-        criteria,
-        transactions: transactions.filter(t => classStudentIds.includes(t.studentId)),
-        rewards,
-        redemptions: redemptions.filter(r => classStudentIds.includes(r.studentId)),
-        seatingColumns,
-        seatingAssignments: Object.fromEntries(
-          Object.entries(seatingAssignments).filter(([_, sId]) => classStudentIds.includes(sId))
-        ),
-        attendanceRecords: attendanceRecords.filter(a => a.classId === targetClassId),
-        boardingRecords: boardingRecords.filter(b => b.classId === targetClassId),
-        timetableConfig,
-        timetable: timetable.filter(t => !t.classId || t.classId === targetClassId),
-        quickLinks
-      };
-
-      const blob = new Blob([JSON.stringify(teacherClassBackup, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Du_Lieu_Lop_${(targetClass?.name || '4A1').replace(/\s+/g, '_')}_${today}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      return;
-    }
-
-    // Role Admin: Tải dữ liệu toàn bộ trường chi tiết đầy đủ
-    const fullBackup = {
-      exportType: 'ADMIN_FULL_SCHOOL_DATA',
-      version: '2.0.0',
+    const backupData = {
+      version: '2.0',
       exportedAt: new Date().toISOString(),
-      system: 'LỚP HỌC HẠNH PHÚC - QUẢN LÝ TOÀN TRƯỜNG',
-      role: 'admin',
-      cycleStartDate,
-      totalClasses: classes.length,
-      totalStudents: students.length,
-      registeredTeachers,
+      account: currentUser ? {
+        username: currentUser.username,
+        fullName: currentUser.fullName,
+        role: currentUser.role
+      } : undefined,
       classes,
       activeClassId,
       students,
@@ -1058,122 +1883,94 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       rewards,
       redemptions,
       seatingColumns,
+      deskCountsPerColumn,
+      deskNumberingOrder,
+      teacherDeskPos,
+      doorPos,
+      blackboardPos,
       seatingAssignments,
       attendanceRecords,
       boardingRecords,
       timetableConfig,
       timetable,
+      teacherRole,
+      subjectTeacherConfig,
+      subjectTimetable,
       quickLinks,
       teacherProfile,
-      questionBanks
+      quizBank,
+      infographicConfig
     };
 
-    const blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Du_Lieu_Toan_Truong_Backup_${today}.json`;
+    const fileSuffix = currentUser ? `_${currentUser.username}_${currentUser.role}` : '';
+    link.download = `Sao_Luu_Lop_Hoc_Hanh_Phuc${fileSuffix}_${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const exportBackupZip = async () => {
-    const today = new Date().toISOString().slice(0, 10);
-    const isTeacher = currentRole === 'teacher';
-
-    if (isTeacher) {
-      const targetClassId = teacherAccount?.assignedClassId || activeClassId;
-      const targetClass = classes.find(c => c.id === targetClassId) || classes[0];
-      const classStudents = students.filter(s => s.classId === targetClassId);
-      const classStudentIds = classStudents.map(s => s.id);
-
-      const teacherClassBackup = {
-        exportType: 'TEACHER_CLASS_DATA',
-        version: '2.0.0',
-        exportedAt: new Date().toISOString(),
-        role: 'teacher',
-        teacher: teacherProfile,
-        classInfo: targetClass,
-        classes: [targetClass],
-        activeClassId: targetClassId,
-        students: classStudents,
-        subjects,
-        criteria,
-        transactions: transactions.filter(t => classStudentIds.includes(t.studentId)),
-        rewards,
-        redemptions: redemptions.filter(r => classStudentIds.includes(r.studentId)),
-        seatingColumns,
-        seatingAssignments: Object.fromEntries(
-          Object.entries(seatingAssignments).filter(([_, sId]) => classStudentIds.includes(sId))
-        ),
-        attendanceRecords: attendanceRecords.filter(a => a.classId === targetClassId),
-        boardingRecords: boardingRecords.filter(b => b.classId === targetClassId),
-        timetableConfig,
-        timetable: timetable.filter(t => !t.classId || t.classId === targetClassId),
-        quickLinks
-      };
-
-      const zip = new JSZip();
-      zip.file(`Du_Lieu_Lop_${(targetClass?.name || '4A1').replace(/\s+/g, '_')}_data.json`, JSON.stringify(teacherClassBackup, null, 2));
-      zip.file("THONG_TIN_SAO_LUU_LOP.txt", `=== SAO LƯU DỮ LIỆU LỚP HỌC HẠNH PHÚC (GIÁO VIÊN) ===\n` +
-        `Lớp học: ${targetClass?.name || '4A1'} (${targetClass?.grade || 'Khối 4'})\n` +
-        `Giáo viên chủ nhiệm: ${teacherProfile.name}\n` +
-        `Sĩ số lớp: ${classStudents.length} học sinh\n` +
-        `Thời gian xuất: ${new Date().toLocaleString('vi-VN')}\n`
-      );
-
-      const blob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Sao_Luu_Lop_${(targetClass?.name || '4A1').replace(/\s+/g, '_')}_${today}.zip`;
-      link.click();
-      URL.revokeObjectURL(url);
-      return;
-    }
-
-    // Role Admin: Toàn trường
     const backupData = {
-      version: '2.0.0',
-      exportType: 'ADMIN_FULL_SCHOOL_DATA',
+      version: '2.0',
       exportedAt: new Date().toISOString(),
+      account: currentUser ? {
+        username: currentUser.username,
+        fullName: currentUser.fullName,
+        role: currentUser.role
+      } : undefined,
       classes,
       activeClassId,
       students,
-      registeredTeachers,
       subjects,
       criteria,
       transactions,
       rewards,
       redemptions,
       seatingColumns,
+      deskCountsPerColumn,
+      deskNumberingOrder,
+      teacherDeskPos,
+      doorPos,
+      blackboardPos,
       seatingAssignments,
       attendanceRecords,
       boardingRecords,
       timetableConfig,
       timetable,
+      teacherRole,
+      subjectTeacherConfig,
+      subjectTimetable,
       quickLinks,
       teacherProfile,
-      questionBanks
+      quizBank,
+      infographicConfig
     };
 
     const zip = new JSZip();
-    zip.file("lop_hoc_hanh_phuc_data_toan_truong.json", JSON.stringify(backupData, null, 2));
-    zip.file("THONG_TIN_SAO_LUU_TOAN_TRUONG.txt", `=== SAO LƯU DỮ LIỆU HỆ THỐNG LỚP HỌC HẠNH PHÚC TOÀN TRƯỜNG ===\n` +
+    zip.file("lop_hoc_hanh_phuc_data.json", JSON.stringify(backupData, null, 2));
+    zip.file("THONG_TIN_SAO_LUU.txt", `=== SAO LƯU DỮ LIỆU HỆ THỐNG LỚP HỌC HẠNH PHÚC ===\n` +
+      `Tài khoản: ${currentUser ? `${currentUser.fullName} (@${currentUser.username})` : 'Mặc định'}\n` +
+      `Vai trò: ${teacherRole === 'homeroom' ? 'Giáo viên chủ nhiệm' : 'Giáo viên bộ môn'}\n` +
+      `Năm học: ${teacherProfile.academicYear || '2026 - 2027'}\n` +
+      `Giáo viên: ${teacherProfile.name}\n` +
       `Đơn vị công tác: ${teacherProfile.schoolName}\n` +
+      `Zalo hỗ trợ hệ thống: 0888358363 (https://zalo.me/0888358363)\n` +
       `Thời gian xuất file: ${new Date().toLocaleString('vi-VN')}\n` +
-      `Tổng số lớp học: ${classes.length} lớp\n` +
-      `Tổng số học sinh: ${students.length} học sinh\n` +
-      `Số tài khoản giáo viên: ${registeredTeachers.length} tài khoản\n\n` +
+      `Số lượng lớp học: ${classes.length} lớp\n` +
+      `Tổng số học sinh: ${students.length} học sinh\n\n` +
       `Hướng dẫn khôi phục:\n` +
-      `Để nạp lại dữ liệu, vào mục "DỮ LIỆU" trong ứng dụng, chọn "Nạp Vào Khôi Phục DỮ LIỆU" và tải file .ZIP này lên.`
+      `Để nạp lại dữ liệu, vào mục "DỮ LIỆU" trong ứng dụng, chọn "Nạp Vào Khôi Phục Dữ Liệu" và tải file .ZIP này lên.`
     );
 
     const blob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Sao_Luu_Toan_Truong_${today}.zip`;
+    const fileSuffix = currentUser ? `_${currentUser.username}_${currentUser.role}` : '';
+    link.download = `Sao_Luu_Lop_Hoc_Hanh_Phuc${fileSuffix}_${new Date().toISOString().slice(0, 10)}.zip`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -1193,22 +1990,16 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const text = await jsonFile.async('text');
       const data = JSON.parse(text);
 
-      if (data.classes && Array.isArray(data.classes)) setClasses(data.classes);
-      if (data.activeClassId) setActiveClassId(data.activeClassId);
-      if (data.students && Array.isArray(data.students)) setStudents(data.students);
-      if (data.subjects && Array.isArray(data.subjects)) setSubjects(data.subjects);
-      if (data.criteria && Array.isArray(data.criteria)) setCriteria(data.criteria);
-      if (data.transactions && Array.isArray(data.transactions)) setTransactions(data.transactions);
-      if (data.rewards && Array.isArray(data.rewards)) setRewards(data.rewards);
-      if (data.redemptions && Array.isArray(data.redemptions)) setRedemptions(data.redemptions);
-      if (data.seatingColumns) setSeatingColumns(data.seatingColumns);
-      if (data.seatingAssignments) setSeatingAssignments(data.seatingAssignments);
-      if (data.attendanceRecords) setAttendanceRecords(data.attendanceRecords);
-      if (data.boardingRecords) setBoardingRecords(data.boardingRecords);
-      if (data.timetableConfig) setTimetableConfig(data.timetableConfig);
-      if (data.timetable) setTimetable(data.timetable);
-      if (data.quickLinks) setQuickLinks(data.quickLinks);
-      if (data.teacherProfile) setTeacherProfile(data.teacherProfile);
+      applyUserClassroomData(data);
+
+      if (currentUser) {
+        logUserActivity('RESTORE_DATA', `Khôi phục độc lập dữ liệu từ file zip ${file.name}`);
+        const currentData = {
+          ...getCurrentUserData(),
+          ...data
+        };
+        await databaseService.saveUserData(currentUser.username, currentData);
+      }
 
       return true;
     } catch (e) {
@@ -1226,22 +2017,16 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const text = await file.text();
       const data = JSON.parse(text);
 
-      if (data.classes && Array.isArray(data.classes)) setClasses(data.classes);
-      if (data.activeClassId) setActiveClassId(data.activeClassId);
-      if (data.students && Array.isArray(data.students)) setStudents(data.students);
-      if (data.subjects && Array.isArray(data.subjects)) setSubjects(data.subjects);
-      if (data.criteria && Array.isArray(data.criteria)) setCriteria(data.criteria);
-      if (data.transactions && Array.isArray(data.transactions)) setTransactions(data.transactions);
-      if (data.rewards && Array.isArray(data.rewards)) setRewards(data.rewards);
-      if (data.redemptions && Array.isArray(data.redemptions)) setRedemptions(data.redemptions);
-      if (data.seatingColumns) setSeatingColumns(data.seatingColumns);
-      if (data.seatingAssignments) setSeatingAssignments(data.seatingAssignments);
-      if (data.attendanceRecords) setAttendanceRecords(data.attendanceRecords);
-      if (data.boardingRecords) setBoardingRecords(data.boardingRecords);
-      if (data.timetableConfig) setTimetableConfig(data.timetableConfig);
-      if (data.timetable) setTimetable(data.timetable);
-      if (data.quickLinks) setQuickLinks(data.quickLinks);
-      if (data.teacherProfile) setTeacherProfile(data.teacherProfile);
+      applyUserClassroomData(data);
+
+      if (currentUser) {
+        logUserActivity('RESTORE_DATA', `Khôi phục độc lập dữ liệu từ file JSON ${file.name}`);
+        const currentData = {
+          ...getCurrentUserData(),
+          ...data
+        };
+        await databaseService.saveUserData(currentUser.username, currentData);
+      }
 
       return true;
     } catch (err) {
@@ -1257,15 +2042,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       name: '4A1',
       grade: 'Khối 4',
       color: '#3B82F6',
-      academicYear: '2026 – 2027',
-      teacherName: 'Nguyễn Thị Hoa',
+      academicYear: '2026–2027',
+      teacherName: 'NGUYỄN THỊ HOA',
       avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
       slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng',
       parentCommittee: {
         head: { name: 'Trần Văn Mạnh', phone: '0988 123 456', roleTitle: 'Trưởng ban phụ huynh' },
         deputy: { name: 'Nguyễn Thị Mai', phone: '0977 654 321', roleTitle: 'Phó ban phụ huynh' },
-        member1: { name: 'Lê Hoàng Nam', phone: '0912 345 678', roleTitle: 'Ủy viên ban phụ huynh' },
-        member2: { name: 'Phạm Thị Lan', phone: '0903 890 123', roleTitle: 'Ủy viên ban phụ huynh' }
+        member1: { name: 'Lê Hoàng Nam', phone: '0912 345 678', roleTitle: 'Ủy viên ban phụ huynh 1' },
+        member2: { name: 'Phạm Thị Lan', phone: '0903 890 123', roleTitle: 'Ủy viên ban phụ huynh 2' }
       }
     };
     const freshClasses = [freshClass];
@@ -1288,24 +2073,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       initialMap[`${col}-${rowInCol}-${sub}`] = s.id;
     });
 
-    // 2. Synchronous localStorage writes to eliminate any state race conditions
-    safeLocalStorageSet(STORAGE_KEY + '_classes', JSON.stringify(freshClasses));
-    safeLocalStorageSet(STORAGE_KEY + '_activeClassId', 'class-4a1');
-    safeLocalStorageSet(STORAGE_KEY + '_students', JSON.stringify(freshStudents));
-    safeLocalStorageSet(STORAGE_KEY + '_subjects', JSON.stringify(INITIAL_SUBJECTS));
-    safeLocalStorageSet(STORAGE_KEY + '_criteria', JSON.stringify(INITIAL_CRITERIA));
-    safeLocalStorageSet(STORAGE_KEY + '_rewards', JSON.stringify(INITIAL_REWARDS));
-    safeLocalStorageSet(STORAGE_KEY + '_timetable', JSON.stringify(freshTimetable));
-    safeLocalStorageSet(STORAGE_KEY + '_quickLinks', JSON.stringify(INITIAL_QUICK_LINKS));
-    safeLocalStorageSet(STORAGE_KEY + '_teacherProfile', JSON.stringify(DEFAULT_TEACHER));
-    safeLocalStorageSet(STORAGE_KEY + '_transactions', JSON.stringify([]));
-    safeLocalStorageSet(STORAGE_KEY + '_redemptions', JSON.stringify([]));
-    safeLocalStorageSet(STORAGE_KEY + '_attendance', JSON.stringify([]));
-    safeLocalStorageSet(STORAGE_KEY + '_boarding', JSON.stringify([]));
-    safeLocalStorageSet(STORAGE_KEY + '_seatingColumns', '2');
-    safeLocalStorageSet(STORAGE_KEY + '_seatingAssignments', JSON.stringify(initialMap));
-
-    // 3. Update React states
+    // 2. Update React states
     setClasses(freshClasses);
     setActiveClassId('class-4a1');
     setStudents(freshStudents);
@@ -1324,18 +2092,6 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const clearAllData = () => {
-    // Synchronous localStorage writes
-    localStorage.setItem(STORAGE_KEY + '_classes', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_activeClassId', '');
-    localStorage.setItem(STORAGE_KEY + '_students', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_timetable', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_transactions', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_rewards', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_redemptions', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_attendance', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_boarding', JSON.stringify([]));
-    localStorage.setItem(STORAGE_KEY + '_seatingAssignments', JSON.stringify({}));
-
     setClasses([]);
     setActiveClassId('');
     setStudents([]);
@@ -1348,542 +2104,16 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSeatingAssignments({});
   };
 
-  // ---------------------------------------------------------------------------
-  // AUTH & ROLE HANDLERS
-  // ---------------------------------------------------------------------------
-  const loginAsTeacher = async (user: any, token: string) => {
-    setCachedAccessToken(token);
-
-    const userEmail = (user.email || '').toLowerCase().trim();
-    const existing = registeredTeachers.find(t => t.email.toLowerCase() === userEmail);
-
-    if (existing) {
-      if (existing.status === 'pending') {
-        throw new Error(`Tài khoản Google (${user.email}) đang ở trạng thái CHỜ PHÊ DUYỆT từ Quản trị viên. Vui lòng liên hệ Admin để được cấp quyền vào lớp.`);
-      }
-      if (existing.status === 'rejected') {
-        throw new Error(`Tài khoản Google (${user.email}) đã bị Quản trị viên TỪ CHỐI quyền truy cập.`);
-      }
-      // If approved, assign to class if not yet set
-      if (existing.assignedClassId && classes.some(c => c.id === existing.assignedClassId)) {
-        setActiveClassId(existing.assignedClassId);
-      }
-      // Update last login timestamp
-      setRegisteredTeachers(prev => prev.map(t => t.id === existing.id ? { ...t, lastLoginAt: Date.now() } : t));
-    } else {
-      // Auto-register as pending for administrator review!
-      const newPendingTeacher: RegisteredTeacher = {
-        id: 'gv-' + Date.now(),
-        email: user.email || '',
-        username: user.email ? user.email.split('@')[0] : 'gv_' + Date.now().toString().slice(-4),
-        password: '123456',
-        displayName: user.displayName || teacherProfile.name || 'Giáo viên mới',
-        photoURL: user.photoURL,
-        assignedClassId: classes[0]?.id || 'class-4a1',
-        assignedClassName: classes[0]?.name ? `${classes[0].name} (${classes[0].grade})` : '4A1 (Khối 4)',
-        status: 'pending',
-        registeredAt: Date.now(),
-        lastLoginAt: Date.now(),
-        note: 'Đăng ký lần đầu bằng Google - Chờ quản trị viên duyệt và phân công lớp'
-      };
-      setRegisteredTeachers(prev => [newPendingTeacher, ...prev]);
-      throw new Error(`Tài khoản Google (${user.email}) vừa đăng ký và đang ở trạng thái CHỜ QUẢN TRỊ VIÊN DUYỆT. Vui lòng đăng nhập tài khoản Quản trị để duyệt hoặc liên hệ Admin.`);
-    }
-
-    const displayName = user.displayName || existing?.displayName || teacherProfile.name || 'Cô Nguyễn Thị Hoa';
-    const folderName = `THƯ MỤC GIÁO VIÊN: ${displayName}`;
-    const account: TeacherAccount = {
-      uid: user.uid,
-      email: user.email || '',
-      displayName,
-      photoURL: user.photoURL,
-      folderName,
-      lastSyncTime: Date.now()
-    };
-    setTeacherAccount(account);
-    setCurrentRole('teacher');
-    setIsImpersonating(false);
-    setRoleModalOpen(false);
-
-    if (user.displayName) {
-      setTeacherProfile(prev => ({
-        ...prev,
-        name: displayName,
-        avatar: user.photoURL || prev.avatar
-      }));
-    }
-
-    try {
-      setIsDriveSyncing(true);
-      setDriveSyncStatus(`Đang tạo và đồng bộ "${folderName}" trên Google Drive...`);
-      const { teacherFolderId } = await ensureDriveTree(token, displayName);
-      account.folderId = teacherFolderId;
-      setTeacherAccount({ ...account });
-
-      // Save class JSON to this teacher's folder
-      const teacherClassJson = {
-        updatedAt: new Date().toISOString(),
-        teacher: { ...teacherProfile, name: displayName, avatar: user.photoURL || teacherProfile.avatar },
-        classes,
-        students,
-        subjects,
-        timetable,
-        transactions,
-        attendanceRecords,
-        boardingRecords
-      };
-      await saveJsonToDrive(
-        token, 
-        teacherFolderId, 
-        `LopHoc_${displayName.replace(/\s+/g, '_')}_data.json`, 
-        teacherClassJson
-      );
-      setDriveSyncStatus(`Đã đồng bộ vào Google Drive: ${folderName}`);
-    } catch (err: any) {
-      console.warn('Drive sync warning:', err);
-      setDriveSyncStatus('Đã đăng nhập Google');
-    } finally {
-      setIsDriveSyncing(false);
-    }
-  };
-
-  // Đăng nhập giáo viên bằng Username & Password do Quản trị viên cấp
-  // (Khắc phục hoàn toàn lỗi bị Google chặn OAuth 403 access_denied)
-  const loginTeacherWithCredentials = (
-    usernameInput: string, 
-    passwordInput: string
-  ): { success: boolean; message?: string } => {
-    const u = usernameInput.trim().toLowerCase();
-    const p = passwordInput.trim();
-
-    if (!u || !p) {
-      return { success: false, message: 'Vui lòng nhập đầy đủ Tên đăng nhập và Mật khẩu giáo viên.' };
-    }
-
-    const teacher = registeredTeachers.find(t => 
-      (t.username && t.username.toLowerCase() === u) || 
-      (t.email && t.email.toLowerCase() === u)
-    );
-
-    if (!teacher) {
-      return { 
-        success: false, 
-        message: 'Tên đăng nhập không tồn tại trên hệ thống. Vui lòng liên hệ Quản trị viên để được cấp tài khoản.' 
-      };
-    }
-
-    if (teacher.password && teacher.password !== p) {
-      return { success: false, message: 'Mật khẩu không chính xác. Vui lòng kiểm tra lại.' };
-    }
-
-    if (teacher.status === 'pending') {
-      return { 
-        success: false, 
-        message: `Tài khoản (${teacher.displayName}) đang ở trạng thái CHỜ PHÊ DUYỆT từ Quản trị viên.` 
-      };
-    }
-
-    if (teacher.status === 'rejected') {
-      return { 
-        success: false, 
-        message: 'Tài khoản này đã bị Quản trị viên TẠM KHÓA quyền truy cập.' 
-      };
-    }
-
-    // Active approved teacher
-    // Yêu cầu: Lớp phụ trách thêm mục Non tức là chưa phân cấp quản lý lớp nào.
-    // Tài khoản nào được phân quyền quản lý lớp nào thì được thao tác hiển thị với lớp đó, còn nếu không khi đăng nhập sẽ không hiển thị lớp.
-    const isAssignedNone = !teacher.assignedClassId || teacher.assignedClassId === 'none';
-    const targetClassId = isAssignedNone ? 'none' : teacher.assignedClassId;
-    setActiveClassId(isAssignedNone ? '' : targetClassId);
-    const targetClass = isAssignedNone ? null : classes.find(c => c.id === targetClassId);
-
-    const account: TeacherAccount = {
-      uid: teacher.id,
-      username: teacher.username,
-      email: teacher.email,
-      displayName: teacher.displayName,
-      assignedClassId: targetClassId,
-      photoURL: teacher.photoURL,
-      folderName: `THƯ MỤC GIÁO VIÊN: ${teacher.displayName}`,
-      lastSyncTime: Date.now()
-    };
-
-    setTeacherAccount(account);
-    setCurrentRole('teacher');
-    setIsImpersonating(false);
-    setRoleModalOpen(false);
-
-    setTeacherProfile(prev => ({
-      ...prev,
-      name: teacher.displayName || prev.name,
-      role: targetClass ? `Giáo viên chủ nhiệm lớp ${targetClass.name}` : 'Chưa phân công lớp',
-      avatar: teacher.photoURL || prev.avatar
-    }));
-
-    // Update last login
-    setRegisteredTeachers(prev => prev.map(t => t.id === teacher.id ? { ...t, lastLoginAt: Date.now() } : t));
-
-    return { success: true };
-  };
-
-  const loginAsAdmin = (username: string, password: string): { success: boolean; message?: string } => {
-    const u = username.trim().toLowerCase();
-    const p = password.trim();
-    if (u === 'admin' && (p === 'Tanuyen@2026' || p === 'admin123' || p === 'admin')) {
-      const account: AdminAccount = {
-        username: 'admin',
-        role: 'admin',
-        folderName: 'THƯ MỤC QUẢN TRỊ',
-        cycleStartDate
-      };
-      setAdminAccount(account);
-      setCurrentRole('admin');
-      setIsImpersonating(false);
-      setRoleModalOpen(false);
-      return { success: true };
-    }
-    return { success: false, message: 'Tên đăng nhập hoặc mật khẩu quản trị không đúng! (Mật khẩu mặc định: Tanuyen@2026 hoặc admin123)' };
-  };
-
-  const logoutRole = async () => {
-    try {
-      await logoutGoogle();
-    } catch (e) {
-      console.error(e);
-    }
-    setCurrentRole(null);
-    setTeacherAccount(null);
-    setAdminAccount(null);
-    setIsImpersonating(false);
-    localStorage.removeItem(STORAGE_KEY + '_currentRole');
-    localStorage.removeItem(STORAGE_KEY + '_teacherAccount');
-    localStorage.removeItem(STORAGE_KEY + '_adminAccount');
-    localStorage.removeItem(STORAGE_KEY + '_isImpersonating');
-    setRoleModalOpen(true);
-  };
-
-  // ---------------------------------------------------------------------------
-  // REGISTERED TEACHERS MANAGEMENT (ADMIN CONTROL)
-  // ---------------------------------------------------------------------------
-  const addRegisteredTeacher = (teacherData: Omit<RegisteredTeacher, 'id' | 'registeredAt'>) => {
-    const isNone = !teacherData.assignedClassId || teacherData.assignedClassId === 'none';
-    const assignedCls = isNone ? null : classes.find(c => c.id === teacherData.assignedClassId);
-    const newTeacher: RegisteredTeacher = {
-      ...teacherData,
-      id: 'gv-' + Date.now(),
-      username: teacherData.username || (teacherData.email ? teacherData.email.split('@')[0] : 'gv_' + Date.now().toString().slice(-4)),
-      password: teacherData.password || '123456',
-      assignedClassId: isNone ? 'none' : teacherData.assignedClassId,
-      assignedClassName: isNone ? 'Chưa phân công (None)' : (assignedCls ? `${assignedCls.name} (${assignedCls.grade})` : (teacherData.assignedClassName || '4A1')),
-      registeredAt: Date.now()
-    };
-    setRegisteredTeachers(prev => [newTeacher, ...prev]);
-  };
-
-  const updateRegisteredTeacher = (id: string, data: Partial<RegisteredTeacher>) => {
-    setRegisteredTeachers(prev => prev.map(t => {
-      if (t.id === id) {
-        let assignedClassName = t.assignedClassName;
-        if (data.assignedClassId !== undefined) {
-          if (data.assignedClassId === 'none' || !data.assignedClassId) {
-            assignedClassName = 'Chưa phân công (None)';
-          } else {
-            const cls = classes.find(c => c.id === data.assignedClassId);
-            if (cls) assignedClassName = `${cls.name} (${cls.grade})`;
-          }
-        }
-        return { ...t, ...data, assignedClassName };
-      }
-      return t;
-    }));
-  };
-
-  const deleteRegisteredTeacher = (id: string) => {
-    setRegisteredTeachers(prev => prev.filter(t => t.id !== id));
-  };
-
-  const approveTeacher = (id: string, classId?: string) => {
-    setRegisteredTeachers(prev => prev.map(t => {
-      if (t.id === id) {
-        const assignedClassId = classId !== undefined ? classId : (t.assignedClassId || 'none');
-        const isNone = assignedClassId === 'none' || !assignedClassId;
-        const cls = isNone ? null : classes.find(c => c.id === assignedClassId);
-        return {
-          ...t,
-          status: 'approved' as const,
-          assignedClassId: isNone ? 'none' : assignedClassId,
-          assignedClassName: isNone ? 'Chưa phân công (None)' : (cls ? `${cls.name} (${cls.grade})` : t.assignedClassName)
-        };
-      }
-      return t;
-    }));
-  };
-
-  const rejectTeacher = (id: string) => {
-    setRegisteredTeachers(prev => prev.map(t => t.id === id ? { ...t, status: 'rejected' as const } : t));
-  };
-
-  const resetTeacherPassword = (id: string, newPassword = '123456') => {
-    setRegisteredTeachers(prev => prev.map(t => t.id === id ? { ...t, password: newPassword } : t));
-  };
-
-  // ---------------------------------------------------------------------------
-  // ADMIN IMPERSONATION (View and interact with class as teacher and back)
-  // ---------------------------------------------------------------------------
-  const adminImpersonateClass = (classId: string) => {
-    const targetClass = classes.find(c => c.id === classId) || classes[0];
-    if (targetClass) {
-      setActiveClassId(targetClass.id);
-      if (targetClass.teacherName) {
-        setTeacherProfile(prev => ({
-          ...prev,
-          name: targetClass.teacherName || prev.name,
-          role: `Giáo viên chủ nhiệm lớp ${targetClass.name}`
-        }));
-      }
-    }
-    setCurrentRole('teacher');
-    setIsImpersonating(true);
-  };
-
-  const exitImpersonation = () => {
-    setCurrentRole('admin');
-    setIsImpersonating(false);
-  };
-
-  // ---------------------------------------------------------------------------
-  // GOOGLE DRIVE SYNC ACTIONS
-  // ---------------------------------------------------------------------------
-  const syncToDriveNow = async (): Promise<{ success: boolean; message: string }> => {
-    const token = getCachedAccessToken();
-    if (!token) {
-      return { 
-        success: false, 
-        message: 'Chưa có phiên kết nối Google Drive. Vui lòng bấm Đăng nhập Google để cấp quyền lưu trữ.' 
-      };
-    }
-
-    setIsDriveSyncing(true);
-    setDriveSyncStatus('Đang đồng bộ dữ liệu lên Google Drive...');
-    try {
-      const teacherName = teacherAccount?.displayName || teacherProfile.name || 'GiaoVien';
-      const { teacherFolderId, adminFolderId } = await ensureDriveTree(token, teacherName);
-
-      if (currentRole === 'teacher' || teacherAccount) {
-        const teacherData = {
-          updatedAt: new Date().toISOString(),
-          teacher: teacherProfile,
-          classes,
-          students,
-          subjects,
-          timetable,
-          transactions,
-          attendanceRecords,
-          boardingRecords
-        };
-        await saveJsonToDrive(
-          token, 
-          teacherFolderId, 
-          `LopHoc_${teacherName.replace(/\s+/g, '_')}_data.json`, 
-          teacherData
-        );
-      }
-
-      if (currentRole === 'admin' || adminAccount) {
-        const adminData = {
-          updatedAt: new Date().toISOString(),
-          totalClasses: classes.length,
-          totalStudents: students.length,
-          classes,
-          students,
-          attendanceRecords,
-          boardingRecords
-        };
-        await saveJsonToDrive(token, adminFolderId, 'DuLieu_TongQuan_QuanTri.json', adminData);
-      }
-
-      setDriveSyncStatus('Đồng bộ Google Drive thành công');
-      setIsDriveSyncing(false);
-      return { success: true, message: 'Dữ liệu đã được lưu trữ và đồng bộ an toàn trên Google Drive!' };
-    } catch (err: any) {
-      setIsDriveSyncing(false);
-      setDriveSyncStatus(`Lỗi đồng bộ: ${err.message || err}`);
-      return { success: false, message: err.message || 'Lỗi khi lưu lên Google Drive' };
-    }
-  };
-
-  const loadFromDriveNow = async (): Promise<{ success: boolean; message: string }> => {
-    const token = getCachedAccessToken();
-    if (!token) {
-      return { success: false, message: 'Chưa có phiên kết nối Google Drive.' };
-    }
-
-    setIsDriveSyncing(true);
-    setDriveSyncStatus('Đang tìm tệp sao lưu trên Google Drive...');
-    try {
-      const teacherName = teacherAccount?.displayName || teacherProfile.name || 'GiaoVien';
-      const { teacherFolderId } = await ensureDriveTree(token, teacherName);
-      const files = await listFilesInFolder(token, teacherFolderId);
-      const jsonFile = files.find(f => f.name.endsWith('.json'));
-
-      if (!jsonFile) {
-        setIsDriveSyncing(false);
-        return { success: false, message: `Chưa có tệp JSON nào trong "THƯ MỤC GIÁO VIÊN: ${teacherName}"` };
-      }
-
-      const driveData = await readJsonFromDrive(token, jsonFile.id);
-      if (driveData.classes && Array.isArray(driveData.classes)) {
-        setClasses(driveData.classes);
-      }
-      if (driveData.students && Array.isArray(driveData.students)) {
-        setStudents(driveData.students);
-      }
-      if (driveData.subjects && Array.isArray(driveData.subjects)) {
-        setSubjects(driveData.subjects);
-      }
-      if (driveData.timetable && Array.isArray(driveData.timetable)) {
-        setTimetable(driveData.timetable);
-      }
-      if (driveData.attendanceRecords && Array.isArray(driveData.attendanceRecords)) {
-        setAttendanceRecords(driveData.attendanceRecords);
-      }
-      if (driveData.boardingRecords && Array.isArray(driveData.boardingRecords)) {
-        setBoardingRecords(driveData.boardingRecords);
-      }
-
-      setIsDriveSyncing(false);
-      setDriveSyncStatus('Đã khôi phục dữ liệu từ Google Drive');
-      return { success: true, message: `Đã nạp thành công dữ liệu từ "${jsonFile.name}" trên Google Drive!` };
-    } catch (err: any) {
-      setIsDriveSyncing(false);
-      return { success: false, message: err.message || 'Lỗi khi đọc Google Drive' };
-    }
-  };
-
-  // ---------------------------------------------------------------------------
-  // 30-DAY CYCLE ALERT & MONTHLY RESET
-  // ---------------------------------------------------------------------------
-  const cycleDateObj = new Date(cycleStartDate || '2026-09-01');
-  const diffDays = Math.floor(Math.abs(Date.now() - cycleDateObj.getTime()) / (1000 * 60 * 60 * 24));
-  const daysIntoCycle = Math.max(0, diffDays);
-  const is30DayAlertDue = daysIntoCycle >= 30 && !isAlertDismissed;
-
-  const dismiss30DayAlert = () => {
-    setIsAlertDismissed(true);
-  };
-
-  const resetMonthlyStatistics = () => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    setCycleStartDate(todayStr);
-    setIsAlertDismissed(false);
-    safeLocalStorageSet(STORAGE_KEY + '_cycleStartDate', todayStr);
-
-    // Xóa làm mới dữ liệu chuyên cần và bán trú cho chu kỳ tháng mới
-    // Giữ nguyên 100% lớp học, danh sách học sinh và điểm xu thi đua
-    setAttendanceRecords([]);
-    setBoardingRecords([]);
-    safeLocalStorageSet(STORAGE_KEY + '_attendance', JSON.stringify([]));
-    safeLocalStorageSet(STORAGE_KEY + '_boarding', JSON.stringify([]));
-  };
-
-  const exportFullSystemJson = () => {
-    exportBackupJson();
-  };
-
-  // ---------------------------------------------------------------------------
-  // QUESTION BANKS MANAGEMENT
-  // ---------------------------------------------------------------------------
-  const addQuestionBank = (bank: Omit<QuestionBank, 'id' | 'createdAt'>) => {
-    const newBank: QuestionBank = {
-      ...bank,
-      id: `qb-${Date.now()}`,
-      createdAt: Date.now()
-    };
-    setQuestionBanks(prev => [newBank, ...prev]);
-  };
-
-  const updateQuestionBank = (id: string, bank: Partial<QuestionBank>) => {
-    setQuestionBanks(prev => prev.map(b => b.id === id ? { ...b, ...bank } : b));
-  };
-
-  const deleteQuestionBank = (id: string) => {
-    setQuestionBanks(prev => prev.filter(b => b.id !== id));
-  };
-
-  const addQuestionToBank = (bankId: string, question: Omit<QuestionItem, 'id'>) => {
-    const newQ: QuestionItem = {
-      ...question,
-      id: `q-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
-    };
-    setQuestionBanks(prev => prev.map(b => {
-      if (b.id === bankId) {
-        return { ...b, questions: [...b.questions, newQ] };
-      }
-      return b;
-    }));
-  };
-
-  const deleteQuestionFromBank = (bankId: string, questionId: string) => {
-    setQuestionBanks(prev => prev.map(b => {
-      if (b.id === bankId) {
-        return { ...b, questions: b.questions.filter(q => q.id !== questionId) };
-      }
-      return b;
-    }));
-  };
-
   return (
     <ClassroomContext.Provider value={{
-      currentRole,
-      setCurrentRole,
-      teacherAccount,
-      adminAccount,
-      isRoleModalOpen,
-      setRoleModalOpen,
-      loginAsTeacher,
-      loginTeacherWithCredentials,
-      loginAsAdmin,
-      logoutRole,
-
-      registeredTeachers,
-      addRegisteredTeacher,
-      updateRegisteredTeacher,
-      deleteRegisteredTeacher,
-      approveTeacher,
-      rejectTeacher,
-      resetTeacherPassword,
-
-      isImpersonating,
-      adminImpersonateClass,
-      exitImpersonation,
-
-      isDriveSyncing,
-      driveSyncStatus,
-      syncToDriveNow,
-      loadFromDriveNow,
-
-      cycleStartDate,
-      daysIntoCycle,
-      is30DayAlertDue,
-      isAlertDismissed,
-      dismiss30DayAlert,
-      resetMonthlyStatistics,
-      exportFullSystemJson,
-
-      questionBanks,
-      addQuestionBank,
-      updateQuestionBank,
-      deleteQuestionBank,
-      addQuestionToBank,
-      deleteQuestionFromBank,
-
       classes,
       activeClassId,
       setActiveClassId,
       addClass,
       updateClass,
       deleteClass,
+      bulkDeleteClasses,
+      bulkUpdateClasses,
       deleteAllClasses,
 
       students,
@@ -1891,13 +2121,18 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       addStudent,
       updateStudent,
       deleteStudent,
+      bulkDeleteStudents,
       clearClassStudents,
       bulkAddStudents,
+      resetStudentsCoins,
 
       subjects,
       addSubject,
       updateSubject,
       deleteSubject,
+      toggleSubjectApplied,
+      setAppliedSubjects,
+      resetDefaultSubjects,
 
       criteria,
       addCriterion,
@@ -1905,8 +2140,6 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       transactions,
       awardPoints,
       deductPoints,
-      resetStudentPoints,
-      bulkSetPoints,
 
       rewards,
       addReward,
@@ -1917,6 +2150,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       seatingColumns,
       setSeatingColumns,
+      deskCountsPerColumn,
+      setDeskCountsPerColumn,
+      updateDeskCountForColumn,
+      deskNumberingOrder,
+      setDeskNumberingOrder,
       teacherDeskPos,
       setTeacherDeskPos,
       doorPos,
@@ -1943,19 +2181,63 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setTimetableConfig,
       updateTimetableSlot,
 
+      teacherRole,
+      setTeacherRole,
+      subjectTeacherConfig,
+      updateSubjectTeacherConfig,
+      subjectTimetable,
+      updateSubjectTimetableSlot,
+      deleteSubjectTimetableSlot,
+      clearSubjectTimetable,
+      seedSample20SubjectClasses,
+      loadSampleTimetableByImage,
+      initSubjectClasses,
+      applySubjectTimetableSlots,
+
       quickLinks,
       addQuickLink,
       deleteQuickLink,
+      updateQuickLink,
+      reorderQuickLinks,
 
       teacherProfile,
       updateTeacherProfile,
+
+      // Kho câu hỏi độc lập & Infographic lưu trực tuyến theo tài khoản
+      quizBank,
+      setQuizBank,
+      updateQuizBank,
+      infographicConfig,
+      updateInfographicConfig,
 
       exportBackupJson,
       importBackupJson,
       exportBackupZip,
       importBackupZip,
       resetToDefaultData,
-      clearAllData
+      clearAllData,
+
+      // Quản lý người dùng, phân quyền & Cơ sở dữ liệu đồng bộ
+      currentUser,
+      allUsers,
+      allTeachers: allUsers.filter(u => u.role === 'homeroom' || u.role === 'subject'),
+      loginUser,
+      logoutUser,
+      switchUserAccount,
+      refreshUsersList,
+      logUserActivity,
+      isAuthModalOpen,
+      setIsAuthModalOpen,
+      isAccountManagerOpen,
+      setIsAccountManagerOpen,
+      isGithubModalOpen,
+      setIsGithubModalOpen,
+      dbSyncStatus,
+      lastDbSyncTime,
+      syncDatabaseNow,
+      isAdmin: currentUser?.role === 'admin',
+      isHomeroom: currentUser?.role === 'homeroom',
+      isSubject: currentUser?.role === 'subject'
     }}>
       {children}
     </ClassroomContext.Provider>

@@ -4,14 +4,13 @@ import {
   Grid3X3, Calendar, Gift, Sparkles, Film, 
   Volume2, Timer, Link, BarChart3, Database, 
   Settings, Brain, ChevronLeft, ChevronRight, BookOpen,
-  Building2, ShieldCheck, GraduationCap, FolderSync, RefreshCw
+  ShieldCheck, LogIn, UserCheck, X
 } from 'lucide-react';
 import { useClassroom } from '../../context/ClassroomContext';
 import { APP_AUTHOR_INFO } from '../../data/initialData';
 
 export type NavigationMenuId = 
   | 'dashboard'
-  | 'admin_stats'
   | 'classes'
   | 'students'
   | 'attendance'
@@ -35,6 +34,8 @@ interface SidebarProps {
   onNavigate: (view: NavigationMenuId) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 interface MenuItem {
@@ -49,306 +50,422 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   onNavigate,
   collapsed,
-  onToggleCollapse
+  onToggleCollapse,
+  isMobileOpen = false,
+  onCloseMobile
 }) => {
   const { 
-    currentClassStudents, teacherProfile, currentRole, 
-    teacherAccount, adminAccount, setRoleModalOpen, logoutRole 
+    currentClassStudents, teacherProfile, teacherRole, setTeacherRole, 
+    subjectTeacherConfig, currentUser, isAdmin, setIsAuthModalOpen, setIsAccountManagerOpen 
   } = useClassroom();
 
   const ALL_MENU_ITEMS: MenuItem[] = [
     {
       id: 'dashboard',
-      label: 'Trang chủ',
+      label: 'TRANG CHỦ',
       icon: LayoutDashboard,
     },
     {
-      id: 'admin_stats',
-      label: 'Quản lý số liệu',
-      icon: Building2,
-      badge: 'ADMIN',
-      badgeType: 'hot'
-    },
-    {
       id: 'classes',
-      label: 'Lớp học',
+      label: 'LỚP HỌC',
       icon: School,
     },
     {
       id: 'students',
-      label: 'Học sinh',
+      label: 'HỌC SINH',
       icon: Users,
       badge: currentClassStudents.length.toString(),
       badgeType: 'count'
     },
     {
       id: 'attendance',
-      label: 'Điểm danh',
+      label: 'ĐIỂM DANH',
       icon: CheckSquare,
     },
     {
       id: 'seating',
-      label: 'Sơ đồ lớp',
+      label: 'SƠ ĐỒ LỚP',
       icon: Grid3X3,
     },
     {
       id: 'schedule',
-      label: 'Thời khóa biểu',
+      label: teacherRole === 'subject' ? 'TKB BỘ MÔN' : 'THỜI KHÓA BIỂU',
       icon: Calendar,
+      badge: teacherRole === 'subject' ? 'BỘ MÔN' : undefined,
+      badgeType: 'hot'
     },
     {
       id: 'infographic',
-      label: 'Infographic Lớp',
+      label: 'INFOGRAPHIC LỚP',
       icon: Sparkles,
       badge: 'A4 PDF',
       badgeType: 'hot'
     },
     {
       id: 'rewards',
-      label: 'Đổi quà',
+      label: 'ĐỔI QUÀ',
       icon: Gift,
       badge: 'HOT',
       badgeType: 'hot'
     },
     {
       id: 'picker',
-      label: 'Gọi tên học sinh',
+      label: 'GỌI TÊN HỌC SINH',
       icon: Sparkles,
       badge: '5 GAME',
       badgeType: 'hot'
     },
     {
       id: 'noise',
-      label: 'Chống Ồn',
+      label: 'CHỐNG ỒN',
       icon: Volume2,
     },
     {
       id: 'timer',
-      label: 'Đếm Ngược',
+      label: 'ĐẾM NGƯỢC',
       icon: Timer,
     },
     {
       id: 'links',
-      label: 'Liên kết',
+      label: 'LIÊN KẾT',
       icon: Link,
     },
     {
       id: 'reports',
-      label: 'Thống kê',
+      label: teacherRole === 'subject' ? 'THỐNG KÊ BỘ MÔN' : 'THỐNG KÊ',
       icon: BarChart3,
     },
     {
       id: 'data',
-      label: 'Dữ liệu',
+      label: 'DỮ LIỆU',
       icon: Database,
     },
     {
       id: 'settings',
-      label: 'Cài đặt',
+      label: 'CÀI ĐẶT',
       icon: Settings,
     },
     {
       id: 'ai',
-      label: 'Trợ lý AI',
+      label: 'TRỢ LÝ AI',
       icon: Brain,
       badge: 'AI',
       badgeType: 'ai'
     }
   ];
 
-  // Yêu cầu: Tài khoản đăng nhập giáo viên sẽ không có menu mục Quản lý số liệu (Chức năng này chỉ dành cho admin)
+  // User requirement: Nếu chọn là giáo viên bộ môn sẽ không có các menu chức năng: ĐIỂM DANH, INFOGRAPHIC, SƠ ĐỒ LỚP
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
-    if (item.id === 'admin_stats') {
-      return currentRole === 'admin';
+    if (teacherRole === 'subject') {
+      if (item.id === 'attendance' || item.id === 'seating' || item.id === 'infographic') {
+        return false;
+      }
     }
     return true;
   });
 
-  return (
-    <aside 
-      className={`bg-white border-r border-slate-200/90 flex flex-col transition-all duration-300 z-40 relative select-none shrink-0 ${
-        collapsed ? 'w-20' : 'w-60'
-      }`}
-    >
-      {/* Brand Header: LỚP HỌC HẠNH PHÚC (Yêu cầu 6) */}
-      <div className="h-16 border-b border-slate-200/80 flex items-center px-4 justify-between">
-        {!collapsed ? (
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-9 h-9 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shadow-xs shrink-0 hover-zoom-interactive">
-              <BookOpen className="w-5 h-5 text-amber-950" />
+  const renderSidebarContent = (isMobileDrawer = false) => {
+    const isEffectivelyCollapsed = isMobileDrawer ? false : collapsed;
+    const handleItemClick = (id: NavigationMenuId) => {
+      onNavigate(id);
+      if (isMobileDrawer && onCloseMobile) {
+        onCloseMobile();
+      }
+    };
+
+    return (
+      <div className="flex flex-col h-full overflow-hidden select-none">
+        {/* Brand Header: LỚP HỌC HẠNH PHÚC (Yêu cầu 6) */}
+        <div className="h-13 border-b border-slate-200/80 flex items-center px-3 justify-between shrink-0">
+          {!isEffectivelyCollapsed ? (
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-8 h-8 rounded-xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shadow-xs shrink-0 hover-zoom-interactive">
+                <BookOpen className="w-4 h-4 text-amber-950" />
+              </div>
+              <div className="truncate">
+                <h1 className="text-[11px] font-black text-indigo-900 tracking-tight leading-tight truncate flex items-center gap-1 uppercase">
+                  LỚP HỌC HẠNH PHÚC
+                </h1>
+                <p className="text-[9.5px] text-indigo-600 font-semibold leading-none mt-0.5">
+                  Hệ sinh thái thông minh
+                </p>
+              </div>
             </div>
-            <div className="truncate">
-              <h1 className="text-xs font-black text-indigo-900 tracking-tight leading-tight truncate flex items-center gap-1 uppercase">
-                LỚP HỌC HẠNH PHÚC
-              </h1>
-              <p className="text-[10px] text-indigo-600 font-semibold leading-none mt-0.5">
-                Hệ sinh thái thông minh
-              </p>
+          ) : (
+            <div className="w-full flex justify-center">
+              <div className="w-8 h-8 rounded-xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shadow-xs hover-zoom-interactive">
+                <BookOpen className="w-4 h-4 text-amber-950" />
+              </div>
             </div>
+          )}
+
+          {isMobileDrawer ? (
+            <button
+              onClick={onCloseMobile}
+              className="p-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ml-auto hover-zoom-btn"
+              title="Đóng menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ml-auto hover-zoom-btn"
+              title={collapsed ? 'Mở rộng bảng điều khiển' : 'Thu gọn bảng điều khiển'}
+            >
+              {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+            </button>
+          )}
+        </div>
+
+        {/* Role Selection Switcher (User requirement: Chọn vai trò GVCN hay GVBM) */}
+        {!isEffectivelyCollapsed ? (
+          <div className="px-2.5 pt-2 pb-0.5 shrink-0">
+            <div className="p-0.5 bg-slate-100/90 rounded-xl border border-slate-200/80 flex items-center gap-1">
+              <button
+                onClick={() => setTeacherRole('homeroom')}
+                className={`flex-1 py-1 px-1.5 rounded-lg text-[9.5px] font-black tracking-tight transition-all flex items-center justify-center gap-1 uppercase ${
+                  teacherRole === 'homeroom'
+                    ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                }`}
+                title="Chế độ Giáo viên chủ nhiệm: Đầy đủ điểm danh, sơ đồ lớp 3D, infographic"
+              >
+                <span>🏫</span>
+                <span>GVCN</span>
+              </button>
+              <button
+                onClick={() => {
+                  setTeacherRole('subject');
+                  if (currentView === 'attendance' || currentView === 'seating' || currentView === 'infographic') {
+                    onNavigate('dashboard');
+                  }
+                }}
+                className={`flex-1 py-1 px-1.5 rounded-lg text-[9.5px] font-black tracking-tight transition-all flex items-center justify-center gap-1 uppercase ${
+                  teacherRole === 'subject'
+                    ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                }`}
+                title="Chế độ Giáo viên bộ môn: Quản lý lớp dạy bộ môn, TKB bộ môn theo mẫu, chấm sao thi đua"
+              >
+                <span>💻</span>
+                <span>GV BỘ MÔN</span>
+              </button>
+            </div>
+            {teacherRole === 'subject' && (
+              <div className="mt-0.5 text-center">
+                <span className="inline-block px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8.5px] font-black uppercase tracking-wider">
+                  Môn: {subjectTeacherConfig.subjectName}
+                </span>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="w-full flex justify-center">
-            <div className="w-9 h-9 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shadow-xs hover-zoom-interactive">
-              <BookOpen className="w-5 h-5 text-amber-950" />
+          <div className="p-1.5 flex justify-center shrink-0">
+            <button
+              onClick={() => {
+                const nextRole = teacherRole === 'homeroom' ? 'subject' : 'homeroom';
+                setTeacherRole(nextRole);
+                if (nextRole === 'subject' && (currentView === 'attendance' || currentView === 'seating' || currentView === 'infographic')) {
+                  onNavigate('dashboard');
+                }
+              }}
+              className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black shadow-2xs hover-zoom-btn ${
+                teacherRole === 'subject' ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'
+              }`}
+              title={`Đang là ${teacherRole === 'subject' ? 'GV Bộ môn' : 'GV Chủ nhiệm'}. Nhấn để đổi vai trò.`}
+            >
+              {teacherRole === 'subject' ? 'BM' : 'CN'}
+            </button>
+          </div>
+        )}
+
+        {/* Navigation Items */}
+        <nav className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
+          {MENU_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleItemClick(item.id)}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left transition-all group hover-zoom-btn ${
+                  isActive 
+                    ? 'bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/25' 
+                    : item.badgeType === 'ai'
+                    ? 'bg-gradient-to-r from-indigo-50/80 to-purple-50/80 text-indigo-900 hover:from-indigo-100 hover:to-purple-100 font-semibold'
+                    : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
+                }`}
+                title={isEffectivelyCollapsed ? item.label : undefined}
+              >
+                <div className={`p-1 rounded-lg shrink-0 transition-colors ${
+                  isActive 
+                    ? 'bg-white/20 text-white' 
+                    : item.badgeType === 'ai'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-500 group-hover:text-slate-800'
+                }`}>
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+
+                {!isEffectivelyCollapsed && (
+                  <div className="truncate flex-1 flex items-center justify-between">
+                    <span className="text-[11.5px] tracking-tight truncate leading-tight font-bold">
+                      {item.label}
+                    </span>
+
+                    {/* Badges matching screenshot */}
+                    {item.badge && (
+                      <span className={`px-1.5 py-0.2 rounded-md text-[8.5px] font-black uppercase tracking-wider shrink-0 ml-1.5 ${
+                        isActive 
+                          ? 'bg-white/25 text-white'
+                          : item.badgeType === 'hot'
+                          ? 'bg-rose-100 text-rose-600'
+                          : item.badgeType === 'new'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : item.badgeType === 'ai'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Admin Quick Action Button */}
+        {!isEffectivelyCollapsed && isAdmin && (
+          <div className="px-2 mb-1.5 shrink-0">
+            <button
+              onClick={() => {
+                setIsAccountManagerOpen(true);
+                if (isMobileDrawer && onCloseMobile) onCloseMobile();
+              }}
+              className="w-full flex items-center justify-between p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 transition-colors shadow-2xs group"
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center font-black">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-[11px] font-black uppercase tracking-tight leading-tight">QUẢN TRỊ ADMIN</div>
+                  <div className="text-[9px] text-rose-600 font-bold leading-tight">Tài khoản & DB</div>
+                </div>
+              </div>
+              <span className="text-[8.5px] font-black uppercase bg-rose-200 text-rose-800 px-1 py-0.2 rounded">SUPER</span>
+            </button>
+          </div>
+        )}
+
+        {/* User Account Card */}
+        {!isEffectivelyCollapsed && (
+          <div className="px-2 mb-1.5 shrink-0">
+            <div className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <img 
+                  src={currentUser?.avatar || teacherProfile.avatar} 
+                  alt={currentUser?.fullName}
+                  className="w-6 h-6 rounded-full border border-slate-200 object-cover bg-white shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="text-[10.5px] font-black text-slate-800 truncate leading-tight">
+                    {currentUser?.fullName || teacherProfile.name}
+                  </div>
+                  <div className="text-[8.5px] font-bold text-slate-400 truncate leading-tight">
+                    {currentUser?.role === 'admin' ? 'Quản trị viên' : currentUser?.role === 'homeroom' ? 'GVCN Lớp ' + (currentUser?.assignedClassName || '4A1') : 'GVBM ' + (currentUser?.subjectName || 'Tin học')}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsAuthModalOpen(true);
+                  if (isMobileDrawer && onCloseMobile) onCloseMobile();
+                }}
+                className="p-1 rounded-lg hover:bg-white text-indigo-600 border border-transparent hover:border-slate-200 transition-colors shrink-0"
+                title="Đổi tài khoản đăng nhập"
+              >
+                <LogIn className="w-3 h-3" />
+              </button>
             </div>
           </div>
         )}
 
-        <button
-          onClick={onToggleCollapse}
-          className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors ml-auto hover-zoom-btn"
-          title={collapsed ? 'Mở rộng bảng điều khiển' : 'Thu gọn bảng điều khiển'}
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* Navigation Items */}
-      <nav className="flex-1 overflow-y-auto p-2.5 space-y-1">
-        {MENU_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentView === item.id;
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-2xl text-left transition-all group hover-zoom-btn ${
-                isActive 
-                  ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-600/25' 
-                  : item.badgeType === 'ai'
-                  ? 'bg-gradient-to-r from-indigo-50/80 to-purple-50/80 text-indigo-900 hover:from-indigo-100 hover:to-purple-100 font-semibold'
-                  : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 font-medium'
-              }`}
-              title={collapsed ? item.label : undefined}
-            >
-              <div className={`p-1.5 rounded-xl shrink-0 transition-colors ${
-                isActive 
-                  ? 'bg-white/20 text-white' 
-                  : item.badgeType === 'ai'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-500 group-hover:text-slate-800'
-              }`}>
-                <Icon className="w-4 h-4" />
-              </div>
-
-              {!collapsed && (
-                <div className="truncate flex-1 flex items-center justify-between">
-                  <span className="text-xs tracking-tight truncate leading-tight font-semibold">
-                    {item.label}
-                  </span>
-
-                  {/* Badges matching screenshot */}
-                  {item.badge && (
-                    <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider shrink-0 ml-1.5 ${
-                      isActive 
-                        ? 'bg-white/25 text-white'
-                        : item.badgeType === 'hot'
-                        ? 'bg-rose-100 text-rose-600'
-                        : item.badgeType === 'new'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : item.badgeType === 'ai'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Role Indicator & Switcher Card */}
-      {!collapsed && (
-        <div className="px-2.5 pb-2">
-          <div className={`p-2.5 rounded-2xl border text-left transition-all ${
-            currentRole === 'admin'
-              ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
-              : 'bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200'
-          }`}>
+        {/* Author Footer: CỐ ĐỊNH THEO YÊU CẦU 6 - KHÔNG LẤY TỪ CÀI ĐẶT */}
+        {!isEffectivelyCollapsed && (
+          <div className="p-2 mx-2 mb-2 rounded-xl bg-gradient-to-br from-indigo-50/90 via-sky-50/80 to-blue-50/80 border border-indigo-200/80 text-left hover-zoom-interactive shadow-xs shrink-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {currentRole === 'admin' ? (
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
-                ) : (
-                  <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
-                )}
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">
-                  {currentRole === 'admin' ? 'Quản Lý Số Liệu' : 'Tài Khoản GV'}
-                </span>
-              </div>
-              <button
-                onClick={() => setRoleModalOpen(true)}
-                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 hover:underline cursor-pointer"
-                title="Chuyển đổi vai trò Giáo viên / Quản lý số liệu"
+              <span className="text-[9px] font-black text-indigo-700 uppercase tracking-wider">
+                TÁC GIẢ ỨNG DỤNG
+              </span>
+              <span className="px-1 py-0.2 rounded bg-indigo-100 text-indigo-800 text-[8.5px] font-black uppercase">
+                CỐ ĐỊNH
+              </span>
+            </div>
+            <div className="text-[11px] font-black text-indigo-950 mt-0.5 uppercase">
+              {APP_AUTHOR_INFO.name}
+            </div>
+            <div className="text-[10px] text-slate-700 font-bold mt-0.5 uppercase">
+              {APP_AUTHOR_INFO.schoolName}
+            </div>
+            <div className="text-[10px] text-blue-700 font-bold mt-1.5 flex items-center justify-between pt-1 border-t border-indigo-100/90">
+              <span className="text-slate-600 font-bold uppercase text-[9px]">ZALO HỖ TRỢ:</span>
+              <a 
+                href={APP_AUTHOR_INFO.zaloUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                className="font-mono bg-white hover:bg-blue-50 px-1.5 py-0.2 rounded text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors text-[9.5px]"
               >
-                <RefreshCw className="w-2.5 h-2.5" />
-                <span>Đổi vai trò</span>
-              </button>
+                {APP_AUTHOR_INFO.zalo}
+              </a>
             </div>
-            
-            <div className="mt-1 text-[11px] font-extrabold text-slate-800 truncate">
-              {currentRole === 'admin' 
-                ? 'admin (Toàn Trường)' 
-                : (teacherAccount?.displayName || teacherProfile.name || 'Chưa đăng nhập')}
+            <div className="text-[10px] text-blue-700 font-bold mt-1 flex items-center justify-between">
+              <span className="text-slate-600 font-bold uppercase text-[9px] flex items-center gap-1">
+                <span className="w-3 h-3 rounded-full bg-blue-600 text-white flex items-center justify-center text-[8px] font-black">f</span>
+                <span>FACEBOOK:</span>
+              </span>
+              <a 
+                href={APP_AUTHOR_INFO.facebook} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="bg-white hover:bg-blue-50 px-1.5 py-0.2 rounded text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors text-[9px] uppercase font-bold"
+              >
+                XEM TRANG
+              </a>
             </div>
-
-            {teacherAccount?.email && currentRole === 'teacher' && (
-              <div className="text-[10px] text-slate-500 font-mono truncate">
-                {teacherAccount.email}
-              </div>
-            )}
           </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Desktop Persistent Sidebar */}
+      <aside 
+        className={`hidden lg:flex bg-white border-r border-slate-200/90 flex-col transition-all duration-300 z-40 relative select-none shrink-0 ${
+          collapsed ? 'w-18' : 'w-56'
+        }`}
+      >
+        {renderSidebarContent(false)}
+      </aside>
+
+      {/* Mobile & Tablet Slide-over Drawer */}
+      {isMobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200" 
+            onClick={onCloseMobile} 
+          />
+          <aside className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white z-50 shadow-2xl flex flex-col animate-in slide-in-from-left duration-250 select-none">
+            {renderSidebarContent(true)}
+          </aside>
         </div>
       )}
-
-      {/* Author Footer: CỐ ĐỊNH THEO YÊU CẦU 5 - KHÔNG LẤY TỪ CÀI ĐẶT */}
-      {!collapsed && (
-        <div className="p-3 mx-2.5 mb-2.5 rounded-2xl bg-gradient-to-br from-indigo-50/90 via-sky-50/80 to-blue-50/80 border border-indigo-200/80 text-left hover-zoom-interactive shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">
-              TÁC GIẢ ỨNG DỤNG
-            </span>
-            <span className="px-1.5 py-0.2 rounded-md bg-indigo-100 text-indigo-800 text-[9px] font-black">
-              Cố định
-            </span>
-          </div>
-          <div className="text-xs font-black text-indigo-950 mt-1">
-            {APP_AUTHOR_INFO.name}
-          </div>
-          <div className="text-[11px] text-slate-700 font-semibold mt-0.5">
-            {APP_AUTHOR_INFO.schoolName}
-          </div>
-          <div className="text-[11px] text-blue-700 font-bold mt-2 flex items-center justify-between pt-1.5 border-t border-indigo-100/90">
-            <span className="text-slate-600 font-medium">Zalo hỗ trợ:</span>
-            <a 
-              href={APP_AUTHOR_INFO.zaloUrl} 
-              target="_blank" 
-              rel="noreferrer"
-              className="font-mono bg-white hover:bg-blue-50 px-2 py-0.5 rounded-md text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors"
-            >
-              {APP_AUTHOR_INFO.zalo}
-            </a>
-          </div>
-          <div className="text-[11px] text-blue-700 font-bold mt-1.5 flex items-center justify-between">
-            <span className="text-slate-600 font-medium flex items-center gap-1">
-              <span className="w-3.5 h-3.5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-black">f</span>
-              <span>Facebook:</span>
-            </span>
-            <a 
-              href={APP_AUTHOR_INFO.facebook} 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-white hover:bg-blue-50 px-2 py-0.5 rounded-md text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors text-[10px]"
-            >
-              Xem trang
-            </a>
-          </div>
-        </div>
-      )}
-    </aside>
+    </>
   );
 };

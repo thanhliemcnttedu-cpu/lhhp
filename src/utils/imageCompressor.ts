@@ -4,9 +4,9 @@
 
 export async function compressImage(
   source: File | string,
-  maxWidth = 800,
-  maxHeight = 800,
-  quality = 0.88
+  maxWidth = 400,
+  maxHeight = 400,
+  quality = 0.85
 ): Promise<string> {
   return new Promise((resolve) => {
     // Safety timeout: Never hang in loading state longer than 4s
@@ -101,15 +101,13 @@ export async function compressImage(
 
 /**
  * Bakes the zoomed & panned avatar into a clean square image canvas
- * matching exactly what the user saw in the preview viewport (containerSize = 192px),
- * without ever pre-cutting or truncating the original photo.
+ * so it renders reliably everywhere at ~20-30KB without needing CSS transforms.
  */
 export async function bakeCroppedAvatar(
   imageSrc: string,
   scale: number = 1,
   position: { x: number; y: number } = { x: 0, y: 0 },
-  outputSize: number = 256,
-  containerSize: number = 192
+  outputSize: number = 240
 ): Promise<string> {
   return new Promise((resolve) => {
     if (!imageSrc) {
@@ -129,7 +127,6 @@ export async function bakeCroppedAvatar(
     };
 
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
@@ -142,37 +139,31 @@ export async function bakeCroppedAvatar(
         }
 
         // Fill crisp background
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#f8fafc';
         ctx.fillRect(0, 0, outputSize, outputSize);
 
-        const nw = img.naturalWidth || outputSize;
-        const nh = img.naturalHeight || outputSize;
-        const aspect = nw / nh;
-
-        // Base size rendered in the preview container
-        let baseW = containerSize;
-        let baseH = containerSize;
-        if (aspect < 1) {
-          // Portrait: width fits container, height is taller
-          baseW = containerSize;
-          baseH = containerSize / aspect;
-        } else {
-          // Landscape or square: height fits container, width is wider
-          baseH = containerSize;
-          baseW = containerSize * aspect;
-        }
-
-        const ratio = outputSize / containerSize;
-        const renderW = baseW * ratio * scale;
-        const renderH = baseH * ratio * scale;
+        // Center point
         const cx = outputSize / 2;
         const cy = outputSize / 2;
-        const dx = position.x * ratio;
-        const dy = position.y * ratio;
 
-        ctx.drawImage(img, cx + dx - renderW / 2, cy + dy - renderH / 2, renderW, renderH);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.translate(position.x, position.y);
+        ctx.scale(scale, scale);
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        // Draw image centered
+        const nw = img.naturalWidth || outputSize;
+        const nh = img.naturalHeight || outputSize;
+
+        // Cover fit
+        const coverScale = Math.max(outputSize / nw, outputSize / nh);
+        const dw = nw * coverScale;
+        const dh = nh * coverScale;
+
+        ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+        ctx.restore();
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
         finish(dataUrl);
       } catch (err) {
         console.warn('bakeCroppedAvatar error:', err);
@@ -184,3 +175,82 @@ export async function bakeCroppedAvatar(
     img.src = imageSrc;
   });
 }
+
+/**
+ * Bakes the zoomed & panned full uncropped image into a high quality square avatar
+ * only when user confirms. Matches preview viewport pixel-for-pixel without pre-cropping.
+ */
+export async function bakeCropFromFullImage(
+  imageSrc: string,
+  frameSize = 240,
+  position: { x: number; y: number } = { x: 0, y: 0 },
+  scale: number = 1,
+  outputSize: number = 360
+): Promise<string> {
+  return new Promise((resolve) => {
+    if (!imageSrc) {
+      resolve('');
+      return;
+    }
+
+    // If it's an external preset avatar without zoom or translation, return source directly
+    if (imageSrc.startsWith('http') && scale === 1 && position.x === 0 && position.y === 0) {
+      resolve(imageSrc);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      console.warn('bakeCropFromFullImage timed out, returning imageSrc');
+      resolve(imageSrc);
+    }, 4000);
+
+    const finish = (result: string) => {
+      clearTimeout(timeoutId);
+      resolve(result);
+    };
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      try {
+        const nw = img.naturalWidth || outputSize;
+        const nh = img.naturalHeight || outputSize;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          finish(imageSrc);
+          return;
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, outputSize, outputSize);
+
+        // Scale ratio from preview frame to export canvas
+        const R = outputSize / frameSize;
+        const s0 = Math.max(frameSize / nw, frameSize / nh);
+
+        ctx.save();
+        ctx.translate(outputSize / 2, outputSize / 2);
+        ctx.translate(position.x * R, position.y * R);
+        ctx.scale(scale * s0 * R, scale * s0 * R);
+
+        ctx.drawImage(img, -nw / 2, -nh / 2, nw, nh);
+        ctx.restore();
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        finish(dataUrl);
+      } catch (err) {
+        console.warn('bakeCropFromFullImage error:', err);
+        finish(imageSrc);
+      }
+    };
+
+    img.onerror = () => finish(imageSrc);
+    img.src = imageSrc;
+  });
+}
+

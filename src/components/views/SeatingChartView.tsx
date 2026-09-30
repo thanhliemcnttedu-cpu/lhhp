@@ -9,7 +9,6 @@ import {
 import confetti from 'canvas-confetti';
 import { toPng } from 'html-to-image';
 import { exportElementToPdf } from '../../utils/printHelper';
-import { NavigationMenuId } from '../layout/Sidebar';
 
 export type SeatingPerspectiveTheme = 
   | 'wood_3d' 
@@ -154,14 +153,12 @@ export const SEATING_THEMES: Record<SeatingPerspectiveTheme, ThemeConfig> = {
   }
 };
 
-interface SeatingChartViewProps {
-  onNavigate?: (view: NavigationMenuId) => void;
-}
-
-export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }) => {
+export const SeatingChartView: React.FC = () => {
   const { 
     currentClassStudents, activeClassId, classes,
     seatingColumns, setSeatingColumns,
+    deskCountsPerColumn, updateDeskCountForColumn, setDeskCountsPerColumn,
+    deskNumberingOrder, setDeskNumberingOrder,
     seatingAssignments, assignSeat, clearSeating,
     autoAssignSeating, teacherDeskPos, setTeacherDeskPos,
     doorPos, setDoorPos,
@@ -177,39 +174,6 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
   const [isConfigDrawerOpen, setIsConfigDrawerOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingPng, setIsExportingPng] = useState(false);
-  const [isGeneratingInfographicImage, setIsGeneratingInfographicImage] = useState(false);
-  const [infographicSuccess, setInfographicSuccess] = useState(false);
-
-  // Yêu cầu: Tùy chọn số bàn của từng dãy, số dãy, đánh số bàn theo dãy dọc hoặc ngang
-  const [desksPerColumn, setDesksPerColumn] = useState<Record<number, number>>({
-    0: 4, 1: 4, 2: 4, 3: 4, 4: 4, 5: 4
-  });
-  const [numberingDirection, setNumberingDirection] = useState<'vertical' | 'horizontal'>('vertical');
-
-  const getDeskNumber = (colIdx: number, rowIdx: number): number => {
-    if (numberingDirection === 'vertical') {
-      let prevCount = 0;
-      for (let c = 0; c < colIdx; c++) {
-        prevCount += (desksPerColumn[c] || 4);
-      }
-      return prevCount + rowIdx + 1;
-    } else {
-      let count = 0;
-      for (let r = 0; r < rowIdx; r++) {
-        for (let c = 0; c < seatingColumns; c++) {
-          if (r < (desksPerColumn[c] || 4)) count++;
-        }
-      }
-      for (let c = 0; c <= colIdx; c++) {
-        if (c === colIdx) {
-          count++;
-        } else if (rowIdx < (desksPerColumn[c] || 4)) {
-          count++;
-        }
-      }
-      return count;
-    }
-  };
 
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const printableAreaRef = useRef<HTMLDivElement | null>(null);
@@ -217,12 +181,57 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
   const currentTheme = SEATING_THEMES[perspectiveTheme];
   const is3D = currentTheme.type === '3d';
 
-  // 4 or 5 standard rows
-  const rows = 4;
+  // Compute valid seat keys based on per-column desk counts
+  const validSeatKeys = new Set<string>();
+  for (let c = 0; c < seatingColumns; c++) {
+    const colCount = deskCountsPerColumn[c] || 4;
+    for (let r = 0; r < colCount; r++) {
+      validSeatKeys.add(`${c}-${r}-0`);
+      validSeatKeys.add(`${c}-${r}-1`);
+    }
+  }
 
-  // Unseated students list
-  const assignedStudentIds = new Set(Object.values(seatingAssignments));
-  const unseatedStudents = currentClassStudents.filter(s => !assignedStudentIds.has(s.id));
+  const seatedStudentIds = new Set(
+    Object.entries(seatingAssignments)
+      .filter(([key]) => validSeatKeys.has(key))
+      .map(([, studentId]) => studentId)
+  );
+  const unseatedStudents = currentClassStudents.filter(s => !seatedStudentIds.has(s.id));
+
+  const totalDesks: number = Array.from({ length: seatingColumns }).reduce(
+    (sum: number, _, c) => sum + (deskCountsPerColumn[c] || 4),
+    0
+  );
+  const totalSeats: number = totalDesks * 2;
+
+  // Calculate desk number based on deskNumberingOrder:
+  // 'vertical' (THEO DỌC): Column by column, top to bottom
+  // 'horizontal' (THEO NGANG): Row by row, left to right
+  const getDeskNumber = (colIdx: number, rowIdx: number): number => {
+    if (deskNumberingOrder === 'horizontal') {
+      const maxRows = Math.max(...Array.from({ length: seatingColumns }).map((_, c) => deskCountsPerColumn[c] || 4), 4);
+      let count = 1;
+      for (let r = 0; r < maxRows; r++) {
+        for (let c = 0; c < seatingColumns; c++) {
+          const colLimit = deskCountsPerColumn[c] || 4;
+          if (r < colLimit) {
+            if (c === colIdx && r === rowIdx) {
+              return count;
+            }
+            count++;
+          }
+        }
+      }
+      return rowIdx + 1;
+    } else {
+      // 'vertical' (THEO DỌC)
+      let prevCount = 0;
+      for (let c = 0; c < colIdx; c++) {
+        prevCount += (deskCountsPerColumn[c] || 4);
+      }
+      return prevCount + rowIdx + 1;
+    }
+  };
 
   const handleSeatClick = (seatKey: string) => {
     if (selectedStudentToSeat) {
@@ -280,38 +289,6 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
     }
   };
 
-  // Tạo ảnh sơ đồ chuyên dụng cho Infographic (Yêu cầu: Mục sơ đồ lớp có thêm chức năng tạo ảnh sơ đồ cho infographic)
-  const handleGenerateInfographicImage = async () => {
-    if (!printableAreaRef.current) return;
-    try {
-      setIsGeneratingInfographicImage(true);
-      const dataUrl = await toPng(printableAreaRef.current, {
-        quality: 0.98,
-        pixelRatio: 2,
-        backgroundColor: '#ffffff'
-      });
-
-      const key = `lop_hoc_seating_infographic_img_${activeClass?.id || activeClassId}`;
-      const payload = {
-        image: dataUrl,
-        classId: activeClass?.id || activeClassId,
-        className: activeClass?.name || '4A1',
-        themeId: perspectiveTheme,
-        themeName: currentTheme.name,
-        columns: seatingColumns,
-        createdAt: Date.now()
-      };
-      localStorage.setItem(key, JSON.stringify(payload));
-
-      confetti({ particleCount: 65, spread: 75, origin: { y: 0.6 } });
-      setInfographicSuccess(true);
-    } catch (err) {
-      console.error('Lỗi khi tạo ảnh sơ đồ cho Infographic:', err);
-    } finally {
-      setIsGeneratingInfographicImage(false);
-    }
-  };
-
   // Switch perspective theme
   const handleSelectTheme = (themeId: SeatingPerspectiveTheme) => {
     setPerspectiveTheme(themeId);
@@ -325,7 +302,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
   // =========================================================================
   // PODIUM COMPONENTS (Matching attached 3D classroom photo)
   // Reactive to teacherDeskPos ('left' | 'center' | 'right') and doorPos ('left' | 'right')
-  // Slogan banner removed completely per user request
+  // Slogan banner removed as requested. Clean, balanced 12-column podium layout.
   // =========================================================================
   const renderTeacherDesk = (colSpan: string = 'col-span-4') => (
     <div className={`${colSpan} h-full min-h-[90px] bg-[#f8ebd7] rounded-xl border-2 border-[#c5a880] p-2.5 shadow-sm text-center transition-all duration-300 hover-zoom-interactive flex flex-col justify-between`}>
@@ -353,7 +330,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
     </div>
   );
 
-  const renderChalkboard = (colSpan: string = 'col-span-5') => (
+  const renderChalkboard = (colSpan: string = 'col-span-6') => (
     <div className={`${colSpan} h-full min-h-[90px] bg-gradient-to-b from-[#1b5e39] to-[#124227] rounded-xl border-4 border-[#8e6b3e] p-2.5 text-center shadow-lg relative transition-all duration-300 flex flex-col justify-center`}>
       <div className="text-xs sm:text-sm md:text-base font-black tracking-wide text-white drop-shadow-md uppercase">
         BẢNG LỚP HỌC HẠNH PHÚC
@@ -364,7 +341,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
     </div>
   );
 
-  const renderDoor = (colSpan: string = 'col-span-3') => (
+  const renderDoor = (colSpan: string = 'col-span-2') => (
     <div className={`${colSpan} h-full min-h-[90px] bg-[#e8d2b7] rounded-xl border-2 border-[#b89870] p-2 text-center shadow-sm relative overflow-hidden flex flex-col justify-between hover-zoom-interactive`}>
       <div className="flex items-center justify-between">
         <span className="text-[9px] font-black text-amber-900 uppercase">CỬA LỚP</span>
@@ -377,31 +354,32 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
     </div>
   );
 
-  // Layout Podium dynamically based on doorPos & teacherDeskPos (No slogan banner per request)
+  // Layout Podium dynamically based on doorPos & teacherDeskPos (No tools shelf, slogan banner removed)
   const renderPodiumLayout = () => {
     if (doorPos === 'left') {
       if (teacherDeskPos === 'left') {
         return (
           <div className="grid grid-cols-12 gap-3 items-stretch animate-in fade-in duration-200">
-            {renderDoor('col-span-3')}
-            {renderTeacherDesk('col-span-4')}
-            {renderChalkboard('col-span-5')}
+            {renderDoor('col-span-3 sm:col-span-2')}
+            {renderTeacherDesk('col-span-4 sm:col-span-4')}
+            {renderChalkboard('col-span-5 sm:col-span-6')}
           </div>
         );
       } else if (teacherDeskPos === 'center') {
         return (
           <div className="grid grid-cols-12 gap-3 items-stretch animate-in fade-in duration-200">
-            {renderDoor('col-span-3')}
-            {renderChalkboard('col-span-5')}
-            {renderTeacherDesk('col-span-4')}
+            {renderDoor('col-span-3 sm:col-span-2')}
+            {renderChalkboard('col-span-4 sm:col-span-5')}
+            {renderTeacherDesk('col-span-5 sm:col-span-5')}
           </div>
         );
       } else {
+        // teacherDeskPos === 'right'
         return (
           <div className="grid grid-cols-12 gap-3 items-stretch animate-in fade-in duration-200">
-            {renderDoor('col-span-3')}
-            {renderChalkboard('col-span-5')}
-            {renderTeacherDesk('col-span-4')}
+            {renderDoor('col-span-3 sm:col-span-2')}
+            {renderChalkboard('col-span-5 sm:col-span-6')}
+            {renderTeacherDesk('col-span-4 sm:col-span-4')}
           </div>
         );
       }
@@ -410,25 +388,26 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
       if (teacherDeskPos === 'left') {
         return (
           <div className="grid grid-cols-12 gap-3 items-stretch animate-in fade-in duration-200">
-            {renderTeacherDesk('col-span-4')}
-            {renderChalkboard('col-span-5')}
-            {renderDoor('col-span-3')}
+            {renderTeacherDesk('col-span-4 sm:col-span-4')}
+            {renderChalkboard('col-span-5 sm:col-span-6')}
+            {renderDoor('col-span-3 sm:col-span-2')}
           </div>
         );
       } else if (teacherDeskPos === 'center') {
         return (
           <div className="grid grid-cols-12 gap-3 items-stretch animate-in fade-in duration-200">
-            {renderChalkboard('col-span-5')}
-            {renderTeacherDesk('col-span-4')}
-            {renderDoor('col-span-3')}
+            {renderTeacherDesk('col-span-5 sm:col-span-5')}
+            {renderChalkboard('col-span-4 sm:col-span-5')}
+            {renderDoor('col-span-3 sm:col-span-2')}
           </div>
         );
       } else {
+        // teacherDeskPos === 'right'
         return (
           <div className="grid grid-cols-12 gap-3 items-stretch animate-in fade-in duration-200">
-            {renderChalkboard('col-span-5')}
-            {renderTeacherDesk('col-span-4')}
-            {renderDoor('col-span-3')}
+            {renderChalkboard('col-span-5 sm:col-span-6')}
+            {renderTeacherDesk('col-span-4 sm:col-span-4')}
+            {renderDoor('col-span-3 sm:col-span-2')}
           </div>
         );
       }
@@ -436,23 +415,23 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
       {/* Top Banner & High-End Action Controls */}
-      <div className="bg-white/95 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover-zoom-card">
+      <div className="bg-white/95 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 hover-zoom-card">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-md shadow-blue-600/25">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-md shadow-blue-600/25 shrink-0">
               <Grid3X3 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
                 <span>Sơ Đồ Lớp Học Không Gian</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  {seatingColumns} Dãy Bàn • Lớp {activeClass?.name}
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  {seatingColumns} Dãy Bàn • {totalDesks} Bàn ({totalSeats} Chỗ)
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                {currentTheme.name} • Vị trí bàn GV và Cửa lớp cập nhật theo thời gian thực
+              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                {currentTheme.name} • Đánh số bàn: <strong>{deskNumberingOrder === 'vertical' ? 'THEO DỌC' : 'THEO NGANG'}</strong> • Cập nhật tức thì
               </p>
             </div>
           </div>
@@ -460,6 +439,33 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Quick Numbering Mode Selector */}
+          <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-black text-slate-500 pl-2 pr-1 uppercase">ĐÁNH SỐ:</span>
+            <button
+              onClick={() => setDeskNumberingOrder('vertical')}
+              className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all hover-zoom-btn ${
+                deskNumberingOrder === 'vertical'
+                  ? 'bg-blue-600 text-white shadow-xs font-black'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+              title="Đánh số bàn lần lượt theo từng dãy (từ trên xuống dưới)"
+            >
+              THEO DỌC
+            </button>
+            <button
+              onClick={() => setDeskNumberingOrder('horizontal')}
+              className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all hover-zoom-btn ${
+                deskNumberingOrder === 'horizontal'
+                  ? 'bg-blue-600 text-white shadow-xs font-black'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+              }`}
+              title="Đánh số bàn lần lượt theo từng hàng (từ trái sang phải)"
+            >
+              THEO NGANG
+            </button>
+          </div>
+
           {/* Quick Config Button */}
           <button
             onClick={() => setIsConfigDrawerOpen(!isConfigDrawerOpen)}
@@ -470,7 +476,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Tùy Biến Bố Trí ({seatingColumns} Dãy)</span>
+            <span>Tùy Biến Bố Trí ({seatingColumns} Dãy, {totalDesks} Bàn)</span>
           </button>
 
           {/* Auto Assign */}
@@ -485,91 +491,42 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
 
           <button
             onClick={clearSeating}
-            className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold text-rose-600 bg-rose-50/80 hover:bg-rose-100 border border-rose-200/80 rounded-2xl transition-all hover-zoom-btn"
+            className="inline-flex items-center gap-1 px-3 py-2 text-xs font-black text-rose-600 bg-rose-50/80 hover:bg-rose-100 border border-rose-200/80 rounded-2xl transition-all hover-zoom-btn uppercase"
             title="Gỡ tất cả học sinh khỏi chỗ ngồi"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>Xóa chỗ</span>
-          </button>
-
-          {/* Nút Tạo Ảnh Sơ Đồ Cho Infographic */}
-          <button
-            onClick={handleGenerateInfographicImage}
-            disabled={isGeneratingInfographicImage}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 rounded-2xl shadow-md shadow-purple-600/25 transition-all hover-zoom-btn disabled:opacity-50 cursor-pointer ring-2 ring-purple-300"
-            title="Tạo ảnh sơ đồ chỗ ngồi chuẩn để chèn tự động vào trang Infographic của lớp"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>{isGeneratingInfographicImage ? 'Đang tạo ảnh Infographic...' : 'Tạo Ảnh Sơ Đồ Cho Infographic'}</span>
+            <span>XÓA CHỖ</span>
           </button>
 
           {/* Nút Xuất Ảnh PNG */}
           <button
             onClick={handleExportPng}
             disabled={isExportingPng}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-2xl shadow-xs transition-all hover-zoom-btn disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-2xl shadow-xs transition-all hover-zoom-btn disabled:opacity-50 uppercase"
             title="Tải ảnh PNG sơ đồ lớp học sắc nét gửi Zalo"
           >
             <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{isExportingPng ? 'Đang xuất PNG...' : 'Xuất Ảnh PNG'}</span>
+            <span>{isExportingPng ? 'ĐANG XUẤT PNG...' : 'XUẤT ẢNH PNG'}</span>
           </button>
 
           {/* Nút Xuất File Sơ Đồ PDF */}
           <button
             onClick={handleExportPdf}
             disabled={isExportingPdf}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn disabled:opacity-50 uppercase"
             title="Xuất file sơ đồ lớp học dạng PDF chuẩn khổ A4"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{isExportingPdf ? 'Đang xuất PDF...' : 'Xuất File Sơ Đồ PDF'}</span>
+            <span>{isExportingPdf ? 'ĐANG XUẤT PDF...' : 'XUẤT FILE SƠ ĐỒ PDF'}</span>
           </button>
         </div>
       </div>
 
-      {/* SUCCESS BANNER: ĐÃ TẠO ẢNH SƠ ĐỒ CHO INFOGRAPHIC */}
-      {infographicSuccess && (
-        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 text-white p-4 rounded-2xl shadow-lg border border-emerald-400 flex flex-col sm:flex-row items-center justify-between gap-3 animate-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-bold shrink-0 text-amber-300">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-black">
-                ĐÃ TẠO VÀ LƯU ẢNH SƠ ĐỒ CHỖ NGỒI CHO INFOGRAPHIC THÀNH CÔNG!
-              </div>
-              <p className="text-[11px] text-emerald-100 font-medium">
-                Ảnh sơ đồ lớp <strong>{activeClass?.name}</strong> (Mẫu: {currentTheme.name}, {seatingColumns} dãy bàn) đã được lưu và sẵn sàng chèn tự động vào mục Infographic của lớp.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {onNavigate && (
-              <button
-                onClick={() => onNavigate('infographic')}
-                className="px-4 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-105"
-              >
-                <span>Xem Trên Infographic</span>
-                <span>➔</span>
-              </button>
-            )}
-            <button
-              onClick={() => setInfographicSuccess(false)}
-              className="p-1.5 text-white/80 hover:text-white rounded-lg text-xs cursor-pointer"
-              title="Đóng thông báo"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* SELECT PERSPECTIVE THEME BAR (User Request: Bổ sung thêm nhiều phối cảnh 2D & 3D) */}
       <div className="bg-white/95 p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+        <div className="flex items-center gap-2 text-xs font-black text-slate-800 uppercase">
           <Palette className="w-4 h-4 text-indigo-600" />
-          <span>Chọn Mẫu Phối Cảnh Lớp Học ({Object.keys(SEATING_THEMES).length} kiểu):</span>
+          <span>CHỌN MẪU PHỐI CẢNH LỚP HỌC ({Object.keys(SEATING_THEMES).length} KIỂU):</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -579,7 +536,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
               <button
                 key={theme.id}
                 onClick={() => handleSelectTheme(theme.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 hover-zoom-btn ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 hover-zoom-btn uppercase ${
                   isSelected
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-102 ring-2 ring-indigo-400'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
@@ -604,29 +561,35 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <Compass className="w-4 h-4 text-blue-600" />
-              <h3 className="text-sm font-bold text-slate-800">
-                Thiết lập thông số không gian & bố trí phòng học (Vị trí cập nhật tức thì)
+              <h3 className="text-sm font-black text-slate-900 uppercase">
+                THIẾT LẬP THÔNG SỐ KHÔNG GIAN & BỐ TRÍ PHÒNG HỌC (VỊ TRÍ CẬP NHẬT TỨC THÌ)
               </h3>
             </div>
             <button
               onClick={() => setIsConfigDrawerOpen(false)}
-              className="text-xs text-slate-400 hover:text-slate-700 p-1 font-bold"
+              className="text-xs text-slate-400 hover:text-slate-700 p-1 font-black uppercase"
             >
-              ✕ Đóng
+              ✕ ĐÓNG
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
             {/* 1. Columns Count */}
             <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60">
-              <label className="block font-bold text-slate-800">
-                1. Số dãy bàn học sinh:
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block font-bold text-slate-800">
+                  1. Chọn số dãy bàn:
+                </label>
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">
+                  {seatingColumns} Dãy
+                </span>
+              </div>
               <div className="grid grid-cols-5 gap-1.5">
-                {([2, 3, 4, 5, 6] as (SeatingColumnsCount | 6)[]).map((cols) => (
+                {([2, 3, 4, 5, 6] as SeatingColumnsCount[]).map((cols) => (
                   <button
                     key={cols}
-                    onClick={() => setSeatingColumns(cols as SeatingColumnsCount)}
+                    type="button"
+                    onClick={() => setSeatingColumns(cols)}
                     className={`py-1.5 rounded-xl font-black text-xs transition-all hover-zoom-btn ${
                       seatingColumns === cols
                         ? 'bg-blue-600 text-white shadow-xs scale-105'
@@ -638,115 +601,67 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                 ))}
               </div>
               <p className="text-[11px] text-slate-500">
-                Lớp tiêu chuẩn thường bố trí <strong>4 Dãy Bàn</strong>.
+                Cho phép chọn từ <strong>2 đến 6 dãy bàn</strong> học sinh.
               </p>
             </div>
 
-            {/* 2. Numbering Direction (Dọc vs Ngang) */}
+            {/* 2. Numbering Rule (THEO DỌC / THEO NGANG) */}
             <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60">
               <div className="flex items-center justify-between">
                 <label className="block font-bold text-slate-800">
-                  2. Đánh số bàn theo:
+                  2. Cách đánh số bàn:
                 </label>
-                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">
-                  {numberingDirection === 'vertical' ? 'Dãy Dọc' : 'Hàng Ngang'}
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 uppercase">
+                  {deskNumberingOrder === 'vertical' ? 'THEO DỌC' : 'THEO NGANG'}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setNumberingDirection('vertical')}
-                  className={`py-2 px-2 rounded-xl font-bold text-xs transition-all text-center ${
-                    numberingDirection === 'vertical'
-                      ? 'bg-indigo-600 text-white shadow-xs font-black'
-                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                  onClick={() => setDeskNumberingOrder('vertical')}
+                  className={`p-2 rounded-xl text-left transition-all border ${
+                    deskNumberingOrder === 'vertical'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-black'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 font-bold'
                   }`}
                 >
-                  <div>Dãy Dọc ⬇</div>
-                  <div className="text-[9px] opacity-80 mt-0.5">Dãy 1: 1, 2, 3...</div>
+                  <div className="text-xs uppercase flex items-center gap-1">
+                    <span>{deskNumberingOrder === 'vertical' ? '✓' : '○'}</span>
+                    <span>THEO DỌC</span>
+                  </div>
+                  <div className={`text-[10px] mt-0.5 leading-tight ${deskNumberingOrder === 'vertical' ? 'text-blue-100' : 'text-slate-500'}`}>
+                    Dãy 1: Bàn 1..N, rồi đến Dãy 2, Dãy 3...
+                  </div>
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => setNumberingDirection('horizontal')}
-                  className={`py-2 px-2 rounded-xl font-bold text-xs transition-all text-center ${
-                    numberingDirection === 'horizontal'
-                      ? 'bg-indigo-600 text-white shadow-xs font-black'
-                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                  onClick={() => setDeskNumberingOrder('horizontal')}
+                  className={`p-2 rounded-xl text-left transition-all border ${
+                    deskNumberingOrder === 'horizontal'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-black'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 font-bold'
                   }`}
                 >
-                  <div>Hàng Ngang ➔</div>
-                  <div className="text-[9px] opacity-80 mt-0.5">Hàng 1: 1, 2, 3...</div>
+                  <div className="text-xs uppercase flex items-center gap-1">
+                    <span>{deskNumberingOrder === 'horizontal' ? '✓' : '○'}</span>
+                    <span>THEO NGANG</span>
+                  </div>
+                  <div className={`text-[10px] mt-0.5 leading-tight ${deskNumberingOrder === 'horizontal' ? 'text-blue-100' : 'text-slate-500'}`}>
+                    Hàng 1: Bàn 1, 2... rồi đến Hàng 2, Hàng 3...
+                  </div>
                 </button>
               </div>
               <p className="text-[11px] text-slate-500">
-                Thứ tự số bàn sẽ tự động cập nhật trên từng chiếc bàn.
+                Sơ đồ sẽ cập nhật ngay lập tức thứ tự đánh số trên các bàn.
               </p>
             </div>
 
-            {/* 3. Desks per Column Configuration */}
-            <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60">
-              <label className="block font-bold text-slate-800">
-                3. Tùy chọn số bàn của từng dãy:
-              </label>
-              <div className="flex items-center gap-1 mb-1.5">
-                <span className="text-[10px] text-slate-500 font-bold">Đặt nhanh tất cả:</span>
-                {[3, 4, 5, 6].map(cnt => (
-                  <button
-                    key={cnt}
-                    type="button"
-                    onClick={() => {
-                      const updated: Record<number, number> = {};
-                      for (let c = 0; c < 6; c++) updated[c] = cnt;
-                      setDesksPerColumn(updated);
-                    }}
-                    className="px-2 py-0.5 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold"
-                  >
-                    {cnt} bàn
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-1.5 max-h-[110px] overflow-y-auto pr-1">
-                {Array.from({ length: seatingColumns }).map((_, cIdx) => {
-                  const currentDeskCount = desksPerColumn[cIdx] || 4;
-                  return (
-                    <div key={cIdx} className="flex items-center justify-between p-1.5 bg-white rounded-xl border border-slate-200 text-[11px]">
-                      <span className="font-bold text-slate-700">Dãy {cIdx + 1}:</span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setDesksPerColumn(prev => ({
-                            ...prev,
-                            [cIdx]: Math.max(1, (prev[cIdx] || 4) - 1)
-                          }))}
-                          className="w-5 h-5 rounded bg-slate-100 hover:bg-rose-100 hover:text-rose-700 font-black flex items-center justify-center cursor-pointer"
-                        >
-                          -
-                        </button>
-                        <span className="font-mono font-bold text-blue-700 w-5 text-center">
-                          {currentDeskCount}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setDesksPerColumn(prev => ({
-                            ...prev,
-                            [cIdx]: Math.min(8, (prev[cIdx] || 4) + 1)
-                          }))}
-                          className="w-5 h-5 rounded bg-slate-100 hover:bg-emerald-100 hover:text-emerald-700 font-black flex items-center justify-center cursor-pointer"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 4. Teacher Desk Position (Reactive) */}
+            {/* 3. Teacher Desk Position (Reactive) */}
             <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60">
               <div className="flex items-center justify-between">
                 <label className="block font-bold text-slate-800">
-                  4. Vị trí Bàn Giáo viên:
+                  3. Vị trí Bàn Giáo viên:
                 </label>
                 <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">
                   {teacherDeskPos === 'left' ? 'Bên Trái' : teacherDeskPos === 'center' ? 'Ở Giữa' : 'Bên Phải'}
@@ -760,6 +675,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                 ].map(pos => (
                   <button
                     key={pos.id}
+                    type="button"
                     onClick={() => setTeacherDeskPos(pos.id as TeacherDeskPosition)}
                     className={`py-1.5 rounded-xl font-bold text-xs transition-all hover-zoom-btn ${
                       teacherDeskPos === pos.id
@@ -772,15 +688,15 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                 ))}
               </div>
               <p className="text-[11px] text-slate-500">
-                Bàn giáo viên sẽ <strong>nhảy vị trí tương ứng</strong> trên bục giảng.
+                Bàn giáo viên sẽ nhảy vị trí tương ứng trên bục giảng.
               </p>
             </div>
 
-            {/* 5. Door Position (Reactive) */}
+            {/* 4. Door Position (Reactive) */}
             <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60">
               <div className="flex items-center justify-between">
                 <label className="block font-bold text-slate-800">
-                  5. Vị trí Cửa ra vào:
+                  4. Vị trí Cửa ra vào:
                 </label>
                 <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
                   {doorPos === 'left' ? 'Cửa Trái' : 'Cửa Phải'}
@@ -793,6 +709,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                 ].map(p => (
                   <button
                     key={p.id}
+                    type="button"
                     onClick={() => setDoorPos(p.id as DoorPosition)}
                     className={`py-1.5 rounded-xl font-bold text-xs transition-all hover-zoom-btn ${
                       doorPos === p.id
@@ -805,48 +722,135 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                 ))}
               </div>
               <p className="text-[11px] text-slate-500">
-                Cửa lớp học sẽ <strong>chuyển sang cánh tương ứng</strong> trên phối cảnh.
+                Cửa lớp học sẽ chuyển sang cánh tương ứng trên phối cảnh.
               </p>
             </div>
 
-            {/* 6. 3D Camera Tilt */}
-            <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60">
+            {/* 5. 3D Camera Tilt & Zoom */}
+            <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60 lg:col-span-2">
               <div className="flex items-center justify-between font-bold text-slate-800">
-                <span>6. Góc nghiêng ({is3D ? `${tiltAngle}°` : '2D phẳng'}):</span>
+                <span>5. Góc nghiêng & Thu phóng 3D ({is3D ? `${tiltAngle}°` : '2D phẳng'}):</span>
                 <button
+                  type="button"
                   onClick={() => { setTiltAngle(is3D ? 18 : 0); setZoomLevel(1); }}
                   className="text-[10px] text-blue-600 hover:underline"
                 >
-                  Mặc định
+                  Mặc định (18°)
                 </button>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="32"
-                disabled={!is3D}
-                value={tiltAngle}
-                onChange={(e) => setTiltAngle(parseInt(e.target.value))}
-                className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer disabled:opacity-40"
-              />
-              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                <span>Thu phóng:</span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setZoomLevel(prev => Math.max(0.75, prev - 0.1))}
-                    className="p-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100"
-                  >
-                    <ZoomOut className="w-3 h-3" />
-                  </button>
-                  <span className="font-mono">{Math.round(zoomLevel * 100)}%</span>
-                  <button
-                    onClick={() => setZoomLevel(prev => Math.min(1.25, prev + 0.1))}
-                    className="p-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100"
-                  >
-                    <ZoomIn className="w-3 h-3" />
-                  </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="32"
+                    disabled={!is3D}
+                    value={tiltAngle}
+                    onChange={(e) => setTiltAngle(parseInt(e.target.value))}
+                    className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer disabled:opacity-40"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                    <span>Nhìn thẳng (0°)</span>
+                    <span>Nghiêng 3D ({tiltAngle}°)</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between sm:justify-end gap-2 text-[11px] text-slate-500">
+                  <span>Thu phóng:</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel(prev => Math.max(0.75, prev - 0.1))}
+                      className="p-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100"
+                    >
+                      <ZoomOut className="w-3 h-3" />
+                    </button>
+                    <span className="font-mono min-w-[36px] text-center font-bold">{Math.round(zoomLevel * 100)}%</span>
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel(prev => Math.min(1.25, prev + 0.1))}
+                      className="p-1 rounded-md bg-white border border-slate-200 hover:bg-slate-100"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Section: Custom Desk Counts Per Column */}
+          <div className="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="text-xs font-black text-indigo-950 uppercase flex items-center gap-1.5">
+                  <Grid3X3 className="w-4 h-4 text-indigo-600" />
+                  <span>CHỌN SỐ BÀN CỦA TỪNG DÃY ({seatingColumns} DÃY BÀN HIỆN TẠI):</span>
+                </span>
+                <p className="text-[11px] text-indigo-800/80 mt-0.5">
+                  Mỗi dãy có thể có số bàn khác nhau tùy theo kích thước thực tế của phòng học. Cập nhật sơ đồ ngay lập tức.
+                </p>
+              </div>
+
+              {/* Quick Batch Presets */}
+              <div className="flex items-center gap-1 flex-wrap">
+                <span className="text-[10px] font-bold text-slate-500 mr-1">Áp dụng tất cả:</span>
+                {[3, 4, 5, 6].map(num => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => {
+                      const newArr = Array(seatingColumns).fill(num);
+                      setDeskCountsPerColumn(newArr);
+                    }}
+                    className="px-2.5 py-1 text-xs font-bold bg-white hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl transition-all shadow-2xs"
+                  >
+                    {num} bàn
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+              {Array.from({ length: seatingColumns }).map((_, cIdx) => {
+                const count = deskCountsPerColumn[cIdx] || 4;
+                return (
+                  <div 
+                    key={cIdx} 
+                    className="bg-white p-3 rounded-2xl border-2 border-indigo-200 shadow-2xs text-center space-y-1.5 transition-all hover:border-indigo-400"
+                  >
+                    <div className="font-black text-slate-800 text-xs flex items-center justify-center gap-1">
+                      <span>Dãy Bàn {cIdx + 1}</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateDeskCountForColumn(cIdx, count - 1)}
+                        disabled={count <= 1}
+                        className="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-sm flex items-center justify-center disabled:opacity-30 cursor-pointer active:scale-95 transition-all shadow-2xs"
+                        title="Giảm 1 bàn"
+                      >
+                        -
+                      </button>
+                      <div className="min-w-[32px] text-center">
+                        <span className="font-black text-base text-indigo-600 block leading-none">{count}</span>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase">Bàn</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateDeskCountForColumn(cIdx, count + 1)}
+                        disabled={count >= 8}
+                        className="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-sm flex items-center justify-center disabled:opacity-30 cursor-pointer active:scale-95 transition-all shadow-2xs"
+                        title="Tăng 1 bàn"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="text-[10px] font-bold text-amber-700 bg-amber-50 rounded-lg py-0.5 border border-amber-200/60">
+                      {count * 2} chỗ ngồi
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -906,22 +910,52 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                   gridTemplateColumns: `repeat(${seatingColumns}, minmax(0, 1fr))`
                 }}
               >
-                {Array.from({ length: seatingColumns }).map((_, colIdx) => (
-                  <div 
-                    key={colIdx} 
-                    className={`space-y-3 p-2 rounded-2xl ${currentTheme.columnBg} relative ${
-                      colIdx < seatingColumns - 1 ? 'border-r-2 border-[#8a5b28]/25' : ''
-                    }`}
-                  >
-                    {/* Column Badge: Dãy Bàn X */}
-                    <div className={`text-center py-1.5 px-3 rounded-xl font-black text-xs shadow-md uppercase tracking-wider ${currentTheme.columnBadge}`}>
-                      Dãy Bàn {colIdx + 1}
-                    </div>
+                {Array.from({ length: seatingColumns }).map((_, colIdx) => {
+                  const colDeskCount = deskCountsPerColumn[colIdx] || 4;
+                  return (
+                    <div 
+                      key={colIdx} 
+                      className={`space-y-3 p-2 rounded-2xl ${currentTheme.columnBg} relative ${
+                        colIdx < seatingColumns - 1 ? 'border-r-2 border-[#8a5b28]/25' : ''
+                      }`}
+                    >
+                      {/* Column Badge: Dãy Bàn X with quick +/- controls */}
+                      <div className={`py-1.5 px-2 sm:px-2.5 rounded-xl font-black text-xs shadow-md uppercase tracking-wider flex items-center justify-between gap-1 ${currentTheme.columnBadge}`}>
+                        <span className="truncate">Dãy {colIdx + 1}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/30 font-bold">
+                            {colDeskCount} bàn
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateDeskCountForColumn(colIdx, colDeskCount - 1);
+                            }}
+                            disabled={colDeskCount <= 1}
+                            title={`Bớt 1 bàn ở Dãy ${colIdx + 1}`}
+                            className="w-5 h-5 rounded bg-black/30 hover:bg-black/60 text-white font-black flex items-center justify-center text-xs disabled:opacity-30 cursor-pointer transition-all active:scale-95"
+                          >
+                            -
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateDeskCountForColumn(colIdx, colDeskCount + 1);
+                            }}
+                            disabled={colDeskCount >= 8}
+                            title={`Thêm 1 bàn vào Dãy ${colIdx + 1}`}
+                            className="w-5 h-5 rounded bg-black/30 hover:bg-black/60 text-white font-black flex items-center justify-center text-xs disabled:opacity-30 cursor-pointer transition-all active:scale-95"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
 
-                    {/* Desks Rows */}
-                    {(() => {
-                      const colRowCount = desksPerColumn[colIdx] || 4;
-                      return Array.from({ length: colRowCount }).map((_, rowIdx) => {
+                      {/* Desks Rows */}
+                      {Array.from({ length: colDeskCount }).map((_, rowIdx) => {
+                        const deskNumber = getDeskNumber(colIdx, rowIdx);
                         const seatLeftKey = `${colIdx}-${rowIdx}-0`;
                         const seatRightKey = `${colIdx}-${rowIdx}-1`;
 
@@ -938,11 +972,11 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                             >
                               {/* Desk Header Badge */}
                               <div className="flex items-center justify-between text-[10px] font-black mb-1.5 px-1">
-                                <span className={`px-2 py-0.5 rounded-md border ${currentTheme.deskHeaderBg}`}>
-                                  Bàn {getDeskNumber(colIdx, rowIdx)}
+                                <span className={`px-2 py-0.5 rounded-md border font-black ${currentTheme.deskHeaderBg}`}>
+                                  Bàn {deskNumber}
                                 </span>
                                 <span className={`px-2 py-0.5 rounded-md border ${currentTheme.deskHeaderBg}`}>
-                                  2 Chỗ
+                                  Hàng {rowIdx + 1} • 2 Chỗ
                                 </span>
                               </div>
 
@@ -968,17 +1002,9 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                                         alt={studentLeft.name}
                                         className="w-11 h-11 rounded-full object-cover border-2 border-amber-300 bg-sky-100 shadow-xs" 
                                       />
-                                      <span className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full text-[8px] font-black text-white flex items-center justify-center shadow-xs ${
-                                        studentLeft.gender === 'Nam' ? 'bg-blue-600' : 'bg-pink-600'
-                                      }`}>
-                                        {studentLeft.gender === 'Nam' ? 'N' : 'G'}
-                                      </span>
                                     </div>
                                     <span className="text-[11px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5">
                                       {studentLeft.name}
-                                    </span>
-                                    <span className="text-[9px] font-bold text-amber-800 font-mono mt-0.5">
-                                      🪙 {studentLeft.points} xu
                                     </span>
                                   </>
                                 ) : (
@@ -1009,17 +1035,9 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                                         alt={studentRight.name}
                                         className="w-11 h-11 rounded-full object-cover border-2 border-amber-300 bg-sky-100 shadow-xs" 
                                       />
-                                      <span className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full text-[8px] font-black text-white flex items-center justify-center shadow-xs ${
-                                        studentRight.gender === 'Nam' ? 'bg-blue-600' : 'bg-pink-600'
-                                      }`}>
-                                        {studentRight.gender === 'Nam' ? 'N' : 'G'}
-                                      </span>
                                     </div>
                                     <span className="text-[11px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5">
                                       {studentRight.name}
-                                    </span>
-                                    <span className="text-[9px] font-bold text-amber-800 font-mono mt-0.5">
-                                      🪙 {studentRight.points} xu
                                     </span>
                                   </>
                                 ) : (
@@ -1039,10 +1057,10 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                           </div>
                         </div>
                       );
-                    });
-                  })()}
+                    })}
                   </div>
-                ))}
+                );
+              })}
               </div>
             </div>
 
@@ -1059,7 +1077,10 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3.5 h-3.5 rounded-md bg-emerald-500"></span>
-                  <span>Đã xếp: {Object.keys(seatingAssignments).length} / {currentClassStudents.length}</span>
+                  <span>Đã xếp: {seatedStudentIds.size} / {currentClassStudents.length} học sinh</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                  <span>Quy mô: <strong>{seatingColumns} dãy • {totalDesks} bàn</strong> ({totalSeats} chỗ ngồi)</span>
                 </span>
               </div>
               <div className="text-[11px] text-slate-500">
@@ -1129,9 +1150,6 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({ onNavigate }
                         #{student.stt} • {student.gender} • {student.group || 'Tổ 1'}
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono font-bold">
-                      🪙 {student.points}
-                    </span>
                   </button>
                 ))
               )}

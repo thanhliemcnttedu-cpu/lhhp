@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { useClassroom } from '../../context/ClassroomContext';
-import { Student, Classroom, Subject } from '../../types';
+import { Student, Classroom, Subject, getStudentRoleInfo, CLASS_OFFICER_ROLES, getStudentRolesList } from '../../types';
 import { parseBulkStudentInput } from '../../utils/genderGuesser';
+import { compressImage } from '../../utils/imageCompressor';
 import { AvatarEditorModal } from '../modals/AvatarEditorModal';
 import { ClassAvatarEditorModal } from '../modals/ClassAvatarEditorModal';
 import { ExportStudentListModal } from '../modals/ExportStudentListModal';
+import { InitSubjectClassesModal } from './classes/InitSubjectClassesModal';
 import { 
   Users, UserPlus, ClipboardPaste, Camera, 
   Trash2, Edit3, Search, Check, Plus, Minus,
@@ -13,7 +15,7 @@ import {
   Star, Award, CheckCircle2, ChevronRight, X,
   FileSpreadsheet, Download, Upload, Calendar, AlertTriangle, CheckSquare,
   Settings, BookOpen, Calculator, Globe, Atom, Map, Monitor, Palette, Music, Activity, Heart,
-  Flame, HelpCircle, Layers, ZoomIn, Coins
+  Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins
 } from 'lucide-react';
 import { playCoinSound, playDeductSound, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -42,25 +44,18 @@ const CLASS_AVATARS = [
 ];
 
 export const OFFICER_ROLE_OPTIONS = [
-  { value: 'Thành viên', label: 'Thành viên (Học sinh)', icon: '🎒' },
-  { value: 'Lớp trưởng', label: 'Lớp trưởng', icon: '⭐' },
-  { value: 'Lớp phó học tập', label: 'Lớp phó học tập', icon: '📘' },
-  { value: 'Lớp phó phong trào', label: 'Lớp phó phong trào', icon: '🚩' },
-  { value: 'Lớp phó lao động', label: 'Lớp phó lao động', icon: '🌱' },
-  { value: 'Tổ trưởng Tổ 1', label: 'Tổ trưởng Tổ 1', icon: '🏅' },
-  { value: 'Tổ phó Tổ 1', label: 'Tổ phó Tổ 1', icon: '🎖️' },
-  { value: 'Tổ trưởng Tổ 2', label: 'Tổ trưởng Tổ 2', icon: '🏅' },
-  { value: 'Tổ phó Tổ 2', label: 'Tổ phó Tổ 2', icon: '🎖️' },
-  { value: 'Tổ trưởng Tổ 3', label: 'Tổ trưởng Tổ 3', icon: '🏅' },
-  { value: 'Tổ phó Tổ 3', label: 'Tổ phó Tổ 3', icon: '🎖️' },
-  { value: 'Tổ trưởng Tổ 4', label: 'Tổ trưởng Tổ 4', icon: '🏅' },
-  { value: 'Tổ phó Tổ 4', label: 'Tổ phó Tổ 4', icon: '🎖️' },
+  { value: 'LỚP TRƯỞNG', label: 'LỚP TRƯỞNG', icon: '👑', badgeBg: 'bg-amber-100', badgeText: 'text-amber-900', badgeBorder: 'border-amber-300' },
+  { value: 'LỚP PHÓ HỌC TẬP', label: 'LỚP PHÓ HỌC TẬP', icon: '📘', badgeBg: 'bg-blue-100', badgeText: 'text-blue-900', badgeBorder: 'border-blue-300' },
+  { value: 'LỚP PHONG TRÀO', label: 'LỚP PHONG TRÀO', icon: '🚩', badgeBg: 'bg-orange-100', badgeText: 'text-orange-900', badgeBorder: 'border-orange-300' },
+  { value: 'TỔ TRƯỞNG TỔ 1', label: 'TỔ TRƯỞNG TỔ 1', icon: '🥇', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-900', badgeBorder: 'border-emerald-300' },
+  { value: 'TỔ TRƯỞNG TỔ 2', label: 'TỔ TRƯỞNG TỔ 2', icon: '🥇', badgeBg: 'bg-sky-100', badgeText: 'text-sky-900', badgeBorder: 'border-sky-300' },
+  { value: 'TỔ TRƯỞNG TỔ 3', label: 'TỔ TRƯỞNG TỔ 3', icon: '🥇', badgeBg: 'bg-violet-100', badgeText: 'text-violet-900', badgeBorder: 'border-violet-300' },
+  { value: 'TỔ TRƯỞNG TỔ 4', label: 'TỔ TRƯỞNG TỔ 4', icon: '🥇', badgeBg: 'bg-rose-100', badgeText: 'text-rose-900', badgeBorder: 'border-rose-300' },
+  { value: 'TỔ PHÓ TỔ 1', label: 'TỔ PHÓ TỔ 1', icon: '🥈', badgeBg: 'bg-teal-50', badgeText: 'text-teal-800', badgeBorder: 'border-teal-200' },
+  { value: 'TỔ PHÓ TỔ 2', label: 'TỔ PHÓ TỔ 2', icon: '🥈', badgeBg: 'bg-cyan-50', badgeText: 'text-cyan-800', badgeBorder: 'border-cyan-200' },
+  { value: 'TỔ PHÓ TỔ 3', label: 'TỔ PHÓ TỔ 3', icon: '🥈', badgeBg: 'bg-fuchsia-50', badgeText: 'text-fuchsia-800', badgeBorder: 'border-fuchsia-200' },
+  { value: 'TỔ PHÓ TỔ 4', label: 'TỔ PHÓ TỔ 4', icon: '🥈', badgeBg: 'bg-pink-50', badgeText: 'text-pink-800', badgeBorder: 'border-pink-200' },
 ];
-
-export const getRoleIcon = (roleName?: string) => {
-  const match = OFFICER_ROLE_OPTIONS.find(o => o.value === roleName);
-  return match ? match.icon : '🎖️';
-};
 
 interface ClassesStudentsViewProps {
   mode?: 'classes' | 'students';
@@ -72,11 +67,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   onNavigate 
 }) => {
   const { 
-    classes, activeClassId, setActiveClassId, addClass, updateClass, deleteClass, deleteAllClasses,
+    classes, activeClassId, setActiveClassId, addClass, updateClass, deleteClass,
+    bulkDeleteClasses, bulkUpdateClasses, deleteAllClasses,
     students, currentClassStudents, addStudent, updateStudent, deleteStudent, 
-    bulkAddStudents, clearClassStudents,
-    awardPoints, deductPoints, resetStudentPoints, bulkSetPoints, subjects, addSubject, updateSubject, deleteSubject,
-    criteria, teacherProfile, resetToDefaultData, attendanceRecords
+    bulkAddStudents, clearClassStudents, resetStudentsCoins,
+    awardPoints, deductPoints, subjects, addSubject, updateSubject, deleteSubject,
+    toggleSubjectApplied, setAppliedSubjects, resetDefaultSubjects,
+    criteria, teacherProfile, resetToDefaultData,
+    teacherRole, subjectTeacherConfig, seedSample20SubjectClasses,
+    isAdmin, allTeachers, currentUser, syncDatabaseNow
   } = useClassroom();
 
   const [activeTabMode, setActiveTabMode] = useState<'classes' | 'students'>(mode);
@@ -87,44 +86,83 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
+  const [adminTeacherFilter, setAdminTeacherFilter] = useState<string>('all');
+  const [newClassAssignedUsername, setNewClassAssignedUsername] = useState<string>('gvcn4a1');
+
+  // Lọc danh sách lớp học theo tài khoản giáo viên khi Admin đăng nhập
+  const displayedClasses = React.useMemo(() => {
+    if (!isAdmin || adminTeacherFilter === 'all') {
+      return classes;
+    }
+    return classes.filter(c => {
+      if (c.teacherUsername) {
+        return c.teacherUsername.toLowerCase() === adminTeacherFilter.toLowerCase();
+      }
+      const t = allTeachers.find(u => u.username.toLowerCase() === adminTeacherFilter.toLowerCase());
+      return t ? c.teacherRole === t.role : true;
+    });
+  }, [classes, isAdmin, adminTeacherFilter, allTeachers]);
   
-  // Selection for bulk actions
+  // Selection for bulk student actions
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
   const [isClearAllConfirmOpen, setIsClearAllConfirmOpen] = useState(false);
   const [isDeleteAllClassesOpen, setIsDeleteAllClassesOpen] = useState(false);
 
-  // Modal for Class Attendance & Overview Report (User Request)
-  const [isClassReportModalOpen, setIsClassReportModalOpen] = useState(false);
+  // Selection for bulk class actions (all 3 roles: admin, homeroom, subject)
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
+  const [isBulkClassDeleteOpen, setIsBulkClassDeleteOpen] = useState(false);
+  const [isBulkClassEditOpen, setIsBulkClassEditOpen] = useState(false);
 
-  // Compute attendance metrics for active class today
-  const todayDateStr = new Date().toISOString().slice(0, 10);
-  const currentAttendanceRec = attendanceRecords.find(r => r.classId === activeClassId && r.date === todayDateStr);
-  const attMap = currentAttendanceRec?.records || {};
-  const presentCount = currentClassStudents.filter(s => (attMap[s.id] || 'present') === 'present').length;
-  const attendanceRate = currentClassStudents.length > 0
-    ? Math.round((presentCount / currentClassStudents.length) * 100)
-    : 100;
+  // Bulk edit form states
+  const [bulkEditGrade, setBulkEditGrade] = useState<string>('keep');
+  const [bulkEditYear, setBulkEditYear] = useState<string>('keep');
+  const [bulkEditTeacher, setBulkEditTeacher] = useState<string>('');
+  const [bulkEditColor, setBulkEditColor] = useState<string>('keep');
+  const [bulkEditSlogan, setBulkEditSlogan] = useState<string>('');
 
-  // Modals for Coin Management (User Request: Xóa điểm xu & Gán điểm xu đồng loạt)
-  const [isResetPointsModalOpen, setIsResetPointsModalOpen] = useState(false);
-  const [isBulkSetPointsModalOpen, setIsBulkSetPointsModalOpen] = useState(false);
-  const [bulkSetMode, setBulkSetMode] = useState<'fixed' | 'add' | 'deduct'>('fixed');
-  const [bulkSetAmount, setBulkSetAmount] = useState<number>(10);
-  const [bulkSetReason, setBulkSetReason] = useState<string>('Gán điểm xu đồng loạt');
-  const [bulkSetSubject, setBulkSetSubject] = useState<string>('Toán');
+  // Danh sách môn học được áp dụng cho lớp hiện tại (enabled !== false)
+  const appliedSubjects = React.useMemo(() => {
+    const list = subjects.filter(s => s.enabled !== false);
+    return list.length > 0 ? list : subjects;
+  }, [subjects]);
 
-  // Active Subject Selector for Quick Point Evaluation (User Request 2)
-  const [activeEvalSubject, setActiveEvalSubject] = useState<string>('Toán');
+  // Bulk Award Points state (Yêu cầu: Gán xu hàng loạt theo môn học)
+  const [isBulkAwardOpen, setIsBulkAwardOpen] = useState(false);
+  const [bulkAwardMode, setBulkAwardMode] = useState<'xu' | 'minus' | 'sao'>('xu');
+  const [bulkAwardCoins, setBulkAwardCoins] = useState(1);
+  const [bulkAwardSubject, setBulkAwardSubject] = useState('GHI CHUNG / NỀ NẾP');
+  const [bulkAwardReason, setBulkAwardReason] = useState('');
+
+  // Reset Coins state (Reset xu về 0)
+  const [isBulkResetCoinsOpen, setIsBulkResetCoinsOpen] = useState(false);
+  const [isClassResetCoinsOpen, setIsClassResetCoinsOpen] = useState(false);
+
+  // Active Subject Selector for Quick Point Evaluation (User Request: Môn mặc định GHI CHUNG / NỀ NẾP hoặc Môn của GVBM)
+  const [activeEvalSubject, setActiveEvalSubject] = useState<string>(
+    teacherRole === 'subject' ? (subjectTeacherConfig.subjectName || 'TIN HỌC') : 'GHI CHUNG / NỀ NẾP'
+  );
+
+  // Đảm bảo activeEvalSubject cập nhật khi đổi vai trò hoặc danh sách môn
+  React.useEffect(() => {
+    if (teacherRole === 'subject') {
+      setActiveEvalSubject(subjectTeacherConfig.subjectName || 'TIN HỌC');
+    } else if (appliedSubjects.length > 0 && !appliedSubjects.some(s => s.name === activeEvalSubject)) {
+      setActiveEvalSubject(appliedSubjects[0].name);
+    }
+  }, [appliedSubjects, teacherRole, subjectTeacherConfig.subjectName]);
 
   // Modals & form states for CLASS MANAGEMENT (User Request 1)
+  const [isInitSubjectClassesModalOpen, setIsInitSubjectClassesModalOpen] = useState(false);
   const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
   const [newClassName, setNewClassName] = useState('');
   const [newClassGrade, setNewClassGrade] = useState('Khối 4');
   const [newClassTeacher, setNewClassTeacher] = useState(teacherProfile.name || 'Cô Nguyễn Thị Hoa');
-  const [newClassYear, setNewClassYear] = useState(teacherProfile.academicYear || '2026 – 2027');
+  const [newClassYear, setNewClassYear] = useState(teacherProfile.academicYear || '2026–2027');
   const [newClassColor, setNewClassColor] = useState(CLASS_COLORS[0]);
   const [newClassAvatar, setNewClassAvatar] = useState(CLASS_AVATARS[0].url);
+  const [newClassOriginalAvatar, setNewClassOriginalAvatar] = useState(CLASS_AVATARS[0].url);
   const [newClassAvatarScale, setNewClassAvatarScale] = useState(1);
   const [newClassAvatarPosition, setNewClassAvatarPosition] = useState({ x: 0, y: 0 });
   const [isNewClassAvatarEditorOpen, setIsNewClassAvatarEditorOpen] = useState(false);
@@ -144,44 +182,72 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const newClassAvatarInputRef = useRef<HTMLInputElement>(null);
   const editClassAvatarInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUploadNewClassAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadNewClassAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-          setNewClassAvatar(ev.target.result as string);
-          setNewClassAvatarScale(1);
-          setNewClassAvatarPosition({ x: 0, y: 0 });
-          // Open interactive zoom & crop modal immediately
-          setIsNewClassAvatarEditorOpen(true);
-        }
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
+      try {
+        const highRes = await compressImage(file, 2048, 1536, 0.94);
+        setNewClassAvatar(highRes);
+        setNewClassOriginalAvatar(highRes);
+        setNewClassAvatarScale(1);
+        setNewClassAvatarPosition({ x: 0, y: 0 });
+        setIsNewClassAvatarEditorOpen(true);
+      } catch (err) {
+        console.error('Lỗi khi tải ảnh lớp mới, fallback FileReader:', err);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (ev.target?.result) {
+            const res = ev.target.result as string;
+            setNewClassAvatar(res);
+            setNewClassOriginalAvatar(res);
+            setNewClassAvatarScale(1);
+            setNewClassAvatarPosition({ x: 0, y: 0 });
+            setIsNewClassAvatarEditorOpen(true);
+          }
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        e.target.value = '';
+      }
     }
   };
 
-  const handleUploadEditClassAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadEditClassAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && editingClass) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        if (ev.target?.result) {
-          const newUrl = ev.target.result as string;
-          const updated = {
-            ...editingClass,
-            avatar: newUrl,
-            avatarScale: 1,
-            avatarPosition: { x: 0, y: 0 }
-          };
-          setEditingClass(updated);
-          // Open interactive zoom & crop modal immediately
-          setAvatarEditingClass(updated);
-        }
-      };
-      reader.readAsDataURL(file);
-      e.target.value = '';
+      try {
+        const highRes = await compressImage(file, 2048, 1536, 0.94);
+        const updated = {
+          ...editingClass,
+          avatar: highRes,
+          originalAvatar: highRes,
+          avatarScale: 1,
+          avatarPosition: { x: 0, y: 0 }
+        };
+        setEditingClass(updated);
+        // Mở ngay modal căn chỉnh và thu phóng ảnh
+        setAvatarEditingClass(updated);
+      } catch (err) {
+        console.error('Lỗi khi tải ảnh sửa lớp, fallback FileReader:', err);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (ev.target?.result) {
+            const newUrl = ev.target.result as string;
+            const updated = {
+              ...editingClass,
+              avatar: newUrl,
+              originalAvatar: newUrl,
+              avatarScale: 1,
+              avatarPosition: { x: 0, y: 0 }
+            };
+            setEditingClass(updated);
+            setAvatarEditingClass(updated);
+          }
+        };
+        reader.readAsDataURL(file);
+      } finally {
+        e.target.value = '';
+      }
     }
   };
 
@@ -198,21 +264,29 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   // Excel Import & Template Modal (User Request 9)
   const excelFileInputRef = useRef<HTMLInputElement>(null);
-  const [excelParsedStudents, setExcelParsedStudents] = useState<Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string }>>([]);
+  const [excelParsedStudents, setExcelParsedStudents] = useState<Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string }>>([]);
   const [isExcelPreviewOpen, setIsExcelPreviewOpen] = useState(false);
   const [isExportStudentListOpen, setIsExportStudentListOpen] = useState(false);
 
-  // Single Add student modal
+  // Single Add student modal (Yêu cầu 1: Thêm đầy đủ thông tin kể cả chức vụ - Tối đa 3 chức vụ)
   const [isSingleAddOpen, setIsSingleAddOpen] = useState(false);
   const [singleName, setSingleName] = useState('');
   const [singleBirthDate, setSingleBirthDate] = useState('');
   const [singleGender, setSingleGender] = useState<'Nam' | 'Nữ'>('Nam');
   const [singleGroup, setSingleGroup] = useState('Tổ 1');
-  const [singleRole, setSingleRole] = useState('Thành viên');
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
+  const [singleRoles, setSingleRoles] = useState<string[]>([]);
 
-  // Edit student modal
+  // Edit student modal (Tối đa 3 chức vụ)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [editingRoles, setEditingRoles] = useState<string[]>([]);
+  
+  // Quick Role modal (Chỉ định tối đa 3 chức vụ cho 1 học sinh)
+  const [quickRoleStudent, setQuickRoleStudent] = useState<Student | null>(null);
+  const [studentSelectedRoles, setStudentSelectedRoles] = useState<string[]>([]);
+
+  // Bulk Role Modal (Gán chức vụ đồng loạt, tối đa 3 chức vụ)
+  const [isBulkRoleModalOpen, setIsBulkRoleModalOpen] = useState(false);
+  const [bulkSelectedRoles, setBulkSelectedRoles] = useState<string[]>([]);
   
   // Avatar editor modal
   const [avatarEditingStudent, setAvatarEditingStudent] = useState<Student | null>(null);
@@ -221,21 +295,38 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [rewardingStudent, setRewardingStudent] = useState<Student | null>(null);
   const [rewardMode, setRewardMode] = useState<'xu' | 'minus' | 'sao'>('xu');
   const [customCoins, setCustomCoins] = useState(1);
-  const [selectedSubjectForAward, setSelectedSubjectForAward] = useState('Toán');
+  const [selectedSubjectForAward, setSelectedSubjectForAward] = useState('GHI CHUNG / NỀ NẾP');
   const [customReason, setCustomReason] = useState('');
 
   const activeClass = classes.find(c => c.id === activeClassId) || classes[0];
 
-  // Filtering students with Group and Officer Role filter
+  // Filtering students (Tìm kiếm theo tên, STT, chức vụ; Lọc theo Tổ và Chức vụ)
   const filteredStudents = currentClassStudents.filter(s => {
-    const matchSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.stt.toString().includes(searchQuery);
+    const sRoles = getStudentRolesList(s);
+    const rolesCombined = (s.role ? `${s.role} ` : '') + sRoles.join(' ');
+    const matchSearch = 
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      s.stt.toString().includes(searchQuery) ||
+      rolesCombined.toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchSearch) return false;
     if (selectedGroupFilter !== 'all' && (s.group || 'Tổ 1') !== selectedGroupFilter) return false;
     if (selectedRoleFilter !== 'all') {
       if (selectedRoleFilter === 'officers') {
-        if (!s.role || s.role === 'Thành viên') return false;
-      } else if (s.role !== selectedRoleFilter) {
-        return false;
+        if (sRoles.length === 0 && (!s.role || !s.role.trim())) return false;
+      } else if (selectedRoleFilter === 'monitor') {
+        if (!rolesCombined.toLowerCase().includes('lớp trưởng')) return false;
+      } else if (selectedRoleFilter === 'academic_deputy') {
+        if (!rolesCombined.toLowerCase().includes('học tập')) return false;
+      } else if (selectedRoleFilter === 'activity_deputy') {
+        if (!rolesCombined.toLowerCase().includes('phong trào')) return false;
+      } else if (selectedRoleFilter === 'team_leader') {
+        if (!rolesCombined.toLowerCase().includes('tổ trưởng')) return false;
+      } else if (selectedRoleFilter === 'team_vice') {
+        if (!rolesCombined.toLowerCase().includes('tổ phó')) return false;
+      } else {
+        const matchSpecific = sRoles.some(r => r.toLowerCase() === selectedRoleFilter.toLowerCase()) ||
+          (s.role && s.role.toLowerCase().includes(selectedRoleFilter.toLowerCase()));
+        if (!matchSpecific) return false;
       }
     }
     return true;
@@ -245,13 +336,21 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const handleCreateClass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClassName.trim()) return;
+
+    const assignedTeacher = isAdmin 
+      ? allTeachers.find(t => t.username.toLowerCase() === newClassAssignedUsername.toLowerCase())
+      : null;
+
     addClass({
       name: newClassName.trim(),
       grade: newClassGrade,
-      teacherName: newClassTeacher.trim() || teacherProfile.name || 'Cô Nguyễn Thị Hoa',
-      academicYear: newClassYear.trim() || teacherProfile.academicYear || '2026 – 2027',
+      teacherUsername: isAdmin ? newClassAssignedUsername : (currentUser?.username || 'gvcn4a1'),
+      teacherRole: isAdmin ? (assignedTeacher?.role === 'subject' ? 'subject' : 'homeroom') : (currentUser?.role === 'subject' ? 'subject' : 'homeroom'),
+      teacherName: isAdmin ? (assignedTeacher?.fullName || newClassTeacher.trim()) : (newClassTeacher.trim() || teacherProfile.name || 'Cô Nguyễn Thị Hoa'),
+      academicYear: newClassYear.trim() || teacherProfile.academicYear || '2026–2027',
       color: newClassColor,
       avatar: newClassAvatar,
+      originalAvatar: newClassOriginalAvatar,
       avatarScale: newClassAvatarScale,
       avatarPosition: newClassAvatarPosition,
       slogan: newClassSlogan.trim(),
@@ -275,10 +374,13 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     updateClass(editingClass.id, {
       name: editingClass.name.trim(),
       grade: editingClass.grade,
+      teacherUsername: editingClass.teacherUsername,
+      teacherRole: editingClass.teacherRole,
       teacherName: editingClass.teacherName?.trim() || teacherProfile.name || 'Cô Nguyễn Thị Hoa',
-      academicYear: editingClass.academicYear?.trim() || teacherProfile.academicYear || '2026 – 2027',
+      academicYear: editingClass.academicYear?.trim() || teacherProfile.academicYear || '2026–2027',
       color: editingClass.color,
       avatar: editingClass.avatar,
+      originalAvatar: editingClass.originalAvatar,
       avatarScale: editingClass.avatarScale || 1,
       avatarPosition: editingClass.avatarPosition || { x: 0, y: 0 },
       slogan: editingClass.slogan,
@@ -319,43 +421,68 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     setEditingSubject(null);
   };
 
-  // 3. EXCEL TEMPLATE DOWNLOAD (User Request 9)
+  const handleApplyAllSubjects = () => {
+    setAppliedSubjects(subjects.map(s => s.id));
+    confetti({ particleCount: 25, spread: 40 });
+  };
+
+  const handleApplyOnlyCoreSubjects = () => {
+    const coreIds = subjects
+      .filter(s => s.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(s.name.trim().toLowerCase()))
+      .map(s => s.id);
+    setAppliedSubjects(coreIds);
+    confetti({ particleCount: 25, spread: 40 });
+  };
+
+  const handleResetDefaultSubjects = () => {
+    if (confirm('Khôi phục danh sách môn học chuẩn theo hệ thống (bao gồm GHI CHUNG / NỀ NẾP, TOÁN, TIẾNG VIỆT)?')) {
+      resetDefaultSubjects();
+      confetti({ particleCount: 30, spread: 50 });
+    }
+  };
+
+  // 3. EXCEL TEMPLATE DOWNLOAD (User Request 9 & Yêu cầu 1)
   const handleDownloadExcelTemplate = () => {
     const templateRows = [
       {
         'STT': 1,
         'Họ và tên': 'Nguyễn Văn An',
-        'Ngày tháng năm sinh': '15/09/2016',
+        'Ngày tháng năm sinh': '12/03/2016',
         'Giới tính': 'Nam',
-        'Tổ': 'Tổ 1'
+        'Tổ': 'Tổ 1',
+        'Chức vụ': 'LỚP TRƯỞNG • TỔ TRƯỞNG TỔ 1'
       },
       {
         'STT': 2,
-        'Họ và tên': 'Trần Thị Mai',
-        'Ngày tháng năm sinh': '22/03/2016',
+        'Họ và tên': 'Trần Thị Ngọc Ánh',
+        'Ngày tháng năm sinh': '25/08/2016',
         'Giới tính': 'Nữ',
-        'Tổ': 'Tổ 1'
+        'Tổ': 'Tổ 1',
+        'Chức vụ': 'LỚP PHÓ HỌC TẬP • TỔ PHÓ TỔ 1'
       },
       {
         'STT': 3,
-        'Họ và tên': 'Lê Hoàng Nam',
-        'Ngày tháng năm sinh': '08/11/2016',
-        'Giới tính': 'Nam',
-        'Tổ': 'Tổ 2'
+        'Họ và tên': 'Phạm Minh Châu',
+        'Ngày tháng năm sinh': '09/06/2016',
+        'Giới tính': 'Nữ',
+        'Tổ': 'Tổ 1',
+        'Chức vụ': 'LỚP PHONG TRÀO'
       },
       {
         'STT': 4,
-        'Họ và tên': 'Phạm Quỳnh Chi',
-        'Ngày tháng năm sinh': '14/06/2016',
-        'Giới tính': 'Nữ',
-        'Tổ': 'Tổ 2'
+        'Họ và tên': 'Hoàng Quốc Cường',
+        'Ngày tháng năm sinh': '18/11/2016',
+        'Giới tính': 'Nam',
+        'Tổ': 'Tổ 1',
+        'Chức vụ': 'TỔ TRƯỞNG TỔ 1'
       },
       {
         'STT': 5,
-        'Họ và tên': 'Vũ Đức Minh',
-        'Ngày tháng năm sinh': '19/01/2016',
-        'Giới tính': 'Nam',
-        'Tổ': 'Tổ 3'
+        'Họ và tên': 'Vũ Mai Dung',
+        'Ngày tháng năm sinh': '04/04/2016',
+        'Giới tính': 'Nữ',
+        'Tổ': 'Tổ 1',
+        'Chức vụ': 'TỔ PHÓ TỔ 1'
       }
     ];
 
@@ -365,7 +492,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       { wch: 26 }, // Họ và tên
       { wch: 22 }, // Ngày tháng năm sinh
       { wch: 12 }, // Giới tính
-      { wch: 12 }  // Tổ
+      { wch: 12 }, // Tổ
+      { wch: 28 }  // Chức vụ (tối đa 3 chức vụ)
     ];
 
     const wb = XLSX.utils.book_new();
@@ -387,7 +515,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         const ws = wb.Sheets[wsname];
         const rawData: any[] = XLSX.utils.sheet_to_json(ws);
 
-        const parsed: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string }> = [];
+        const parsed: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }> = [];
 
         rawData.forEach((row) => {
           const nameVal = row['Họ và tên'] || row['Họ và Tên'] || row['Họ tên'] || row['Tên'] || row['Ho va ten'] || row['Name'] || row['name'];
@@ -411,12 +539,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
           }
 
           const groupVal = row['Tổ'] || row['To'] || row['Group'] || row['Nhóm'] || 'Tổ 1';
+          const roleVal = row['Chức vụ'] || row['Chức Vụ'] || row['Chuc vu'] || row['ChucVu'] || row['Role'] || row['Nhiệm vụ'] || row['Nhiem vu'] || '';
+          const roleParts = String(roleVal).split(/[•,;\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 3);
 
           parsed.push({
             name: nameVal.trim(),
             gender,
             birthDate: String(birthVal).trim(),
-            group: String(groupVal).trim()
+            group: String(groupVal).trim(),
+            role: roleParts.join(' • ') || String(roleVal).trim(),
+            roles: roleParts
           });
         });
 
@@ -444,60 +576,11 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     }
   };
 
-  // Yêu cầu: Mục chuyên cần của lớp thêm tỉ lệ % học sinh có mặt trên tổng số học sinh.
-  // Cho phép xuất biểu tổng hợp thống kê báo cáo chi tiết pdf và excel theo từng lớp trong mục học sinh.
-  const handleExportClassAttendanceReportExcel = () => {
-    const wb = XLSX.utils.book_new();
-    const today = new Date().toISOString().slice(0, 10);
-    const activeCls = classes.find(c => c.id === activeClassId);
-
-    const summaryRows = [
-      { 'Chỉ tiêu': 'Tên lớp học', 'Thông tin': activeCls?.name || '4A1' },
-      { 'Chỉ tiêu': 'Khối', 'Thông tin': activeCls?.grade || 'Khối 4' },
-      { 'Chỉ tiêu': 'Giáo viên chủ nhiệm', 'Thông tin': activeCls?.teacherName || teacherProfile.name },
-      { 'Chỉ tiêu': 'Năm học', 'Thông tin': activeCls?.academicYear || teacherProfile.academicYear },
-      { 'Chỉ tiêu': 'Tổng sĩ số', 'Thông tin': `${currentClassStudents.length} học sinh` },
-      { 'Chỉ tiêu': 'Học sinh Nam', 'Thông tin': `${currentClassStudents.filter(s => s.gender === 'Nam').length} học sinh` },
-      { 'Chỉ tiêu': 'Học sinh Nữ', 'Thông tin': `${currentClassStudents.filter(s => s.gender === 'Nữ').length} học sinh` },
-      { 'Chỉ tiêu': 'Có mặt hôm nay', 'Thông tin': `${presentCount} / ${currentClassStudents.length} em` },
-      { 'Chỉ tiêu': 'Tỉ lệ chuyên cần (%)', 'Thông tin': `${attendanceRate}%` },
-      { 'Chỉ tiêu': 'Ngày xuất báo cáo', 'Thông tin': new Date().toLocaleDateString('vi-VN') }
-    ];
-    const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Tong_Quan_Lop');
-
-    const studentRows = currentClassStudents.map((st, idx) => {
-      const stStatus = attMap[st.id] || 'present';
-      const statusLabel = stStatus === 'present' ? 'Có mặt'
-        : stStatus === 'late' ? 'Đi muộn'
-        : stStatus === 'sick' ? 'Nghỉ ốm'
-        : stStatus === 'excused' ? 'Vắng có phép'
-        : stStatus === 'unexcused' ? 'Vắng không phép'
-        : 'Lý do khác';
-
-      return {
-        'STT': idx + 1,
-        'Họ và tên': st.name,
-        'Ngày sinh': st.birthDate || '',
-        'Giới tính': st.gender,
-        'Tổ': st.group || 'Tổ 1',
-        'Chức vụ': st.role || 'Thành viên',
-        'Điểm xu thi đua': st.points || 0,
-        'Trạng thái chuyên cần hôm nay': statusLabel,
-        'Tỉ lệ có mặt cả lớp': `${attendanceRate}%`
-      };
-    });
-    const wsStudents = XLSX.utils.json_to_sheet(studentRows);
-    XLSX.utils.book_append_sheet(wb, wsStudents, 'Danh_Sach_Chi_Tiet');
-
-    XLSX.writeFile(wb, `Bao_Cao_Tong_Hop_Lop_${activeCls?.name || '4A1'}_${today}.xlsx`);
-    confetti({ particleCount: 50, spread: 60 });
-  };
-
-  // Single Add
+  // Single Add (Yêu cầu 1 & 2: Thêm đầy đủ thông tin & chức vụ - Tối đa 3 chức vụ)
   const handleSingleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!singleName.trim()) return;
+    const finalRoles = singleRoles.slice(0, 3);
     addStudent({
       classId: activeClassId,
       name: singleName.trim(),
@@ -507,13 +590,87 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       avatarScale: 1,
       avatarPosition: { x: 0, y: 0 },
       group: singleGroup,
-      role: singleRole || 'Thành viên'
+      role: finalRoles.join(' • '),
+      roles: finalRoles
     });
     setSingleName('');
     setSingleBirthDate('');
-    setSingleRole('Thành viên');
+    setSingleRoles([]);
     setIsSingleAddOpen(false);
     confetti({ particleCount: 30, spread: 40 });
+  };
+
+  // 5. BULK POINTS & REWARD HANDLERS (Yêu cầu 3)
+  const handleConfirmBulkAward = () => {
+    if (selectedStudentIds.length === 0) return;
+    const count = selectedStudentIds.length;
+    if (bulkAwardMode === 'minus') {
+      const reason = bulkAwardReason.trim() || `Trừ -${bulkAwardCoins} xu nề nếp môn ${bulkAwardSubject} (${count} học sinh)`;
+      deductPoints(selectedStudentIds, bulkAwardCoins, reason, bulkAwardSubject);
+      playDeductSound();
+    } else if (bulkAwardMode === 'sao') {
+      const pts = bulkAwardCoins * 5;
+      const reason = bulkAwardReason.trim() || `Tặng ${bulkAwardCoins} ⭐ Ngôi sao thi đua môn ${bulkAwardSubject} (+${pts} xu, ${count} học sinh)`;
+      awardPoints(selectedStudentIds, pts, reason, bulkAwardSubject);
+      playCoinSound();
+      confetti({ particleCount: 70, spread: 80 });
+    } else {
+      const reason = bulkAwardReason.trim() || `Khen thưởng +${bulkAwardCoins} xu môn ${bulkAwardSubject} (${count} học sinh)`;
+      awardPoints(selectedStudentIds, bulkAwardCoins, reason, bulkAwardSubject);
+      playCoinSound();
+      confetti({ particleCount: 60, spread: 70 });
+    }
+    setIsBulkAwardOpen(false);
+    setBulkAwardReason('');
+  };
+
+  // 6. BULK ROLE ASSIGNMENT (Yêu cầu 2: Gán chức vụ đồng loạt tối đa 3 chức vụ)
+  const handleConfirmBulkRole = () => {
+    if (selectedStudentIds.length === 0) return;
+    const rolesLimited = bulkSelectedRoles.slice(0, 3);
+    const roleStr = rolesLimited.join(' • ');
+    selectedStudentIds.forEach(id => {
+      updateStudent(id, { 
+        roles: rolesLimited,
+        role: roleStr 
+      });
+    });
+    setIsBulkRoleModalOpen(false);
+    playCoinSound();
+    confetti({ particleCount: 40, spread: 55 });
+  };
+
+  // 7. RESET COINS HANDLERS (Yêu cầu 3)
+  const handleConfirmBulkResetCoins = () => {
+    if (selectedStudentIds.length === 0) return;
+    resetStudentsCoins(selectedStudentIds, activeClassId);
+    setIsBulkResetCoinsOpen(false);
+    playCoinSound();
+  };
+
+  const handleConfirmClassResetCoins = () => {
+    resetStudentsCoins([], activeClassId);
+    setIsClassResetCoinsOpen(false);
+    playCoinSound();
+  };
+
+  const handleSaveStudentRoles = (studentId: string, rolesToSave: string[]) => {
+    const limited = rolesToSave.slice(0, 3);
+    const roleStr = limited.join(' • ');
+    updateStudent(studentId, {
+      roles: limited,
+      role: roleStr
+    });
+    if (editingStudent && editingStudent.id === studentId) {
+      setEditingStudent({
+        ...editingStudent,
+        roles: limited,
+        role: roleStr
+      });
+    }
+    setQuickRoleStudent(null);
+    playCoinSound();
+    confetti({ particleCount: 35, spread: 60 });
   };
 
   // Quick Points Handlers - Opens evaluation modal with subject selector (Yêu cầu 3)
@@ -574,6 +731,30 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     setIsBulkDeleteConfirmOpen(false);
   };
 
+  const handleConfirmBulkDeleteClasses = () => {
+    if (selectedClassIds.length === 0) return;
+    bulkDeleteClasses(selectedClassIds);
+    playDeductSound();
+    setSelectedClassIds([]);
+    setIsBulkClassDeleteOpen(false);
+  };
+
+  const handleConfirmBulkEditClasses = () => {
+    if (selectedClassIds.length === 0) return;
+    const updates: Partial<Classroom> = {};
+    if (bulkEditGrade !== 'keep') updates.grade = bulkEditGrade;
+    if (bulkEditYear !== 'keep') updates.academicYear = bulkEditYear;
+    if (bulkEditTeacher.trim() !== '') updates.teacherName = bulkEditTeacher.trim();
+    if (bulkEditColor !== 'keep') updates.color = bulkEditColor;
+    if (bulkEditSlogan.trim() !== '') updates.slogan = bulkEditSlogan.trim();
+
+    bulkUpdateClasses(selectedClassIds, updates);
+    playFanfareSound();
+    confetti({ particleCount: 50, spread: 60 });
+    setSelectedClassIds([]);
+    setIsBulkClassEditOpen(false);
+  };
+
   const handleClearAllClassStudents = () => {
     clearClassStudents(activeClassId);
     setSelectedStudentIds([]);
@@ -581,18 +762,18 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
       {/* Top Header Switch */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 p-4 md:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover-zoom-card">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-black shadow-2xs">
-            {activeTabMode === 'classes' ? <School className="w-5 h-5" /> : <Users className="w-5 h-5" />}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-2.5 px-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover-zoom-card">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-black shadow-2xs shrink-0">
+            {activeTabMode === 'classes' ? <School className="w-4 h-4" /> : <Users className="w-4 h-4" />}
           </div>
           <div>
-            <h2 className="text-base md:text-lg font-black text-indigo-950 tracking-tight">
+            <h2 className="text-sm sm:text-base font-black text-indigo-950 tracking-tight leading-tight">
               {activeTabMode === 'classes' ? 'Quản Lý Lớp Học & Thống Kê Sĩ Số' : `Không Gian Học Sinh Lớp ${activeClass?.name || ''}`}
             </h2>
-            <p className="text-xs text-indigo-700/80 font-medium">
+            <p className="text-[10px] sm:text-[11px] text-indigo-700/80 font-medium leading-none mt-0.5">
               {activeTabMode === 'classes' 
                 ? 'Ảnh đại diện lớp học, thống kê số lượng lớp và sĩ số học sinh từng lớp.' 
                 : 'Thẻ 3D to rõ nét, đánh giá thi đua theo môn học, nhập Excel và điểm thưởng.'}
@@ -601,80 +782,80 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         </div>
 
         {/* Tab Toggle: Lớp Học vs Học Sinh */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start md:self-auto">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start sm:self-auto shrink-0">
           <button
             onClick={() => setActiveTabMode('classes')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 hover-zoom-btn ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 hover-zoom-btn uppercase ${
               activeTabMode === 'classes' 
                 ? 'bg-white text-indigo-700 shadow-xs' 
                 : 'text-indigo-900/70 hover:text-indigo-950'
             }`}
           >
-            <School className="w-4 h-4" />
-            <span>Lớp Học ({classes.length})</span>
+            <School className="w-3.5 h-3.5" />
+            <span>LỚP HỌC ({classes.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTabMode('students')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 hover-zoom-btn ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 hover-zoom-btn uppercase ${
               activeTabMode === 'students' 
                 ? 'bg-white text-indigo-700 shadow-xs' 
                 : 'text-indigo-900/70 hover:text-indigo-950'
             }`}
           >
-            <Users className="w-4 h-4" />
-            <span>Học Sinh ({currentClassStudents.length})</span>
+            <Users className="w-3.5 h-3.5" />
+            <span>HỌC SINH ({currentClassStudents.length})</span>
           </button>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. VIEW TAB: QUẢN LÝ LỚP HỌC (User Request 1) */}
+      {/* 1. VIEW TAB: QUẢN LÝ LỚP HỌC (User Request: Màu sắc tươi sáng, hạn chế chữ màu đen) */}
       {/* ========================================================================= */}
       {activeTabMode === 'classes' && (
-        <div className="space-y-6">
-          {/* STATS OVERVIEW: Tổng số lớp đang quản lý, mỗi lớp bao nhiêu học sinh (User Request 1) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Card 1: Tổng số lớp */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black shadow-2xs shrink-0">
-                <School className="w-6 h-6" />
+        <div className="space-y-3">
+          {/* STATS OVERVIEW: Thống kê số lớp đang quản lý, mỗi lớp bao nhiêu học sinh */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
+            {/* Card 1: Tổng số lớp đang quản lý */}
+            <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 rounded-2xl p-3 sm:p-3.5 text-white shadow-sm shadow-indigo-500/20 hover-zoom-card flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center font-black shadow-xs shrink-0">
+                <School className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Tổng Lớp Đang Quản Lý</span>
-                <div className="text-2xl md:text-3xl font-black text-indigo-950 font-mono mt-0.5">
-                  {classes.length} <span className="text-xs font-bold text-indigo-600">lớp học</span>
+                <span className="text-[10px] font-black text-indigo-100 uppercase tracking-wider block">TỔNG LỚP ĐANG QUẢN LÝ</span>
+                <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
+                  {classes.length} <span className="text-xs font-bold text-cyan-100 uppercase">LỚP HỌC</span>
                 </div>
               </div>
             </div>
 
             {/* Card 2: Tổng số học sinh toàn trường */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black shadow-2xs shrink-0">
-                <Users className="w-6 h-6" />
+            <div className="bg-gradient-to-br from-emerald-500 via-teal-500 to-green-600 rounded-2xl p-3 sm:p-3.5 text-white shadow-sm shadow-emerald-500/20 hover-zoom-card flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center font-black shadow-xs shrink-0">
+                <Users className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng Số Học Sinh Các Lớp</span>
-                <div className="text-2xl md:text-3xl font-black text-emerald-700 font-mono mt-0.5">
-                  {students.length} <span className="text-xs font-bold text-slate-400">em</span>
+                <span className="text-[10px] font-black text-emerald-100 uppercase tracking-wider block">TỔNG SỐ HỌC SINH CÁC LỚP</span>
+                <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
+                  {students.length} <span className="text-xs font-bold text-emerald-100 uppercase">EM HỌC SINH</span>
                 </div>
               </div>
             </div>
 
-            {/* Card 3: Thống kê nhanh sĩ số các lớp */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Chi Tiết Sĩ Số Từng Lớp</span>
-              <div className="flex flex-wrap gap-2 mt-2">
+            {/* Card 3: Thống kê nhanh sĩ số từng lớp */}
+            <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 rounded-2xl p-3 sm:p-3.5 text-white shadow-sm shadow-orange-500/20 hover-zoom-card flex flex-col justify-between space-y-1.5">
+              <span className="text-[10px] font-black text-amber-100 uppercase tracking-wider block">CHI TIẾT SĨ SỐ TỪNG LỚP</span>
+              <div className="flex flex-wrap gap-1.5">
                 {classes.map(c => {
                   const num = students.filter(s => s.classId === c.id).length;
                   return (
                     <span 
                       key={c.id} 
-                      className="px-2.5 py-1 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1.5"
+                      className="px-2 py-0.5 bg-white/25 backdrop-blur-md border border-white/40 rounded-lg text-[11px] font-black text-white flex items-center gap-1 shadow-2xs"
                     >
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color }} />
-                      <span>Lớp {c.name}:</span>
-                      <strong className="text-indigo-700">{num} em</strong>
+                      <span className="w-2 h-2 rounded-full ring-2 ring-white/80" style={{ backgroundColor: c.color || '#3B82F6' }} />
+                      <span>LỚP {c.name}:</span>
+                      <strong className="text-yellow-200">{num} EM</strong>
                     </span>
                   );
                 })}
@@ -682,51 +863,205 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
           </div>
 
-          {/* Class List Action Header (Yêu cầu 4: Cho phép xóa hết tất cả các lớp) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* ADMIN UNIFIED TEACHER FILTER BAR (Dành cho Quản trị viên sử dụng dữ liệu GVCN & GVBM) */}
+          {isAdmin && (
+            <div className="p-4 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 rounded-3xl border-2 border-indigo-200/90 shadow-xs space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-indigo-600 text-white rounded-xl shadow-xs">
+                    <ShieldCheck className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <span className="text-xs md:text-sm font-black text-indigo-950 uppercase block">
+                      QUẢN TRỊ VIÊN TOÀN TRƯỜNG • ĐỒNG BỘ DỮ LIỆU CÁC TÀI KHOẢN GIÁO VIÊN:
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Xem và quản lý tất cả các lớp học, học sinh của các tài khoản GV Chủ nhiệm và GV Bộ môn
+                    </span>
+                  </div>
+                </div>
+                <div className="text-[11px] text-slate-600 font-bold uppercase">
+                  Tổng số: <strong className="text-indigo-700">{classes.length} lớp</strong> • <strong className="text-emerald-700">{students.length} học sinh</strong>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setAdminTeacherFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                    adminTeacherFilter === 'all'
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
+                  }`}
+                >
+                  <span>🌟</span>
+                  <span>TẤT CẢ LỚP HỌC ({classes.length})</span>
+                </button>
+
+                {allTeachers.map(t => {
+                  const tClasses = classes.filter(c => c.teacherUsername === t.username || (!c.teacherUsername && c.teacherRole === t.role));
+                  const isHomeroom = t.role === 'homeroom';
+                  return (
+                    <button
+                      key={t.id || t.username}
+                      type="button"
+                      onClick={() => setAdminTeacherFilter(t.username)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                        adminTeacherFilter === t.username
+                          ? isHomeroom ? 'bg-indigo-600 text-white shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      <span>{isHomeroom ? '🏫' : '💻'}</span>
+                      <span>{t.fullName} ({tClasses.length} lớp)</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Class List Action Header (Cho phép xóa hết tất cả các lớp hoặc thêm lớp mới) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-indigo-50 via-sky-50 to-purple-50 p-4 rounded-3xl border border-indigo-200/80">
             <div>
-              <h3 className="text-base md:text-lg font-black text-indigo-950">
-                Danh Sách Không Gian Lớp Học ({classes.length} Lớp)
+              <h3 className="text-base md:text-lg font-black text-indigo-900 uppercase">
+                DANH SÁCH KHÔNG GIAN LỚP HỌC ({displayedClasses.length} LỚP {isAdmin && adminTeacherFilter !== 'all' ? '• ĐANG LỌC' : ''})
               </h3>
-              <p className="text-xs text-indigo-700/80 font-medium mt-0.5">
-                Mỗi lớp có ảnh đại diện, màu sắc nhận diện, giáo viên chủ nhiệm và sĩ số học sinh.
+              <p className="text-xs text-indigo-700 font-bold mt-0.5 uppercase">
+                MỖI LỚP CÓ ẢNH ĐẠI DIỆN, NĂM HỌC 2026–2027, GIÁO VIÊN VÀ THỜI KHÓA BIỂU RIÊNG CỐ ĐỊNH.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
+              {teacherRole === 'subject' && (
+                <button
+                  type="button"
+                  onClick={() => setIsInitSubjectClassesModalOpen(true)}
+                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all hover-zoom-btn shadow-md shadow-emerald-600/25 uppercase"
+                  title="Khởi tạo nhanh danh sách các lớp dạy bộ môn, điền thông tin lớp và số lượng học sinh"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                  <span>KHỞI TẠO LỚP DẠY BỘ MÔN</span>
+                </button>
+              )}
+
               {classes.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setIsDeleteAllClassesOpen(true)}
-                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all hover-zoom-btn shadow-xs"
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border-2 border-rose-300 rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all hover-zoom-btn shadow-xs uppercase"
                   title="Xóa tất cả các lớp học trong hệ thống"
                 >
                   <Trash2 className="w-4 h-4 text-rose-600" />
-                  <span>Xóa Hết Tất Cả Các Lớp</span>
+                  <span>XÓA HẾT TẤT CẢ CÁC LỚP</span>
                 </button>
               )}
 
               <button
                 type="button"
                 onClick={() => setIsCreateClassOpen(true)}
-                className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn"
+                className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 text-white rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn uppercase"
               >
                 <Plus className="w-4 h-4" />
-                <span>Thêm Lớp Học Mới</span>
+                <span>THÊM LỚP HỌC MỚI</span>
               </button>
             </div>
           </div>
 
-          {/* Grid Thẻ Lớp Học LỚN, RÕ NÉT kèm Ảnh Đại Diện To Rõ (User Request) */}
-          {classes.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-indigo-100 p-12 text-center space-y-4 shadow-xs">
-              <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-2xs">
+          {/* NÚT LỆNH TÍCH CHỌN NHIỀU LỚP & THAO TÁC ĐỒNG LOẠT (CẢ 3 VAI TRÒ) */}
+          {displayedClasses.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white rounded-3xl border-2 border-indigo-200/90 shadow-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedClassIds.length === displayedClasses.length) {
+                      setSelectedClassIds([]);
+                    } else {
+                      setSelectedClassIds(displayedClasses.map(c => c.id));
+                    }
+                  }}
+                  className={`px-4 py-2.5 rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all hover-zoom-btn uppercase shadow-xs ${
+                    selectedClassIds.length > 0 && selectedClassIds.length === displayedClasses.length
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-2 border-amber-300'
+                      : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-2 border-indigo-200'
+                  }`}
+                  title="Tích chọn tất cả các lớp hoặc bỏ chọn"
+                >
+                  <CheckSquare className="w-4 h-4 text-indigo-600" />
+                  <span>{selectedClassIds.length === displayedClasses.length ? 'BỎ CHỌN TẤT CẢ' : `TÍCH CHỌN TẤT CẢ (${displayedClasses.length} LỚP)`}</span>
+                </button>
+
+                {selectedClassIds.length > 0 && (
+                  <span className="px-3.5 py-2 rounded-2xl bg-amber-50 text-amber-900 border-2 border-amber-300 text-xs font-black uppercase flex items-center gap-1.5 shadow-2xs">
+                    <span>🎯</span>
+                    <span>ĐÃ CHỌN: <strong className="text-amber-950 font-black">{selectedClassIds.length}</strong> / {displayedClasses.length} LỚP</span>
+                  </span>
+                )}
+              </div>
+
+              {selectedClassIds.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkEditGrade('keep');
+                      setBulkEditYear('keep');
+                      setBulkEditTeacher('');
+                      setBulkEditColor('keep');
+                      setBulkEditSlogan('');
+                      setIsBulkClassEditOpen(true);
+                    }}
+                    className="px-4 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all hover-zoom-btn shadow-md shadow-indigo-600/25 uppercase"
+                    title="Sửa thông tin các lớp đã chọn cùng lúc (Năm học, Khối, Giáo viên, Màu, Khẩu hiệu)"
+                  >
+                    <Edit3 className="w-4 h-4 text-cyan-200" />
+                    <span>SỬA THÔNG TIN ĐỒNG LOẠT ({selectedClassIds.length} LỚP)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsBulkClassDeleteOpen(true)}
+                    className="px-4 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all hover-zoom-btn shadow-md shadow-rose-600/25 uppercase"
+                    title="Xóa đồng loạt các lớp đã tích chọn"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-100" />
+                    <span>XÓA ĐỒNG LOẠT ({selectedClassIds.length} LỚP)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClassIds([])}
+                    className="p-2.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
+                    title="Hủy chọn"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="text-xs text-slate-500 font-medium italic flex items-center gap-1.5">
+                  <span>💡</span>
+                  <span>Tích chọn nút trên từng thẻ lớp học để thao tác xóa hoặc sửa thông tin đồng loạt</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Grid Thẻ Lớp Học LỚN, RÕ NÉT kèm Ảnh Đại Diện To Rõ */}
+          {displayedClasses.length === 0 ? (
+            <div className="bg-gradient-to-b from-white via-indigo-50/40 to-sky-50/40 rounded-3xl border-2 border-dashed border-indigo-200 p-12 text-center space-y-4 shadow-xs">
+              <div className="w-16 h-16 rounded-3xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto shadow-2xs">
                 <School className="w-8 h-8" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-black text-indigo-950">Chưa Có Lớp Học Nào Trong Hệ Thống</h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                  Tất cả các lớp học đã được xóa hoặc chưa được tạo. Hãy bấm nút bên dưới để tạo lớp học bắt đầu năm học mới.
+                <h3 className="text-lg font-black text-indigo-950 uppercase">
+                  {isAdmin && adminTeacherFilter !== 'all' ? 'GIÁO VIÊN NÀY CHƯA CÓ LỚP HỌC NÀO' : 'CHƯA CÓ LỚP HỌC NÀO TRONG HỆ THỐNG'}
+                </h3>
+                <p className="text-xs text-indigo-700 max-w-md mx-auto leading-relaxed font-semibold uppercase">
+                  {isAdmin && adminTeacherFilter !== 'all'
+                    ? 'BẠN CÓ THỂ BẤM NÚT "TẠO LỚP HỌC MỚI" VÀ PHÂN CÔNG CHO GIÁO VIÊN NÀY PHỤ TRÁCH.'
+                    : 'TẤT CẢ CÁC LỚP HỌC ĐÃ ĐƯỢC XÓA HOẶC CHƯA ĐƯỢC TẠO. HÃY BẤM NÚT BÊN DƯỚI ĐỂ TẠO LỚP HỌC BẮT ĐẦU NĂM HỌC MỚI.'}
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
@@ -736,24 +1071,25 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     playFanfareSound();
                     confetti({ particleCount: 60, spread: 70 });
                   }}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-md shadow-emerald-600/25 transition-all hover-zoom-btn inline-flex items-center gap-2"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-md shadow-emerald-600/25 transition-all hover-zoom-btn inline-flex items-center gap-2 uppercase"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  <span>Khôi Phục Lớp Mẫu 4A1 (30 Học Sinh)</span>
+                  <span>KHÔI PHỤC LỚP MẪU 4A1 (30 HỌC SINH)</span>
                 </button>
                 <button
                   onClick={() => setIsCreateClassOpen(true)}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn inline-flex items-center gap-2"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn inline-flex items-center gap-2 uppercase"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Tạo Lớp Học Mới</span>
+                  <span>TẠO LỚP HỌC MỚI</span>
                 </button>
               </div>
             </div>
           ) : (
-          <div className={classes.length === 1 ? 'max-w-3xl mx-auto' : 'grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8'}>
-            {classes.map((cls) => {
+          <div className={displayedClasses.length === 1 ? 'max-w-3xl mx-auto' : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 lg:gap-6'}>
+            {displayedClasses.map((cls) => {
               const isSelected = cls.id === activeClassId;
+              const isClassChecked = selectedClassIds.includes(cls.id);
               const classStudents = students.filter(s => s.classId === cls.id);
               const count = classStudents.length;
               const maleCount = classStudents.filter(s => s.gender === 'Nam').length;
@@ -764,140 +1100,199 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               return (
                 <div
                   key={cls.id}
-                  className={`bg-white rounded-3xl p-5 md:p-6 border-2 transition-all hover-zoom-card flex flex-col justify-between space-y-5 ${
-                    isSelected 
-                      ? 'border-indigo-600 ring-4 ring-indigo-500/15 shadow-xl' 
-                      : 'border-slate-200/90 shadow-sm hover:shadow-lg hover:border-indigo-300'
+                  className={`bg-white rounded-2xl p-3.5 sm:p-4 border-2 transition-all hover-zoom-card flex flex-col justify-between space-y-3 shadow-2xs hover:shadow-lg ${
+                    isClassChecked
+                      ? 'border-amber-500 ring-4 ring-amber-400/30 shadow-amber-500/10'
+                      : isSelected 
+                        ? 'border-indigo-600 ring-4 ring-indigo-500/20 shadow-indigo-500/10' 
+                        : 'border-indigo-100 hover:border-indigo-400'
                   }`}
                 >
-                  {/* KHUNG ẢNH ĐẠI DIỆN LỚP TO RÕ & CÓ ZOOM TRỰC TIẾP (User Request) */}
-                  <div className="relative w-full h-56 sm:h-64 md:h-72 rounded-2xl md:rounded-3xl overflow-hidden bg-slate-950 shadow-md group/photo border border-slate-200">
+                  {/* Dải màu nhận diện trên đầu thẻ */}
+                  <div className="h-1.5 w-full rounded-full" style={{ backgroundColor: cls.color || '#3B82F6' }} />
+
+                  {/* KHUNG ẢNH ĐẠI DIỆN LỚP CÂN ĐỐI CHUẨN TỈ LỆ BANNER 16:8 (2:1) KHỚP 100% GÓC NHÌN CROP */}
+                  <div className="relative w-full aspect-[16/8] min-h-[160px] max-h-[220px] rounded-xl md:rounded-2xl overflow-hidden bg-slate-900 shadow-xs group/photo border border-indigo-200">
                     {cls.avatar ? (
                       <img
                         src={cls.avatar}
                         alt={displayName}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover/photo:scale-102"
-                        style={{
-                          transform: `translate(${cls.avatarPosition?.x || 0}px, ${cls.avatarPosition?.y || 0}px) scale(${cls.avatarScale || 1})`,
-                          transformOrigin: 'center center'
-                        }}
+                        style={
+                          (cls.avatarScale && cls.avatarScale !== 1) || (cls.avatarPosition && (cls.avatarPosition.x !== 0 || cls.avatarPosition.y !== 0))
+                            ? {
+                                transform: `translate(${cls.avatarPosition?.x || 0}px, ${cls.avatarPosition?.y || 0}px) scale(${cls.avatarScale || 1})`,
+                                transformOrigin: 'center center'
+                              }
+                            : undefined
+                        }
                       />
                     ) : (
                       <div 
-                        className="w-full h-full flex flex-col items-center justify-center font-black text-white text-5xl shadow-md"
+                        className="w-full h-full flex flex-col items-center justify-center font-black text-white text-3xl shadow-xs"
                         style={{ backgroundColor: cls.color || '#6366F1' }}
                       >
                         <span>{cls.name}</span>
-                        <span className="text-xs font-semibold text-white/80 mt-2">Chưa cài đặt ảnh lớp</span>
+                        <span className="text-[11px] font-semibold text-white/80 mt-1 uppercase">CHƯA CÀI ĐẶT ẢNH LỚP</span>
                       </div>
                     )}
 
                     {/* Gradient overlay for badges */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/45 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/70 via-transparent to-indigo-950/40 pointer-events-none" />
 
                     {/* Top Badges */}
-                    <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between gap-2">
+                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5">
                       <span 
-                        className="px-3.5 py-1.5 rounded-full text-white text-xs font-black shadow-md flex items-center gap-1.5 backdrop-blur-md"
+                        className="px-2.5 py-1 rounded-full text-white text-[11px] font-black shadow-sm flex items-center gap-1.5 backdrop-blur-md uppercase"
                         style={{ backgroundColor: cls.color ? `${cls.color}ee` : '#6366F1ee' }}
                       >
-                        <span className="w-2 h-2 rounded-full bg-white ring-2 ring-white/40" />
-                        <span>{cls.grade} • Năm học: {cls.academicYear || '2026 - 2027'}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-white ring-2 ring-white/40" />
+                        <span>{cls.grade} • {cls.academicYear || '2026–2027'}</span>
                       </span>
 
                       {isSelected ? (
-                        <span className="px-3.5 py-1.5 rounded-full bg-emerald-500 text-white font-black text-xs tracking-wide shadow-md flex items-center gap-1.5 backdrop-blur-md">
-                          <Check className="w-3.5 h-3.5" />
-                          <span>✓ Đang chọn</span>
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-black text-[11px] tracking-wide shadow-sm flex items-center gap-1 backdrop-blur-md uppercase">
+                          <Check className="w-3 h-3" />
+                          <span>✓ ĐANG CHỌN</span>
                         </span>
                       ) : (
                         <button
                           onClick={() => setActiveClassId(cls.id)}
-                          className="px-3.5 py-1.5 rounded-full bg-white/95 hover:bg-white text-indigo-700 font-black text-xs transition-all shadow-md hover-zoom-btn backdrop-blur-md"
+                          className="px-2.5 py-1 rounded-full bg-white hover:bg-indigo-50 text-indigo-700 font-black text-[11px] transition-all shadow-sm hover-zoom-btn backdrop-blur-md uppercase"
                         >
-                          Chọn lớp này
+                          CHỌN LỚP NÀY
                         </button>
                       )}
                     </div>
 
-                    {/* Bottom Floating Action: Zoom / Adjust Image Button (User Request) */}
-                    <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2">
+                    {/* Bottom Floating Actions: Multi-Select Checkbox & Zoom */}
+                    <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedClassIds(prev => 
+                            prev.includes(cls.id) ? prev.filter(id => id !== cls.id) : [...prev, cls.id]
+                          );
+                        }}
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 shadow-md backdrop-blur-md border transition-all hover-zoom-btn uppercase ${
+                          isClassChecked
+                            ? 'bg-amber-400 text-amber-950 border-amber-300 ring-2 ring-amber-300/60 font-black'
+                            : 'bg-indigo-950/85 hover:bg-indigo-900 text-white border-white/25'
+                        }`}
+                        title="Tích chọn lớp này để thao tác đồng loạt (xóa, sửa)"
+                      >
+                        <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                          isClassChecked ? 'bg-amber-500 border-amber-600 text-white' : 'border-white/60 bg-white/20'
+                        }`}>
+                          {isClassChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                        <span>{isClassChecked ? 'ĐÃ CHỌN' : 'TÍCH CHỌN'}</span>
+                      </button>
+                    </div>
+
+                    <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
                       <button
                         onClick={() => setAvatarEditingClass(cls)}
-                        className="px-3.5 py-2 bg-black/80 hover:bg-black text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-lg backdrop-blur-md border border-white/25 transition-all hover-zoom-btn"
+                        className="px-2.5 py-1.5 bg-indigo-950/85 hover:bg-indigo-950 text-white rounded-lg text-[11px] font-black flex items-center gap-1.5 shadow-md backdrop-blur-md border border-white/25 transition-all hover-zoom-btn uppercase"
                         title="Phóng to, thu nhỏ và căn chỉnh vị trí ảnh lớp học"
                       >
-                        <ZoomIn className="w-4 h-4 text-amber-300" />
-                        <span>Phóng to & Căn chỉnh ảnh</span>
+                        <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
+                        <span>CĂN CHỈNH ẢNH</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* THÔNG TIN CHI TIẾT LỚP HỌC TO RÕ NÉT */}
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
+                  {/* THÔNG TIN CHI TIẾT LỚP HỌC (TƯƠI SÁNG, HẠN CHẾ CHỮ MÀU ĐEN) */}
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="text-2xl sm:text-3xl font-black text-indigo-950 leading-tight">
+                        <h3 className="text-xl sm:text-2xl font-black text-indigo-950 leading-tight uppercase">
                           {displayName}
                         </h3>
-                        <p className="text-xs sm:text-sm text-indigo-600 font-bold mt-1 flex items-center gap-1.5">
+                        <p className="text-xs text-blue-700 font-black mt-0.5 flex items-center gap-1 uppercase">
                           <span>🏫</span>
-                          <span>GVCN: <strong className="text-indigo-800">{cls.teacherName || teacherProfile.name}</strong></span>
+                          <span>GVCN: <strong className="text-indigo-800 font-black">{cls.teacherName || teacherProfile.name}</strong></span>
                         </p>
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-[11px] font-black text-amber-800 border border-amber-200 shadow-2xs mt-1 uppercase">
+                          <span>📅</span>
+                          <span>NĂM HỌC: <strong className="text-amber-950 font-black">{cls.academicYear || '2026–2027'}</strong></span>
+                        </div>
                       </div>
 
-                      {/* Quick Edit/Delete icon buttons */}
+                      {/* Quick Edit/Delete buttons */}
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => setEditingClass(cls)}
-                          className="p-2.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors hover-zoom-btn"
+                          className="p-2 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors hover-zoom-btn"
                           title="Sửa thông tin lớp học"
                         >
-                          <Edit3 className="w-4 h-4" />
+                          <Edit3 className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           onClick={() => setDeleteConfirmClass(cls)}
-                          className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors hover-zoom-btn"
+                          className="p-2 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors hover-zoom-btn"
                           title="Xóa lớp học này"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* Sĩ số & Phân loại học sinh */}
-                    <div className="grid grid-cols-2 gap-3 p-3.5 bg-indigo-50/50 rounded-2xl border border-indigo-100">
+                    <div className="grid grid-cols-2 gap-2 p-2.5 bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-200">
                       <div>
-                        <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider block">Sĩ số học sinh</span>
-                        <span className="text-base sm:text-lg font-black text-indigo-700 font-mono">
-                          👥 {count} em
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-wider block">SĨ SỐ HỌC SINH</span>
+                        <span className="text-sm sm:text-base font-black text-indigo-900 font-mono">
+                          👥 {count} EM HỌC SINH
                         </span>
                       </div>
                       <div>
-                        <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider block">Cơ cấu giới tính</span>
-                        <span className="text-xs sm:text-sm font-black text-indigo-900">
-                          ♂ {maleCount} Nam • ♀ {femaleCount} Nữ
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-wider block">CƠ CẤU GIỚI TÍNH</span>
+                        <span className="text-[11px] sm:text-xs font-black text-blue-800 uppercase">
+                          ♂ {maleCount} NAM • ♀ {femaleCount} NỮ
                         </span>
                       </div>
                     </div>
+
+                    {cls.slogan && (
+                      <div className="text-[11px] text-amber-800 font-bold italic bg-amber-50/80 p-2 rounded-lg border border-amber-200/80">
+                        ⭐ « {cls.slogan} »
+                      </div>
+                    )}
                   </div>
 
-                  {/* Nút to: Vào không gian lớp học */}
-                  <button
-                    onClick={() => {
-                      setActiveClassId(cls.id);
-                      setActiveTabMode('students');
-                    }}
-                    className={`w-full py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all hover-zoom-btn shadow-md ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-indigo-600/25'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    }`}
-                  >
-                    <span>Vào Không Gian Lớp Học</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  {/* 2 NÚT THAO TÁC CHÍNH: THỜI KHÓA BIỂU RIÊNG & VÀO LỚP HỌC */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
+                    <button
+                      onClick={() => {
+                        setActiveClassId(cls.id);
+                        if (onNavigate) onNavigate('schedule');
+                      }}
+                      className="py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all hover-zoom-btn shadow-sm bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-sky-500/20 uppercase"
+                      title={`Thiết lập thời khóa biểu riêng cho lớp ${cls.name}`}
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-white" />
+                      <span>THỜI KHÓA BIỂU RIÊNG</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setActiveClassId(cls.id);
+                        setActiveTabMode('students');
+                      }}
+                      className={`py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all hover-zoom-btn shadow-sm uppercase ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-indigo-600/25'
+                          : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5 text-white" />
+                      <span>VÀO LỚP HỌC</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-white" />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -910,148 +1305,148 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       {/* 2. VIEW TAB: QUẢN LÝ HỌC SINH & CẤU HÌNH NHẬN XU (User Request 2 & 9) */}
       {/* ========================================================================= */}
       {activeTabMode === 'students' && (
-        <div className="space-y-6">
+        <div className="space-y-2.5 sm:space-y-3">
           {/* ACTIVE SUBJECT EVALUATION BAR: MÀU SẮC TƯƠI MỚI HIỆN ĐẠI (User Request 2) */}
-          <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-indigo-50/70 rounded-3xl border border-emerald-200/70 p-4.5 shadow-xs space-y-3 hover-zoom-card">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 text-white flex items-center justify-center shadow-xs">
-                  <Sparkles className="w-4 h-4" />
+          <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-indigo-50/70 rounded-2xl border border-emerald-200/70 p-2.5 px-3.5 shadow-2xs space-y-1.5 hover-zoom-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 text-white flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="text-xs font-black text-emerald-950 uppercase tracking-wider block">
+                  <span className="text-[11px] font-black text-emerald-950 uppercase tracking-wider inline-block mr-1.5">
                     MÔN HỌC ĐÁNH GIÁ NHẬN XU:
                   </span>
-                  <span className="text-[11px] text-emerald-800 font-semibold">
-                    Đang chấm điểm cho: <strong className="text-indigo-800 font-black">{activeEvalSubject}</strong>
+                  <span className="text-[10.5px] text-emerald-800 font-semibold">
+                    Đang chấm cho: <strong className="text-indigo-800 font-black">{activeEvalSubject}</strong>
                   </span>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-black text-xs shadow-xs shadow-indigo-500/25">
+                <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-black text-xs shadow-xs shadow-indigo-500/25">
                   {activeEvalSubject}
+                </span>
+                <span className="text-[10px] font-bold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200 shadow-2xs">
+                  ✓ Áp dụng {appliedSubjects.length}/{subjects.length} môn
                 </span>
               </div>
 
-              {/* NÚT CẤU HÌNH NHẬN XU (User Request 2) */}
+              {/* NÚT CẤU HÌNH NHẬN XU (User Request) */}
               <button
                 onClick={() => setIsSubjectConfigOpen(true)}
-                className="px-4 py-2 bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-2xl text-xs font-black flex items-center gap-2 shadow-xs transition-all hover-zoom-btn self-start sm:self-auto"
-                title="Mở cấu hình các môn học đánh giá nhận xu"
+                className="px-3 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 border border-amber-300 rounded-xl text-[11px] font-black flex items-center gap-1.5 shadow-xs transition-all hover-zoom-btn self-start sm:self-auto uppercase tracking-wide cursor-pointer"
+                title="Mở bảng cấu hình nhận xu: Thêm, sửa, xóa và thiết lập danh sách môn học áp dụng"
               >
-                <Settings className="w-4 h-4 text-indigo-600" />
-                <span>⚙️ Cấu Hình Nhận Xu</span>
+                <Settings className="w-3.5 h-3.5 text-amber-950" />
+                <span>⚙️ CẤU HÌNH NHẬN XU</span>
               </button>
             </div>
 
-            {/* Scrolling list of subjects */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5">
-              {subjects.map((sub) => {
+            {/* Scrolling list of applied subjects */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5">
+              {appliedSubjects.map((sub) => {
                 const isSelected = activeEvalSubject === sub.name;
+                const isCore = sub.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(sub.name.trim().toLowerCase());
                 return (
                   <button
                     key={sub.id}
                     onClick={() => setActiveEvalSubject(sub.name)}
-                    className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 hover-zoom-btn ${
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 hover-zoom-btn uppercase ${
                       isSelected
-                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-600/30 scale-103 font-black'
+                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-sm shadow-indigo-600/30 scale-102 font-black ring-2 ring-indigo-400'
                         : 'bg-white text-indigo-900 border border-indigo-100 hover:bg-indigo-50 hover:border-indigo-300 font-bold'
                     }`}
                   >
-                    <span className="w-2.5 h-2.5 rounded-full ring-2 ring-white/60" style={{ backgroundColor: sub.color || '#3B82F6' }} />
+                    <span className="w-2 h-2 rounded-full ring-2 ring-white/60" style={{ backgroundColor: sub.color || '#3B82F6' }} />
                     <span>{sub.name}</span>
+                    {isCore && <span className="text-[9px] text-amber-300 font-black">★</span>}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Action Bar: Search, Excel, Add, Bulk Delete (Gọn gàng trong khung, không tràn mép) */}
-          <div className="bg-white rounded-3xl border border-indigo-100/90 p-4 md:p-5 shadow-xs space-y-3.5 hover-zoom-card overflow-hidden">
-            {/* Hàng 1: Tìm kiếm, Bộ lọc & Tỉ lệ chuyên cần có mặt */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2 flex-1">
-                <div className="relative flex-1 min-w-[180px]">
-                  <Search className="w-4 h-4 text-indigo-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Tìm học sinh theo tên hoặc STT..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2 bg-indigo-50/40 border border-indigo-200/80 rounded-xl text-xs font-bold text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  />
-                </div>
-
-                <select
-                  value={selectedGroupFilter}
-                  onChange={(e) => setSelectedGroupFilter(e.target.value)}
-                  className="px-3 py-2 bg-indigo-50/50 border border-indigo-200/80 rounded-xl text-xs font-black text-indigo-900 focus:outline-none hover-zoom-btn cursor-pointer"
-                >
-                  <option value="all">Tất cả các Tổ</option>
-                  <option value="Tổ 1">Tổ 1</option>
-                  <option value="Tổ 2">Tổ 2</option>
-                  <option value="Tổ 3">Tổ 3</option>
-                  <option value="Tổ 4">Tổ 4</option>
-                </select>
-
-                {/* Lọc theo chức vụ cán bộ lớp */}
-                <select
-                  value={selectedRoleFilter}
-                  onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                  className="px-3 py-2 bg-amber-50/70 border border-amber-200/90 rounded-xl text-xs font-black text-amber-950 focus:outline-none hover-zoom-btn cursor-pointer"
-                  title="Lọc học sinh theo chức vụ cán bộ lớp"
-                >
-                  <option value="all">Tất cả vai trò</option>
-                  <option value="officers">🎖️ Ban cán sự lớp</option>
-                  <option value="Lớp trưởng">⭐ Lớp trưởng</option>
-                  <option value="Lớp phó học tập">📘 Lớp phó học tập</option>
-                  <option value="Lớp phó phong trào">🚩 Lớp phó phong trào</option>
-                  <option value="Lớp phó lao động">🌱 Lớp phó lao động</option>
-                  <option value="Tổ trưởng Tổ 1">🏅 Tổ trưởng Tổ 1</option>
-                  <option value="Tổ phó Tổ 1">🎖️ Tổ phó Tổ 1</option>
-                  <option value="Tổ trưởng Tổ 2">🏅 Tổ trưởng Tổ 2</option>
-                  <option value="Tổ phó Tổ 2">🎖️ Tổ phó Tổ 2</option>
-                  <option value="Tổ trưởng Tổ 3">🏅 Tổ trưởng Tổ 3</option>
-                  <option value="Tổ phó Tổ 3">🎖️ Tổ phó Tổ 3</option>
-                  <option value="Tổ trưởng Tổ 4">🏅 Tổ trưởng Tổ 4</option>
-                  <option value="Tổ phó Tổ 4">🎖️ Tổ phó Tổ 4</option>
-                  <option value="Thành viên">🎒 Thành viên</option>
-                </select>
-
-                {filteredStudents.length > 0 && (
+          {/* Action Bar: Search, Excel, Add, Bulk Delete (Sắp xếp gọn gàng vừa khít khung, không tràn viền) */}
+          <div className="bg-white rounded-2xl border border-indigo-100/90 p-2.5 px-3.5 shadow-2xs space-y-2 hover-zoom-card">
+            {/* Hàng 1: Tìm kiếm & Các bộ lọc nhanh */}
+            <div className="flex flex-col md:flex-row md:items-center gap-2 w-full">
+              <div className="relative flex-1 min-w-[180px]">
+                <Search className="w-3.5 h-3.5 text-indigo-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Tìm học sinh theo tên, STT hoặc chức vụ..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-7 py-1.5 bg-indigo-50/40 border border-indigo-200/80 rounded-lg text-xs font-bold text-indigo-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+                {searchQuery && (
                   <button
-                    type="button"
-                    onClick={handleSelectAllStudents}
-                    className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-xl text-xs font-black flex items-center gap-1.5 hover-zoom-btn border border-indigo-200/60 cursor-pointer"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    <CheckSquare className="w-3.5 h-3.5" />
-                    <span>{selectedStudentIds.length === filteredStudents.length ? 'Bỏ chọn' : 'Chọn tất cả'}</span>
+                    <X className="w-3 h-3" />
                   </button>
                 )}
               </div>
 
-              {/* Yêu cầu: Thêm tỉ lệ % học sinh có mặt trên tổng số học sinh */}
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-300 text-emerald-800 text-xs font-black flex items-center gap-2 shadow-2xs">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Có mặt: <strong className="text-emerald-950 font-black">{presentCount}/{currentClassStudents.length}</strong> em</span>
-                  <span className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[11px] font-mono font-bold shadow-xs">
-                    {attendanceRate}%
-                  </span>
-                </div>
+              <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                <select
+                  value={selectedGroupFilter}
+                  onChange={(e) => setSelectedGroupFilter(e.target.value)}
+                  className="px-2.5 py-1.5 bg-indigo-50/50 border border-indigo-200/80 rounded-lg text-xs font-black text-indigo-900 focus:outline-none hover-zoom-btn uppercase"
+                >
+                  <option value="all">TẤT CẢ CÁC TỔ</option>
+                  <option value="Tổ 1">TỔ 1</option>
+                  <option value="Tổ 2">TỔ 2</option>
+                  <option value="Tổ 3">TỔ 3</option>
+                  <option value="Tổ 4">TỔ 4</option>
+                </select>
+
+                <select
+                  value={selectedRoleFilter}
+                  onChange={(e) => setSelectedRoleFilter(e.target.value)}
+                  className="px-2.5 py-1.5 bg-indigo-50/50 border border-indigo-200/80 rounded-lg text-xs font-black text-indigo-900 focus:outline-none hover-zoom-btn uppercase"
+                >
+                  <option value="all">TẤT CẢ CHỨC VỤ</option>
+                  <option value="officers">⭐ TẤT CẢ CÁN BỘ LỚP</option>
+                  <option value="monitor">👑 LỚP TRƯỞNG</option>
+                  <option value="academic_deputy">📘 LỚP PHÓ HỌC TẬP</option>
+                  <option value="activity_deputy">🚩 LỚP PHONG TRÀO</option>
+                  <option value="team_leader">🥇 TỔ TRƯỞNG (TẤT CẢ)</option>
+                  <option value="team_vice">🥈 TỔ PHÓ (TẤT CẢ)</option>
+                  {OFFICER_ROLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.icon} {opt.label}
+                    </option>
+                  ))}
+                </select>
+
+                {filteredStudents.length > 0 && (
+                  <button
+                    onClick={handleSelectAllStudents}
+                    className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-lg text-xs font-black flex items-center gap-1 hover-zoom-btn border border-indigo-200/60 uppercase"
+                  >
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    <span>{selectedStudentIds.length === filteredStudents.length ? 'BỎ CHỌN' : 'CHỌN TẤT CẢ'}</span>
+                  </button>
+                )}
+
+                <span className="px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold font-mono">
+                  {filteredStudents.length} / {currentClassStudents.length} em
+                </span>
               </div>
             </div>
 
-            {/* Hàng 2: Các nút thao tác dữ liệu được nhóm gọn gàng, bao bọc trong khung, không tràn viền */}
-            <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-              {/* Nhóm 1: Nhập / Xuất & Báo cáo chuyên cần */}
-              <div className="flex flex-wrap items-center gap-2">
+            {/* Hàng 2: Nhóm nút lệnh thao tác - Tự động co giãn theo hàng, không tràn khung */}
+            <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 w-full">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
-                  type="button"
-                  onClick={handleDownloadExcelTemplate}
-                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all hover-zoom-btn cursor-pointer"
-                  title="Tải file mẫu Excel danh sách học sinh: Họ và tên, Ngày sinh, Giới tính, Tổ"
+                  onClick={() => {
+                    setIsSingleAddOpen(true);
+                    setSingleRoles([]);
+                  }}
+                  className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-indigo-600/20 transition-all hover-zoom-btn uppercase shrink-0"
                 >
-                  <Download className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Tải File Mẫu (.xlsx)</span>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>THÊM HỌC SINH</span>
                 </button>
 
                 <input
@@ -1062,119 +1457,165 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   onChange={handleExcelUpload}
                 />
                 <button
-                  type="button"
                   onClick={() => excelFileInputRef.current?.click()}
-                  className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn cursor-pointer"
+                  className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
                   title="Nhập danh sách học sinh từ file Excel"
                 >
                   <Upload className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Nhập Từ File Excel</span>
+                  <span>NHẬP TỪ FILE EXCEL</span>
                 </button>
 
                 <button
-                  type="button"
+                  onClick={handleDownloadExcelTemplate}
+                  className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
+                  title="Tải file mẫu Excel danh sách học sinh: Họ và tên, Ngày sinh, Giới tính, Tổ, Chức vụ"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>TẢI FILE MẪU (.XLSX)</span>
+                </button>
+
+                <button
+                  onClick={() => setIsSubjectConfigOpen(true)}
+                  className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
+                  title="Cấu hình nhận xu: Thêm, sửa, xóa môn học và thiết lập danh sách áp dụng"
+                >
+                  <Settings className="w-3.5 h-3.5 text-amber-700" />
+                  <span>⚙️ CẤU HÌNH NHẬN XU</span>
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
                   onClick={() => setIsExportStudentListOpen(true)}
-                  className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all hover-zoom-btn cursor-pointer"
+                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-emerald-600/20 transition-all hover-zoom-btn uppercase shrink-0"
                   title="Xuất danh sách học sinh ra file Excel hoặc in ấn bản A4"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
-                  <span>Xuất DS Học Sinh</span>
+                  <span>XUẤT DS HỌC SINH</span>
                 </button>
 
-                {/* Yêu cầu: Cho phép xuất biểu tổng hợp thống kê báo cáo chi tiết pdf và excel theo từng lớp */}
-                <button
-                  type="button"
-                  onClick={() => setIsClassReportModalOpen(true)}
-                  className="px-3.5 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-teal-600/20 transition-all hover-zoom-btn cursor-pointer"
-                  title="Xuất biểu tổng hợp thống kê báo cáo chi tiết PDF và Excel của lớp"
-                >
-                  <Award className="w-3.5 h-3.5 text-amber-200" />
-                  <span>Báo Cáo Tổng Hợp & Chuyên Cần</span>
-                </button>
-              </div>
-
-              {/* Nhóm 2: Infographic & Thêm học sinh */}
-              <div className="flex flex-wrap items-center gap-2">
-                {onNavigate && (
+                {onNavigate && teacherRole !== 'subject' && (
                   <button
-                    type="button"
                     onClick={() => onNavigate('infographic')}
-                    className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn cursor-pointer"
+                    className="px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-indigo-600/20 transition-all hover-zoom-btn uppercase shrink-0"
                     title="Tạo bản Infographic khổ dọc A4 xuất PDF cho lớp"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Infographic Lớp A4</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setIsSingleAddOpen(true)}
-                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Thêm Học Sinh</span>
-                </button>
-              </div>
-
-              {/* Nhóm 3: Thao tác Xu & Xóa */}
-              <div className="flex flex-wrap items-center gap-2">
-                {currentClassStudents.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsBulkSetPointsModalOpen(true)}
-                    className="px-3 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/25 transition-all hover-zoom-btn cursor-pointer"
-                    title="Gán điểm xu hoặc cộng/trừ xu đồng loạt"
-                  >
-                    <Coins className="w-3.5 h-3.5 text-amber-100" />
-                    <span>
-                      {selectedStudentIds.length > 0 ? `Gán Xu (${selectedStudentIds.length})` : 'Gán Điểm Xu'}
-                    </span>
+                    <span>INFOGRAPHIC LỚP A4</span>
                   </button>
                 )}
 
                 {currentClassStudents.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsResetPointsModalOpen(true)}
-                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn cursor-pointer"
-                    title="Xóa điểm xu về 0 cho học sinh"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-rose-600" />
-                    <span>
-                      {selectedStudentIds.length > 0 ? `Xóa Xu (${selectedStudentIds.length})` : 'Xóa Điểm Xu'}
-                    </span>
-                  </button>
-                )}
+                  <>
+                    <button
+                      onClick={() => setIsClassResetCoinsOpen(true)}
+                      className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
+                      title="Đặt lại toàn bộ số xu của tất cả học sinh trong lớp về mức 0"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+                      <span>RESET XU CẢ LỚP VỀ 0</span>
+                    </button>
 
-                {currentClassStudents.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (selectedStudentIds.length > 0) {
-                        setIsBulkDeleteConfirmOpen(true);
-                      } else {
-                        setIsClearAllConfirmOpen(true);
-                      }
-                    }}
-                    className="px-3 py-2 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 hover:border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all hover-zoom-btn cursor-pointer"
-                    title="Xóa học sinh đã chọn hoặc cả danh sách"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-slate-500 hover:text-rose-600" />
-                    <span>
-                      {selectedStudentIds.length > 0 ? `Xóa (${selectedStudentIds.length})` : 'Xóa DS'}
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        if (selectedStudentIds.length > 0) {
+                          setIsBulkDeleteConfirmOpen(true);
+                        } else {
+                          setIsClearAllConfirmOpen(true);
+                        }
+                      }}
+                      className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
+                      title="Xóa danh sách học sinh đồng loạt"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>
+                        {selectedStudentIds.length > 0 ? `XÓA ${selectedStudentIds.length} EM ĐÃ CHỌN` : 'XÓA CẢ DANH SÁCH'}
+                      </span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
           </div>
 
+          {/* Sticky Floating Bulk Action Bar when Students are selected (Yêu cầu 3 & 4) */}
+          {selectedStudentIds.length > 0 && (
+            <div className="sticky top-20 z-30 bg-gradient-to-r from-indigo-800 via-indigo-900 to-violet-900 text-white rounded-3xl p-3 md:p-4 shadow-2xl border-2 border-indigo-400/40 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 backdrop-blur-md">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-400 text-indigo-950 flex items-center justify-center font-black shadow-md">
+                  <CheckSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xs md:text-sm font-black text-amber-300 uppercase tracking-wide block">
+                    ĐÃ CHỌN {selectedStudentIds.length} HỌC SINH
+                  </span>
+                  <span className="text-[11px] text-indigo-200 font-medium">
+                    Chọn các thao tác nhanh hàng loạt bên cạnh:
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => {
+                    setBulkAwardMode('xu');
+                    setBulkAwardCoins(1);
+                    setBulkAwardSubject(activeEvalSubject || subjects[0]?.name || 'Toán');
+                    setBulkAwardReason('');
+                    setIsBulkAwardOpen(true);
+                  }}
+                  className="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all hover-zoom-btn uppercase"
+                  title="Gán xu hoặc trừ xu đồng loạt cho các học sinh đã chọn"
+                >
+                  <Coins className="w-3.5 h-3.5" />
+                  <span>GÁN XU HÀNG LOẠT</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setBulkSelectedRoles([]);
+                    setIsBulkRoleModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/25 transition-all hover-zoom-btn uppercase"
+                  title="Chỉ định chức vụ cán bộ lớp đồng loạt (Tối đa 3 chức vụ)"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>👑 GÁN CHỨC VỤ</span>
+                </button>
+
+                <button
+                  onClick={() => setIsBulkResetCoinsOpen(true)}
+                  className="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white border border-white/25 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn uppercase"
+                  title="Đặt lại số xu của các em đã chọn về 0"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-amber-300" />
+                  <span>🔄 ĐẶT VỀ 0 XU</span>
+                </button>
+
+                <button
+                  onClick={() => setIsBulkDeleteConfirmOpen(true)}
+                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-rose-600/25 transition-all hover-zoom-btn uppercase"
+                  title="Xóa các học sinh đã chọn"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>XÓA ĐÃ CHỌN</span>
+                </button>
+
+                <button
+                  onClick={() => setSelectedStudentIds([])}
+                  className="px-3 py-2 bg-white/10 hover:bg-white/20 text-indigo-100 rounded-xl text-xs font-bold transition-all hover-zoom-btn uppercase"
+                >
+                  ✕ BỎ CHỌN
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Student Grid: BIG, 3D MODERN STYLE, LARGE CRISP AVATARS (User Request 9) */}
           {filteredStudents.length === 0 ? (
             <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
               <Users className="w-12 h-12 text-slate-300 mx-auto" />
-              <h3 className="text-base font-bold text-slate-700">Chưa có học sinh nào trong lớp</h3>
+              <h3 className="text-base font-bold text-slate-700">Chưa có học sinh nào phù hợp</h3>
               <p className="text-xs text-slate-400 max-w-md mx-auto">
                 Bấm "Nhập Từ File Excel" để nạp nhanh danh sách hoặc "Tải File Mẫu (.xlsx)" để chuẩn bị danh sách học sinh.
               </p>
@@ -1185,27 +1626,27 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     playFanfareSound();
                     confetti({ particleCount: 60, spread: 70 });
                   }}
-                  className="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold hover-zoom-btn flex items-center gap-1.5"
+                  className="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-black hover-zoom-btn flex items-center gap-1.5 uppercase"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Khôi Phục 30 Học Sinh Mẫu Lớp 4A1</span>
+                  <span>KHÔI PHỤC 30 HỌC SINH MẪU LỚP 4A1</span>
                 </button>
                 <button
                   onClick={handleDownloadExcelTemplate}
-                  className="px-4 py-2 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold hover-zoom-btn"
+                  className="px-4 py-2 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-black hover-zoom-btn uppercase"
                 >
-                  Tải File Mẫu Excel
+                  TẢI FILE MẪU EXCEL
                 </button>
                 <button
                   onClick={() => setIsSingleAddOpen(true)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover-zoom-btn"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black hover-zoom-btn uppercase"
                 >
-                  Thêm Thủ Công
+                  THÊM THỦ CÔNG
                 </button>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-5">
               {filteredStudents.map((student) => {
                 const isChecked = selectedStudentIds.includes(student.id);
 
@@ -1216,142 +1657,204 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   'Tổ 4': 'bg-amber-50 text-amber-800 border-amber-200',
                 };
                 const groupClass = groupStyles[student.group || 'Tổ 1'] || 'bg-slate-100 text-slate-700 border-slate-200';
+                const studentRoles = getStudentRolesList(student);
 
                 return (
                   <div
                     key={student.id}
-                    className={`bg-gradient-to-b from-white via-white to-slate-50/70 rounded-3xl border transition-all duration-200 hover-zoom-card flex flex-col justify-between group relative overflow-hidden shadow-xs hover:shadow-md ${
+                    className={`bg-gradient-to-b from-white via-white to-slate-50/70 rounded-2xl border transition-all duration-200 hover-zoom-card flex flex-col justify-between group relative overflow-hidden shadow-xs hover:shadow-md ${
                       isChecked 
                         ? 'border-indigo-500 ring-2 ring-indigo-500/30 shadow-md bg-indigo-50/30' 
                         : 'border-slate-200/90 hover:border-indigo-300'
                     }`}
                   >
-                    {/* Top Row: STT Badge, Checkbox & Group */}
-                    <div className="p-4 pb-2 flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleSelectStudent(student.id)}
-                          className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-indigo-700 to-violet-700 text-amber-300 font-mono font-black text-xs shadow-xs ring-1 ring-indigo-500">
-                          #{student.stt}
-                        </span>
-                        <span className={`px-2.5 py-0.5 rounded-full border font-black text-[10px] ${groupClass}`}>
-                          {student.group || 'Tổ 1'}
+                    {/* Top Row: STT Badge, Checkbox, Group, Gender & Role */}
+                    <div className="p-3 pb-1.5 space-y-1.5">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSelectStudent(student.id)}
+                            className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                          <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-700 to-violet-700 text-amber-300 font-black text-xs shadow-xs ring-1 ring-indigo-500 shrink-0 flex items-center gap-1">
+                            <span className="text-[9.5px] text-indigo-200 font-bold uppercase tracking-tight">STT</span>
+                            <span className="font-mono">{student.stt}</span>
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full border font-black text-[9.5px] ${groupClass}`}>
+                            {student.group || 'Tổ 1'}
+                          </span>
+                        </div>
+
+                        {/* Gender Badge */}
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs border ${
+                          student.gender === 'Nam' 
+                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}>
+                          {student.gender === 'Nam' ? '♂ Nam' : '♀ Nữ'}
                         </span>
                       </div>
 
-                      {/* Gender Badge */}
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-black shadow-2xs border ${
-                        student.gender === 'Nam' 
-                          ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                          : 'bg-rose-50 text-rose-700 border-rose-200'
-                      }`}>
-                        {student.gender === 'Nam' ? '♂ Nam' : '♀ Nữ'}
-                      </span>
-                    </div>
-
-                    {/* Class Officer Role Badge & Quick Designation */}
-                    <div className="px-4 py-1 flex items-center justify-between border-y border-slate-100 bg-slate-50/70">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {student.role && student.role !== 'Thành viên' && student.role !== 'none' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400/20 via-orange-400/20 to-yellow-400/25 border border-amber-300 text-amber-950 font-black text-[11px] shadow-2xs truncate">
-                            <span>{getRoleIcon(student.role)}</span>
-                            <span className="truncate">{student.role}</span>
-                          </span>
+                      {/* Official Role Badges (Học sinh có thể đảm nhiệm tối đa 3 chức vụ) */}
+                      <div className="flex flex-wrap items-center justify-between gap-1 pt-0.5 min-h-[24px]">
+                        {studentRoles.length > 0 ? (
+                          <div className="flex flex-wrap items-center gap-1 flex-1">
+                            {studentRoles.map((rName, rIdx) => {
+                              const rDef = getStudentRoleInfo(rName);
+                              return (
+                                <button
+                                  key={rIdx}
+                                  type="button"
+                                  onClick={() => {
+                                    setQuickRoleStudent(student);
+                                    setStudentSelectedRoles(studentRoles);
+                                  }}
+                                  className={`px-2 py-0.5 rounded-lg text-[9.5px] md:text-[10px] font-black shadow-2xs border flex items-center gap-0.5 transition-all hover-zoom-btn ${rDef?.badgeBg || 'bg-amber-100'} ${rDef?.badgeText || 'text-amber-900'} ${rDef?.badgeBorder || 'border-amber-300'}`}
+                                  title={`Chức vụ: ${rName} (Bấm để chỉnh sửa tối đa 3 chức vụ)`}
+                                >
+                                  <span className="text-[11px]">{rDef?.icon || '👑'}</span>
+                                  <span className="uppercase tracking-tight font-black">{rName}</span>
+                                </button>
+                              );
+                            })}
+                            {studentRoles.length < 3 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setQuickRoleStudent(student);
+                                  setStudentSelectedRoles(studentRoles);
+                                }}
+                                className="px-1.5 py-0.5 rounded-lg text-[9.5px] font-black text-indigo-700 hover:text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100 border border-dashed border-indigo-400 transition-colors flex items-center gap-0.5 hover-zoom-btn shadow-2xs"
+                                title={`Đã gán ${studentRoles.length}/3 chức vụ. Bấm để thêm chức vụ.`}
+                              >
+                                <Plus className="w-2.5 h-2.5 text-indigo-600" />
+                                <span>+ THÊM ({studentRoles.length}/3)</span>
+                              </button>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-[10px] text-slate-400 font-bold">
-                            🎒 Thành viên
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setQuickRoleStudent(student);
+                              setStudentSelectedRoles([]);
+                            }}
+                            className="px-2 py-0.5 rounded-lg text-[9.5px] md:text-[10px] font-black text-indigo-700 hover:text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100 border border-dashed border-indigo-400 transition-colors flex items-center gap-1 hover-zoom-btn shadow-2xs"
+                            title="Bấm để gán chức vụ cán bộ lớp (Tối đa 3 chức vụ)"
+                          >
+                            <Crown className="w-3 h-3 text-amber-500" />
+                            <span>+ GÁN CHỨC VỤ (0/3)</span>
+                          </button>
                         )}
                       </div>
-
-                      {/* Quick 1-click Role Assignment selector */}
-                      <select
-                        value={student.role || 'Thành viên'}
-                        onChange={(e) => {
-                          updateStudent(student.id, { role: e.target.value });
-                          confetti({ particleCount: 25, spread: 45 });
-                        }}
-                        className="text-[10px] font-black text-indigo-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg px-1.5 py-0.5 focus:outline-none cursor-pointer shadow-2xs transition-colors"
-                        title="Bấm để phân công hoặc đổi chức vụ cán bộ lớp cho học sinh"
-                      >
-                        {OFFICER_ROLE_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.icon} {opt.label}
-                          </option>
-                        ))}
-                      </select>
                     </div>
 
                     {/* Middle Section: TO, RÕ NÉT, 3D AVATAR & STUDENT INFO */}
-                    <div className="px-4 py-2 flex items-center gap-3.5">
-                      {/* LARGE 3D CRISP AVATAR */}
+                    <div className="px-3 py-1.5 flex items-center gap-2.5">
+                      {/* LARGE 3D CRISP AVATAR (Ảnh nạp gốc, đã crop chuẩn canvas, không bị lẹm viền) */}
                       <div className="relative shrink-0 group/avatar">
                         <div 
                           onClick={() => setAvatarEditingStudent(student)}
-                          className="w-[74px] h-[74px] rounded-2xl overflow-hidden border-2 border-indigo-200/80 bg-gradient-to-tr from-indigo-50 via-white to-sky-50 shadow-md relative group-hover/avatar:border-indigo-500 transition-all cursor-pointer hover-zoom-btn"
-                          title="Bấm để đổi ảnh đại diện cho học sinh"
+                          className="w-[66px] h-[66px] sm:w-[72px] sm:h-[72px] rounded-2xl overflow-hidden border-2 border-indigo-200/90 bg-gradient-to-tr from-indigo-50 via-white to-sky-50 shadow-md relative group-hover/avatar:border-indigo-500 transition-all cursor-pointer hover-zoom-btn ring-2 ring-indigo-50"
+                          title="Bấm để thu phóng & căn chỉnh ảnh đại diện học sinh"
                         >
                           <img
                             src={student.avatar}
                             alt={student.name}
-                            className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"
+                            className="w-full h-full object-cover transition-transform group-hover/avatar:scale-105"
                             referrerPolicy="no-referrer"
                           />
 
-                          <div className="absolute inset-0 bg-indigo-950/60 text-white text-[10px] font-black flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-                            <Camera className="w-4 h-4 mb-0.5 text-amber-300" />
-                            <span>ĐỔI ẢNH</span>
+                          <div className="absolute inset-0 bg-indigo-950/65 text-white text-[9px] font-black flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                            <Camera className="w-3.5 h-3.5 mb-0.5 text-amber-300" />
+                            <span>CHỈNH ẢNH</span>
                           </div>
 
-                          <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs border border-white">
+                          <div className="absolute bottom-1 right-1 w-4.5 h-4.5 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs border border-white">
                             <Camera className="w-2.5 h-2.5" />
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex-1 min-w-0 space-y-1">
+                      <div 
+                        onClick={() => {
+                          setEditingStudent(student);
+                          setEditingRoles(getStudentRolesList(student));
+                        }}
+                        className="flex-1 min-w-0 space-y-0.5 cursor-pointer group/info"
+                        title="Chạm để xem & chỉnh sửa thông tin học sinh"
+                      >
                         <h4 
-                          className="text-base md:text-lg font-black text-indigo-950 truncate leading-snug tracking-tight" 
+                          className="text-sm font-black text-indigo-950 leading-snug tracking-tight group-hover/info:text-indigo-600 transition-colors line-clamp-2 break-words" 
                           title={student.name}
                         >
                           {student.name}
                         </h4>
 
-                        <div className="flex items-center gap-1.5 text-xs text-indigo-600 font-medium">
-                          <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                        <div className="flex items-center gap-1 text-[11px] text-indigo-600 font-medium">
+                          <Calendar className="w-3 h-3 text-indigo-500 shrink-0" />
                           <span className="font-bold text-indigo-700">{student.birthDate ? student.birthDate : 'Chưa có ngày sinh'}</span>
                         </div>
 
-                        <div className="pt-0.5">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-amber-950 font-black text-xs rounded-xl shadow-xs shadow-amber-400/25 border border-amber-300">
-                            <span>🪙</span>
+                        <div className="pt-0.5 space-y-0.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-amber-950 font-black text-[11px] rounded-lg shadow-xs shadow-amber-400/25 border border-amber-300 shrink-0">
+                            <Coins className="w-3.5 h-3.5 text-amber-950 fill-amber-500 shrink-0" />
                             <span>{student.points} xu thi đua</span>
                           </span>
+
+                          {/* Dữ liệu xu theo môn học (User Requirement: Lưu theo học sinh và theo môn) */}
+                          {student.subjectPoints && Object.entries(student.subjectPoints).some(([_, pts]) => pts > 0) && (
+                            <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                              {Object.entries(student.subjectPoints)
+                                .filter(([_, pts]) => pts > 0)
+                                .slice(0, 3)
+                                .map(([subName, pts]) => {
+                                  const subObj = subjects.find(s => s.name === subName);
+                                  return (
+                                    <span
+                                      key={subName}
+                                      className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-md bg-indigo-50/90 text-[9.5px] font-bold text-indigo-900 border border-indigo-100"
+                                      title={`Môn ${subName}: ${pts} xu`}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: subObj?.color || '#3B82F6' }} />
+                                      <span className="truncate max-w-[60px]">{subName}:</span>
+                                      <strong className="text-amber-700 font-black">+{pts}</strong>
+                                    </span>
+                                  );
+                                })}
+                              {Object.entries(student.subjectPoints).filter(([_, pts]) => pts > 0).length > 3 && (
+                                <span 
+                                  className="px-1.5 py-0.2 rounded-md bg-slate-100 text-[9.5px] font-bold text-slate-600 cursor-help"
+                                  title={Object.entries(student.subjectPoints).filter(([_, pts]) => pts > 0).map(([k, v]) => `${k}: ${v} xu`).join('\n')}
+                                >
+                                  +{Object.entries(student.subjectPoints).filter(([_, pts]) => pts > 0).length - 3} môn
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
                     {/* Bottom Action Buttons: Fast in-class actions with active subject */}
-                    <div className="p-3 mx-3 mb-3 mt-2 bg-gradient-to-r from-indigo-50/50 via-sky-50/40 to-indigo-50/50 rounded-2xl border border-indigo-100 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
+                    <div className="p-2 mx-2.5 mb-2.5 mt-1 bg-gradient-to-r from-indigo-50/50 via-sky-50/40 to-indigo-50/50 rounded-xl border border-indigo-100 flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleQuickAdd(student)}
-                          className="w-9 h-9 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm flex items-center justify-center shadow-xs shadow-emerald-500/25 transition-all hover-zoom-btn"
-                          title={`Cộng xu khen thưởng cho học sinh theo môn học`}
+                          className="w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs flex items-center justify-center shadow-xs shadow-emerald-500/25 transition-all hover-zoom-btn shrink-0"
+                          title={`Cộng xu khen thưởng cho học sinh theo môn ${activeEvalSubject}`}
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           onClick={() => handleQuickDeduct(student)}
-                          className="w-9 h-9 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black text-sm flex items-center justify-center shadow-xs shadow-rose-500/25 transition-all hover-zoom-btn"
-                          title={`Trừ xu nề nếp cho học sinh theo môn học`}
+                          className="w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black text-xs flex items-center justify-center shadow-xs shadow-rose-500/25 transition-all hover-zoom-btn shrink-0"
+                          title={`Trừ xu nề nếp cho học sinh theo môn ${activeEvalSubject}`}
                         >
-                          <Minus className="w-4 h-4" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
 
                         {/* NÚT TẶNG SAO / KHEN THƯỞNG THEO MÔN (Yêu cầu 3) */}
@@ -1360,22 +1863,38 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             setRewardingStudent(student);
                             setRewardMode('sao');
                             setCustomCoins(1);
-                            setSelectedSubjectForAward(activeEvalSubject || subjects[0]?.name || 'Toán');
+                            setSelectedSubjectForAward(activeEvalSubject || appliedSubjects[0]?.name || 'GHI CHUNG / NỀ NẾP');
                           }}
-                          className="w-9 h-9 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white font-black text-sm flex items-center justify-center shadow-xs shadow-amber-500/30 transition-all hover-zoom-btn"
+                          className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white font-black text-xs sm:text-sm flex items-center justify-center shadow-xs shadow-amber-500/30 transition-all hover-zoom-btn shrink-0"
                           title="Tặng sao thi đua cho học sinh theo môn học"
                         >
-                          <Star className="w-4 h-4 fill-white text-white" />
+                          <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
+                        </button>
+
+                        {/* NÚT GÁN CHỨC VỤ NHANH (Yêu cầu 2: Tối đa 3 chức vụ) */}
+                        <button
+                          onClick={() => {
+                            setQuickRoleStudent(student);
+                            setStudentSelectedRoles(getStudentRolesList(student));
+                          }}
+                          className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-black text-xs sm:text-sm flex items-center justify-center border border-indigo-200 transition-all hover-zoom-btn shrink-0"
+                          title="Chỉ định chức vụ cán bộ lớp (Tối đa 3 chức vụ)"
+                        >
+                          <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
                         <button
-                          onClick={() => setEditingStudent(student)}
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-colors hover-zoom-btn"
+                          onClick={() => {
+                            setEditingStudent(student);
+                            setEditingRoles(getStudentRolesList(student));
+                          }}
+                          className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 flex items-center justify-center transition-all hover-zoom-btn border border-indigo-200/80 shadow-2xs shrink-0"
                           title="Sửa thông tin học sinh"
+                          aria-label={`Sửa thông tin học sinh ${student.name}`}
                         >
-                          <Edit3 className="w-4 h-4" />
+                          <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
                         </button>
 
                         <button
@@ -1384,10 +1903,11 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                               deleteStudent(student.id);
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-lg transition-colors hover-zoom-btn"
+                          className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all hover-zoom-btn border border-slate-200/70 shrink-0"
                           title="Xóa học sinh"
+                          aria-label={`Xóa học sinh ${student.name}`}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </div>
@@ -1396,73 +1916,27 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               })}
             </div>
           )}
-
-          {/* Floating Action Bar when students are selected */}
-          {selectedStudentIds.length > 0 && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-5">
-              <div className="flex items-center gap-2 pr-2 border-r border-slate-700">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs font-bold whitespace-nowrap">
-                  Đã chọn <strong className="text-amber-300 font-black text-sm">{selectedStudentIds.length}</strong> học sinh
-                </span>
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => setIsBulkSetPointsModalOpen(true)}
-                className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/25 cursor-pointer hover-zoom-btn whitespace-nowrap"
-              >
-                <Coins className="w-3.5 h-3.5 text-amber-200" />
-                <span>Gán Điểm Xu Đồng Loạt</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsResetPointsModalOpen(true)}
-                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-rose-600/25 cursor-pointer hover-zoom-btn whitespace-nowrap"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Xóa Điểm Xu ({selectedStudentIds.length} em)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsBulkDeleteConfirmOpen(true)}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Xóa học sinh</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedStudentIds([])}
-                className="text-xs text-slate-400 hover:text-white font-medium pl-1 cursor-pointer whitespace-nowrap"
-              >
-                Bỏ chọn
-              </button>
-            </div>
-          )}
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL: CẤU HÌNH NHẬN XU & MÔN HỌC ĐÁNH GIÁ (User Request 2) */}
+      {/* MODAL: CẤU HÌNH NHẬN XU & MÔN HỌC ĐÁNH GIÁ (User Request: "CẤU HÌNH NHẬN XU") */}
       {/* ========================================================================= */}
       {isSubjectConfigOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-2xl w-full p-6 space-y-5 max-h-[92vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-indigo-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-black">
-                  <Settings className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 flex items-center justify-center font-black shadow-md shadow-amber-500/25">
+                  <Settings className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-indigo-950">
+                  <h3 className="text-base sm:text-lg font-black text-indigo-950 uppercase tracking-tight">
                     Cấu Hình Nhận Xu & Môn Học Đánh Giá
                   </h3>
-                  <p className="text-xs text-indigo-700">
-                    Thiết lập danh sách các môn học tiểu học đánh giá nhận xu đối với lớp và giáo viên
+                  <p className="text-xs text-indigo-700 font-medium">
+                    Thêm, sửa, xóa & thiết lập danh sách môn học áp dụng cho lớp <strong>{activeClass?.name || '4A1'}</strong> (GV: {teacherProfile.name || 'chủ nhiệm'})
                   </p>
                 </div>
               </div>
@@ -1471,25 +1945,105 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   setIsSubjectConfigOpen(false);
                   setEditingSubject(null);
                 }}
-                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Form Thêm Môn Học Mới */}
-            <form onSubmit={handleAddNewSubject} className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-3">
-              <span className="text-xs font-black text-indigo-900 uppercase tracking-wider block">
-                + Thêm Môn Học Mới
+            {/* 3 MÔN MẶC ĐỊNH BẮT BUỘC HỆ THỐNG (User Requirement: GHI CHUNG / NỀ NẾP, TOÁN, TIẾNG VIỆT) */}
+            <div className="p-4 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 rounded-2xl border-2 border-amber-300 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">👑</span>
+                  <span className="text-xs font-black text-amber-950 uppercase tracking-wide">
+                    3 MÔN MẶC ĐỊNH HỆ THỐNG (BẮT BUỘC & CỐT LÕI):
+                  </span>
+                </div>
+                <span className="text-[10px] font-black text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-full border border-amber-300">
+                  Chuẩn thi đua
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                {[
+                  { name: 'GHI CHUNG / NỀ NẾP', icon: '⭐', color: '#F59E0B', desc: 'Chuyên cần, kỷ luật, việc tốt' },
+                  { name: 'TOÁN', icon: '🔢', color: '#3B82F6', desc: 'Học tập, tính toán, tư duy' },
+                  { name: 'TIẾNG VIỆT', icon: '📖', color: '#EF4444', desc: 'Đọc, viết, chính tả, ngữ văn' },
+                ].map((core) => {
+                  const subObj = subjects.find(s => s.name.trim().toLowerCase() === core.name.toLowerCase());
+                  const isEnabled = subObj ? subObj.enabled !== false : true;
+                  return (
+                    <div 
+                      key={core.name}
+                      className="p-2.5 bg-white/90 rounded-xl border border-amber-200 flex flex-col justify-between space-y-1 shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span>{core.icon}</span>
+                          <span className="text-xs font-black text-slate-800 truncate">{core.name}</span>
+                        </div>
+                        <span className={`w-2.5 h-2.5 rounded-full ${isEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium">{core.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* THAO TÁC NHANH DANH SÁCH MÔN ÁP DỤNG CHO LỚP HIỆN TẠI (User Requirement: Thiết lập danh sách môn học áp dụng) */}
+            <div className="p-3.5 bg-indigo-50/70 rounded-2xl border border-indigo-100 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-xs font-black text-indigo-950 uppercase tracking-wide flex items-center gap-1.5">
+                  <CheckSquare className="w-4 h-4 text-indigo-600" />
+                  <span>THIẾT LẬP NHANH MÔN ÁP DỤNG CHO LỚP ({appliedSubjects.length} / {subjects.length} môn):</span>
+                </span>
+                <span className="text-[11px] font-bold text-indigo-700">
+                  {appliedSubjects.length === subjects.length ? 'Đang áp dụng toàn bộ môn' : `Đang bật ${appliedSubjects.length} môn`}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleApplyAllSubjects}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all hover-zoom-btn uppercase shadow-xs cursor-pointer"
+                >
+                  ✓ Áp Dụng Tất Cả ({subjects.length} môn)
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyOnlyCoreSubjects}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black transition-all hover-zoom-btn uppercase shadow-xs cursor-pointer"
+                  title="Chỉ áp dụng 3 môn cốt lõi: GHI CHUNG / NỀ NẾP, TOÁN, TIẾNG VIỆT"
+                >
+                  ⚡ Chỉ Dùng 3 Môn Mặc Định
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetDefaultSubjects}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all hover-zoom-btn uppercase cursor-pointer"
+                  title="Khôi phục danh sách môn chuẩn theo quy định hệ thống"
+                >
+                  🔄 Khôi Phục Danh Mục Gốc
+                </button>
+              </div>
+            </div>
+
+            {/* FORM THÊM MÔN HỌC MỚI (User Requirement: Thêm môn học) */}
+            <form onSubmit={handleAddNewSubject} className="p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100/90 space-y-3">
+              <span className="text-xs font-black text-indigo-950 uppercase tracking-wider block flex items-center gap-1.5">
+                <Plus className="w-3.5 h-3.5 text-indigo-600" />
+                <span>+ THÊM MÔN HỌC MỚI VÀO HỆ THỐNG:</span>
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
                 <input
                   type="text"
-                  placeholder="Tên môn học (Ví dụ: Tiếng Anh, Tin học...)"
+                  placeholder="Nhập tên môn học mới (VD: Tiếng Anh, Tin học, Đạo đức, Mĩ thuật...)"
                   value={newSubjectName}
                   onChange={(e) => setNewSubjectName(e.target.value)}
-                  className="sm:col-span-8 px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500"
+                  className="sm:col-span-8 px-3.5 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   required
                 />
 
@@ -1498,110 +2052,177 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     type="color"
                     value={newSubjectColor}
                     onChange={(e) => setNewSubjectColor(e.target.value)}
-                    className="w-9 h-9 rounded-xl border border-indigo-200 cursor-pointer p-0.5 bg-white shrink-0"
-                    title="Màu sắc nhận diện môn học"
+                    className="w-10 h-10 rounded-xl border border-indigo-200 cursor-pointer p-0.5 bg-white shrink-0"
+                    title="Chọn màu sắc nhận diện môn học"
                   />
                   <button
                     type="submit"
-                    className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs hover-zoom-btn flex items-center justify-center gap-1"
+                    className="flex-1 py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs hover-zoom-btn flex items-center justify-center gap-1 uppercase cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                     <span>Thêm</span>
                   </button>
                 </div>
               </div>
+
+              {/* Color swatches preset */}
+              <div className="flex items-center gap-1.5 pt-1">
+                <span className="text-[11px] font-bold text-slate-500">Màu gợi ý:</span>
+                {['#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'].map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setNewSubjectColor(c)}
+                    className={`w-5 h-5 rounded-full border transition-transform hover:scale-125 ${newSubjectColor === c ? 'ring-2 ring-indigo-500 scale-110' : 'border-white'}`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
             </form>
 
-            {/* Danh Sách Môn Học Hiện Tại */}
-            <div className="space-y-2">
-              <span className="text-xs font-black text-indigo-900 uppercase tracking-wider block">
-                Danh Sách Môn Học Đang Đánh Giá ({subjects.length} môn):
-              </span>
+            {/* DANH SÁCH MÔN HỌC & THIẾT LẬP BẬT/TẮT ÁP DỤNG CHO LỚP (User Requirement: Sửa, xóa, thiết lập áp dụng) */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-indigo-950 uppercase tracking-wider block">
+                  Danh Sách Môn Học ({subjects.length} môn) • Tick chọn môn áp dụng cho lớp:
+                </span>
+                <span className="text-[11px] font-bold text-slate-500">
+                  {appliedSubjects.length} môn đang kích hoạt
+                </span>
+              </div>
 
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                {subjects.map((sub) => (
-                  <div
-                    key={sub.id}
-                    className="flex items-center justify-between p-3 bg-white border border-indigo-100/90 rounded-2xl hover-zoom-interactive"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-4 h-4 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: sub.color || '#3B82F6' }} />
-                      <span className="text-xs font-black text-indigo-950">{sub.name}</span>
-                    </div>
+              <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                {subjects.map((sub) => {
+                  const isEnabled = sub.enabled !== false;
+                  const isCore = sub.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(sub.name.trim().toLowerCase());
+                  return (
+                    <div
+                      key={sub.id}
+                      className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                        isEnabled
+                          ? 'bg-white border-indigo-100 shadow-2xs hover-zoom-interactive'
+                          : 'bg-slate-50 border-slate-200 opacity-60'
+                      }`}
+                    >
+                      {/* Checkbox bật/tắt áp dụng cho lớp */}
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isEnabled}
+                            onChange={() => toggleSubjectApplied(sub.id)}
+                            className="w-4 h-4 rounded-md text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                          <span className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: sub.color || '#3B82F6' }} />
+                          <span className={`text-xs font-black ${isEnabled ? 'text-indigo-950' : 'text-slate-500 line-through'}`}>
+                            {sub.name}
+                          </span>
+                        </label>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => setEditingSubject(sub)}
-                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors hover-zoom-btn"
-                        title="Chỉnh sửa môn học"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
+                        {isCore && (
+                          <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black">
+                            👑 Mặc định
+                          </span>
+                        )}
 
-                      {subjects.length > 1 && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          isEnabled ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          {isEnabled ? 'Đang áp dụng' : 'Tạm tắt cho lớp'}
+                        </span>
+                      </div>
+
+                      {/* Action buttons: Sửa, Xóa */}
+                      <div className="flex items-center gap-1.5">
                         <button
+                          type="button"
+                          onClick={() => setEditingSubject(sub)}
+                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
+                          title="Chỉnh sửa tên và màu sắc môn học"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={() => {
-                            if (confirm(`Xóa môn học "${sub.name}" khỏi danh sách đánh giá?`)) {
-                              deleteSubject(sub.id);
+                            if (isCore) {
+                              if (confirm(`Môn "${sub.name}" là một trong 3 môn mặc định hệ thống. Bạn có chắc chắn muốn xóa không? (Bạn vẫn có thể khôi phục lại bất kỳ lúc nào)`)) {
+                                deleteSubject(sub.id);
+                              }
+                            } else {
+                              if (confirm(`Xóa vĩnh viễn môn học "${sub.name}"?`)) {
+                                deleteSubject(sub.id);
+                              }
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors hover-zoom-btn"
-                          title="Xóa môn học"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                          title="Xóa môn học khỏi hệ thống"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            {/* Modal Edit Subject */}
+            {/* FORM SỬA MÔN HỌC (User Requirement: Sửa môn học) */}
             {editingSubject && (
-              <form onSubmit={handleSaveEditSubject} className="p-4 bg-indigo-50/70 border border-indigo-200 rounded-2xl space-y-3">
-                <span className="text-xs font-black text-indigo-900 block">Sửa Môn Học: {editingSubject.name}</span>
-                <div className="flex items-center gap-2">
+              <form onSubmit={handleSaveEditSubject} className="p-4 bg-amber-50/80 border-2 border-amber-300 rounded-2xl space-y-3 animate-in fade-in">
+                <span className="text-xs font-black text-amber-950 uppercase tracking-wide block">
+                  ✏️ Chỉnh Sửa Môn Học: {editingSubject.name}
+                </span>
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                   <input
                     type="text"
                     value={editingSubject.name}
                     onChange={(e) => setEditingSubject({ ...editingSubject, name: e.target.value })}
-                    className="flex-1 px-3 py-1.5 bg-white border border-indigo-200 rounded-xl text-xs font-bold"
+                    className="w-full sm:flex-1 px-3.5 py-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="Tên môn học"
                     required
                   />
-                  <input
-                    type="color"
-                    value={editingSubject.color || '#3B82F6'}
-                    onChange={(e) => setEditingSubject({ ...editingSubject, color: e.target.value })}
-                    className="w-8 h-8 rounded-xl border border-indigo-200 cursor-pointer p-0.5 bg-white shrink-0"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl hover-zoom-btn"
-                  >
-                    Lưu
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingSubject(null)}
-                    className="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs rounded-xl"
-                  >
-                    Hủy
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <input
+                      type="color"
+                      value={editingSubject.color || '#3B82F6'}
+                      onChange={(e) => setEditingSubject({ ...editingSubject, color: e.target.value })}
+                      className="w-9 h-9 rounded-xl border border-amber-300 cursor-pointer p-0.5 bg-white shrink-0"
+                      title="Màu sắc nhận diện"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl shadow-xs hover-zoom-btn uppercase cursor-pointer"
+                    >
+                      Lưu Thay Đổi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingSubject(null)}
+                      className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl cursor-pointer"
+                    >
+                      Hủy
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
 
-            <div className="flex items-center justify-end pt-2 border-t border-slate-100">
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-indigo-100">
+              <span className="text-xs text-indigo-700 font-semibold">
+                Lớp {activeClass?.name}: <strong>{appliedSubjects.length}</strong> môn sẵn sàng chấm điểm
+              </span>
               <button
                 type="button"
                 onClick={() => {
                   setIsSubjectConfigOpen(false);
                   setEditingSubject(null);
                 }}
-                className="px-5 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover-zoom-btn"
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-black text-xs rounded-xl shadow-md shadow-indigo-600/25 hover-zoom-btn uppercase cursor-pointer"
               >
-                Đóng
+                Xong & Áp Dụng Cho Lớp
               </button>
             </div>
           </div>
@@ -1651,13 +2272,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   className="w-12 h-12 rounded-xl object-cover bg-white ring-2 ring-indigo-200"
                 />
                 <div>
-                  <div className="text-sm font-black text-indigo-950">#{rewardingStudent.stt} {rewardingStudent.name}</div>
+                  <div className="text-sm font-black text-indigo-950">STT {rewardingStudent.stt} · {rewardingStudent.name}</div>
                   <div className="text-xs text-indigo-700 font-semibold">{activeClass?.name} · {rewardingStudent.gender} · {rewardingStudent.group || 'Tổ 1'}</div>
                 </div>
               </div>
 
-              <div className="px-3 py-1 bg-amber-100 border border-amber-300 text-amber-900 rounded-xl text-xs font-black shadow-2xs">
-                🪙 Hiện có: {rewardingStudent.points} xu
+              <div className="px-3 py-1 bg-amber-100 border border-amber-300 text-amber-900 rounded-xl text-xs font-black shadow-2xs flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-amber-900 fill-amber-500 shrink-0" />
+                <span>Hiện có: {rewardingStudent.points} xu</span>
               </div>
             </div>
 
@@ -1722,14 +2344,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
-                {subjects.map((sub) => {
+                {appliedSubjects.map((sub) => {
                   const isChosen = selectedSubjectForAward === sub.name;
+                  const isCore = sub.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(sub.name.trim().toLowerCase());
                   return (
                     <button
                       key={sub.id}
                       type="button"
                       onClick={() => setSelectedSubjectForAward(sub.name)}
-                      className={`p-2 rounded-xl text-xs font-bold text-left transition-all truncate hover-zoom-btn flex items-center gap-2 ${
+                      className={`p-2 rounded-xl text-xs font-bold text-left transition-all truncate hover-zoom-btn flex items-center gap-2 cursor-pointer ${
                         isChosen
                           ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-600/40 font-black'
                           : 'bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-300'
@@ -1738,6 +2361,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     >
                       <span className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/60" style={{ backgroundColor: sub.color || '#3B82F6' }} />
                       <span className="truncate">{sub.name}</span>
+                      {isCore && <span className="text-[10px] text-amber-400 shrink-0">★</span>}
                     </button>
                   );
                 })}
@@ -2247,7 +2871,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tên giáo viên chủ nhiệm</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Tên giáo viên chủ nhiệm / phụ trách</label>
                 <input
                   type="text"
                   value={editingClass.teacherName || ''}
@@ -2255,6 +2879,44 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
+
+              {/* Phân công giáo viên quản lý lớp (Dành cho Quản trị viên Admin) */}
+              {isAdmin && (
+                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/90 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-black text-amber-900 uppercase">
+                      👑 Phân Công Giáo Viên Phụ Trách Lớp Học:
+                    </label>
+                    <span className="text-[10px] bg-amber-200/60 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+                      Quyền Quản Trị
+                    </span>
+                  </div>
+                  <select
+                    value={editingClass.teacherUsername || ''}
+                    onChange={(e) => {
+                      const selectedU = e.target.value;
+                      const teacher = allTeachers.find(t => t.username.toLowerCase() === selectedU.toLowerCase());
+                      setEditingClass({
+                        ...editingClass,
+                        teacherUsername: selectedU,
+                        teacherRole: teacher ? (teacher.role === 'subject' ? 'subject' : 'homeroom') : (editingClass.teacherRole || 'homeroom'),
+                        teacherName: teacher?.fullName || editingClass.teacherName || ''
+                      });
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="">-- Chưa chỉ định tài khoản giáo viên --</option>
+                    {allTeachers.map(t => (
+                      <option key={t.username} value={t.username}>
+                        {t.fullName} ({t.username}) — {t.role === 'homeroom' ? '🏫 GV Chủ nhiệm' : '💻 GV Bộ môn'}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-amber-800 font-medium">
+                    Thay đổi tại đây sẽ lập tức đồng bộ lớp và học sinh vào tài khoản giáo viên tương ứng trên toàn hệ thống.
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -2598,6 +3260,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       <th className="p-2.5">Ngày sinh</th>
                       <th className="p-2.5 text-center">Giới tính</th>
                       <th className="p-2.5 text-center">Tổ</th>
+                      <th className="p-2.5 text-center">Chức vụ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-indigo-50">
@@ -2614,6 +3277,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                           </span>
                         </td>
                         <td className="p-2.5 text-center text-indigo-900 font-bold">{st.group || 'Tổ 1'}</td>
+                        <td className="p-2.5 text-center">
+                          {st.role ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-black text-[10px]">
+                              {st.role}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-[10px]">Thành viên</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -2708,10 +3380,216 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         </div>
       )}
 
+      {/* MODAL: XÓA ĐỒNG LOẠT CÁC LỚP ĐÃ CHỌN (Yêu cầu 1) */}
+      {isBulkClassDeleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-rose-200 max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-sm">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-rose-950 uppercase">
+                Xóa Đồng Loạt {selectedClassIds.length} Lớp Học?
+              </h3>
+              <p className="text-xs text-rose-800 leading-relaxed font-semibold">
+                Bạn đang chuẩn bị xóa {selectedClassIds.length} lớp học đã tích chọn:
+              </p>
+              <div className="max-h-36 overflow-y-auto p-3 bg-rose-50/80 rounded-2xl border border-rose-200 text-left space-y-1">
+                {classes.filter(c => selectedClassIds.includes(c.id)).map(c => {
+                  const studentCount = students.filter(s => s.classId === c.id).length;
+                  return (
+                    <div key={c.id} className="text-xs font-bold text-rose-900 flex items-center justify-between">
+                      <span>• Lớp {c.name} ({c.grade})</span>
+                      <span className="text-[11px] font-mono text-rose-700">{studentCount} học sinh</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-slate-500 font-bold">
+                ⚠️ Dữ liệu học sinh và các tiết dạy tương ứng trong thời khóa biểu sẽ tự động được dọn dẹp và đồng bộ trực tuyến.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsBulkClassDeleteOpen(false)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs rounded-2xl uppercase transition-all"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBulkDeleteClasses}
+                className="flex-1 py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs rounded-2xl shadow-md shadow-rose-600/25 hover-zoom-btn uppercase transition-all flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Xác Nhận Xóa</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: SỬA THÔNG TIN ĐỒNG LOẠT CÁC LỚP ĐÃ CHỌN (Yêu cầu 1) */}
+      {isBulkClassEditOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-200 max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-black">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-indigo-950 uppercase">
+                    Sửa Thông Tin Đồng Loạt ({selectedClassIds.length} Lớp)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Áp dụng thay đổi cho tất cả các lớp đang được tích chọn
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkClassEditOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Selected Classes Preview Pill list */}
+            <div className="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200">
+              <span className="text-[11px] font-black text-indigo-700 uppercase block mb-1.5">
+                Các lớp đang được chọn:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {classes.filter(c => selectedClassIds.includes(c.id)).map(c => (
+                  <span key={c.id} className="px-2.5 py-1 bg-white rounded-xl text-xs font-black text-indigo-900 border border-indigo-200 shadow-2xs">
+                    {c.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3.5 text-xs font-bold text-slate-700">
+              {/* Khối Lớp */}
+              <div>
+                <label className="block text-[11px] font-black uppercase text-indigo-900 mb-1">
+                  1. Cập nhật Khối Lớp:
+                </label>
+                <select
+                  value={bulkEditGrade}
+                  onChange={(e) => setBulkEditGrade(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 focus:border-indigo-600 font-bold bg-white text-slate-800"
+                >
+                  <option value="keep">— Giữ nguyên khối lớp của từng lớp —</option>
+                  <option value="Khối 1">Khối 1</option>
+                  <option value="Khối 2">Khối 2</option>
+                  <option value="Khối 3">Khối 3</option>
+                  <option value="Khối 4">Khối 4</option>
+                  <option value="Khối 5">Khối 5</option>
+                </select>
+              </div>
+
+              {/* Năm học */}
+              <div>
+                <label className="block text-[11px] font-black uppercase text-indigo-900 mb-1">
+                  2. Cập nhật Năm Học:
+                </label>
+                <select
+                  value={bulkEditYear}
+                  onChange={(e) => setBulkEditYear(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 focus:border-indigo-600 font-bold bg-white text-slate-800"
+                >
+                  <option value="keep">— Giữ nguyên năm học hiện tại —</option>
+                  <option value="2026–2027">Năm học 2026–2027</option>
+                  <option value="2025–2026">Năm học 2025–2026</option>
+                  <option value="2027–2028">Năm học 2027–2028</option>
+                </select>
+              </div>
+
+              {/* Tên Giáo viên */}
+              <div>
+                <label className="block text-[11px] font-black uppercase text-indigo-900 mb-1">
+                  3. Giáo viên Phụ trách / Chủ nhiệm (Để trống nếu giữ nguyên):
+                </label>
+                <input
+                  type="text"
+                  value={bulkEditTeacher}
+                  onChange={(e) => setBulkEditTeacher(e.target.value)}
+                  placeholder="Nhập tên giáo viên mới để gán cho các lớp đã chọn..."
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 focus:border-indigo-600 font-bold"
+                />
+              </div>
+
+              {/* Màu Nhận Diện */}
+              <div>
+                <label className="block text-[11px] font-black uppercase text-indigo-900 mb-1">
+                  4. Màu sắc nhận diện:
+                </label>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setBulkEditColor('keep')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase border transition-all ${
+                      bulkEditColor === 'keep' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-100 text-slate-600 border-slate-300'
+                    }`}
+                  >
+                    Giữ nguyên màu
+                  </button>
+                  {CLASS_COLORS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setBulkEditColor(c)}
+                      className={`w-7 h-7 rounded-xl border-2 transition-all ${
+                        bulkEditColor === c ? 'ring-2 ring-indigo-600 scale-110 border-white' : 'border-transparent'
+                      }`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Khẩu hiệu lớp */}
+              <div>
+                <label className="block text-[11px] font-black uppercase text-indigo-900 mb-1">
+                  5. Khẩu hiệu chung của lớp (Để trống nếu giữ nguyên):
+                </label>
+                <input
+                  type="text"
+                  value={bulkEditSlogan}
+                  onChange={(e) => setBulkEditSlogan(e.target.value)}
+                  placeholder="Ví dụ: Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 focus:border-indigo-600 font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsBulkClassEditOpen(false)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs rounded-2xl uppercase transition-all"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBulkEditClasses}
+                className="flex-1 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-black text-xs rounded-2xl shadow-md shadow-indigo-600/25 hover-zoom-btn uppercase transition-all flex items-center justify-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                <span>Lưu Thay Đổi Đồng Loạt</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: THÊM HỌC SINH */}
       {isSingleAddOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
               <div>
                 <h3 className="text-base font-black text-indigo-950">Thêm Học Sinh Mới</h3>
@@ -2781,23 +3659,48 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
               </div>
 
-              {/* Chức vụ cán bộ lớp */}
+              {/* Chức vụ cán bộ lớp (Tối đa 3 chức vụ) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Chức vụ cán bộ lớp</span>
-                </label>
-                <select
-                  value={singleRole}
-                  onChange={(e) => setSingleRole(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
-                >
-                  {OFFICER_ROLE_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.icon} {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Chức vụ cán bộ lớp (Tối đa 3)</span>
+                  </label>
+                  <span className="text-[11px] font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
+                    Đã chọn: {singleRoles.length}/3
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5 p-2 bg-slate-50 rounded-2xl border border-slate-200 max-h-36 overflow-y-auto">
+                  {OFFICER_ROLE_OPTIONS.map((opt) => {
+                    const isSelected = singleRoles.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSingleRoles(prev => prev.filter(r => r !== opt.value));
+                          } else {
+                            if (singleRoles.length >= 3) {
+                              alert('Mỗi học sinh chỉ được đảm nhiệm tối đa 3 chức vụ!');
+                              return;
+                            }
+                            setSingleRoles(prev => [...prev, opt.value]);
+                          }
+                        }}
+                        className={`p-2 rounded-xl text-[11px] font-bold text-left transition-all flex items-center justify-between truncate ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white font-black shadow-xs'
+                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50/50'
+                        }`}
+                      >
+                        <span className="truncate">{opt.icon} {opt.label}</span>
+                        {isSelected && <span className="text-xs ml-1 font-black">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -2823,7 +3726,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       {/* MODAL: SỬA HỌC SINH */}
       {editingStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
               <div>
                 <h3 className="text-base font-black text-indigo-950">Sửa Thông Tin Học Sinh</h3>
@@ -2841,20 +3744,25 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!editingStudent.name.trim()) return;
+                const limited = editingRoles.slice(0, 3);
+                const roleStr = limited.join(' • ');
                 updateStudent(editingStudent.id, {
                   name: editingStudent.name.trim(),
+                  classId: editingStudent.classId,
                   birthDate: editingStudent.birthDate?.trim() || '',
                   gender: editingStudent.gender,
                   group: editingStudent.group,
                   points: editingStudent.points,
-                  role: editingStudent.role || 'Thành viên',
+                  role: roleStr,
+                  roles: limited,
                   avatar: editingStudent.avatar,
                   originalAvatar: editingStudent.originalAvatar,
                   avatarScale: editingStudent.avatarScale,
                   avatarPosition: editingStudent.avatarPosition
                 });
                 setEditingStudent(null);
-                confetti({ particleCount: 30, spread: 50 });
+                playCoinSound();
+                syncDatabaseNow();
               }}
               className="space-y-4"
             >
@@ -2870,16 +3778,33 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-black text-indigo-950">Ảnh đại diện học sinh</div>
-                  <p className="text-[11px] text-indigo-600">Đổi ảnh chụp thật hoặc chọn ảnh hoạt hình</p>
+                  <p className="text-[11px] text-indigo-600">Đổi ảnh chụp thật hoặc căn chỉnh khung hình</p>
                   <button
                     type="button"
                     onClick={() => setAvatarEditingStudent(editingStudent)}
                     className="mt-1.5 px-3 py-1 bg-white hover:bg-indigo-50 border border-indigo-300 rounded-xl text-xs font-bold text-indigo-700 flex items-center gap-1.5 transition-colors shadow-2xs hover-zoom-btn"
                   >
                     <Camera className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Chỉnh sửa / Đổi ảnh</span>
+                    <span>Thu phóng & Cắt ảnh</span>
                   </button>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Lớp học ({classes.length} lớp):
+                </label>
+                <select
+                  value={editingStudent.classId}
+                  onChange={(e) => setEditingStudent({ ...editingStudent, classId: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                >
+                  {classes.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.grade}) {c.teacherName ? `• ${c.teacherName}` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -2934,7 +3859,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Số xu</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Số xu thi đua</label>
                   <input
                     type="number"
                     value={editingStudent.points}
@@ -2944,23 +3869,48 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
               </div>
 
-              {/* Chức vụ cán bộ lớp */}
+              {/* Chức vụ cán bộ lớp (Tối đa 3 chức vụ) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Chức vụ cán bộ lớp</span>
-                </label>
-                <select
-                  value={editingStudent.role || 'Thành viên'}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, role: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
-                >
-                  {OFFICER_ROLE_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.icon} {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Chức vụ cán bộ lớp (Tối đa 3)</span>
+                  </label>
+                  <span className="text-[11px] font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
+                    Đã chọn: {editingRoles.length}/3
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5 p-2 bg-slate-50 rounded-2xl border border-slate-200 max-h-36 overflow-y-auto">
+                  {OFFICER_ROLE_OPTIONS.map((opt) => {
+                    const isSelected = editingRoles.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setEditingRoles(prev => prev.filter(r => r !== opt.value));
+                          } else {
+                            if (editingRoles.length >= 3) {
+                              alert('Mỗi học sinh chỉ được đảm nhiệm tối đa 3 chức vụ!');
+                              return;
+                            }
+                            setEditingRoles(prev => [...prev, opt.value]);
+                          }
+                        }}
+                        className={`p-2 rounded-xl text-[11px] font-bold text-left transition-all flex items-center justify-between truncate ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white font-black shadow-xs'
+                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50/50'
+                        }`}
+                      >
+                        <span className="truncate">{opt.icon} {opt.label}</span>
+                        {isSelected && <span className="text-xs ml-1 font-black">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -2983,7 +3933,609 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         </div>
       )}
 
-      {/* MODAL: STUDENT AVATAR EDITOR */}
+      {/* ========================================================================= */}
+      {/* MODAL: CHỈ ĐỊNH CHỨC VỤ CHO 1 HỌC SINH (TỐI ĐA 3 CHỨC VỤ) */}
+      {/* ========================================================================= */}
+      {quickRoleStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-lg w-full p-6 space-y-4 max-h-[90vh] flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-indigo-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-black">
+                    <Crown className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-indigo-950">Chỉ Định Chức Vụ Cán Bộ</h3>
+                    <p className="text-xs text-indigo-700">Học sinh: <strong className="text-indigo-950">STT {quickRoleStudent.stt} · {quickRoleStudent.name}</strong> • Tổ {quickRoleStudent.group || '1'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setQuickRoleStudent(null)}
+                  className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Thanh hiển thị các chức vụ đã chọn */}
+              <div className="mt-3 p-3 bg-gradient-to-r from-amber-50/80 via-indigo-50/60 to-sky-50/80 rounded-2xl border border-indigo-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-indigo-950 uppercase tracking-wide">
+                    Chức vụ đảm nhiệm:
+                  </span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border ${
+                    studentSelectedRoles.length === 3 
+                      ? 'bg-amber-100 text-amber-900 border-amber-300' 
+                      : 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                  }`}>
+                    {studentSelectedRoles.length} / 3 chức vụ (tối đa)
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 min-h-[32px]">
+                  {studentSelectedRoles.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">
+                      Chưa gán chức vụ nào (Học sinh là thành viên lớp)
+                    </span>
+                  ) : (
+                    studentSelectedRoles.map((r, idx) => {
+                      const rDef = getStudentRoleInfo(r);
+                      return (
+                        <span
+                          key={idx}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black border shadow-2xs ${
+                            rDef?.badgeBg || 'bg-amber-100'
+                          } ${rDef?.badgeText || 'text-amber-900'} ${rDef?.badgeBorder || 'border-amber-300'}`}
+                        >
+                          <span>{rDef?.icon || '👑'}</span>
+                          <span>{r}</span>
+                          <button
+                            type="button"
+                            onClick={() => setStudentSelectedRoles(prev => prev.filter(item => item !== r))}
+                            className="ml-1 hover:opacity-70 text-slate-500 hover:text-rose-600"
+                            title="Bỏ chức vụ này"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Danh sách 11 chức vụ */}
+              <div className="mt-3 space-y-1.5">
+                <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
+                  Bấm để chọn / bỏ chọn (Tối đa 3 chức vụ):
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                  {OFFICER_ROLE_OPTIONS.map((opt) => {
+                    const isSelected = studentSelectedRoles.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setStudentSelectedRoles(prev => prev.filter(r => r !== opt.value));
+                          } else {
+                            if (studentSelectedRoles.length >= 3) {
+                              alert('Mỗi học sinh chỉ được đảm nhiệm tối đa 3 chức vụ! Hãy bỏ bớt 1 chức vụ đã chọn nếu muốn thay đổi.');
+                              return;
+                            }
+                            setStudentSelectedRoles(prev => [...prev, opt.value]);
+                          }
+                        }}
+                        className={`p-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all hover-zoom-btn border text-left ${
+                          isSelected
+                            ? 'border-indigo-600 ring-2 ring-indigo-400 bg-indigo-50/90 text-indigo-950 shadow-xs'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-base shrink-0">{opt.icon}</span>
+                          <span className="truncate font-black">{opt.label}</span>
+                        </div>
+                        <div className="shrink-0 ml-1">
+                          {isSelected ? (
+                            <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black shadow-2xs">
+                              ✓
+                            </span>
+                          ) : (
+                            <span className="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-[10px] text-transparent hover:text-slate-400">
+                              +
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setStudentSelectedRoles([])}
+                className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors"
+              >
+                Về Thành Viên
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQuickRoleStudent(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveStudentRoles(quickRoleStudent.id, studentSelectedRoles)}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/25 hover-zoom-btn flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Lưu Chức Vụ ({studentSelectedRoles.length})</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: GÁN XU HÀNG LOẠT CHO NHIỀU HỌC SINH (Yêu cầu 3) */}
+      {/* ========================================================================= */}
+      {isBulkAwardOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-100">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black ${
+                  bulkAwardMode === 'minus' ? 'bg-rose-100 text-rose-700' : bulkAwardMode === 'sao' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                }`}>
+                  {bulkAwardMode === 'minus' ? <Minus className="w-5 h-5" /> : bulkAwardMode === 'sao' ? <Star className="w-5 h-5 fill-amber-500" /> : <Plus className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-indigo-950">
+                    Gán Xu Hàng Loạt ({selectedStudentIds.length} Học Sinh)
+                  </h3>
+                  <p className="text-xs text-indigo-700 font-medium">
+                    Thực hiện {bulkAwardMode === 'minus' ? 'trừ xu' : bulkAwardMode === 'sao' ? 'tặng sao' : 'cộng xu'} đồng loạt cho các học sinh đang chọn
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkAwardOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* List of selected students badges */}
+            <div className="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 space-y-1.5">
+              <span className="text-xs font-black text-indigo-950 uppercase tracking-wide block">
+                Danh sách {selectedStudentIds.length} học sinh được áp dụng:
+              </span>
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                {currentClassStudents
+                  .filter(s => selectedStudentIds.includes(s.id))
+                  .map(s => (
+                    <span key={s.id} className="px-2.5 py-1 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 shadow-2xs">
+                      STT {s.stt} · {s.name}
+                    </span>
+                  ))}
+              </div>
+            </div>
+
+            {/* 3 Forms: Cộng xu, Trừ xu, Tặng sao */}
+            <div>
+              <label className="block text-xs font-black text-indigo-950 mb-1.5 uppercase tracking-wider">
+                1. HÌNH THỨC GÁN ĐIỂM:
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkAwardMode('xu');
+                    setBulkAwardCoins(1);
+                  }}
+                  className={`py-2.5 px-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 transition-all hover-zoom-btn ${
+                    bulkAwardMode === 'xu' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 scale-102' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Cộng Xu</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkAwardMode('minus');
+                    setBulkAwardCoins(1);
+                  }}
+                  className={`py-2.5 px-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 transition-all hover-zoom-btn ${
+                    bulkAwardMode === 'minus' ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25 scale-102' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <Minus className="w-4 h-4" />
+                  <span>- Trừ Xu</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkAwardMode('sao');
+                    setBulkAwardCoins(1);
+                  }}
+                  className={`py-2.5 px-3 rounded-2xl text-xs font-black flex items-center justify-center gap-1.5 transition-all hover-zoom-btn ${
+                    bulkAwardMode === 'sao' ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25 scale-102' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  <Star className="w-4 h-4 fill-current" />
+                  <span>⭐ Tặng Sao</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Choose Subject */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-black text-indigo-950 flex items-center gap-1.5 uppercase tracking-wider">
+                  <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>2. CHỌN MÔN HỌC ĐÁNH GIÁ:</span>
+                </label>
+                <span className="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
+                  Đang chọn: {bulkAwardSubject}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-36 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
+                {appliedSubjects.map((sub) => {
+                  const isChosen = bulkAwardSubject === sub.name;
+                  const isCore = sub.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(sub.name.trim().toLowerCase());
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setBulkAwardSubject(sub.name)}
+                      className={`p-2 rounded-xl text-xs font-bold text-left transition-all truncate hover-zoom-btn flex items-center gap-2 cursor-pointer ${
+                        isChosen
+                          ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-600/40 font-black'
+                          : 'bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50/50'
+                      }`}
+                      title={sub.name}
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: sub.color || '#3B82F6' }} />
+                      <span className="truncate">{sub.name}</span>
+                      {isCore && <span className="text-[10px] text-amber-400 shrink-0">★</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Choose Amount */}
+            <div>
+              <label className="block text-xs font-black text-indigo-950 mb-1.5 uppercase tracking-wider">
+                3. {bulkAwardMode === 'sao' ? 'SỐ SAO TẶNG (1 ⭐ = 5 xu):' : bulkAwardMode === 'minus' ? 'SỐ XU TRỪ:' : 'SỐ XU CỘNG:'}
+              </label>
+              {bulkAwardMode === 'sao' ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {[1, 2, 3].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setBulkAwardCoins(num)}
+                      className={`py-2.5 rounded-2xl text-xs font-black transition-all hover-zoom-btn ${
+                        bulkAwardCoins === num ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25' : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {num === 1 ? '⭐ 1 Sao (+5 xu)' : num === 2 ? '⭐⭐ 2 Sao (+10 xu)' : '⭐⭐⭐ 3 Sao (+15 xu)'}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 5, 10].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setBulkAwardCoins(num)}
+                      className={`flex-1 py-2.5 rounded-2xl text-xs font-black transition-all hover-zoom-btn ${
+                        bulkAwardCoins === num 
+                          ? bulkAwardMode === 'minus' ? 'bg-rose-600 text-white shadow-md shadow-rose-600/25' : 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {bulkAwardMode === 'minus' ? `-${num}` : `+${num}`} xu
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Reason */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Lý do / Lời nhận xét:
+              </label>
+              <input
+                type="text"
+                placeholder={bulkAwardMode === 'minus' ? 'Lý do trừ xu đồng loạt...' : 'Lời khen ngợi đồng loạt...'}
+                value={bulkAwardReason}
+                onChange={(e) => setBulkAwardReason(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsBulkAwardOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBulkAward}
+                className={`px-5 py-2.5 text-white text-xs font-black rounded-xl shadow-md transition-all hover-zoom-btn flex items-center gap-1.5 ${
+                  bulkAwardMode === 'minus' ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20' : bulkAwardMode === 'sao' ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
+                }`}
+              >
+                {bulkAwardMode === 'minus' ? <Minus className="w-4 h-4" /> : bulkAwardMode === 'sao' ? <Star className="w-4 h-4 fill-white" /> : <Plus className="w-4 h-4" />}
+                <span>
+                  {bulkAwardMode === 'minus'
+                    ? `Xác Nhận Trừ -${bulkAwardCoins} Xu Môn ${bulkAwardSubject} (${selectedStudentIds.length} Em)`
+                    : bulkAwardMode === 'sao'
+                    ? `Xác Nhận Tặng +${bulkAwardCoins} ⭐ Môn ${bulkAwardSubject} (+${bulkAwardCoins * 5} xu, ${selectedStudentIds.length} Em)`
+                    : `Xác Nhận Cộng +${bulkAwardCoins} Xu Môn ${bulkAwardSubject} (${selectedStudentIds.length} Em)`}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: CHỈ ĐỊNH CHỨC VỤ HÀNG LOẠT (Tối đa 3 chức vụ) */}
+      {/* ========================================================================= */}
+      {isBulkRoleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-lg w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-black">
+                  <Crown className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-indigo-950">
+                    Gán Chức Vụ Đồng Loạt ({selectedStudentIds.length} Học Sinh)
+                  </h3>
+                  <p className="text-xs text-indigo-700">Mỗi học sinh có thể đảm nhiệm tối đa 3 chức vụ trọng trách</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBulkRoleModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Thanh preview các chức vụ đã chọn cho nhóm */}
+            <div className="p-3 bg-gradient-to-r from-amber-50/80 via-indigo-50/60 to-sky-50/80 rounded-2xl border border-indigo-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-indigo-950 uppercase tracking-wide">
+                  Chức vụ áp dụng:
+                </span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border ${
+                  bulkSelectedRoles.length === 3 
+                    ? 'bg-amber-100 text-amber-900 border-amber-300' 
+                    : 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                }`}>
+                  {bulkSelectedRoles.length} / 3 chức vụ (tối đa)
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5 min-h-[30px]">
+                {bulkSelectedRoles.length === 0 ? (
+                  <span className="text-xs text-slate-400 italic">
+                    Chưa chọn chức vụ nào (Sẽ chuyển các em thành Thành viên lớp nếu bấm Lưu)
+                  </span>
+                ) : (
+                  bulkSelectedRoles.map((r, idx) => {
+                    const rDef = getStudentRoleInfo(r);
+                    return (
+                      <span
+                        key={idx}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black border shadow-2xs ${
+                          rDef?.badgeBg || 'bg-amber-100'
+                        } ${rDef?.badgeText || 'text-amber-900'} ${rDef?.badgeBorder || 'border-amber-300'}`}
+                      >
+                        <span>{rDef?.icon || '👑'}</span>
+                        <span>{r}</span>
+                        <button
+                          type="button"
+                          onClick={() => setBulkSelectedRoles(prev => prev.filter(item => item !== r))}
+                          className="ml-1 hover:opacity-70 text-slate-500 hover:text-rose-600"
+                          title="Bỏ chức vụ này"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-xs font-black text-slate-700 uppercase tracking-wide block">
+                Bấm để chọn / bỏ chọn (Tối đa 3 chức vụ):
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                {OFFICER_ROLE_OPTIONS.map((opt) => {
+                  const isSelected = bulkSelectedRoles.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setBulkSelectedRoles(prev => prev.filter(r => r !== opt.value));
+                        } else {
+                          if (bulkSelectedRoles.length >= 3) {
+                            alert('Mỗi học sinh chỉ được đảm nhiệm tối đa 3 chức vụ!');
+                            return;
+                          }
+                          setBulkSelectedRoles(prev => [...prev, opt.value]);
+                        }
+                      }}
+                      className={`p-2.5 rounded-2xl text-xs font-bold flex items-center justify-between transition-all hover-zoom-btn border text-left ${
+                        isSelected
+                          ? 'border-indigo-600 ring-2 ring-indigo-400 bg-indigo-50/90 text-indigo-950 shadow-xs font-black'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base shrink-0">{opt.icon}</span>
+                        <span className="truncate font-black">{opt.label}</span>
+                      </div>
+                      <div className="shrink-0 ml-1">
+                        {isSelected ? (
+                          <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-black">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-[10px] text-transparent hover:text-slate-400">
+                            +
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setBulkSelectedRoles([])}
+                className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors"
+                title="Xóa hết chức vụ, đưa các em về thành viên lớp"
+              >
+                Về Thành Viên
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkRoleModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmBulkRole}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Áp Dụng Cho {selectedStudentIds.length} Em</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: ĐẶT VỀ 0 XU CHO CÁC HỌC SINH ĐÃ CHỌN (Yêu cầu 3) */}
+      {/* ========================================================================= */}
+      {isBulkResetCoinsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-amber-200 max-w-sm w-full p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-xs">
+              <RotateCcw className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-black text-amber-950">
+                Đặt Về 0 Xu ({selectedStudentIds.length} Học Sinh)?
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Số xu thi đua của <strong className="text-amber-800 font-black">{selectedStudentIds.length} học sinh đã chọn</strong> sẽ được đặt lại về 0 xu.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsBulkResetCoinsOpen(false)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBulkResetCoins}
+                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 hover-zoom-btn flex items-center justify-center gap-1.5"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Đặt Về 0 Xu</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: RESET TOÀN BỘ XU CẢ LỚP VỀ 0 (Yêu cầu 3) */}
+      {/* ========================================================================= */}
+      {isClassResetCoinsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-amber-200 max-w-sm w-full p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-xs">
+              <RotateCcw className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="text-center space-y-1">
+              <h3 className="text-base font-black text-amber-950">
+                Reset Xu Cả Lớp {activeClass?.name} Về 0?
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Toàn bộ số xu thi đua của <strong className="text-amber-800 font-black">{currentClassStudents.length} học sinh</strong> trong lớp sẽ được đặt lại về 0 xu.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsClassResetCoinsOpen(false)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmClassResetCoins}
+                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 hover-zoom-btn flex items-center justify-center gap-1.5"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Reset Cả Lớp Về 0</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: STUDENT AVATAR EDITOR (Yêu cầu 5: Khắc phục triệt để lỗi crop ảnh) */}
       {avatarEditingStudent && (
         <AvatarEditorModal
           isOpen={!!avatarEditingStudent}
@@ -2993,23 +4545,22 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
           currentScale={avatarEditingStudent.avatarScale || 1}
           currentPosition={avatarEditingStudent.avatarPosition || { x: 0, y: 0 }}
           onClose={() => setAvatarEditingStudent(null)}
-          onSave={(avatarUrl, scale, position, originalAvatar) => {
-            updateStudent(avatarEditingStudent.id, {
-              avatar: avatarUrl,
-              originalAvatar: originalAvatar || avatarEditingStudent.originalAvatar || avatarUrl,
+          onSave={(croppedUrl, originalUrl, scale, position) => {
+            const avatarData = {
+              avatar: croppedUrl,
+              originalAvatar: originalUrl,
               avatarScale: scale,
               avatarPosition: position
-            });
+            };
+            updateStudent(avatarEditingStudent.id, avatarData);
             if (editingStudent && editingStudent.id === avatarEditingStudent.id) {
               setEditingStudent({
                 ...editingStudent,
-                avatar: avatarUrl,
-                originalAvatar: originalAvatar || editingStudent.originalAvatar || avatarUrl,
-                avatarScale: scale,
-                avatarPosition: position
+                ...avatarData
               });
             }
             setAvatarEditingStudent(null);
+            syncDatabaseNow();
           }}
         />
       )}
@@ -3020,13 +4571,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
           isOpen={!!avatarEditingClass}
           classNameTitle={avatarEditingClass.name}
           currentAvatar={avatarEditingClass.avatar || CLASS_AVATARS[0].url}
+          originalAvatar={avatarEditingClass.originalAvatar}
           currentScale={avatarEditingClass.avatarScale || 1}
           currentPosition={avatarEditingClass.avatarPosition || { x: 0, y: 0 }}
           colorTheme={avatarEditingClass.color || '#6366F1'}
           onClose={() => setAvatarEditingClass(null)}
-          onSave={(avatarUrl, scale, position) => {
+          onSave={(avatarUrl, scale, position, originalUrl) => {
+            const finalOriginal = originalUrl || avatarEditingClass.originalAvatar || avatarUrl;
             updateClass(avatarEditingClass.id, {
               avatar: avatarUrl,
+              originalAvatar: finalOriginal,
               avatarScale: scale,
               avatarPosition: position
             });
@@ -3034,6 +4588,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               setEditingClass({
                 ...editingClass,
                 avatar: avatarUrl,
+                originalAvatar: finalOriginal,
                 avatarScale: scale,
                 avatarPosition: position
               });
@@ -3061,12 +4616,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
           isOpen={isNewClassAvatarEditorOpen}
           classNameTitle={newClassName || 'Lớp mới'}
           currentAvatar={newClassAvatar}
+          originalAvatar={newClassOriginalAvatar}
           currentScale={newClassAvatarScale}
           currentPosition={newClassAvatarPosition}
           colorTheme={newClassColor}
           onClose={() => setIsNewClassAvatarEditorOpen(false)}
-          onSave={(avatarUrl, scale, position) => {
+          onSave={(avatarUrl, scale, position, originalUrl) => {
+            const finalOrig = originalUrl || newClassOriginalAvatar || avatarUrl;
             setNewClassAvatar(avatarUrl);
+            setNewClassOriginalAvatar(finalOrig);
             setNewClassAvatarScale(scale);
             setNewClassAvatarPosition(position);
             setIsNewClassAvatarEditorOpen(false);
@@ -3075,385 +4633,11 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         />
       )}
 
-      {/* MODAL: XÓA ĐIỂM XU (Yêu cầu người dùng) */}
-      {isResetPointsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-                <RotateCcw className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-slate-900">
-                  Xác Nhận Xóa Điểm Xu Về 0
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Đưa số xu tích lũy của học sinh về 0 xu
-                </p>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-rose-50/70 border border-rose-200 space-y-2 text-xs text-rose-950">
-              <div className="font-bold flex items-center gap-1.5 text-rose-800">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>
-                  {selectedStudentIds.length > 0 
-                    ? `Sẽ xóa điểm xu của ${selectedStudentIds.length} học sinh đang được chọn.` 
-                    : `Sẽ xóa điểm xu của TẤT CẢ ${currentClassStudents.length} học sinh Lớp ${activeClass?.name}.`}
-                </span>
-              </div>
-              <p className="text-[11px] text-rose-700 leading-relaxed">
-                Tất cả điểm xu thi đua của các em được chọn sẽ trở về <strong>0 xu</strong>. Lịch sử giao dịch sẽ được ghi nhận để đối chiếu khi cần thiết.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsResetPointsModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Hủy Bỏ
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const targetIds = selectedStudentIds.length > 0 ? selectedStudentIds : currentClassStudents.map(s => s.id);
-                  resetStudentPoints(targetIds);
-                  playDeductSound();
-                  confetti({ particleCount: 35, spread: 50 });
-                  setIsResetPointsModalOpen(false);
-                }}
-                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-md shadow-rose-600/25 transition-all hover-zoom-btn cursor-pointer"
-              >
-                Xác Nhận Xóa Về 0 Xu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: GÁN ĐIỂM XU ĐỒNG LOẠT (Yêu cầu người dùng) */}
-      {isBulkSetPointsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/25">
-                  <Coins className="w-5 h-5 text-amber-100" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">
-                    Gán Điểm Xu Đồng Loạt
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {selectedStudentIds.length > 0
-                      ? `Áp dụng cho ${selectedStudentIds.length} học sinh đang được chọn`
-                      : `Áp dụng cho tất cả ${currentClassStudents.length} học sinh Lớp ${activeClass?.name}`}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsBulkSetPointsModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Chế độ gán điểm */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">Hình thức gán điểm:</label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setBulkSetMode('fixed')}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    bulkSetMode === 'fixed'
-                      ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-300'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  🎯 Đặt Giá Trị Cố Định
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBulkSetMode('add')}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    bulkSetMode === 'add'
-                      ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-300'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  ➕ Cộng Thêm Xu
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBulkSetMode('deduct')}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    bulkSetMode === 'deduct'
-                      ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-300'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  ➖ Trừ Bớt Xu
-                </button>
-              </div>
-            </div>
-
-            {/* Nhập số xu */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">
-                {bulkSetMode === 'fixed' 
-                  ? 'Số xu muốn gán thành (mỗi học sinh sẽ có đúng số xu này):' 
-                  : bulkSetMode === 'add' 
-                  ? 'Số xu cộng thêm cho mỗi học sinh:' 
-                  : 'Số xu trừ bớt cho mỗi học sinh:'}
-              </label>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  min="0"
-                  max="1000"
-                  value={bulkSetAmount}
-                  onChange={(e) => setBulkSetAmount(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-32 px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-black text-amber-900 focus:ring-2 focus:ring-amber-500 font-mono"
-                />
-                <span className="text-xs font-bold text-slate-500">xu thi đua</span>
-              </div>
-
-              {/* Quick Preset Buttons */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                <span className="text-[11px] font-bold text-slate-400 self-center mr-1">Chọn nhanh:</span>
-                {[0, 5, 10, 15, 20, 50, 100].map(val => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => setBulkSetAmount(val)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                      bulkSetAmount === val
-                        ? 'bg-amber-500 text-white font-black'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                    }`}
-                  >
-                    {val}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Chọn môn học */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Theo môn học:</span>
-              </label>
-              <select
-                value={bulkSetSubject}
-                onChange={(e) => setBulkSetSubject(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-              >
-                {subjects.map(sub => (
-                  <option key={sub.id} value={sub.name}>
-                    {sub.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Lý do / Ghi chú */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Lý do / Lời nhận xét:
-              </label>
-              <input
-                type="text"
-                value={bulkSetReason}
-                onChange={(e) => setBulkSetReason(e.target.value)}
-                placeholder="Ví dụ: Khen thưởng tuần, Đạt kết quả tốt, v.v."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsBulkSetPointsModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                Hủy Bỏ
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const targetIds = selectedStudentIds.length > 0 ? selectedStudentIds : currentClassStudents.map(s => s.id);
-                  if (bulkSetMode === 'fixed') {
-                    bulkSetPoints(targetIds, bulkSetAmount, bulkSetReason, bulkSetSubject);
-                  } else if (bulkSetMode === 'add') {
-                    awardPoints(targetIds, bulkSetAmount, bulkSetReason, bulkSetSubject);
-                  } else {
-                    deductPoints(targetIds, bulkSetAmount, bulkSetReason, bulkSetSubject);
-                  }
-                  playCoinSound();
-                  confetti({ particleCount: 50, spread: 60 });
-                  setIsBulkSetPointsModalOpen(false);
-                }}
-                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/25 transition-all hover-zoom-btn cursor-pointer"
-              >
-                Xác Nhận Áp Dụng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* ========================================================================= */}
-      {/* MODAL: BÁO CÁO TỔNG HỢP & CHUYÊN CẦN LỚP (PDF & EXCEL) (Yêu cầu người dùng) */}
-      {/* ========================================================================= */}
-      {isClassReportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center font-black">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-slate-900">
-                    Báo Cáo Tổng Hợp & Chuyên Cần Lớp {classes.find(c => c.id === activeClassId)?.name || '4A1'}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Thống kê chuyên cần tỉ lệ % có mặt, sĩ số, giới tính và điểm xu thi đua
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsClassReportModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Attendance & Class KPI Summary Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-2xl text-center">
-                <span className="text-[11px] font-black text-indigo-700 uppercase block">Tổng Sĩ Số</span>
-                <div className="text-2xl font-black text-indigo-950 mt-0.5">{currentClassStudents.length}</div>
-                <span className="text-[10px] text-slate-500 font-bold">
-                  Nam: {currentClassStudents.filter(s => s.gender === 'Nam').length} • Nữ: {currentClassStudents.filter(s => s.gender === 'Nữ').length}
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-center">
-                <span className="text-[11px] font-black text-emerald-800 uppercase block">Có Mặt Hôm Nay</span>
-                <div className="text-2xl font-black text-emerald-700 mt-0.5">{presentCount}</div>
-                <span className="text-[10px] text-emerald-700 font-bold">
-                  Vắng: {currentClassStudents.length - presentCount} em
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-2xl text-center">
-                <span className="text-[11px] font-black text-teal-800 uppercase block">Tỉ Lệ Chuyên Cần</span>
-                <div className="text-2xl font-black text-teal-700 mt-0.5">{attendanceRate}%</div>
-                <span className="text-[10px] text-teal-700 font-bold">
-                  {presentCount}/{currentClassStudents.length} học sinh
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-center">
-                <span className="text-[11px] font-black text-amber-800 uppercase block">Tổng Xu Thi Đua</span>
-                <div className="text-2xl font-black text-amber-700 mt-0.5">
-                  {currentClassStudents.reduce((sum, s) => sum + (s.points || 0), 0)}
-                </div>
-                <span className="text-[10px] text-amber-700 font-bold">Xu toàn lớp</span>
-              </div>
-            </div>
-
-            {/* Preview Table of Students */}
-            <div className="space-y-2">
-              <span className="text-xs font-black text-slate-700 uppercase tracking-wider block">
-                Bảng Chi Tiết Học Sinh & Trạng Thái Chuyên Cần:
-              </span>
-              <div className="overflow-x-auto max-h-[300px] border border-slate-200 rounded-2xl">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-100 text-slate-700 sticky top-0 font-bold">
-                    <tr>
-                      <th className="py-2.5 px-3 text-center w-10">STT</th>
-                      <th className="py-2.5 px-3">Họ và tên</th>
-                      <th className="py-2.5 px-3 text-center">Giới tính</th>
-                      <th className="py-2.5 px-3 text-center">Tổ</th>
-                      <th className="py-2.5 px-3 text-center">Chức vụ</th>
-                      <th className="py-2.5 px-3 text-center">Xu thi đua</th>
-                      <th className="py-2.5 px-3 text-center">Chuyên cần</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {currentClassStudents.map((st, idx) => {
-                      const stStatus = attMap[st.id] || 'present';
-                      const isPresent = stStatus === 'present';
-                      return (
-                        <tr key={st.id} className="hover:bg-slate-50">
-                          <td className="py-2 px-3 text-center font-bold text-slate-400">{idx + 1}</td>
-                          <td className="py-2 px-3 font-bold text-slate-900">{st.name}</td>
-                          <td className="py-2 px-3 text-center font-semibold text-slate-600">{st.gender}</td>
-                          <td className="py-2 px-3 text-center font-medium text-slate-600">{st.group || 'Tổ 1'}</td>
-                          <td className="py-2 px-3 text-center font-medium text-slate-600">{st.role || 'Thành viên'}</td>
-                          <td className="py-2 px-3 text-center font-black text-amber-700">🪙 {st.points || 0}</td>
-                          <td className="py-2 px-3 text-center">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              isPresent ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                            }`}>
-                              {isPresent ? '✓ Có mặt' : 'Vắng mặt'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsClassReportModalOpen(false)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
-              >
-                Đóng
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleExportClassAttendanceReportExcel();
-                    setIsClassReportModalOpen(false);
-                  }}
-                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Xuất File Excel (.xlsx)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    window.print();
-                  }}
-                  className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-teal-600/20 cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>In / Xuất Báo Cáo PDF (A4)</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODAL: KHỞI TẠO LỚP DẠY BỘ MÔN (User Request) */}
+      <InitSubjectClassesModal
+        isOpen={isInitSubjectClassesModalOpen}
+        onClose={() => setIsInitSubjectClassesModalOpen(false)}
+      />
     </div>
   );
 };

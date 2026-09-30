@@ -1,75 +1,13 @@
-import { Classroom, Student, Subject, PointCriterion, Reward, TimetableSlot, QuickLink, TeacherProfile, RegisteredTeacher } from '../types';
+import { Classroom, Student, Subject, PointCriterion, Reward, TimetableSlot, QuickLink, TeacherProfile, SubjectTeacherConfig, SubjectTimetableSlot } from '../types';
 
-// Thông tin TÁC GIẢ ỨNG DỤNG - Cố định không sửa trong cài đặt (Yêu cầu 5)
+// Thông tin TÁC GIẢ ỨNG DỤNG - Cố định không sửa trong cài đặt (Yêu cầu 6)
 export const APP_AUTHOR_INFO = {
   name: 'NGUYỄN THANH LIÊM',
-  schoolName: 'Trường Tiểu học số 1 Tân Uyên',
-  zalo: '0888358363',
+  schoolName: 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN',
+  zalo: '0888.358.363',
   zaloUrl: 'https://zalo.me/0888358363',
   facebook: 'https://www.facebook.com/nguyenthanhliemautotech/'
 };
-
-// Danh sách tài khoản giáo viên đăng ký & phê duyệt
-export const INITIAL_REGISTERED_TEACHERS: RegisteredTeacher[] = [
-  {
-    id: 'gv-user',
-    username: 'gv_liem',
-    password: '123456',
-    email: 'nguyenthanhliemtanuyen1@gmail.com',
-    displayName: 'Thầy Nguyễn Thanh Liêm',
-    photoURL: 'https://api.dicebear.com/7.x/bottts/svg?seed=TeacherLiem&backgroundColor=b6e3f4',
-    assignedClassId: 'class-4a1',
-    assignedClassName: '4A1 (Khối 4)',
-    status: 'approved',
-    registeredAt: Date.now() - 86400000 * 15,
-    lastLoginAt: Date.now() - 3600000 * 2,
-    phone: '0977058363',
-    note: 'Giáo viên chủ nhiệm lớp 4A1 - Đã phê duyệt chính thức'
-  },
-  {
-    id: 'gv-hoa',
-    username: 'gv_4a1',
-    password: '123456',
-    email: 'nguyenthihoa.tanuyen@gmail.com',
-    displayName: 'Cô Nguyễn Thị Hoa',
-    photoURL: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoNguyenThiHoa&backgroundColor=ffd5dc',
-    assignedClassId: 'class-4a1',
-    assignedClassName: '4A1 (Khối 4)',
-    status: 'approved',
-    registeredAt: Date.now() - 86400000 * 20,
-    lastLoginAt: Date.now() - 3600000 * 5,
-    phone: '0988123456',
-    note: 'Giáo viên chủ nhiệm lớp 4A1'
-  },
-  {
-    id: 'gv-minh',
-    username: 'gv_4a2',
-    password: '123456',
-    email: 'tranthiminh.edu@gmail.com',
-    displayName: 'Cô Trần Thị Minh',
-    photoURL: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoTranThiMinh&backgroundColor=d1d4f9',
-    assignedClassId: 'class-4a2',
-    assignedClassName: '4A2 (Khối 4)',
-    status: 'approved',
-    registeredAt: Date.now() - 86400000 * 2,
-    phone: '0912345678',
-    note: 'Giáo viên phụ trách lớp 4A2'
-  },
-  {
-    id: 'gv-tuan',
-    username: 'gv_5a1',
-    password: '123456',
-    email: 'levantuan.school@gmail.com',
-    displayName: 'Thầy Lê Văn Tuấn',
-    photoURL: 'https://api.dicebear.com/7.x/bottts/svg?seed=ThayLeVanTuan&backgroundColor=ffdfbf',
-    assignedClassId: 'class-5a1',
-    assignedClassName: '5A1 (Khối 5)',
-    status: 'pending',
-    registeredAt: Date.now() - 86400000 * 1,
-    phone: '0903890123',
-    note: 'Đăng ký mới - Đang chờ phê duyệt'
-  }
-];
 
 export const SYSTEM_AVATARS = [
   // Cartoon Boys
@@ -91,9 +29,9 @@ export const SYSTEM_AVATARS = [
 
 // Thông tin giáo viên mặc định trong cài đặt (Yêu cầu 7)
 export const DEFAULT_TEACHER: TeacherProfile = {
-  name: 'Nguyễn Thị Hoa',
+  name: 'NGUYỄN THỊ HOA',
   birthDate: '15/08/1988',
-  role: 'Giáo viên chủ nhiệm',
+  role: 'GIÁO VIÊN CHỦ NHIỆM',
   teachingSubject: 'Giáo viên chủ nhiệm',
   schoolName: 'Trường Tiểu học số 1 Tân Uyên',
   avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoNguyenThiHoa&backgroundColor=ffd5dc',
@@ -101,7 +39,7 @@ export const DEFAULT_TEACHER: TeacherProfile = {
   zalo: '0977058363',
   facebook: 'https://www.facebook.com/tieuhocso1tanuyen/',
   socialLink: 'https://zalo.me/0977058363',
-  academicYear: '2026 – 2027'
+  academicYear: '2026–2027'
 };
 
 // Mặc định ban đầu: Chỉ có 1 lớp là 4A1 (Yêu cầu 7)
@@ -111,34 +49,41 @@ export const INITIAL_CLASSES: Classroom[] = [
     name: '4A1',
     grade: 'Khối 4',
     color: '#3B82F6', // Blue
-    academicYear: '2026 – 2027',
-    teacherName: 'Nguyễn Thị Hoa',
+    academicYear: '2026–2027',
+    teacherName: 'NGUYỄN THỊ HOA',
     avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
     slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng',
     parentCommittee: {
       head: { name: 'Trần Văn Mạnh', phone: '0988 123 456', roleTitle: 'Trưởng ban phụ huynh' },
       deputy: { name: 'Nguyễn Thị Mai', phone: '0977 654 321', roleTitle: 'Phó ban phụ huynh' },
-      member1: { name: 'Lê Hoàng Nam', phone: '0912 345 678', roleTitle: 'Ủy viên ban phụ huynh' },
-      member2: { name: 'Phạm Thị Lan', phone: '0903 890 123', roleTitle: 'Ủy viên ban phụ huynh' }
+      member1: { name: 'Lê Hoàng Nam', phone: '0912 345 678', roleTitle: 'Ủy viên ban phụ huynh 1' },
+      member2: { name: 'Phạm Thị Lan', phone: '0903 890 123', roleTitle: 'Ủy viên ban phụ huynh 2' }
     }
   }
 ];
 
+// 3 Môn mặc định theo yêu cầu hệ thống
+export const DEFAULT_CORE_SUBJECTS: Subject[] = [
+  { id: 'sub-general', name: 'GHI CHUNG / NỀ NẾP', icon: 'Star', color: '#F59E0B', enabled: true, isDefault: true },
+  { id: 'sub-toan', name: 'TOÁN', icon: 'Calculator', color: '#3B82F6', enabled: true, isDefault: true },
+  { id: 'sub-tiengviet', name: 'TIẾNG VIỆT', icon: 'BookOpen', color: '#EF4444', enabled: true, isDefault: true }
+];
+
 export const INITIAL_SUBJECTS: Subject[] = [
-  { id: 'sub-general', name: 'Ghi chung / Nề nếp', icon: 'Star', color: '#F59E0B' },
-  { id: 'sub-toan', name: 'Toán', icon: 'Calculator', color: '#3B82F6' },
-  { id: 'sub-tiengviet', name: 'Tiếng Việt', icon: 'BookOpen', color: '#EF4444' },
-  { id: 'sub-tienganh', name: 'Tiếng Anh', icon: 'Globe', color: '#8B5CF6' },
-  { id: 'sub-tnxh', name: 'TN & Xã hội', icon: 'Compass', color: '#10B981' },
-  { id: 'sub-khoahoc', name: 'Khoa học', icon: 'Atom', color: '#06B6D4' },
-  { id: 'sub-lichsu', name: 'Lịch sử & Địa lý', icon: 'Map', color: '#F97316' },
-  { id: 'sub-tinhoc', name: 'Tin học', icon: 'Monitor', color: '#6366F1' },
-  { id: 'sub-congnghe', name: 'Công nghệ', icon: 'Cpu', color: '#14B8A6' },
-  { id: 'sub-mythuat', name: 'Mĩ thuật', icon: 'Palette', color: '#EC4899' },
-  { id: 'sub-amnhac', name: 'Âm nhạc', icon: 'Music', color: '#A855F7' },
-  { id: 'sub-gdtc', name: 'Giáo dục thể chất', icon: 'Activity', color: '#3B82F6' },
-  { id: 'sub-daoduc', name: 'Đạo đức', icon: 'Heart', color: '#E11D48' },
-  { id: 'sub-trainghiem', name: 'Hoạt động trải nghiệm', icon: 'Sparkles', color: '#F59E0B' }
+  { id: 'sub-general', name: 'GHI CHUNG / NỀ NẾP', icon: 'Star', color: '#F59E0B', enabled: true, isDefault: true },
+  { id: 'sub-toan', name: 'TOÁN', icon: 'Calculator', color: '#3B82F6', enabled: true, isDefault: true },
+  { id: 'sub-tiengviet', name: 'TIẾNG VIỆT', icon: 'BookOpen', color: '#EF4444', enabled: true, isDefault: true },
+  { id: 'sub-tienganh', name: 'TIẾNG ANH', icon: 'Globe', color: '#8B5CF6', enabled: true },
+  { id: 'sub-tnxh', name: 'TN & XÃ HỘI', icon: 'Compass', color: '#10B981', enabled: true },
+  { id: 'sub-khoahoc', name: 'KHOA HỌC', icon: 'Atom', color: '#06B6D4', enabled: true },
+  { id: 'sub-lichsu', name: 'LỊCH SỬ & ĐỊA LÝ', icon: 'Map', color: '#F97316', enabled: true },
+  { id: 'sub-tinhoc', name: 'TIN HỌC', icon: 'Monitor', color: '#6366F1', enabled: true },
+  { id: 'sub-congnghe', name: 'CÔNG NGHỆ', icon: 'Cpu', color: '#14B8A6', enabled: true },
+  { id: 'sub-mythuat', name: 'MĨ THUẬT', icon: 'Palette', color: '#EC4899', enabled: true },
+  { id: 'sub-amnhac', name: 'ÂM NHẠC', icon: 'Music', color: '#A855F7', enabled: true },
+  { id: 'sub-gdtc', name: 'GIÁO DỤC THỂ CHẤT', icon: 'Activity', color: '#3B82F6', enabled: true },
+  { id: 'sub-daoduc', name: 'ĐẠO ĐỨC', icon: 'Heart', color: '#E11D48', enabled: true },
+  { id: 'sub-trainghiem', name: 'HOẠT ĐỘNG TRẢI NGHIỆM', icon: 'Sparkles', color: '#F59E0B', enabled: true }
 ];
 
 export const INITIAL_CRITERIA: PointCriterion[] = [
@@ -155,33 +100,33 @@ export const INITIAL_CRITERIA: PointCriterion[] = [
 
 // Lớp 4A1 có mặc định 30 học sinh đầy đủ thông tin ngày sinh, giới tính và điểm xu ngẫu nhiên (Yêu cầu 7)
 export const INITIAL_STUDENTS_CLASS_4A1: Student[] = [
-  { id: 'hs-1', classId: 'class-4a1', stt: 1, name: 'Nguyễn Văn An', birthDate: '12/03/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[0].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 35, group: 'Tổ 1', role: 'Lớp trưởng' },
-  { id: 'hs-2', classId: 'class-4a1', stt: 2, name: 'Trần Thị Ngọc Ánh', birthDate: '25/08/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[5].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 48, group: 'Tổ 1', role: 'Lớp phó học tập' },
-  { id: 'hs-3', classId: 'class-4a1', stt: 3, name: 'Lê Gia Bảo', birthDate: '14/01/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[1].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 26, group: 'Tổ 1', role: 'Lớp phó phong trào' },
-  { id: 'hs-4', classId: 'class-4a1', stt: 4, name: 'Phạm Minh Châu', birthDate: '09/06/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[6].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 52, group: 'Tổ 1', role: 'Tổ trưởng Tổ 1' },
-  { id: 'hs-5', classId: 'class-4a1', stt: 5, name: 'Hoàng Quốc Cường', birthDate: '18/11/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[2].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 31, group: 'Tổ 1', role: 'Tổ phó Tổ 1' },
-  { id: 'hs-6', classId: 'class-4a1', stt: 6, name: 'Vũ Mai Dung', birthDate: '04/04/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[7].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 40, group: 'Tổ 1' },
+  { id: 'hs-1', classId: 'class-4a1', stt: 1, name: 'Nguyễn Văn An', birthDate: '12/03/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[0].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 35, group: 'Tổ 1', role: 'LỚP TRƯỞNG • TỔ TRƯỞNG TỔ 1', roles: ['LỚP TRƯỞNG', 'TỔ TRƯỞNG TỔ 1'] },
+  { id: 'hs-2', classId: 'class-4a1', stt: 2, name: 'Trần Thị Ngọc Ánh', birthDate: '25/08/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[5].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 48, group: 'Tổ 1', role: 'LỚP PHÓ HỌC TẬP • TỔ PHÓ TỔ 1', roles: ['LỚP PHÓ HỌC TẬP', 'TỔ PHÓ TỔ 1'] },
+  { id: 'hs-3', classId: 'class-4a1', stt: 3, name: 'Lê Gia Bảo', birthDate: '14/01/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[1].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 26, group: 'Tổ 1' },
+  { id: 'hs-4', classId: 'class-4a1', stt: 4, name: 'Phạm Minh Châu', birthDate: '09/06/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[6].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 52, group: 'Tổ 1', role: 'LỚP PHONG TRÀO', roles: ['LỚP PHONG TRÀO'] },
+  { id: 'hs-5', classId: 'class-4a1', stt: 5, name: 'Hoàng Quốc Cường', birthDate: '18/11/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[2].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 31, group: 'Tổ 1', role: 'TỔ TRƯỞNG TỔ 1', roles: ['TỔ TRƯỞNG TỔ 1'] },
+  { id: 'hs-6', classId: 'class-4a1', stt: 6, name: 'Vũ Mai Dung', birthDate: '04/04/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[7].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 40, group: 'Tổ 1', role: 'TỔ PHÓ TỔ 1', roles: ['TỔ PHÓ TỔ 1'] },
   { id: 'hs-7', classId: 'class-4a1', stt: 7, name: 'Đặng Tuấn Đạt', birthDate: '22/09/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[3].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 29, group: 'Tổ 1' },
   { id: 'hs-8', classId: 'class-4a1', stt: 8, name: 'Bùi Thùy Dương', birthDate: '15/07/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[8].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 64, group: 'Tổ 1' },
 
-  { id: 'hs-9', classId: 'class-4a1', stt: 9, name: 'Đỗ Tiến Đức', birthDate: '30/10/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[4].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 38, group: 'Tổ 2', role: 'Tổ trưởng Tổ 2' },
-  { id: 'hs-10', classId: 'class-4a1', stt: 10, name: 'Hồ Mỹ Hạnh', birthDate: '08/02/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[9].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 45, group: 'Tổ 2', role: 'Tổ phó Tổ 2' },
+  { id: 'hs-9', classId: 'class-4a1', stt: 9, name: 'Đỗ Tiến Đức', birthDate: '30/10/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[4].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 38, group: 'Tổ 2', role: 'TỔ TRƯỞNG TỔ 2', roles: ['TỔ TRƯỞNG TỔ 2'] },
+  { id: 'hs-10', classId: 'class-4a1', stt: 10, name: 'Hồ Mỹ Hạnh', birthDate: '08/02/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[9].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 45, group: 'Tổ 2', role: 'TỔ PHÓ TỔ 2', roles: ['TỔ PHÓ TỔ 2'] },
   { id: 'hs-11', classId: 'class-4a1', stt: 11, name: 'Ngô Đức Huy', birthDate: '19/12/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[0].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 58, group: 'Tổ 2' },
   { id: 'hs-12', classId: 'class-4a1', stt: 12, name: 'Dương Thu Hương', birthDate: '11/05/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[5].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 33, group: 'Tổ 2' },
   { id: 'hs-13', classId: 'class-4a1', stt: 13, name: 'Lâm Tuấn Kiệt', birthDate: '27/03/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[1].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 42, group: 'Tổ 2' },
   { id: 'hs-14', classId: 'class-4a1', stt: 14, name: 'Phan Thảo Linh', birthDate: '17/08/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[6].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 61, group: 'Tổ 2' },
   { id: 'hs-15', classId: 'class-4a1', stt: 15, name: 'Võ Minh Long', birthDate: '05/01/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[2].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 28, group: 'Tổ 2' },
 
-  { id: 'hs-16', classId: 'class-4a1', stt: 16, name: 'Mai Khánh Ly', birthDate: '23/06/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[7].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 47, group: 'Tổ 3', role: 'Tổ trưởng Tổ 3' },
-  { id: 'hs-17', classId: 'class-4a1', stt: 17, name: 'Trịnh Hoàng Nam', birthDate: '02/09/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[3].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 36, group: 'Tổ 3', role: 'Tổ phó Tổ 3' },
-  { id: 'hs-18', classId: 'class-4a1', stt: 18, name: 'Lý Kim Ngân', birthDate: '16/04/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[8].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 55, group: 'Tổ 3' },
+  { id: 'hs-16', classId: 'class-4a1', stt: 16, name: 'Mai Khánh Ly', birthDate: '23/06/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[7].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 47, group: 'Tổ 3' },
+  { id: 'hs-17', classId: 'class-4a1', stt: 17, name: 'Trịnh Hoàng Nam', birthDate: '02/09/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[3].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 36, group: 'Tổ 3', role: 'TỔ TRƯỞNG TỔ 3', roles: ['TỔ TRƯỞNG TỔ 3'] },
+  { id: 'hs-18', classId: 'class-4a1', stt: 18, name: 'Lý Kim Ngân', birthDate: '16/04/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[8].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 55, group: 'Tổ 3', role: 'TỔ PHÓ TỔ 3', roles: ['TỔ PHÓ TỔ 3'] },
   { id: 'hs-19', classId: 'class-4a1', stt: 19, name: 'Đoàn Hải Phong', birthDate: '28/11/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[4].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 50, group: 'Tổ 3' },
   { id: 'hs-20', classId: 'class-4a1', stt: 20, name: 'Đinh Hồng Phúc', birthDate: '10/10/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[9].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 39, group: 'Tổ 3' },
   { id: 'hs-21', classId: 'class-4a1', stt: 21, name: 'Thái Minh Quân', birthDate: '21/07/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[0].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 68, group: 'Tổ 3' },
   { id: 'hs-22', classId: 'class-4a1', stt: 22, name: 'Cao Như Quỳnh', birthDate: '07/03/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[5].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 43, group: 'Tổ 3' },
 
-  { id: 'hs-23', classId: 'class-4a1', stt: 23, name: 'Châu Trọng Tấn', birthDate: '13/12/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[1].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 34, group: 'Tổ 4', role: 'Tổ trưởng Tổ 4' },
-  { id: 'hs-24', classId: 'class-4a1', stt: 24, name: 'Tạ Cẩm Tiên', birthDate: '20/05/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[6].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 72, group: 'Tổ 4', role: 'Tổ phó Tổ 4' },
+  { id: 'hs-23', classId: 'class-4a1', stt: 23, name: 'Châu Trọng Tấn', birthDate: '13/12/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[1].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 34, group: 'Tổ 4', role: 'TỔ TRƯỞNG TỔ 4', roles: ['TỔ TRƯỞNG TỔ 4'] },
+  { id: 'hs-24', classId: 'class-4a1', stt: 24, name: 'Tạ Cẩm Tiên', birthDate: '20/05/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[6].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 72, group: 'Tổ 4', role: 'TỔ PHÓ TỔ 4', roles: ['TỔ PHÓ TỔ 4'] },
   { id: 'hs-25', classId: 'class-4a1', stt: 25, name: 'Lưu Quang Thịnh', birthDate: '03/08/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[2].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 44, group: 'Tổ 4' },
   { id: 'hs-26', classId: 'class-4a1', stt: 26, name: 'Vương Bảo Trâm', birthDate: '19/02/2016', gender: 'Nữ', avatar: SYSTEM_AVATARS[7].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 53, group: 'Tổ 4' },
   { id: 'hs-27', classId: 'class-4a1', stt: 27, name: 'Hà Thanh Tùng', birthDate: '26/09/2016', gender: 'Nam', avatar: SYSTEM_AVATARS[3].url, avatarScale: 1, avatarPosition: { x: 0, y: 0 }, points: 37, group: 'Tổ 4' },
@@ -191,88 +136,6 @@ export const INITIAL_STUDENTS_CLASS_4A1: Student[] = [
 ];
 
 export const INITIAL_STUDENTS_CLASS_4_1 = INITIAL_STUDENTS_CLASS_4A1;
-
-export const INITIAL_QUESTION_BANKS = [
-  {
-    id: 'qb-toan',
-    title: 'Đố Vui Toán Học - Rung Chuông Vàng',
-    subject: 'Toán',
-    createdAt: Date.now(),
-    questions: [
-      {
-        id: 'q-t1',
-        type: 'multiple_choice' as const,
-        questionText: 'Số liền sau của số lớn nhất có năm chữ số là số nào?',
-        options: ['99 999', '100 000', '100 001', '999 990'],
-        correctOptionIndex: 1,
-        teacherAnswerKey: 'Số lớn nhất có năm chữ số là 99 999. Số liền sau là 99 999 + 1 = 100 000.',
-        pointsReward: 3,
-        subject: 'Toán'
-      },
-      {
-        id: 'q-t2',
-        type: 'multiple_choice' as const,
-        questionText: 'Một hình vuông có chu vi là 36cm. Diện tích của hình vuông đó là bao nhiêu?',
-        options: ['36 cm²', '81 cm²', '72 cm²', '144 cm²'],
-        correctOptionIndex: 1,
-        teacherAnswerKey: 'Cạnh hình vuông = 36 : 4 = 9cm. Diện tích = 9 × 9 = 81 cm².',
-        pointsReward: 3,
-        subject: 'Toán'
-      },
-      {
-        id: 'q-t3',
-        type: 'oral' as const,
-        questionText: 'Em hãy nêu quy tắc tính chu vi và diện tích hình chữ nhật khi biết chiều dài và chiều rộng.',
-        teacherAnswerKey: 'Chu vi = (chiều dài + chiều rộng) × 2 (cùng đơn vị đo). Diện tích = chiều dài × chiều rộng (cùng đơn vị đo).',
-        pointsReward: 3,
-        subject: 'Toán'
-      },
-      {
-        id: 'q-t4',
-        type: 'oral' as const,
-        questionText: 'Số nào nhân với số nào cũng bằng chính nó? Và số nào cộng với số nào cũng bằng chính số đó?',
-        teacherAnswerKey: 'Số 1 nhân với số nào cũng bằng chính số đó. Số 0 cộng với số nào cũng bằng chính số đó.',
-        pointsReward: 2,
-        subject: 'Toán'
-      }
-    ]
-  },
-  {
-    id: 'qb-tiengviet',
-    title: 'Tiếng Việt & Đố Vui Trí Tuệ',
-    subject: 'Tiếng Việt',
-    createdAt: Date.now(),
-    questions: [
-      {
-        id: 'q-tv1',
-        type: 'multiple_choice' as const,
-        questionText: 'Trong câu: "Mùa xuân, trăm hoa đua nở rực rỡ", bộ phận nào là trạng ngữ chỉ thời gian?',
-        options: ['trăm hoa', 'Mùa xuân', 'đua nở', 'rực rỡ'],
-        correctOptionIndex: 1,
-        teacherAnswerKey: '"Mùa xuân" trả lời cho câu hỏi "Khi nào?", là trạng ngữ chỉ thời gian.',
-        pointsReward: 2,
-        subject: 'Tiếng Việt'
-      },
-      {
-        id: 'q-tv2',
-        type: 'oral' as const,
-        questionText: 'Em hãy đặt một câu có sử dụng biện pháp so sánh hoặc nhân hóa miêu tả về lớp học của em.',
-        teacherAnswerKey: 'Học sinh đặt câu đúng ngữ pháp, có từ ngữ so sánh (như, là, tựa...) hoặc nhân hóa (gọi đồ vật bằng từ ngữ chỉ người).',
-        pointsReward: 3,
-        subject: 'Tiếng Việt'
-      },
-      {
-        id: 'q-tv3',
-        type: 'oral' as const,
-        questionText: 'Con gì đầu chuột đuôi heo, ngực cánh như bướm biết bay trên trời? (Đố vui)',
-        teacherAnswerKey: 'Con dơi (thân có lông giống chuột, tai cánh biết bay).',
-        pointsReward: 2,
-        subject: 'Tiếng Việt'
-      }
-    ]
-  }
-];
-
 
 export const INITIAL_REWARDS: Reward[] = [
   {
@@ -343,3 +206,87 @@ export const INITIAL_TIMETABLE: TimetableSlot[] = [
   { day: 6, session: 'morning', period: 4, subject: 'Sinh hoạt lớp', teacher: 'Cô Hoa', classId: 'class-4a1' },
   { day: 6, session: 'morning', period: 5, subject: 'Hoạt động trải nghiệm', teacher: 'Cô Hoa', classId: 'class-4a1' }
 ];
+
+// Cấu hình mặc định cho Giáo viên bộ môn (Yêu cầu GVBM Tin học dạy nhiều lớp)
+export const DEFAULT_SUBJECT_TEACHER_CONFIG: SubjectTeacherConfig = {
+  subjectName: 'TIN HỌC',
+  subject2: 'CÔNG NGHỆ',
+  subject3: '',
+  subject4: '',
+  taughtSubjects: ['TIN HỌC', 'CÔNG NGHỆ'],
+  roomDefault: 'Phòng máy Tin học',
+  scheduleScope: 'semester',
+  periodName: 'Học kì I (Từ ngày 05/9/2026)',
+  morningPeriods: 4,
+  afternoonPeriods: 3,
+  hasSaturday: false,
+  teacherDisplayName: 'Nguyễn Thanh Liêm',
+  semester: 'I',
+  effectiveStartDate: '05/9/2026'
+};
+
+// 20 Tên lớp phổ biến để giáo viên bộ môn phân bổ giảng dạy
+export const PRESET_SUBJECT_CLASS_NAMES = [
+  '3A1', '3A2', '3A3', '3A4',
+  '4A1', '4A2', '4A3', '4A4', '4A5', '4A6',
+  '5A1', '5A2', '5A3', '5A4', '5A5', '5A6',
+  '2A1', '2A2', '1A1', '1A2'
+];
+
+// Danh sách 18 lớp theo mẫu Thời khóa biểu giảng dạy thực tế của thầy Nguyễn Thanh Liêm
+export const SAMPLE_SUBJECT_CLASSES_BY_IMAGE = [
+  // Khối 3 (7 lớp)
+  { name: '3A1', grade: 'Khối 3', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 3A1' },
+  { name: '3A2', grade: 'Khối 3', studentCount: 34, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 3A2' },
+  { name: '3A3', grade: 'Khối 3', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 3A3' },
+  { name: '3A4', grade: 'Khối 3', studentCount: 33, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 3A4' },
+  { name: '3A5', grade: 'Khối 3', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 3A5' },
+  { name: '3A6', grade: 'Khối 3', studentCount: 34, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 3A6' },
+  { name: '3A7', grade: 'Khối 3', studentCount: 32, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 3A7' },
+  // Khối 4 (6 lớp)
+  { name: '4A1', grade: 'Khối 4', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 4A1' },
+  { name: '4A2', grade: 'Khối 4', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 4A2' },
+  { name: '4A3', grade: 'Khối 4', studentCount: 34, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 4A3' },
+  { name: '4A4', grade: 'Khối 4', studentCount: 33, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 4A4' },
+  { name: '4A5', grade: 'Khối 4', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 4A5' },
+  { name: '4A6', grade: 'Khối 4', studentCount: 34, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 4A6' },
+  // Khối 5 (5 lớp)
+  { name: '5A1', grade: 'Khối 5', studentCount: 36, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 5A1' },
+  { name: '5A2', grade: 'Khối 5', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 5A2' },
+  { name: '5A3', grade: 'Khối 5', studentCount: 34, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 5A3' },
+  { name: '5A4', grade: 'Khối 5', studentCount: 35, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 5A4' },
+  { name: '5A5', grade: 'Khối 5', studentCount: 36, room: 'Phòng máy Tin học', teacherName: 'GVCN Lớp 5A5' }
+];
+
+// THỜI KHÓA BIỂU GIẢNG DẠY MẪU CHUẨN ĐÚNG THEO ẢNH ĐÍNH KÈM (THẦY NGUYỄN THANH LIÊM - MÔN TIN HỌC)
+export const SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE: SubjectTimetableSlot[] = [
+  // THỨ HAI (6 tiết: Sáng 3 tiết, Chiều 3 tiết)
+  { id: 'sbj-img-2-m2', day: 2, session: 'morning', period: 2, classId: 'class-4a1', className: '4A1', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 4A1' },
+  { id: 'sbj-img-2-m3', day: 2, session: 'morning', period: 3, classId: 'class-4a2', className: '4A2', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 4A2' },
+  { id: 'sbj-img-2-m4', day: 2, session: 'morning', period: 4, classId: 'class-4a3', className: '4A3', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 4A3' },
+  { id: 'sbj-img-2-a1', day: 2, session: 'afternoon', period: 1, classId: 'class-4a4', className: '4A4', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 4A4' },
+  { id: 'sbj-img-2-a2', day: 2, session: 'afternoon', period: 2, classId: 'class-4a5', className: '4A5', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 4A5' },
+  { id: 'sbj-img-2-a3', day: 2, session: 'afternoon', period: 3, classId: 'class-4a6', className: '4A6', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 4A6' },
+
+  // THỨ BA (7 tiết: Sáng 4 tiết, Chiều 3 tiết)
+  { id: 'sbj-img-3-m1', day: 3, session: 'morning', period: 1, classId: 'class-3a1', className: '3A1', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 3A1' },
+  { id: 'sbj-img-3-m2', day: 3, session: 'morning', period: 2, classId: 'class-3a2', className: '3A2', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 3A2' },
+  { id: 'sbj-img-3-m3', day: 3, session: 'morning', period: 3, classId: 'class-3a3', className: '3A3', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 3A3' },
+  { id: 'sbj-img-3-m4', day: 3, session: 'morning', period: 4, classId: 'class-3a4', className: '3A4', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 3A4' },
+  { id: 'sbj-img-3-a1', day: 3, session: 'afternoon', period: 1, classId: 'class-3a5', className: '3A5', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 3A5' },
+  { id: 'sbj-img-3-a2', day: 3, session: 'afternoon', period: 2, classId: 'class-3a6', className: '3A6', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 3A6' },
+  { id: 'sbj-img-3-a3', day: 3, session: 'afternoon', period: 3, classId: 'class-3a7', className: '3A7', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 3A7' },
+
+  // THỨ TƯ (4 tiết: Sáng 3 tiết, Chiều 1 tiết)
+  { id: 'sbj-img-4-m2', day: 4, session: 'morning', period: 2, classId: 'class-5a1', className: '5A1', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 5A1' },
+  { id: 'sbj-img-4-m3', day: 4, session: 'morning', period: 3, classId: 'class-5a2', className: '5A2', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 5A2' },
+  { id: 'sbj-img-4-m4', day: 4, session: 'morning', period: 4, classId: 'class-5a3', className: '5A3', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 5A3' },
+  { id: 'sbj-img-4-a2', day: 4, session: 'afternoon', period: 2, classId: 'class-5a4', className: '5A4', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 5A4' },
+
+  // THỨ SÁU (1 tiết: Sáng 1 tiết)
+  { id: 'sbj-img-6-m2', day: 6, session: 'morning', period: 2, classId: 'class-5a5', className: '5A5', subject: 'Tin học', room: 'Phòng máy Tin học', note: 'Tin học 5A5' }
+];
+
+// Thời khóa biểu mẫu ban đầu cho Giáo viên bộ môn Tin học dạy 20 lớp
+export const INITIAL_SUBJECT_TIMETABLE: SubjectTimetableSlot[] = SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE;
+

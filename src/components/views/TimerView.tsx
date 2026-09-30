@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Timer, Play, Pause, RotateCcw, Maximize2, Minimize2, 
   Volume2, VolumeX, ChevronUp, ChevronDown, Check, Sparkles,
-  Clock, Calendar as CalendarIcon, LayoutGrid, Split
+  Clock, Calendar as CalendarIcon, LayoutGrid, Split, Bell
 } from 'lucide-react';
-import { playWarningTick, playTimerAlarm, playCoinSound } from '../../utils/audio';
+import { playWarningTick, playTimerAlarm, playTenSecondTimerAlarm, playCoinSound } from '../../utils/audio';
 
 const QUICK_PRESETS = [
+  { label: '30 giây', seconds: 30 },
   { label: '1 phút', seconds: 60 },
   { label: '3 phút', seconds: 180 },
   { label: '5 phút', seconds: 300 },
@@ -38,6 +39,12 @@ export const TimerView: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(THEME_COLORS[0]);
 
+  // 10-second Alarm & Flashing Red Alert State
+  const [isAlarmActive, setIsAlarmActive] = useState(false);
+  const [alarmSecondsLeft, setAlarmSecondsLeft] = useState(0);
+  const alarmControlRef = useRef<{ stop: () => void } | null>(null);
+  const alarmIntervalRef = useRef<number | null>(null);
+
   // Real-time live date and time for Analog Clock
   const [now, setNow] = useState(new Date());
 
@@ -47,6 +54,46 @@ export const TimerView: React.FC = () => {
   const [setSecs, setSetSecs] = useState(0);
 
   const timerRef = useRef<number | null>(null);
+
+  // Stop active 10-second alarm
+  const stopAlarm = () => {
+    setIsAlarmActive(false);
+    setAlarmSecondsLeft(0);
+    if (alarmControlRef.current) {
+      alarmControlRef.current.stop();
+      alarmControlRef.current = null;
+    }
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  };
+
+  // Manage 10-second alarm countdown
+  useEffect(() => {
+    if (isAlarmActive) {
+      alarmIntervalRef.current = window.setInterval(() => {
+        setAlarmSecondsLeft(prev => {
+          if (prev <= 1) {
+            setIsAlarmActive(false);
+            if (alarmControlRef.current) {
+              alarmControlRef.current.stop();
+              alarmControlRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (alarmIntervalRef.current) {
+        clearInterval(alarmIntervalRef.current);
+        alarmIntervalRef.current = null;
+      }
+    };
+  }, [isAlarmActive]);
 
   // Live Clock Ticker
   useEffect(() => {
@@ -67,8 +114,13 @@ export const TimerView: React.FC = () => {
             playWarningTick();
           }
           if (next <= 0) {
-            if (hasSound) playTimerAlarm();
             setIsRunning(false);
+            setIsAlarmActive(true);
+            setAlarmSecondsLeft(10);
+            if (hasSound) {
+              if (alarmControlRef.current) alarmControlRef.current.stop();
+              alarmControlRef.current = playTenSecondTimerAlarm();
+            }
             return 0;
           }
           return next;
@@ -82,6 +134,24 @@ export const TimerView: React.FC = () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isRunning, tick10s, hasSound]);
+
+  // Unmount cleanup
+  useEffect(() => {
+    return () => {
+      if (alarmControlRef.current) {
+        alarmControlRef.current.stop();
+        alarmControlRef.current = null;
+      }
+      if (alarmIntervalRef.current) {
+        clearInterval(alarmIntervalRef.current);
+        alarmIntervalRef.current = null;
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -106,6 +176,7 @@ export const TimerView: React.FC = () => {
   };
 
   const handleApplyCustomTime = () => {
+    stopAlarm();
     const total = setHours * 3600 + setMins * 60 + setSecs;
     if (total > 0) {
       setTotalSeconds(total);
@@ -116,6 +187,7 @@ export const TimerView: React.FC = () => {
   };
 
   const handleSelectPreset = (secs: number) => {
+    stopAlarm();
     setTotalSeconds(secs);
     setRemainingSeconds(secs);
     setSetHours(Math.floor(secs / 3600));
@@ -124,12 +196,25 @@ export const TimerView: React.FC = () => {
     setIsRunning(false);
   };
 
+  const handleStartQuick30s = () => {
+    stopAlarm();
+    setTotalSeconds(30);
+    setRemainingSeconds(30);
+    setSetHours(0);
+    setSetMins(0);
+    setSetSecs(30);
+    setIsRunning(true);
+    playCoinSound();
+  };
+
   const handleAdjustSeconds = (delta: number) => {
+    stopAlarm();
     setRemainingSeconds(prev => Math.max(0, prev + delta));
     setTotalSeconds(prev => Math.max(0, prev + delta));
   };
 
   const handleReset = () => {
+    stopAlarm();
     setIsRunning(false);
     setRemainingSeconds(totalSeconds);
   };
@@ -181,9 +266,9 @@ export const TimerView: React.FC = () => {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-3 md:p-5 max-w-7xl mx-auto space-y-4">
       {/* Top Header Card */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover-zoom-card">
+      <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 hover-zoom-card">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
@@ -214,46 +299,46 @@ export const TimerView: React.FC = () => {
               }`}
             >
               <Split className="w-3.5 h-3.5" />
-              <span>Song Song</span>
+              <span>SONG SONG</span>
             </button>
             <button
               onClick={() => setViewMode('analog')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn uppercase ${
                 viewMode === 'analog' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Đồng Hồ Kim</span>
+              <span>ĐỒNG HỒ KIM</span>
             </button>
             <button
               onClick={() => setViewMode('countdown')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn uppercase ${
                 viewMode === 'countdown' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <Timer className="w-3.5 h-3.5" />
-              <span>Đếm Ngược</span>
+              <span>ĐẾM NGƯỢC</span>
             </button>
           </div>
 
           <button
             onClick={() => setHasSound(!hasSound)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all hover-zoom-btn ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 border transition-all hover-zoom-btn uppercase ${
               hasSound 
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                 : 'bg-slate-100 text-slate-500 border-slate-200'
             }`}
           >
             {hasSound ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-            <span>{hasSound ? 'Có chuông' : 'Tắt chuông'}</span>
+            <span>{hasSound ? 'CÓ CHUÔNG' : 'TẮT CHUÔNG'}</span>
           </button>
 
           <button
             onClick={toggleFullscreen}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 hover-zoom-btn"
+            className="px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 hover-zoom-btn uppercase"
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            <span>Toàn màn hình</span>
+            <span>TOÀN MÀN HÌNH</span>
           </button>
         </div>
       </div>
@@ -389,233 +474,338 @@ export const TimerView: React.FC = () => {
       {/* COUNTDOWN TIMER STAGE (ĐỒNG HỒ ĐẾM NGƯỢC GIỜ HỌC)                     */}
       {/* ===================================================================== */}
       {(viewMode === 'countdown' || viewMode === 'split') && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Stage: Big Circular Ring */}
-          <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs flex flex-col items-center justify-center space-y-6 hover-zoom-card">
-            {/* Circular Countdown SVG */}
-            <div className="relative w-72 h-72 flex items-center justify-center">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 300 300">
-                {/* Background Track */}
-                <circle
-                  cx="150"
-                  cy="150"
-                  r={radius}
-                  fill="none"
-                  stroke="#e2e8f0"
-                  strokeWidth="14"
-                />
-                {/* Progress Ring */}
-                <circle
-                  cx="150"
-                  cy="150"
-                  r={radius}
-                  fill="none"
-                  stroke={selectedTheme.ring}
-                  strokeWidth="14"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  className="transition-all duration-500"
-                />
-              </svg>
-
-              {/* Center Content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-4xl md:text-5xl font-black font-mono tracking-tight text-slate-900">
-                  {formatTime(remainingSeconds)}
-                </span>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mt-1">
-                  {remainingSeconds === 0 ? 'HẾT GIỜ!' : isRunning ? 'ĐANG CHẠY' : 'SẴN SÀNG'}
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Controls: -30s, Reset, Start/Pause, +30s */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleAdjustSeconds(-30)}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn"
-              >
-                - 30s
-              </button>
-
-              <button
-                onClick={handleReset}
-                className="p-2.5 rounded-xl text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 hover-zoom-btn"
-                title="Đặt lại từ đầu"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={() => setIsRunning(!isRunning)}
-                className={`px-8 py-3 rounded-2xl font-black text-sm text-white shadow-md flex items-center gap-2 hover-zoom-btn ${
-                  isRunning
-                    ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25'
-                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25'
-                }`}
-              >
-                {isRunning ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white" />}
-                <span>{isRunning ? 'Tạm dừng' : 'Bắt đầu'}</span>
-              </button>
-
-              <button
-                onClick={() => handleAdjustSeconds(30)}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn"
-              >
-                + 30s
-              </button>
-            </div>
-
-            {/* Toggle "Tiếng tick cuối 10 giây" */}
-            <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-600 pt-2 hover-zoom-interactive">
-              <input
-                type="checkbox"
-                checked={tick10s}
-                onChange={(e) => setTick10s(e.target.checked)}
-                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
-              />
-              <span>Tiếng tick cuối 10 giây</span>
-            </label>
-          </div>
-
-          {/* Right Stage: Time Configuration */}
-          <div className="lg:col-span-5 space-y-5">
-            {/* Thiết lập thời gian (Hours, Mins, Secs) */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-4 hover-zoom-card">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Timer className="w-4 h-4 text-indigo-600" />
-                Thiết lập thời gian đếm ngược
-              </h3>
-
-              {/* 3 Column Spinners */}
-              <div className="flex items-center justify-center gap-4 py-2">
-                {/* Hours */}
-                <div className="flex flex-col items-center">
-                  <button
-                    type="button"
-                    onClick={() => setSetHours(prev => Math.min(23, prev + 1))}
-                    className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
-                    {setHours}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Giờ</span>
-                  <button
-                    type="button"
-                    onClick={() => setSetHours(prev => Math.max(0, prev - 1))}
-                    className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
+        <div className="space-y-4">
+          {/* Cảnh báo nhấp nháy nền màu đỏ nội dung "HẾT GIỜ" và chuông reo trong 10 giây */}
+          {isAlarmActive && (
+            <div className="w-full bg-red-600 animate-flash-red text-white py-4 px-6 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl border-4 border-red-300">
+              <div className="flex items-center gap-4 text-center sm:text-left">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center animate-bounce shrink-0">
+                  <Bell className="w-8 h-8 text-white" />
                 </div>
-
-                <span className="text-xl font-bold text-slate-300 -mt-4">:</span>
-
-                {/* Mins */}
-                <div className="flex flex-col items-center">
-                  <button
-                    type="button"
-                    onClick={() => setSetMins(prev => Math.min(59, prev + 1))}
-                    className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
-                    {setMins}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Phút</span>
-                  <button
-                    type="button"
-                    onClick={() => setSetMins(prev => Math.max(0, prev - 1))}
-                    className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <span className="text-xl font-bold text-slate-300 -mt-4">:</span>
-
-                {/* Secs */}
-                <div className="flex flex-col items-center">
-                  <button
-                    type="button"
-                    onClick={() => setSetSecs(prev => Math.min(59, prev + 1))}
-                    className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
-                  >
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
-                    {setSecs}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Giây</span>
-                  <button
-                    type="button"
-                    onClick={() => setSetSecs(prev => Math.max(0, prev - 1))}
-                    className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
+                <div>
+                  <div className="text-3xl sm:text-4xl font-black tracking-widest uppercase flex items-center justify-center sm:justify-start gap-3">
+                    <span>⏰ HẾT GIỜ</span>
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-white text-red-700 font-black tracking-normal shadow-sm">
+                      {alarmSecondsLeft}s
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-red-100 mt-1">
+                    Chuông báo hiệu đang reo trong 10 giây (còn {alarmSecondsLeft} giây)
+                  </p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleApplyCustomTime}
-                className="w-full py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all hover-zoom-btn flex items-center justify-center gap-1.5"
-              >
-                <Check className="w-4 h-4" />
-                <span>Áp dụng thời gian</span>
-              </button>
-            </div>
-
-            {/* Mẫu nhanh (Quick Presets) */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3 hover-zoom-card">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                Mẫu nhanh
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {QUICK_PRESETS.map((p) => {
-                  const isActive = totalSeconds === p.seconds && !isRunning;
-                  return (
-                    <button
-                      key={p.seconds}
-                      type="button"
-                      onClick={() => handleSelectPreset(p.seconds)}
-                      className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all hover-zoom-btn ${
-                        isActive
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={stopAlarm}
+                  className="px-5 py-2.5 bg-white text-red-700 hover:bg-red-50 rounded-2xl font-black text-xs shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                >
+                  <VolumeX className="w-4 h-4" />
+                  <span>TẮT CHUÔNG BÁO</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStartQuick30s}
+                  className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-2xl font-black text-xs shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-900" />
+                  <span>ĐẾM LẠI 30 GIÂY</span>
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Màu chủ đề (Themes) */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs space-y-3 hover-zoom-card">
-              <h3 className="text-sm font-bold text-slate-900">
-                Màu chủ đề
-              </h3>
-              <div className="flex items-center gap-3">
-                {THEME_COLORS.map((t) => (
-                  <button
-                    key={t.name}
-                    type="button"
-                    onClick={() => setSelectedTheme(t)}
-                    className={`w-8 h-8 rounded-full border-2 transition-transform hover-zoom-btn ${
-                      selectedTheme.name === t.name ? 'scale-125 border-slate-800 ring-2 ring-indigo-200' : 'border-transparent'
-                    }`}
-                    style={{ backgroundColor: t.bg }}
-                    title={t.name}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left Stage: Big Circular Ring */}
+            <div className={`lg:col-span-7 bg-white rounded-3xl p-4 border shadow-xs flex flex-col items-center justify-center space-y-4 hover-zoom-card transition-colors ${
+              isAlarmActive ? 'border-red-400 shadow-red-200' : 'border-slate-200/90'
+            }`}>
+              {/* Circular Countdown SVG */}
+              <div className="relative w-56 h-56 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 300 300">
+                  {/* Background Track */}
+                  <circle
+                    cx="150"
+                    cy="150"
+                    r={radius}
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth="14"
                   />
-                ))}
+                  {/* Progress Ring */}
+                  <circle
+                    cx="150"
+                    cy="150"
+                    r={radius}
+                    fill="none"
+                    stroke={remainingSeconds === 0 ? '#ef4444' : selectedTheme.ring}
+                    strokeWidth="14"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    className={`transition-all duration-500 ${isAlarmActive ? 'animate-pulse' : ''}`}
+                  />
+                </svg>
+
+                {/* Center Content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                  {remainingSeconds === 0 ? (
+                    <div className={`flex flex-col items-center justify-center ${isAlarmActive ? 'animate-bounce' : ''}`}>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 animate-flash-red text-white text-[11px] font-black uppercase mb-1.5 shadow-md">
+                        <Bell className="w-3.5 h-3.5 animate-spin" />
+                        <span>CẢNH BÁO</span>
+                      </div>
+                      <span className="text-4xl md:text-5xl font-black tracking-widest text-red-600 animate-pulse drop-shadow-sm">
+                        HẾT GIỜ
+                      </span>
+                      {isAlarmActive ? (
+                        <span className="text-xs font-black text-red-600 mt-1.5 flex items-center gap-1">
+                          <Bell className="w-3 h-3 text-red-500 animate-pulse" /> Chuông reo: còn {alarmSecondsLeft}s
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold text-slate-400 mt-1">
+                          ĐÃ HOÀN THÀNH
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-3xl md:text-4xl font-black font-mono tracking-tight text-slate-900">
+                        {formatTime(remainingSeconds)}
+                      </span>
+                      <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mt-1">
+                        {isRunning ? 'ĐANG CHẠY' : 'SẴN SÀNG'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Controls: -30s, Reset, Start/Pause, 30s Quick, +30s */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleAdjustSeconds(-30)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn"
+                >
+                  - 30s
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="p-2.5 rounded-xl text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 hover-zoom-btn"
+                  title="Đặt lại từ đầu"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopAlarm();
+                    setIsRunning(!isRunning);
+                  }}
+                  className={`px-8 py-3 rounded-2xl font-black text-sm text-white shadow-md flex items-center gap-2 hover-zoom-btn ${
+                    isRunning
+                      ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25'
+                      : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25'
+                  }`}
+                >
+                  {isRunning ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white" />}
+                  <span>{isRunning ? 'Tạm dừng' : 'Bắt đầu'}</span>
+                </button>
+
+                {/* Quick 30s preset button */}
+                <button
+                  type="button"
+                  onClick={handleStartQuick30s}
+                  className="px-4 py-2.5 rounded-2xl text-xs font-black bg-amber-500 hover:bg-amber-600 text-white shadow-md flex items-center gap-1.5 hover-zoom-btn transition-transform"
+                  title="Kích hoạt ngay mẫu nhanh 30 giây"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>30 GIÂY</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleAdjustSeconds(30)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn"
+                >
+                  + 30s
+                </button>
+              </div>
+
+              {/* Toggle "Tiếng tick cuối 10 giây" */}
+              <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-600 pt-2 hover-zoom-interactive">
+                <input
+                  type="checkbox"
+                  checked={tick10s}
+                  onChange={(e) => setTick10s(e.target.checked)}
+                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>Tiếng tick cuối 10 giây</span>
+              </label>
+            </div>
+
+            {/* Right Stage: Time Configuration */}
+            <div className="lg:col-span-5 space-y-3">
+              {/* Thiết lập thời gian (Hours, Mins, Secs) */}
+              <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-3 hover-zoom-card">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Timer className="w-4 h-4 text-indigo-600" />
+                  Thiết lập thời gian đếm ngược
+                </h3>
+
+                {/* 3 Column Spinners */}
+                <div className="flex items-center justify-center gap-4 py-2">
+                  {/* Hours */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={() => setSetHours(prev => Math.min(23, prev + 1))}
+                      className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
+                      {setHours}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Giờ</span>
+                    <button
+                      type="button"
+                      onClick={() => setSetHours(prev => Math.max(0, prev - 1))}
+                      className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <span className="text-xl font-bold text-slate-300 -mt-4">:</span>
+
+                  {/* Mins */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={() => setSetMins(prev => Math.min(59, prev + 1))}
+                      className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
+                      {setMins}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Phút</span>
+                    <button
+                      type="button"
+                      onClick={() => setSetMins(prev => Math.max(0, prev - 1))}
+                      className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <span className="text-xl font-bold text-slate-300 -mt-4">:</span>
+
+                  {/* Secs */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      type="button"
+                      onClick={() => setSetSecs(prev => Math.min(59, prev + 1))}
+                      className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
+                      {setSecs}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">Giây</span>
+                    <button
+                      type="button"
+                      onClick={() => setSetSecs(prev => Math.max(0, prev - 1))}
+                      className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleApplyCustomTime}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all hover-zoom-btn flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Áp dụng thời gian</span>
+                </button>
+              </div>
+
+              {/* Mẫu nhanh (Quick Presets) */}
+              <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-2 hover-zoom-card">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    Mẫu nhanh
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleStartQuick30s}
+                    className="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 text-[11px] font-black flex items-center gap-1 hover-zoom-btn transition-colors"
+                  >
+                    <Play className="w-3 h-3 fill-amber-800" />
+                    <span>Bắt đầu 30s ngay</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                  {QUICK_PRESETS.map((p) => {
+                    const isActive = totalSeconds === p.seconds && !isRunning;
+                    const is30s = p.seconds === 30;
+                    return (
+                      <button
+                        key={p.seconds}
+                        type="button"
+                        onClick={() => handleSelectPreset(p.seconds)}
+                        className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all hover-zoom-btn relative ${
+                          isActive
+                            ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-300'
+                            : is30s
+                              ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-extrabold'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {is30s && (
+                          <span className="absolute -top-1.5 -right-1 px-1 py-0.2 bg-red-500 text-[8px] text-white font-extrabold rounded-full">
+                            HOT
+                          </span>
+                        )}
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Màu chủ đề (Themes) */}
+              <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-2 hover-zoom-card">
+                <h3 className="text-sm font-bold text-slate-900">
+                  Màu chủ đề
+                </h3>
+                <div className="flex items-center gap-3">
+                  {THEME_COLORS.map((t) => (
+                    <button
+                      key={t.name}
+                      type="button"
+                      onClick={() => setSelectedTheme(t)}
+                      className={`w-8 h-8 rounded-full border-2 transition-transform hover-zoom-btn ${
+                        selectedTheme.name === t.name ? 'scale-125 border-slate-800 ring-2 ring-indigo-200' : 'border-transparent'
+                      }`}
+                      style={{ backgroundColor: t.bg }}
+                      title={t.name}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>

@@ -9,7 +9,7 @@ export const PointsAwardView: React.FC = () => {
   const { 
     currentClassStudents, criteria, addCriterion, 
     subjects, addSubject, awardPoints, deductPoints, 
-    transactions, activeClassId 
+    transactions, activeClassId, teacherRole, subjectTeacherConfig
   } = useClassroom();
 
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -19,7 +19,9 @@ export const PointsAwardView: React.FC = () => {
   
   // Subject filter
   const [isBySubject, setIsBySubject] = useState(true);
-  const [selectedSubject, setSelectedSubject] = useState<string>(subjects[0]?.name || 'Toán học');
+  const [selectedSubject, setSelectedSubject] = useState<string>(
+    teacherRole === 'subject' ? (subjectTeacherConfig.subjectName || 'TIN HỌC') : (subjects[0]?.name || 'GHI CHUNG / NỀ NẾP')
+  );
   const [newSubjectName, setNewSubjectName] = useState('');
   const [isAddingSubject, setIsAddingSubject] = useState(false);
 
@@ -99,60 +101,62 @@ export const PointsAwardView: React.FC = () => {
   const recentTransactions = transactions.filter(t => t.classId === activeClassId).slice(0, 10);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
       {/* Top Banner */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-amber-500" />
-            <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-              Tích điểm Thi đua & Thưởng / Trừ Xu
+            <Award className="w-4 h-4 text-amber-500" />
+            <h2 className="text-base sm:text-lg font-black text-slate-800 tracking-tight uppercase">
+              TÍCH ĐIỂM THI ĐUA & THƯỞNG / TRỪ XU
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Ghi nhận nỗ lực học sinh ngay trong tiết dạy · Phân tách theo môn học và lưu lịch sử minh bạch
+          <p className="text-[11px] text-slate-500 mt-0.5 uppercase">
+            GHI NHẬN NỖ LỰC HỌC SINH NGAY TRONG TIẾT DẠY · PHÂN TÁCH THEO MÔN HỌC VÀ LƯU LỊCH SỬ MINH BẠCH
           </p>
         </div>
 
         {/* Selected count and Quick Trigger */}
-        <div className="flex items-center gap-2">
-          <div className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700">
-            Đã chọn: <strong className="text-blue-600 font-mono text-sm">{selectedStudentIds.length}</strong> học sinh
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="text-[11px] font-black px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 uppercase shrink-0">
+            ĐÃ CHỌN: <strong className="text-blue-600 font-mono text-xs">{selectedStudentIds.length}</strong> HỌC SINH
           </div>
 
-          <button
-            onClick={handleExecuteAward}
-            disabled={selectedStudentIds.length === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl shadow-xs transition-all btn-lift"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Thưởng +{customAmount} Xu</span>
-          </button>
+          <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+            <button
+              onClick={handleExecuteAward}
+              disabled={selectedStudentIds.length === 0}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all hover-zoom-btn uppercase"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>THƯỞNG +{customAmount} XU</span>
+            </button>
 
-          <button
-            onClick={handleExecuteDeduct}
-            disabled={selectedStudentIds.length === 0}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl shadow-xs transition-all btn-lift"
-          >
-            <MinusCircle className="w-4 h-4" />
-            <span>Trừ -{customAmount} Xu</span>
-          </button>
+            <button
+              onClick={handleExecuteDeduct}
+              disabled={selectedStudentIds.length === 0}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-black text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all hover-zoom-btn uppercase"
+            >
+              <MinusCircle className="w-3.5 h-3.5" />
+              <span>TRỪ -{customAmount} XU</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
         {/* Left Column: Student Selection Grid (7 cols) */}
-        <div className="lg:col-span-7 bg-white/95 rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-4 card-lift">
+        <div className="lg:col-span-7 bg-white/95 rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-xs space-y-3 card-lift">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-800">
-                1. Chọn học sinh
+              <h3 className="text-sm font-black text-slate-800 uppercase">
+                1. CHỌN HỌC SINH
               </h3>
               <button
                 onClick={selectAll}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium underline underline-offset-2 ml-2"
+                className="text-xs text-blue-600 hover:text-blue-700 font-bold underline underline-offset-2 ml-2 uppercase"
               >
-                {selectedStudentIds.length === currentClassStudents.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả cả lớp'}
+                {selectedStudentIds.length === currentClassStudents.length ? 'BỎ CHỌN TẤT CẢ' : 'CHỌN TẤT CẢ CẢ LỚP'}
               </button>
             </div>
 
@@ -196,8 +200,8 @@ export const PointsAwardView: React.FC = () => {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="text-[10px] font-mono text-slate-400">
-                      #{student.stt}
+                    <div className="text-[10px] font-mono text-slate-500 font-bold">
+                      STT {student.stt}
                     </div>
                     <div className="text-xs font-semibold text-slate-800 truncate" title={student.name}>
                       {student.name}

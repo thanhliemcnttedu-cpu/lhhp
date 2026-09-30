@@ -70,7 +70,6 @@ export const ExportStudentListModal: React.FC<ExportStudentListModalProps> = ({
           'Ngày tháng năm sinh': st.birthDate || 'Chưa cập nhật',
           'Giới tính': st.gender,
           'Tổ': st.group || 'Tổ 1',
-          'Chức vụ cán bộ lớp': st.role || 'Thành viên',
           'Ghi chú': ''
         });
       });
@@ -83,7 +82,6 @@ export const ExportStudentListModal: React.FC<ExportStudentListModalProps> = ({
           'Ngày tháng năm sinh': st.birthDate || 'Chưa cập nhật',
           'Giới tính': st.gender,
           'Tổ': st.group || 'Tổ 1',
-          'Chức vụ cán bộ lớp': st.role || 'Thành viên',
           'Xu Thưởng Tích Lũy': st.points || 0,
           'Sao Vinh Danh': Math.floor((st.points || 0) / 10),
           'Ghi chú': ''

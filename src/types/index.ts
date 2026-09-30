@@ -2,18 +2,19 @@ export type Gender = 'Nam' | 'Nữ';
 
 export type ClassOfficerRoleId = 
   | 'none'
-  | 'monitor'           // Lớp trưởng
-  | 'academic_deputy'   // Lớp phó học tập
-  | 'activity_deputy'   // Lớp phó phong trào
-  | 'labor_deputy'      // Lớp phó lao động
-  | 'team_leader_1'     // Tổ trưởng Tổ 1
-  | 'team_deputy_1'     // Tổ phó Tổ 1
-  | 'team_leader_2'     // Tổ trưởng Tổ 2
-  | 'team_deputy_2'     // Tổ phó Tổ 2
-  | 'team_leader_3'     // Tổ trưởng Tổ 3
-  | 'team_deputy_3'     // Tổ phó Tổ 3
-  | 'team_leader_4'     // Tổ trưởng Tổ 4
-  | 'team_deputy_4';    // Tổ phó Tổ 4
+  | 'monitor'           // LỚP TRƯỞNG
+  | 'academic_deputy'   // LỚP PHÓ HỌC TẬP
+  | 'activity_deputy'   // LỚP PHONG TRÀO
+  | 'team_leader_1'     // TỔ TRƯỞNG TỔ 1
+  | 'team_leader_2'     // TỔ TRƯỞNG TỔ 2
+  | 'team_leader_3'     // TỔ TRƯỞNG TỔ 3
+  | 'team_leader_4'     // TỔ TRƯỞNG TỔ 4
+  | 'team_vice_1'       // TỔ PHÓ TỔ 1
+  | 'team_vice_2'       // TỔ PHÓ TỔ 2
+  | 'team_vice_3'       // TỔ PHÓ TỔ 3
+  | 'team_vice_4'       // TỔ PHÓ TỔ 4
+  | 'custom'
+  | string;
 
 export interface ClassOfficerRoleDef {
   id: ClassOfficerRoleId;
@@ -26,19 +27,64 @@ export interface ClassOfficerRoleDef {
 }
 
 export const CLASS_OFFICER_ROLES: ClassOfficerRoleDef[] = [
-  { id: 'monitor', label: 'Lớp trưởng', icon: '👑', color: 'from-amber-500 to-yellow-600', badgeBg: 'bg-amber-100', badgeText: 'text-amber-900', badgeBorder: 'border-amber-300' },
-  { id: 'academic_deputy', label: 'Lớp phó học tập', icon: '📘', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-100', badgeText: 'text-blue-900', badgeBorder: 'border-blue-300' },
-  { id: 'activity_deputy', label: 'Lớp phó phong trào', icon: '🚩', color: 'from-orange-500 to-red-600', badgeBg: 'bg-orange-100', badgeText: 'text-orange-900', badgeBorder: 'border-orange-300' },
-  { id: 'labor_deputy', label: 'Lớp phó lao động', icon: '🌱', color: 'from-emerald-500 to-green-600', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-900', badgeBorder: 'border-emerald-300' },
-  { id: 'team_leader_1', label: 'Tổ trưởng Tổ 1', icon: '🏅', color: 'from-purple-500 to-indigo-600', badgeBg: 'bg-purple-100', badgeText: 'text-purple-900', badgeBorder: 'border-purple-300' },
-  { id: 'team_deputy_1', label: 'Tổ phó Tổ 1', icon: '🎖️', color: 'from-purple-400 to-indigo-500', badgeBg: 'bg-purple-50', badgeText: 'text-purple-800', badgeBorder: 'border-purple-200' },
-  { id: 'team_leader_2', label: 'Tổ trưởng Tổ 2', icon: '🏅', color: 'from-teal-500 to-emerald-600', badgeBg: 'bg-teal-100', badgeText: 'text-teal-900', badgeBorder: 'border-teal-300' },
-  { id: 'team_deputy_2', label: 'Tổ phó Tổ 2', icon: '🎖️', color: 'from-teal-400 to-emerald-500', badgeBg: 'bg-teal-50', badgeText: 'text-teal-800', badgeBorder: 'border-teal-200' },
-  { id: 'team_leader_3', label: 'Tổ trưởng Tổ 3', icon: '🏅', color: 'from-yellow-500 to-amber-600', badgeBg: 'bg-yellow-100', badgeText: 'text-yellow-900', badgeBorder: 'border-yellow-300' },
-  { id: 'team_deputy_3', label: 'Tổ phó Tổ 3', icon: '🎖️', color: 'from-yellow-400 to-amber-500', badgeBg: 'bg-yellow-50', badgeText: 'text-yellow-800', badgeBorder: 'border-yellow-200' },
-  { id: 'team_leader_4', label: 'Tổ trưởng Tổ 4', icon: '🏅', color: 'from-rose-500 to-pink-600', badgeBg: 'bg-rose-100', badgeText: 'text-rose-900', badgeBorder: 'border-rose-300' },
-  { id: 'team_deputy_4', label: 'Tổ phó Tổ 4', icon: '🎖️', color: 'from-rose-400 to-pink-500', badgeBg: 'bg-rose-50', badgeText: 'text-rose-800', badgeBorder: 'border-rose-200' },
+  { id: 'monitor', label: 'LỚP TRƯỞNG', icon: '👑', color: 'from-amber-500 to-yellow-600', badgeBg: 'bg-amber-100', badgeText: 'text-amber-900', badgeBorder: 'border-amber-300' },
+  { id: 'academic_deputy', label: 'LỚP PHÓ HỌC TẬP', icon: '📘', color: 'from-blue-500 to-indigo-600', badgeBg: 'bg-blue-100', badgeText: 'text-blue-900', badgeBorder: 'border-blue-300' },
+  { id: 'activity_deputy', label: 'LỚP PHONG TRÀO', icon: '🚩', color: 'from-orange-500 to-red-600', badgeBg: 'bg-orange-100', badgeText: 'text-orange-900', badgeBorder: 'border-orange-300' },
+  { id: 'team_leader_1', label: 'TỔ TRƯỞNG TỔ 1', icon: '🥇', color: 'from-emerald-500 to-teal-600', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-900', badgeBorder: 'border-emerald-300' },
+  { id: 'team_leader_2', label: 'TỔ TRƯỞNG TỔ 2', icon: '🥇', color: 'from-sky-500 to-blue-600', badgeBg: 'bg-sky-100', badgeText: 'text-sky-900', badgeBorder: 'border-sky-300' },
+  { id: 'team_leader_3', label: 'TỔ TRƯỞNG TỔ 3', icon: '🥇', color: 'from-violet-500 to-purple-600', badgeBg: 'bg-violet-100', badgeText: 'text-violet-900', badgeBorder: 'border-violet-300' },
+  { id: 'team_leader_4', label: 'TỔ TRƯỞNG TỔ 4', icon: '🥇', color: 'from-rose-500 to-pink-600', badgeBg: 'bg-rose-100', badgeText: 'text-rose-900', badgeBorder: 'border-rose-300' },
+  { id: 'team_vice_1', label: 'TỔ PHÓ TỔ 1', icon: '🥈', color: 'from-teal-500 to-emerald-600', badgeBg: 'bg-teal-50', badgeText: 'text-teal-800', badgeBorder: 'border-teal-200' },
+  { id: 'team_vice_2', label: 'TỔ PHÓ TỔ 2', icon: '🥈', color: 'from-cyan-500 to-sky-600', badgeBg: 'bg-cyan-50', badgeText: 'text-cyan-800', badgeBorder: 'border-cyan-200' },
+  { id: 'team_vice_3', label: 'TỔ PHÓ TỔ 3', icon: '🥈', color: 'from-fuchsia-500 to-purple-600', badgeBg: 'bg-fuchsia-50', badgeText: 'text-fuchsia-800', badgeBorder: 'border-fuchsia-200' },
+  { id: 'team_vice_4', label: 'TỔ PHÓ TỔ 4', icon: '🥈', color: 'from-pink-500 to-rose-600', badgeBg: 'bg-pink-50', badgeText: 'text-pink-800', badgeBorder: 'border-pink-200' },
 ];
+
+export function getStudentRoleInfo(role?: string): ClassOfficerRoleDef | null {
+  if (!role || !role.trim()) return null;
+  const clean = role.trim().toLowerCase();
+  const match = CLASS_OFFICER_ROLES.find(
+    r => r.label.toLowerCase() === clean || r.id === clean
+  );
+  if (match) return match;
+  if (clean.includes('lớp trưởng')) {
+    return CLASS_OFFICER_ROLES[0];
+  }
+  if (clean.includes('học tập')) {
+    return CLASS_OFFICER_ROLES[1];
+  }
+  if (clean.includes('phong trào')) {
+    return CLASS_OFFICER_ROLES[2];
+  }
+  if (clean.includes('tổ trưởng')) {
+    if (clean.includes('1')) return CLASS_OFFICER_ROLES[3];
+    if (clean.includes('2')) return CLASS_OFFICER_ROLES[4];
+    if (clean.includes('3')) return CLASS_OFFICER_ROLES[5];
+    if (clean.includes('4')) return CLASS_OFFICER_ROLES[6];
+    return CLASS_OFFICER_ROLES[3];
+  }
+  if (clean.includes('tổ phó')) {
+    if (clean.includes('1')) return CLASS_OFFICER_ROLES[7];
+    if (clean.includes('2')) return CLASS_OFFICER_ROLES[8];
+    if (clean.includes('3')) return CLASS_OFFICER_ROLES[9];
+    if (clean.includes('4')) return CLASS_OFFICER_ROLES[10];
+    return CLASS_OFFICER_ROLES[7];
+  }
+  return { id: 'custom', label: role, icon: '⭐', color: 'from-indigo-500 to-purple-600', badgeBg: 'bg-indigo-50', badgeText: 'text-indigo-800', badgeBorder: 'border-indigo-200' };
+}
+
+// Lấy danh sách tối đa 3 chức vụ của học sinh
+export function getStudentRolesList(student: { role?: string; roles?: string[] } | null | undefined): string[] {
+  if (!student) return [];
+  if (Array.isArray(student.roles) && student.roles.length > 0) {
+    return student.roles.filter(Boolean).slice(0, 3);
+  }
+  if (student.role && student.role.trim()) {
+    const parts = student.role.split(/[•,;\n]+/).map(s => s.trim()).filter(Boolean);
+    return parts.length > 0 ? parts.slice(0, 3) : [student.role.trim()];
+  }
+  return [];
+}
 
 export interface Student {
   id: string;
@@ -48,12 +94,14 @@ export interface Student {
   birthDate?: string; // Ngày tháng năm sinh (dd/mm/yyyy hoặc yyyy-mm-dd)
   gender: Gender;
   avatar: string;
-  originalAvatar?: string; // Tấm ảnh gốc trước khi căn chỉnh để khi mở lại không bị mất/cắt ảnh gốc
+  originalAvatar?: string; // Ảnh gốc chưa crop từ máy tính để luôn thu phóng chỉnh sửa nguyên vẹn
   avatarScale: number; // 0.8 - 2.5
   avatarPosition: { x: number; y: number };
-  points: number;
+  points: number; // Tổng số xu tích lũy (không làm mất tổng xu hiện tại)
+  subjectPoints?: Record<string, number>; // Điểm xu lưu theo từng môn học (User requirement)
   group?: string; // Tổ 1, Tổ 2, Tổ 3, Tổ 4
-  role?: string;  // Chức vụ cán bộ lớp: Lớp trưởng, Lớp phó học tập, Lớp phó phong trào, Tổ trưởng Tổ 1 -> 4
+  role?: string;  // Chức vụ cán bộ lớp (chuỗi kết hợp ví dụ 'LỚP TRƯỞNG • TỔ TRƯỞNG TỔ 1')
+  roles?: string[]; // Mảng tối đa 3 chức vụ trọng trách đảm nhiệm đồng thời (User Request)
 }
 
 // Question types for Random Picker & Classroom Quiz Challenges
@@ -64,7 +112,9 @@ export interface QuestionItem {
   type: QuestionType;
   questionText: string;
   image?: string; // Tùy chọn ảnh minh họa câu hỏi
+  answerImage?: string; // Tùy chọn ảnh minh họa câu trả lời / đáp án giáo viên
   options?: string[]; // Cho dạng trắc nghiệm (A, B, C, D)
+  optionImages?: string[]; // Tùy chọn ảnh minh họa cho từng đáp án A, B, C, D (User request)
   correctOptionIndex?: number; // 0, 1, 2, 3
   teacherAnswerKey?: string; // Đáp án/hướng dẫn của giáo viên (cho dạng câu hỏi bằng lời hoặc giải thích)
   pointsReward?: number; // Số xu thưởng khi trả lời đúng (mặc định 2 xu)
@@ -100,8 +150,11 @@ export interface Classroom {
   grade: string; // Khối 1 -> Khối 5, Khối 6...
   color: string; // Hex or tailwind badge
   academicYear: string; // e.g. "2026 - 2027"
-  teacherName?: string; // Tên giáo viên chủ nhiệm
+  teacherName?: string; // Tên giáo viên chủ nhiệm / bộ môn
+  teacherUsername?: string; // Tài khoản giáo viên phụ trách (gvcn4a1, gvbm01...)
+  teacherRole?: TeacherRole; // 'homeroom' | 'subject'
   avatar?: string; // Ảnh đại diện của lớp học
+  originalAvatar?: string; // Ảnh gốc độ nét cao ban đầu để căn chỉnh lại
   avatarScale?: number; // Tỉ lệ zoom ảnh đại diện (0.5 - 3)
   avatarPosition?: { x: number; y: number }; // Vị trí căn chỉnh ảnh (x, y)
   slogan?: string; // Slogan lớp học
@@ -113,6 +166,8 @@ export interface Subject {
   name: string;
   icon?: string;
   color?: string;
+  enabled?: boolean; // Áp dụng cho lớp / giáo viên hiện tại
+  isDefault?: boolean; // Đánh dấu 3 môn mặc định hệ thống: GHI CHUNG / NỀ NẾP, TOÁN, TIẾNG VIỆT
 }
 
 export interface PointCriterion {
@@ -183,6 +238,7 @@ export type SeatingColumnsCount = 2 | 3 | 4 | 5 | 6;
 export type TeacherDeskPosition = 'left' | 'center' | 'right';
 export type DoorPosition = 'left' | 'right';
 export type BlackboardPosition = 'center' | 'left' | 'right';
+export type DeskNumberingOrder = 'vertical' | 'horizontal'; // 'THEO DỌC' | 'THEO NGANG'
 
 export interface SeatingDeskAssignment {
   seatKey: string; // e.g. "col-row-sub"
@@ -193,6 +249,39 @@ export interface TimetableConfig {
   morningPeriods: number; // default 5
   afternoonPeriods: number; // default 4
   hasSaturday: boolean;
+}
+
+export type TeacherRole = 'homeroom' | 'subject'; // 'homeroom' = Giáo viên chủ nhiệm, 'subject' = Giáo viên bộ môn
+
+export interface SubjectTimetableSlot {
+  id: string;
+  day: number; // 2 -> 7 (Thứ 2 - Thứ 7)
+  period: number; // 1 -> 5
+  session: 'morning' | 'afternoon';
+  classId: string; // ID lớp học (ví dụ: 'class-4a1')
+  className: string; // Tên lớp học (ví dụ: '4A1')
+  subject: string; // Tên môn (ví dụ: 'Tin học')
+  room?: string; // Phòng học (ví dụ: 'Phòng máy 1')
+  note?: string; // Nội dung bài dạy hoặc ghi chú
+  scope?: 'semester' | 'period'; // 'semester' = Dùng chung cả học kì, 'period' = Theo thời điểm/tuần
+  periodName?: string; // Tên giai đoạn áp dụng
+}
+
+export interface SubjectTeacherConfig {
+  subjectName: string; // Môn giảng dạy chính (ví dụ: 'Tin học')
+  subject2?: string; // Môn dạy 2 (ví dụ: 'Công nghệ')
+  subject3?: string; // Môn dạy 3 (tùy chọn)
+  subject4?: string; // Môn dạy 4 (tùy chọn)
+  taughtSubjects?: string[]; // Danh sách các môn giáo viên bộ môn giảng dạy (có thể dạy nhiều môn)
+  roomDefault: string; // Phòng học mặc định
+  scheduleScope: 'semester' | 'period'; // 'semester' (Dùng chung cả học kì) | 'period' (Theo thời điểm)
+  periodName: string; // Ví dụ: 'Học kì I (Áp dụng Tuần 1 – Tuần 18)'
+  morningPeriods: number;
+  afternoonPeriods: number;
+  hasSaturday: boolean;
+  semester?: string; // Ví dụ: 'I' hoặc 'II'
+  effectiveStartDate?: string; // Ví dụ: '05/9/2026'
+  teacherDisplayName?: string; // Ví dụ: 'Nguyễn Thanh Liêm'
 }
 
 export interface TimetableSlot {
@@ -213,6 +302,7 @@ export interface QuickLink {
   category: string;
   description?: string;
   isPinned?: boolean;
+  iconUrl?: string; // URL or base64 image for link logo/icon
 }
 
 export interface TeacherProfile {
@@ -222,6 +312,7 @@ export interface TeacherProfile {
   teachingSubject: string;
   schoolName: string;
   avatar: string;
+  originalAvatar?: string; // Ảnh gốc chưa crop từ máy tính để luôn thu phóng chỉnh sửa nguyên vẹn
   avatarScale?: number;
   avatarPosition?: { x: number; y: number };
   phone?: string;
@@ -249,93 +340,61 @@ export interface AiStudentRemark {
   parentNote: string;
 }
 
-// -----------------------------------------------------------------------------
-// APP ROLE & AUTHENTICATION TYPES
-// -----------------------------------------------------------------------------
-export type AppUserRole = 'teacher' | 'admin';
+export interface InitSubjectClassItem {
+  name: string;
+  grade?: string;
+  studentCount: number;
+  room?: string;
+  teacherName?: string;
+  slogan?: string;
+}
 
-export type TeacherApprovalStatus = 'approved' | 'pending' | 'rejected';
+export type UserRole = 'admin' | 'homeroom' | 'subject';
 
-export interface RegisteredTeacher {
+export interface UserAccount {
   id: string;
-  username: string; // Tên đăng nhập do Admin cấp (e.g. gv_4a1, hoa_nguyen)
-  password: string; // Mật khẩu đăng nhập (e.g. 123456)
-  email: string; // Email liên kết (hoặc Google email)
-  displayName: string; // Tên giáo viên
-  photoURL?: string;
-  assignedClassId: string; // Lớp phụ trách (e.g. 'class-4a1')
-  assignedClassName?: string; // Tên lớp (e.g. '4A1')
-  status: TeacherApprovalStatus; // 'approved' | 'pending' | 'rejected'
-  registeredAt: number; // Timestamp
-  lastLoginAt?: number;
+  username: string;
+  password?: string;
+  fullName: string;
+  role: UserRole;
+  email?: string;
   phone?: string;
-  note?: string;
+  avatar?: string;
+  assignedClassName?: string;
+  subjectName?: string;
+  schoolName?: string;
+  createdAt: number;
+  lastLoginAt?: number;
+  status?: 'active' | 'locked';
 }
 
-export interface TeacherAccount {
-  uid: string;
-  username?: string;
-  email: string;
-  displayName: string;
-  photoURL?: string;
-  assignedClassId?: string;
-  folderName: string; // "THƯ MỤC GIÁO VIÊN: [Name]"
-  folderId?: string;
-  lastSyncTime?: number;
-}
-
-export interface AdminAccount {
-  username: string; // 'admin'
-  role: 'admin';
-  folderName: string; // "THƯ MỤC QUẢN TRỊ"
-  folderId?: string;
-  cycleStartDate: string; // YYYY-MM-DD
-  lastBackupDate?: string;
-}
-
-export interface ClassStatisticsOverview {
-  classId: string;
-  className: string;
-  grade: string;
-  teacherName: string;
-  totalStudents: number;
-  maleCount: number;
-  femaleCount: number;
-  boardingCount: number;
-  boardingRate: number; // %
-  presentCount: number;
-  excusedAbsence: number;
-  unexcusedAbsence: number;
-  sickAbsence: number;
-  otherAbsence: number;
-  totalAbsence: number;
-  attendanceRate: number; // %
-  averagePoints: number;
-  topExcellingStudents: Student[]; // 5 học sinh chuyên cần xuất sắc nhất
-}
-
-export interface SchoolDataMetrics {
-  totalClasses: number;
-  totalStudents: number;
-  totalMale: number;
-  totalFemale: number;
-  totalBoarding: number;
-  totalBoardingRate: number;
-  totalPresent: number;
-  totalExcused: number;
-  totalUnexcused: number;
-  totalSick: number;
-  totalOther: number;
-  overallAttendanceRate: number;
-  gradeBreakdown: {
-    grade: string;
-    classCount: number;
-    studentCount: number;
-    maleCount: number;
-    femaleCount: number;
-    boardingCount: number;
-    attendanceRate: number;
-  }[];
-  classesOverview: ClassStatisticsOverview[];
+export interface UserClassroomData {
+  classes: Classroom[];
+  activeClassId: string;
+  students: Student[];
+  subjects: Subject[];
+  criteria: PointCriterion[];
+  transactions: PointTransaction[];
+  rewards: Reward[];
+  redemptions: RewardRedemption[];
+  seatingColumns: SeatingColumnsCount;
+  deskCountsPerColumn: number[];
+  deskNumberingOrder: DeskNumberingOrder;
+  teacherDeskPos: TeacherDeskPosition;
+  doorPos: DoorPosition;
+  blackboardPos: BlackboardPosition;
+  seatingAssignments: Record<string, string>;
+  attendanceRecords: DailyAttendance[];
+  boardingRecords: DailyBoardingMeal[];
+  timetable: TimetableSlot[];
+  timetableConfig: TimetableConfig;
+  teacherRole: TeacherRole;
+  subjectTeacherConfig: SubjectTeacherConfig;
+  subjectTimetable: SubjectTimetableSlot[];
+  quickLinks: QuickLink[];
+  teacherProfile: TeacherProfile;
+  quizBank?: QuestionItem[];
+  infographicConfig?: any;
+  updatedAt?: number;
 }
 

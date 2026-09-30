@@ -4,55 +4,66 @@ import { useClassroom } from '../../context/ClassroomContext';
 import { AttendanceStatus, BoardingStatus } from '../../types';
 import { 
   CheckSquare, Calendar, Check, Clock, 
-  Download, Save, Sparkles, AlertCircle, HeartPulse, 
-  HelpCircle, UserCheck, Filter, Search, RotateCcw,
+  Download, Sparkles, AlertCircle, HeartPulse, 
+  UserCheck, Search, RotateCcw,
   Utensils, Copy, FileSpreadsheet, TrendingUp, BarChart3,
-  ChevronLeft, ChevronRight, MessageSquare, AlertTriangle, Users
+  ChevronLeft, ChevronRight, AlertTriangle, Users, Building2,
+  FileText, CheckCircle2, Lock, ArrowRight, PieChart, History,
+  Image as ImageIcon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { AttendanceChartsView } from './attendance/AttendanceChartsView';
+import { AttendanceExportModal } from './attendance/AttendanceExportModal';
 
-const STATUS_CONFIG: Record<AttendanceStatus, { label: string; short: string; activeClass: string; inactiveClass: string; dotColor: string }> = {
+// 4 Trạng thái điểm danh trọng tâm theo yêu cầu của Bộ GD & người dùng
+const STATUS_CONFIG: Record<AttendanceStatus, { label: string; short: string; activeClass: string; inactiveClass: string; badgeClass: string; icon: string }> = {
   present: {
-    label: 'Có mặt & Đúng giờ',
-    short: 'Có mặt',
+    label: 'CÓ MẶT',
+    short: 'CÓ MẶT',
     activeClass: 'bg-emerald-600 text-white font-black shadow-xs ring-2 ring-emerald-600/30',
-    inactiveClass: 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700',
-    dotColor: '#10B981'
-  },
-  late: {
-    label: 'Đi học muộn',
-    short: 'Đi muộn',
-    activeClass: 'bg-amber-500 text-white font-black shadow-xs ring-2 ring-amber-500/30',
-    inactiveClass: 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700',
-    dotColor: '#F59E0B'
-  },
-  sick: {
-    label: 'Nghỉ ốm',
-    short: 'Nghỉ ốm',
-    activeClass: 'bg-purple-600 text-white font-black shadow-xs ring-2 ring-purple-600/30',
-    inactiveClass: 'bg-slate-100 text-slate-600 hover:bg-purple-50 hover:text-purple-700',
-    dotColor: '#9333EA'
+    inactiveClass: 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800',
+    badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    icon: '✓'
   },
   excused: {
-    label: 'Vắng có phép',
-    short: 'Có phép',
+    label: 'VẮNG CÓ PHÉP',
+    short: 'CÓ PHÉP',
     activeClass: 'bg-blue-600 text-white font-black shadow-xs ring-2 ring-blue-600/30',
-    inactiveClass: 'bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700',
-    dotColor: '#2563EB'
+    inactiveClass: 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-800',
+    badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
+    icon: '📝'
   },
   unexcused: {
-    label: 'Vắng không phép',
-    short: 'Không phép',
+    label: 'VẮNG KHÔNG PHÉP',
+    short: 'KHÔNG PHÉP',
     activeClass: 'bg-rose-600 text-white font-black shadow-xs ring-2 ring-rose-600/30',
-    inactiveClass: 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700',
-    dotColor: '#E11D48'
+    inactiveClass: 'bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-800',
+    badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
+    icon: '✕'
+  },
+  sick: {
+    label: 'NGHỈ ỐM',
+    short: 'NGHỈ ỐM',
+    activeClass: 'bg-purple-600 text-white font-black shadow-xs ring-2 ring-purple-600/30',
+    inactiveClass: 'bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-800',
+    badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
+    icon: '🏥'
+  },
+  late: {
+    label: 'ĐI MUỘN',
+    short: 'ĐI MUỘN',
+    activeClass: 'bg-amber-500 text-white font-black shadow-xs ring-2 ring-amber-500/30',
+    inactiveClass: 'bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-800',
+    badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
+    icon: '⏰'
   },
   other: {
-    label: 'Lý do khác',
-    short: 'Khác',
+    label: 'LÝ DO KHÁC',
+    short: 'KHÁC',
     activeClass: 'bg-slate-700 text-white font-black shadow-xs ring-2 ring-slate-700/30',
-    inactiveClass: 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800',
-    dotColor: '#475569'
+    inactiveClass: 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-800',
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+    icon: '•'
   }
 };
 
@@ -73,25 +84,93 @@ const BOARDING_CONFIG: Record<'eating' | 'not_eating', { label: string; activeCl
 
 export const AttendanceView: React.FC = () => {
   const { 
-    currentClassStudents, attendanceRecords, setStudentAttendance, 
+    currentClassStudents, students, attendanceRecords, setStudentAttendance, 
     batchSetAttendance, activeClassId, classes, teacherProfile,
     boardingRecords, setStudentBoarding, batchSetBoarding 
   } = useClassroom();
   
   const activeClass = classes.find(c => c.id === activeClassId);
 
-  // Sub-tabs: 'daily' (Điểm danh chuyên cần) vs 'boarding' (Điểm danh ăn bán trú)
-  const [activeTab, setActiveTab] = useState<'daily' | 'boarding'>('daily');
+  // 3 Sub-tabs: 'daily' (Chuyên cần) | 'boarding' (Ăn bán trú) | 'charts' (Thống kê & Biểu đồ)
+  const [activeTab, setActiveTab] = useState<'daily' | 'boarding' | 'charts'>('daily');
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  // Real Today String
+  const realTodayStr = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
+
+  const [selectedDate, setSelectedDate] = useState<string>(realTodayStr);
   const [saveToast, setSaveToast] = useState<string | null>(null);
-  const [filterType, setFilterType] = useState<'all' | 'present' | 'absent' | 'late'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'present' | 'absent' | 'sick' | 'excused' | 'unexcused' | 'late'>('all');
   const [boardingFilterType, setBoardingFilterType] = useState<'all' | 'eating' | 'not_eating'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedReportToast, setCopiedReportToast] = useState(false);
-  // Multi-select for boarding meal (User Request)
+  
+  // Highlight flash state when stats jump automatically
+  const [statsJustUpdated, setStatsJustUpdated] = useState(false);
+
+  // Multi-select for boarding meal
   const [selectedBoardingStudentIds, setSelectedBoardingStudentIds] = useState<string[]>([]);
+
+  // Export Modal Open State (Single / Multi Class PDF & Excel)
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  // Helper date shortcuts
+  const getDateDaysAgo = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const getLastFridayStr = () => {
+    const d = new Date();
+    const day = d.getDay(); // 0 is Sun, 5 is Fri
+    let diff = day >= 5 ? day - 5 : day + 2;
+    if (diff === 0) diff = 7; // If today is Friday, last Friday is 7 days ago
+    d.setDate(d.getDate() - diff);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dt = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dt}`;
+  };
+
+  // Date Navigation Helpers
+  const changeDateByDays = (days: number) => {
+    const cur = new Date(selectedDate);
+    cur.setDate(cur.getDate() + days);
+    const y = cur.getFullYear();
+    const m = String(cur.getMonth() + 1).padStart(2, '0');
+    const d = String(cur.getDate()).padStart(2, '0');
+    setSelectedDate(`${y}-${m}-${d}`);
+  };
+
+  const getDayOfWeekName = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      return days[d.getDay()];
+    } catch {
+      return '';
+    }
+  };
+
+  const formatDateDisplay = (dateStr: string) => {
+    try {
+      const [y, m, d] = dateStr.split('-');
+      return `${getDayOfWeekName(dateStr)}, ngày ${d}/${m}/${y}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const isPastDateSelected = selectedDate !== realTodayStr;
 
   // Current day's attendance record
   const currentRecord = attendanceRecords.find(r => r.date === selectedDate && r.classId === activeClassId);
@@ -124,55 +203,116 @@ export const AttendanceView: React.FC = () => {
     // If student is absent, prevent marking 'eating'
     if (status === 'eating' && isStudentAbsent(studentId)) {
       const reason = getStudentAbsentReason(studentId) || 'Vắng mặt';
-      setSaveToast(`⚠️ Học sinh này đã được tích chọn chuyên cần là "${reason}". Không thể điểm danh ăn bán trú!`);
+      setSaveToast(`⚠️ Học sinh này đã được điểm danh chuyên cần là "${reason}". Không được điểm danh ăn bán trú!`);
       setTimeout(() => setSaveToast(null), 3500);
       return;
     }
     setStudentBoarding(studentId, status, selectedDate);
   };
 
-  // 1. Điểm danh đồng loạt cả lớp
+  // 1. Điểm danh toàn lớp CÓ MẶT
   const handleSelectAllPresent = () => {
     batchSetAttendance('present', selectedDate);
     confetti({ particleCount: 40, spread: 50 });
-  };
-
-  // 2. Điểm danh thông minh (tự động điền Có mặt)
-  const handleSmartCompleteAttendance = () => {
-    currentClassStudents.forEach(student => {
-      const currentStatus = currentStatusMap[student.id];
-      if (!currentStatus || (currentStatus !== 'sick' && currentStatus !== 'excused' && currentStatus !== 'unexcused' && currentStatus !== 'other' && currentStatus !== 'late')) {
-        setStudentAttendance(student.id, 'present', selectedDate);
-      }
-    });
-
-    confetti({ particleCount: 50, spread: 60 });
-    setSaveToast(`Đã tự động ghi nhận Có mặt & Đúng giờ cho tất cả học sinh còn lại ngày ${selectedDate}!`);
+    setSaveToast(`Đã ghi nhận toàn bộ ${currentClassStudents.length} học sinh CÓ MẶT ngày ${selectedDate}!`);
     setTimeout(() => setSaveToast(null), 3500);
   };
 
-  // 3. Điểm danh đồng loạt ăn bán trú (chỉ áp dụng cho học sinh có mặt / đi muộn, không áp dụng cho học sinh nghỉ ốm, có phép, không phép, khác)
+  // 2. YÊU CẦU CỐT LÕI:
+  // "Cho phép điểm danh bổ sung các ngày trước đó, điểm danh xong phải bấm nút Xác nhận điểm danh, 
+  // sau đó sẽ tự động nhảy tổng hợp báo cáo cho: HÔM NAY; TUẦN NÀY; TUẦN TRƯỚC; CẢ THÁNG."
+  const handleConfirmAndCompleteAttendance = () => {
+    let newlyPresentCount = 0;
+    let absentCount = 0;
+    let sickCount = 0;
+    let excusedCount = 0;
+    let unexcusedCount = 0;
+
+    currentClassStudents.forEach(student => {
+      const currentStatus = currentStatusMap[student.id];
+      const isAbsent = currentStatus === 'sick' || currentStatus === 'excused' || currentStatus === 'unexcused' || currentStatus === 'other';
+
+      if (isAbsent) {
+        absentCount++;
+        if (currentStatus === 'sick') sickCount++;
+        else if (currentStatus === 'excused') excusedCount++;
+        else if (currentStatus === 'unexcused') unexcusedCount++;
+        // Đảm bảo học sinh vắng bị khóa không ăn bán trú
+        setStudentBoarding(student.id, 'not_eating', selectedDate);
+      } else {
+        // Tự động gán các học sinh còn lại là CÓ MẶT
+        setStudentAttendance(student.id, 'present', selectedDate);
+        newlyPresentCount++;
+      }
+    });
+
+    // Trigger visual pulse animation on KPI report cards
+    setStatsJustUpdated(true);
+    setTimeout(() => setStatsJustUpdated(false), 4500);
+
+    confetti({ particleCount: 60, spread: 70 });
+    setSaveToast(
+      `✓ ĐÃ XÁC NHẬN ĐIỂM DANH ${isPastDateSelected ? `BỔ SUNG NGÀY ${selectedDate}` : 'XONG'}! Hệ thống tự động ghi nhận ${newlyPresentCount} học sinh CÓ MẶT và tự động nhảy tổng hợp báo cáo cho HÔM NAY, TUẦN NÀY, TUẦN TRƯỚC, CẢ THÁNG.`
+    );
+    setTimeout(() => setSaveToast(null), 5000);
+  };
+
+  // 2.1 YÊU CẦU MỚI: XÁC NHẬN ĐIỂM DANH BÁN TRÚ (TỰ ĐỘNG NHẢY BÁO CÁO)
+  // Áp dụng cho cả ngày hôm nay và điểm danh bán trú bổ sung của những ngày trước
+  const handleConfirmAndCompleteBoarding = () => {
+    let eatingCount = 0;
+    let notEatingCount = 0;
+    let absentCount = 0;
+
+    currentClassStudents.forEach(st => {
+      const isAbsent = isStudentAbsent(st.id);
+      if (isAbsent) {
+        setStudentBoarding(st.id, 'not_eating', selectedDate);
+        absentCount++;
+      } else {
+        const curB = currentBoardingMap[st.id] || 'eating';
+        setStudentBoarding(st.id, curB, selectedDate);
+        if (curB === 'eating') eatingCount++;
+        else notEatingCount++;
+      }
+    });
+
+    // Kích hoạt hiệu ứng tự động nhảy số liệu trên 4 thẻ báo cáo
+    setStatsJustUpdated(true);
+    setTimeout(() => setStatsJustUpdated(false), 4500);
+
+    confetti({ particleCount: 60, spread: 70 });
+    setSaveToast(
+      `✓ ĐÃ XÁC NHẬN ĐIỂM DANH BÁN TRÚ ${isPastDateSelected ? `BỔ SUNG NGÀY ${selectedDate}` : 'XONG'}! Ghi nhận ${eatingCount} suất ăn bán trú (${notEatingCount} em về nhà, ${absentCount} em vắng chuyên cần). Hệ thống đã tự động nhảy tổng hợp báo cáo cho HÔM NAY, TUẦN NÀY, TUẦN TRƯỚC, CẢ THÁNG.`
+    );
+    setTimeout(() => setSaveToast(null), 5000);
+  };
+
+  // 3. Điểm danh bán trú: Cả lớp ăn bán trú (tự động loại trừ học sinh vắng)
   const handleSelectAllBoarding = () => {
     let eatingCount = 0;
+    let absentCount = 0;
+
     currentClassStudents.forEach(st => {
       if (!isStudentAbsent(st.id)) {
         setStudentBoarding(st.id, 'eating', selectedDate);
         eatingCount++;
       } else {
         setStudentBoarding(st.id, 'not_eating', selectedDate);
+        absentCount++;
       }
     });
+
     confetti({ particleCount: 40, spread: 50 });
-    const absentCount = currentClassStudents.length - eatingCount;
     setSaveToast(
       absentCount > 0
-        ? `Đã ghi nhận ${eatingCount} học sinh có mặt ăn bán trú ngày ${selectedDate} (${absentCount} học sinh vắng được giữ không ăn)!`
+        ? `Đã ghi nhận ${eatingCount} học sinh ăn bán trú ngày ${selectedDate} (Đã tự động loại trừ ${absentCount} em vắng chuyên cần)!`
         : `Đã ghi nhận toàn bộ ${eatingCount} học sinh ăn bán trú ngày ${selectedDate}!`
     );
     setTimeout(() => setSaveToast(null), 3500);
   };
 
-  // 3.1 Điểm danh nhanh cả lớp không ăn (User Request mới)
+  // 3.1 Điểm danh nhanh cả lớp không ăn
   const handleSelectAllNotEating = () => {
     batchSetBoarding('not_eating', selectedDate);
     confetti({ particleCount: 30, spread: 45 });
@@ -180,7 +320,7 @@ export const AttendanceView: React.FC = () => {
     setTimeout(() => setSaveToast(null), 3000);
   };
 
-  // 3.2 Tích chọn nhiều học sinh ăn bán trú & cập nhật nhanh chóng (User Request mới)
+  // 3.2 Tích chọn nhiều học sinh ăn bán trú
   const toggleSelectBoardingStudent = (id: string) => {
     setSelectedBoardingStudentIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -211,7 +351,7 @@ export const AttendanceView: React.FC = () => {
       });
       const label = BOARDING_CONFIG['eating'].label;
       if (blocked > 0) {
-        setSaveToast(`Đã cập nhật "${label}" cho ${applied} em (${blocked} em vắng chuyên cần không được ăn bán trú)!`);
+        setSaveToast(`Đã cập nhật "${label}" cho ${applied} em (${blocked} em vắng chuyên cần bị khóa không được ăn bán trú)!`);
       } else {
         setSaveToast(`Đã cập nhật trạng thái "${label}" cho ${applied} học sinh được chọn!`);
       }
@@ -227,23 +367,24 @@ export const AttendanceView: React.FC = () => {
     setTimeout(() => setSaveToast(null), 3000);
   };
 
-  // 4. THỐNG KÊ CHUYÊN CẦN TUẦN NÀY, TUẦN TRƯỚC, CẢ THÁNG (User Request 3)
-  const statsOverview = useMemo(() => {
+  // 4. THỐNG KÊ CHI TIẾT & TỶ LỆ % TỰ ĐỘNG NHẢY CHO:
+  // HÔM NAY • TUẦN NÀY • TUẦN TRƯỚC • CẢ THÁNG
+  const periodStats = useMemo(() => {
     const totalStudents = currentClassStudents.length;
 
-    // Helper: calculate week and month bounds accurately without mutating dates
-    const now = new Date();
-    const currentDay = now.getDay();
-    const diffToMonday = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+    // Use REAL current date as reference point for Today, This Week, Last Week, This Month
+    const realToday = new Date();
+    const currentDay = realToday.getDay();
+    const diffToMonday = realToday.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
 
-    const thisWeekMonday = new Date(now.getFullYear(), now.getMonth(), diffToMonday);
-    const thisWeekSunday = new Date(thisWeekMonday.getFullYear(), thisWeekMonday.getMonth(), thisWeekMonday.getDate() + 6);
+    const thisWeekMon = new Date(realToday.getFullYear(), realToday.getMonth(), diffToMonday);
+    const thisWeekSun = new Date(thisWeekMon.getFullYear(), thisWeekMon.getMonth(), thisWeekMon.getDate() + 6);
 
-    const lastWeekMonday = new Date(thisWeekMonday.getFullYear(), thisWeekMonday.getMonth(), thisWeekMonday.getDate() - 7);
-    const lastWeekSunday = new Date(lastWeekMonday.getFullYear(), lastWeekMonday.getMonth(), lastWeekMonday.getDate() + 6);
+    const lastWeekMon = new Date(thisWeekMon.getFullYear(), thisWeekMon.getMonth(), thisWeekMon.getDate() - 7);
+    const lastWeekSun = new Date(lastWeekMon.getFullYear(), lastWeekMon.getMonth(), lastWeekMon.getDate() + 6);
 
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const startOfMonth = new Date(realToday.getFullYear(), realToday.getMonth(), 1);
+    const endOfMonth = new Date(realToday.getFullYear(), realToday.getMonth() + 1, 0);
 
     const fmt = (d: Date) => {
       const y = d.getFullYear();
@@ -252,147 +393,173 @@ export const AttendanceView: React.FC = () => {
       return `${y}-${m}-${day}`;
     };
 
-    const calcPeriod = (startDateStr: string, endDateStr: string) => {
-      const records = attendanceRecords.filter(r => 
-        r.classId === activeClassId && r.date >= startDateStr && r.date <= endDateStr
-      );
+    const calcRange = (fromStr: string, toStr: string, label: string) => {
+      const aRecs = attendanceRecords.filter(r => r.classId === activeClassId && r.date >= fromStr && r.date <= toStr);
+      const bRecs = boardingRecords.filter(r => r.classId === activeClassId && r.date >= fromStr && r.date <= toStr);
 
-      let totalSessions = records.length;
-      let presentCount = 0;
-      let lateCount = 0;
-      let sickCount = 0;
-      let excusedCount = 0;
-      let unexcusedCount = 0;
+      const sessions = Math.max(1, aRecs.length);
+      let present = 0;
+      let late = 0;
+      let sick = 0;
+      let excused = 0;
+      let unexcused = 0;
 
-      records.forEach(r => {
+      aRecs.forEach(r => {
         Object.values(r.records).forEach(status => {
-          if (status === 'present') presentCount++;
-          else if (status === 'late') lateCount++;
-          else if (status === 'sick') sickCount++;
-          else if (status === 'excused') excusedCount++;
-          else if (status === 'unexcused') unexcusedCount++;
+          if (status === 'present') present++;
+          else if (status === 'late') late++;
+          else if (status === 'sick') sick++;
+          else if (status === 'excused') excused++;
+          else if (status === 'unexcused') unexcused++;
         });
       });
 
-      const totalStudentSlots = totalSessions * totalStudents;
-      const rate = totalStudentSlots > 0 ? Math.round((presentCount / totalStudentSlots) * 100) : 100;
-
-      return {
-        sessions: totalSessions,
-        rate,
-        present: presentCount,
-        late: lateCount,
-        sick: sickCount,
-        excused: excusedCount,
-        unexcused: unexcusedCount
-      };
-    };
-
-    const thisWeekStats = calcPeriod(fmt(thisWeekMonday), fmt(thisWeekSunday));
-    const lastWeekStats = calcPeriod(fmt(lastWeekMonday), fmt(lastWeekSunday));
-    const thisMonthStats = calcPeriod(fmt(startOfMonth), fmt(endOfMonth));
-
-    return {
-      thisWeek: thisWeekStats,
-      lastWeek: lastWeekStats,
-      thisMonth: thisMonthStats
-    };
-  }, [attendanceRecords, activeClassId, currentClassStudents.length]);
-
-  // 5. XUẤT BẢNG TỔNG HỢP CHUYÊN CẦN (User Request 3)
-  const handleExportSummaryReport = () => {
-    const totalRecords = attendanceRecords.filter(r => r.classId === activeClassId);
-
-    const summaryRows = currentClassStudents.map((st, idx) => {
-      let presentDays = 0;
-      let lateDays = 0;
-      let sickDays = 0;
-      let excusedDays = 0;
-      let unexcusedDays = 0;
-
-      totalRecords.forEach(rec => {
-        const s = rec.records[st.id] || 'present';
-        if (s === 'present') presentDays++;
-        else if (s === 'late') lateDays++;
-        else if (s === 'sick') sickDays++;
-        else if (s === 'excused') excusedDays++;
-        else if (s === 'unexcused') unexcusedDays++;
+      let boardingEating = 0;
+      bRecs.forEach(r => {
+        const correspondingAtt = aRecs.find(a => a.date === r.date);
+        Object.entries(r.records).forEach(([sId, bStatus]) => {
+          const aStatus = correspondingAtt?.records[sId];
+          const isAbsent = aStatus === 'sick' || aStatus === 'excused' || aStatus === 'unexcused' || aStatus === 'other';
+          if (bStatus === 'eating' && !isAbsent) {
+            boardingEating++;
+          }
+        });
       });
 
-      const totalLogged = totalRecords.length;
-      const rate = totalLogged > 0 ? Math.round((presentDays / totalLogged) * 100) : 100;
+      const totalStudentSlots = aRecs.length > 0 ? aRecs.length * totalStudents : totalStudents;
+      const attendanceRate = totalStudentSlots > 0 ? Math.round((present / totalStudentSlots) * 100) : 100;
+      const boardingRate = totalStudentSlots > 0 ? Math.round((boardingEating / totalStudentSlots) * 100) : 0;
 
       return {
-        'STT': idx + 1,
-        'Họ và tên': st.name,
-        'Giới tính': st.gender,
-        'Tổ': st.group || 'Tổ 1',
-        'Tổng số buổi đã điểm danh': totalLogged,
-        'Số buổi có mặt đúng giờ': presentDays,
-        'Số buổi đi muộn': lateDays,
-        'Số buổi nghỉ ốm': sickDays,
-        'Vắng có phép': excusedDays,
-        'Vắng không phép': unexcusedDays,
-        'Tỷ lệ chuyên cần (%)': `${rate}%`,
-        'Xếp loại chuyên cần': rate >= 95 ? 'Tốt' : rate >= 85 ? 'Khá' : 'Cần chấn chỉnh'
+        label,
+        totalStudents,
+        sessions: aRecs.length,
+        present,
+        late,
+        sick,
+        excused,
+        unexcused,
+        totalAbsent: sick + excused + unexcused,
+        attendanceRate,
+        boardingEating,
+        boardingRate
       };
+    };
+
+    // Real Today stats
+    const todayARec = attendanceRecords.find(r => r.classId === activeClassId && r.date === realTodayStr);
+    const todayBRec = boardingRecords.find(r => r.classId === activeClassId && r.date === realTodayStr);
+    const todayAMap = todayARec?.records || {};
+    const todayBMap = todayBRec?.records || {};
+
+    let todayPresent = 0;
+    let todayLate = 0;
+    let todaySick = 0;
+    let todayExcused = 0;
+    let todayUnexcused = 0;
+    let todayEating = 0;
+
+    currentClassStudents.forEach(s => {
+      const st = todayAMap[s.id] || 'present';
+      if (st === 'present') todayPresent++;
+      else if (st === 'late') todayLate++;
+      else if (st === 'sick') todaySick++;
+      else if (st === 'excused') todayExcused++;
+      else if (st === 'unexcused') todayUnexcused++;
+
+      const isAbs = st === 'sick' || st === 'excused' || st === 'unexcused' || st === 'other';
+      if (!isAbs && (todayBMap[s.id] || 'eating') === 'eating') {
+        todayEating++;
+      }
     });
 
-    const ws = XLSX.utils.json_to_sheet(summaryRows);
-    ws['!cols'] = [
-      { wch: 6 },  // STT
-      { wch: 24 }, // Họ tên
-      { wch: 10 }, // Giới tính
-      { wch: 10 }, // Tổ
-      { wch: 15 }, // Tổng buổi
-      { wch: 15 }, // Có mặt
-      { wch: 12 }, // Muộn
-      { wch: 12 }, // Nghỉ ốm
-      { wch: 14 }, // Có phép
-      { wch: 14 }, // Không phép
-      { wch: 14 }, // Tỷ lệ
-      { wch: 16 }  // Xếp loại
-    ];
+    const todayAttRate = totalStudents > 0 ? Math.round((todayPresent / totalStudents) * 100) : 100;
+    const todayBRate = totalStudents > 0 ? Math.round((todayEating / totalStudents) * 100) : 0;
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Tong_Hop_Chuyen_Can");
-    XLSX.writeFile(wb, `Bang_Tong_Hop_Chuyen_Can_${activeClass?.name || 'Lop'}_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
+    return {
+      today: {
+        label: realTodayStr,
+        totalStudents,
+        sessions: 1,
+        present: todayPresent,
+        late: todayLate,
+        sick: todaySick,
+        excused: todayExcused,
+        unexcused: todayUnexcused,
+        totalAbsent: todaySick + todayExcused + todayUnexcused,
+        attendanceRate: todayAttRate,
+        boardingEating: todayEating,
+        boardingRate: todayBRate
+      },
+      thisWeek: calcRange(fmt(thisWeekMon), fmt(thisWeekSun), 'Tuần này'),
+      lastWeek: calcRange(fmt(lastWeekMon), fmt(lastWeekSun), 'Tuần trước'),
+      thisMonth: calcRange(fmt(startOfMonth), fmt(endOfMonth), 'Tháng này')
+    };
+  }, [attendanceRecords, boardingRecords, activeClassId, currentClassStudents, realTodayStr]);
 
-  // 6. XUẤT BẢNG BÁO ĂN BÁN TRÚ (User Request: 2 lựa chọn Ăn bán trú & Không ăn/Về nhà)
-  const handleExportBoardingReport = () => {
-    const boardingRows = currentClassStudents.map((st, idx) => {
-      const isAbsent = isStudentAbsent(st.id);
-      const absentReason = getStudentAbsentReason(st.id);
-      const status = isAbsent ? 'not_eating' : (currentBoardingMap[st.id] || 'eating');
-      const statusLabel = status === 'eating' ? 'Ăn bán trú' : 'Không ăn / Về nhà';
+  // Selected date stats (useful when supplementing past days)
+  const selectedDateStats = useMemo(() => {
+    const totalStudents = currentClassStudents.length;
+    let present = 0;
+    let late = 0;
+    let sick = 0;
+    let excused = 0;
+    let unexcused = 0;
+    let eating = 0;
+
+    currentClassStudents.forEach(s => {
+      const st = currentStatusMap[s.id] || 'present';
+      if (st === 'present') present++;
+      else if (st === 'late') late++;
+      else if (st === 'sick') sick++;
+      else if (st === 'excused') excused++;
+      else if (st === 'unexcused') unexcused++;
+
+      const isAbs = st === 'sick' || st === 'excused' || st === 'unexcused' || st === 'other';
+      if (!isAbs && (currentBoardingMap[s.id] || 'eating') === 'eating') {
+        eating++;
+      }
+    });
+
+    const totalAbsent = sick + excused + unexcused;
+    const attRate = totalStudents > 0 ? Math.round((present / totalStudents) * 100) : 100;
+    const bRate = totalStudents > 0 ? Math.round((eating / totalStudents) * 100) : 0;
+
+    return {
+      present,
+      late,
+      sick,
+      excused,
+      unexcused,
+      totalAbsent,
+      eating,
+      attRate,
+      bRate
+    };
+  }, [currentClassStudents, currentStatusMap, currentBoardingMap]);
+
+  // Group stats for class
+  const groupStats = useMemo(() => {
+    const groups = ['Tổ 1', 'Tổ 2', 'Tổ 3', 'Tổ 4'];
+    return groups.map(groupName => {
+      const gStudents = currentClassStudents.filter(s => (s.group || 'Tổ 1') === groupName);
+      const total = gStudents.length;
+      const present = gStudents.filter(s => (currentStatusMap[s.id] || 'present') === 'present').length;
+      const eating = gStudents.filter(s => !isStudentAbsent(s.id) && (currentBoardingMap[s.id] || 'eating') === 'eating').length;
+
+      const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 100;
+      const boardingRate = total > 0 ? Math.round((eating / total) * 100) : 0;
 
       return {
-        'STT': idx + 1,
-        'Họ và tên': st.name,
-        'Giới tính': st.gender,
-        'Tổ': st.group || 'Tổ 1',
-        'Ngày báo ăn': selectedDate,
-        'Trạng thái ăn bán trú': statusLabel,
-        'Ghi chú chuyên cần': isAbsent ? `Vắng mặt (${absentReason})` : 'Có mặt tại lớp'
+        groupName,
+        total,
+        present,
+        attendanceRate,
+        boardingEating: eating,
+        boardingRate
       };
     });
-
-    const ws = XLSX.utils.json_to_sheet(boardingRows);
-    ws['!cols'] = [
-      { wch: 6 },  // STT
-      { wch: 24 }, // Họ tên
-      { wch: 10 }, // Giới tính
-      { wch: 10 }, // Tổ
-      { wch: 15 }, // Ngày
-      { wch: 22 }, // Trạng thái
-      { wch: 26 }  // Ghi chú
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Bao_An_Ban_Tru");
-    XLSX.writeFile(wb, `Danh_Sach_Bao_An_Ban_Tru_${activeClass?.name || 'Lop'}_${selectedDate}.xlsx`);
-  };
+  }, [currentClassStudents, currentStatusMap, currentBoardingMap]);
 
   // Copy kitchen message
   const handleCopyKitchenReport = () => {
@@ -401,14 +568,14 @@ export const AttendanceView: React.FC = () => {
     const notEatingStudents = currentClassStudents.filter(s => !isStudentAbsent(s.id) && currentBoardingMap[s.id] === 'not_eating');
 
     const msg = `🍱 BÁO CÁO SUẤT ĂN BÁN TRÚ 🍱\n` +
-      `📅 Ngày: ${selectedDate}\n` +
+      `📅 Ngày: ${selectedDate} (${getDayOfWeekName(selectedDate)})\n` +
       `🏫 Trường: ${teacherProfile.schoolName || 'Trường Tiểu học số 1 Tân Uyên'}\n` +
       `👥 Lớp: ${activeClass?.name || 'Lớp học'} (GVCN: ${teacherProfile.name})\n` +
       `--------------------------------\n` +
-      `🍽️ TỔNG SỐ SUẤT ĂN ĐĂNG KÝ: ${eatingStudents.length} suất\n` +
+      `🍽️ TỔNG SỐ SUẤT ĂN ĐĂNG KÝ: ${eatingStudents.length} suất (Tỷ lệ: ${selectedDateStats.bRate}%)\n` +
       `🏠 Không ăn / Về nhà: ${notEatingStudents.length + absentStudents.length} em\n` +
       (absentStudents.length > 0 
-        ? `   ↳ Trong đó có ${absentStudents.length} em vắng chuyên cần (${absentStudents.map(s => `${s.name} - ${getStudentAbsentReason(s.id)}`).join(', ')})\n` 
+        ? `   ↳ Trong đó có ${absentStudents.length} em vắng chuyên cần không ăn (${absentStudents.map(s => `${s.name} - ${getStudentAbsentReason(s.id)}`).join(', ')})\n` 
         : '') +
       `--------------------------------\n` +
       `Xin cảm ơn bộ phận cấp dưỡng & nhà bếp!`;
@@ -418,23 +585,6 @@ export const AttendanceView: React.FC = () => {
     setTimeout(() => setCopiedReportToast(false), 3000);
   };
 
-  // Counts for Daily Attendance
-  const totalStudents = currentClassStudents.length;
-  const presentCount = currentClassStudents.filter(s => (currentStatusMap[s.id] || 'present') === 'present').length;
-  const lateCount = currentClassStudents.filter(s => currentStatusMap[s.id] === 'late').length;
-  const sickCount = currentClassStudents.filter(s => currentStatusMap[s.id] === 'sick').length;
-  const excusedCount = currentClassStudents.filter(s => currentStatusMap[s.id] === 'excused').length;
-  const unexcusedCount = currentClassStudents.filter(s => currentStatusMap[s.id] === 'unexcused').length;
-  const otherCount = currentClassStudents.filter(s => currentStatusMap[s.id] === 'other').length;
-  const totalAbsent = sickCount + excusedCount + unexcusedCount + otherCount;
-  const attendanceRate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 100;
-
-  // Counts for Boarding Meal Attendance (2 lựa chọn: Ăn bán trú & Không ăn/Về nhà)
-  // Học sinh vắng chuyên cần luôn tính vào Không ăn
-  const boardingEatingCount = currentClassStudents.filter(s => !isStudentAbsent(s.id) && (currentBoardingMap[s.id] || 'eating') === 'eating').length;
-  const boardingNotEatingCount = totalStudents - boardingEatingCount;
-  const boardingAbsentCount = currentClassStudents.filter(s => isStudentAbsent(s.id)).length;
-
   // Filtered Students for Attendance
   const filteredAttendanceStudents = currentClassStudents.filter(st => {
     const nameMatch = st.name.toLowerCase().includes(searchQuery.toLowerCase()) || st.stt.toString().includes(searchQuery);
@@ -442,6 +592,9 @@ export const AttendanceView: React.FC = () => {
 
     const stStatus = currentStatusMap[st.id] || 'present';
     if (filterType === 'present') return stStatus === 'present';
+    if (filterType === 'sick') return stStatus === 'sick';
+    if (filterType === 'excused') return stStatus === 'excused';
+    if (filterType === 'unexcused') return stStatus === 'unexcused';
     if (filterType === 'late') return stStatus === 'late';
     if (filterType === 'absent') return stStatus === 'sick' || stStatus === 'excused' || stStatus === 'unexcused' || stStatus === 'other';
     return true;
@@ -459,220 +612,406 @@ export const AttendanceView: React.FC = () => {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Top Banner & Mode Toggle: Chuyên Cần vs Ăn Bán Trú */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover-zoom-card">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-2xs shrink-0">
-            {activeTab === 'daily' ? <CheckSquare className="w-5 h-5" /> : <Utensils className="w-5 h-5" />}
+    <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
+      {/* Top Banner & Mode Toggle: Chuyên Cần vs Ăn Bán Trú vs Thống Kê Biểu Đồ */}
+      <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover-zoom-card">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-500/20 shrink-0">
+            {activeTab === 'daily' ? <CheckSquare className="w-5 h-5" /> : activeTab === 'boarding' ? <Utensils className="w-5 h-5" /> : <BarChart3 className="w-5 h-5" />}
           </div>
           <div>
-            <h2 className="text-base md:text-lg font-black text-slate-900 leading-tight">
-              {activeTab === 'daily' 
-                ? `Điểm Danh & Thống Kê Chuyên Cần Lớp ${activeClass?.name}` 
-                : `Điểm Danh Ăn Bán Trú & Báo Suất Ăn Lớp ${activeClass?.name}`}
+            <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight uppercase flex items-center gap-2">
+              <span>ĐIỂM DANH & CHUYÊN CẦN LỚP {activeClass?.name}</span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-black">
+                {currentClassStudents.length} học sinh
+              </span>
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {activeTab === 'daily'
-                ? 'Thống kê chuyên cần tuần này, tuần trước, cả tháng & xuất file tổng hợp.'
-                : 'Điểm danh đăng ký ăn bán trú hằng ngày, tự động tính số suất và báo cho nhà bếp.'}
+            <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+              {formatDateDisplay(selectedDate)} • GVCN: {activeClass?.teacherName || teacherProfile.name}
             </p>
           </div>
         </div>
 
-        {/* 2 Main Sub-Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 self-start lg:self-auto">
+        {/* 3 Main Sub-Tabs */}
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start lg:self-auto">
           <button
             onClick={() => setActiveTab('daily')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 hover-zoom-btn ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 hover-zoom-btn uppercase cursor-pointer ${
               activeTab === 'daily' 
                 ? 'bg-white text-emerald-800 shadow-xs' 
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <CheckSquare className="w-4 h-4" />
-            <span>Chuyên Cần Lớp</span>
+            <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
+            <span>1. ĐIỂM DANH LỚP</span>
           </button>
 
           <button
             onClick={() => setActiveTab('boarding')}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 hover-zoom-btn ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 hover-zoom-btn uppercase cursor-pointer ${
               activeTab === 'boarding' 
                 ? 'bg-white text-indigo-700 shadow-xs' 
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Utensils className="w-4 h-4" />
-            <span>Điểm Danh Bán Trú</span>
+            <Utensils className="w-3.5 h-3.5 text-indigo-600" />
+            <span>2. ĂN BÁN TRÚ</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('charts')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1 hover-zoom-btn uppercase cursor-pointer ${
+              activeTab === 'charts' 
+                ? 'bg-white text-purple-800 shadow-xs' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-purple-600" />
+            <span>3. THỐNG KÊ & BIỂU ĐỒ</span>
           </button>
         </div>
       </div>
 
       {saveToast && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 p-4 rounded-2xl text-xs flex items-center gap-2 shadow-xs animate-in fade-in duration-150">
-          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span className="font-bold">{saveToast}</span>
+        <div className="bg-emerald-50 border-2 border-emerald-400 text-emerald-950 p-4 rounded-2xl text-xs flex items-center gap-3 shadow-md animate-in fade-in duration-150">
+          <div className="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shrink-0">
+            <Check className="w-4 h-4" />
+          </div>
+          <span className="font-bold leading-relaxed">{saveToast}</span>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 1. VIEW TAB: ĐIỂM DANH & THỐNG KÊ CHUYÊN CẦN (User Request 3) */}
+      {/* HISTORICAL ATTENDANCE TOOLBAR & NOTIFICATION (User Request 1) */}
+      {/* ========================================================================= */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-4 md:p-5 shadow-xs space-y-4 hover-zoom-card">
+        {/* Date Selector Row */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700 font-black">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-xs font-black text-slate-900 uppercase">
+                CHỌN NGÀY ĐIỂM DANH & ĐIỂM DANH BỔ SUNG CÁC NGÀY TRƯỚC:
+              </span>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Cho phép điểm danh lại hoặc bổ sung ngày quá khứ. Bấm <strong>Xác nhận điểm danh</strong> để tự động nhảy số liệu báo cáo 4 kỳ.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Date Switcher */}
+          <div className="flex flex-wrap items-center gap-1.5 self-start lg:self-auto bg-slate-50 p-1.5 rounded-2xl border border-slate-200 text-xs">
+            <button
+              onClick={() => changeDateByDays(-1)}
+              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              title="Lùi 1 ngày"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => setSelectedDate(realTodayStr)}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer ${
+                selectedDate === realTodayStr 
+                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  : 'text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Hôm Nay
+            </button>
+
+            <button
+              onClick={() => setSelectedDate(getDateDaysAgo(1))}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer ${
+                selectedDate === getDateDaysAgo(1) 
+                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  : 'text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Hôm Qua
+            </button>
+
+            <button
+              onClick={() => setSelectedDate(getDateDaysAgo(2))}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer hidden sm:inline-block ${
+                selectedDate === getDateDaysAgo(2) 
+                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  : 'text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              2 ngày trước
+            </button>
+
+            <button
+              onClick={() => setSelectedDate(getLastFridayStr())}
+              className={`px-3 py-1.5 rounded-xl font-bold text-xs cursor-pointer hidden md:inline-block ${
+                selectedDate === getLastFridayStr() 
+                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  : 'text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Thứ 6 tuần trước
+            </button>
+
+            {/* Custom Date Input */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 font-bold text-slate-800 bg-white rounded-xl border border-slate-200">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent font-black text-slate-900 focus:outline-none cursor-pointer text-xs"
+              />
+            </div>
+
+            <button
+              onClick={() => changeDateByDays(1)}
+              className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+              title="Tiến 1 ngày"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Historical Mode Alert Banner */}
+        {isPastDateSelected && (
+          <div className="p-3.5 bg-amber-50 border-2 border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs animate-in fade-in duration-150">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 shadow-2xs">
+                <History className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-black text-amber-950 block">
+                  {activeTab === 'boarding'
+                    ? `🕒 ĐANG Ở CHẾ ĐỘ ĐIỂM DANH BÁN TRÚ BỔ SUNG NGÀY: ${formatDateDisplay(selectedDate)}`
+                    : `🕒 ĐANG Ở CHẾ ĐỘ ĐIỂM DANH CHUYÊN CẦN BỔ SUNG NGÀY: ${formatDateDisplay(selectedDate)}`}
+                </span>
+                <span className="text-[11px] text-amber-800 font-medium">
+                  {activeTab === 'boarding'
+                    ? 'Kiểm tra danh sách học sinh ăn bán trú, sau đó bấm "XÁC NHẬN ĐIỂM DANH BÁN TRÚ" để hệ thống lưu và tự động nhảy tổng hợp số liệu 4 kỳ.'
+                    : 'Đánh dấu các học sinh vắng, sau đó bấm "XÁC NHẬN ĐIỂM DANH" để hệ thống tự động ghi nhận Có mặt cho các em còn lại và tự động nhảy tổng hợp số liệu cho Hôm nay, Tuần này, Tuần trước, Cả tháng.'}
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSelectedDate(realTodayStr)}
+              className="px-3 py-1.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition-colors cursor-pointer self-start sm:self-auto shrink-0"
+            >
+              ↩ Quay về Hôm Nay
+            </button>
+          </div>
+        )}
+
+        {/* 4 PERIODS KPI CARDS: HÔM NAY • TUẦN NÀY • TUẦN TRƯỚC • CẢ THÁNG (User Request) */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase text-slate-700 tracking-wider">
+              TỔNG HỢP BÁO CÁO 4 KỲ (TỰ ĐỘNG NHẢY KHI XÁC NHẬN ĐIỂM DANH):
+            </span>
+            {statsJustUpdated && (
+              <span className="animate-pulse bg-emerald-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-xs">
+                <Sparkles className="w-3 h-3" />
+                <span>✨ Vừa tự động nhảy số liệu mới!</span>
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* 1. HÔM NAY */}
+            <div className={`p-4 rounded-2xl border transition-all duration-300 space-y-2 ${
+              statsJustUpdated 
+                ? 'bg-emerald-100/90 border-emerald-400 ring-4 ring-emerald-400/40 shadow-md scale-[1.01]' 
+                : 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 hover-zoom-card'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase text-emerald-800">HÔM NAY</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-mono font-black text-xs shadow-2xs">
+                  {periodStats.today.attendanceRate}%
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-black font-mono text-emerald-950">
+                  {periodStats.today.present} <span className="text-xs font-bold text-emerald-700">/ {currentClassStudents.length} em có mặt</span>
+                </div>
+                <div className="text-[11px] text-emerald-800 mt-1 font-medium">
+                  Vắng: <strong className="text-rose-700">{periodStats.today.totalAbsent} em</strong> ({periodStats.today.sick} ốm, {periodStats.today.excused} phép, {periodStats.today.unexcused} không phép)
+                </div>
+              </div>
+              <div className="pt-2 border-t border-emerald-200 flex items-center justify-between text-xs font-bold text-indigo-900">
+                <span>Ăn bán trú:</span>
+                <span className="font-mono font-black">{periodStats.today.boardingEating} suất ({periodStats.today.boardingRate}%)</span>
+              </div>
+            </div>
+
+            {/* 2. TUẦN NÀY */}
+            <div className={`p-4 rounded-2xl border transition-all duration-300 space-y-2 ${
+              statsJustUpdated 
+                ? 'bg-blue-100/90 border-blue-400 ring-4 ring-blue-400/40 shadow-md scale-[1.01]' 
+                : 'bg-gradient-to-br from-blue-50 to-sky-50 border-blue-200 hover-zoom-card'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase text-blue-800">TUẦN NÀY</span>
+                <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white font-mono font-black text-xs shadow-2xs">
+                  {periodStats.thisWeek.attendanceRate}%
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-black font-mono text-blue-950">
+                  {periodStats.thisWeek.attendanceRate}% <span className="text-xs font-bold text-blue-700">chuyên cần</span>
+                </div>
+                <div className="text-[11px] text-blue-800 mt-1 font-medium">
+                  Tổng lượt có mặt: <strong className="text-blue-900">{periodStats.thisWeek.present} lượt</strong> ({periodStats.thisWeek.sessions} buổi)
+                </div>
+              </div>
+              <div className="pt-2 border-t border-blue-200 flex items-center justify-between text-xs font-bold text-indigo-900">
+                <span>Ăn bán trú:</span>
+                <span className="font-mono font-black">{periodStats.thisWeek.boardingEating} suất ({periodStats.thisWeek.boardingRate}%)</span>
+              </div>
+            </div>
+
+            {/* 3. TUẦN TRƯỚC */}
+            <div className={`p-4 rounded-2xl border transition-all duration-300 space-y-2 ${
+              statsJustUpdated 
+                ? 'bg-indigo-100/90 border-indigo-400 ring-4 ring-indigo-400/40 shadow-md scale-[1.01]' 
+                : 'bg-gradient-to-br from-indigo-50 to-violet-50 border-indigo-200 hover-zoom-card'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase text-indigo-800">TUẦN TRƯỚC</span>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-mono font-black text-xs shadow-2xs">
+                  {periodStats.lastWeek.attendanceRate}%
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-black font-mono text-indigo-950">
+                  {periodStats.lastWeek.attendanceRate}% <span className="text-xs font-bold text-indigo-700">chuyên cần</span>
+                </div>
+                <div className="text-[11px] text-indigo-800 mt-1 font-medium">
+                  Tổng lượt có mặt: <strong className="text-indigo-900">{periodStats.lastWeek.present} lượt</strong> ({periodStats.lastWeek.sessions} buổi)
+                </div>
+              </div>
+              <div className="pt-2 border-t border-indigo-200 flex items-center justify-between text-xs font-bold text-indigo-900">
+                <span>Ăn bán trú:</span>
+                <span className="font-mono font-black">{periodStats.lastWeek.boardingEating} suất ({periodStats.lastWeek.boardingRate}%)</span>
+              </div>
+            </div>
+
+            {/* 4. CẢ THÁNG */}
+            <div className={`p-4 rounded-2xl border transition-all duration-300 space-y-2 ${
+              statsJustUpdated 
+                ? 'bg-purple-100/90 border-purple-400 ring-4 ring-purple-400/40 shadow-md scale-[1.01]' 
+                : 'bg-gradient-to-br from-purple-50 to-fuchsia-50 border-purple-200 hover-zoom-card'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase text-purple-800">CẢ THÁNG</span>
+                <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white font-mono font-black text-xs shadow-2xs">
+                  {periodStats.thisMonth.attendanceRate}%
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-black font-mono text-purple-950">
+                  {periodStats.thisMonth.attendanceRate}% <span className="text-xs font-bold text-purple-700">toàn tháng</span>
+                </div>
+                <div className="text-[11px] text-purple-800 mt-1 font-medium">
+                  Tổng lượt có mặt: <strong className="text-purple-900">{periodStats.thisMonth.present} lượt</strong> ({periodStats.thisMonth.sessions} buổi)
+                </div>
+              </div>
+              <div className="pt-2 border-t border-purple-200 flex items-center justify-between text-xs font-bold text-indigo-900">
+                <span>Ăn bán trú:</span>
+                <span className="font-mono font-black">{periodStats.thisMonth.boardingEating} suất ({periodStats.thisMonth.boardingRate}%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 1. VIEW TAB: ĐIỂM DANH CHUYÊN CẦN */}
       {/* ========================================================================= */}
       {activeTab === 'daily' && (
         <div className="space-y-6">
-          {/* THỐNG KÊ CHUYÊN CẦN: TUẦN NÀY, TUẦN TRƯỚC, CẢ THÁNG (User Request 3) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 1. Chuyên cần tuần này */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex flex-col justify-between space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500">Chuyên Cần Tuần Này</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-black text-xs">
-                  {statsOverview.thisWeek.rate}%
-                </span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-3xl font-black text-emerald-700 font-mono">
-                  {statsOverview.thisWeek.rate}% <span className="text-xs font-bold text-slate-400">chuyên cần</span>
-                </div>
-                <div className="text-[11px] text-slate-500">
-                  Có mặt: <strong className="text-slate-800">{statsOverview.thisWeek.present} lượt</strong> • Muộn: {statsOverview.thisWeek.late} • Nghỉ: {statsOverview.thisWeek.sick + statsOverview.thisWeek.excused + statsOverview.thisWeek.unexcused}
-                </div>
-              </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${statsOverview.thisWeek.rate}%` }} />
-              </div>
-            </div>
-
-            {/* 2. Chuyên cần tuần trước */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex flex-col justify-between space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500">Chuyên Cần Tuần Trước</span>
-                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-black text-xs">
-                  {statsOverview.lastWeek.rate}%
-                </span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-3xl font-black text-blue-700 font-mono">
-                  {statsOverview.lastWeek.rate}% <span className="text-xs font-bold text-slate-400">chuyên cần</span>
-                </div>
-                <div className="text-[11px] text-slate-500">
-                  Có mặt: <strong className="text-slate-800">{statsOverview.lastWeek.present} lượt</strong> • Muộn: {statsOverview.lastWeek.late} • Nghỉ: {statsOverview.lastWeek.sick + statsOverview.lastWeek.excused + statsOverview.lastWeek.unexcused}
-                </div>
-              </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${statsOverview.lastWeek.rate}%` }} />
-              </div>
-            </div>
-
-            {/* 3. Chuyên cần của tháng */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex flex-col justify-between space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-500">Chuyên Cần Của Tháng</span>
-                <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-black text-xs">
-                  {statsOverview.thisMonth.rate}%
-                </span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-3xl font-black text-purple-700 font-mono">
-                  {statsOverview.thisMonth.rate}% <span className="text-xs font-bold text-slate-400">toàn tháng</span>
-                </div>
-                <div className="text-[11px] text-slate-500">
-                  Đã ghi nhận: <strong className="text-slate-800">{statsOverview.thisMonth.sessions} ngày học</strong> trong tháng này
-                </div>
-              </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                <div className="h-full bg-purple-500 rounded-full" style={{ width: `${statsOverview.thisMonth.rate}%` }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Date Selector & Action Toolbar */}
+          {/* Action Toolbar */}
           <div className="bg-white rounded-3xl border border-slate-200/90 p-4 md:p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover-zoom-card">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-slate-600">Ngày điểm danh:</span>
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold">
-                <Calendar className="w-4 h-4 text-indigo-600" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-transparent font-black text-slate-800 focus:outline-none"
-                />
-              </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-black uppercase text-slate-900 flex items-center gap-2">
+                <span>QUY TRÌNH ĐIỂM DANH THÔNG MINH</span>
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                {isPastDateSelected 
+                  ? `Đang bổ sung điểm danh ngày ${selectedDate}. Điểm danh xong bấm nút bên cạnh để tự động nhảy báo cáo.`
+                  : 'Tích chọn các em vắng rồi bấm xác nhận, phần mềm sẽ tự động ghi nhận tất cả học sinh còn lại là CÓ MẶT.'}
+              </p>
             </div>
 
-            {/* Export & Smart Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {/* NÚT XUẤT BẢNG TỔNG HỢP CHUYÊN CẦN (User Request 3) */}
+            {/* Main Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              {/* NÚT CỐT LÕI THEO YÊU CẦU: XÁC NHẬN ĐIỂM DANH (TỰ ĐỘNG CÒN LẠI CÓ MẶT & NHẢY BÁO CÁO) */}
               <button
-                onClick={handleExportSummaryReport}
-                className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn"
-                title="Xuất bảng Excel tổng hợp chuyên cần cả lớp"
+                onClick={handleConfirmAndCompleteAttendance}
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-600/30 transition-all hover-zoom-btn uppercase cursor-pointer"
+                title="Bấm để xác nhận điểm danh: Tự động ghi nhận Có mặt cho tất cả học sinh chưa đánh dấu vắng và tự động nhảy báo cáo 4 kỳ"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Xuất Bảng Tổng Hợp Chuyên Cần</span>
+                <Sparkles className="w-4 h-4 text-emerald-200" />
+                <span>⚡ XÁC NHẬN ĐIỂM DANH (TỰ ĐỘNG NHẢY BÁO CÁO)</span>
               </button>
 
-              {/* Nút Điểm danh thông minh: Tự điền có mặt */}
-              <button
-                onClick={handleSmartCompleteAttendance}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all hover-zoom-btn"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>⚡ Tự Điền Có Mặt</span>
-              </button>
-
-              {/* Nút Tất cả có mặt */}
+              {/* Nút Cả lớp có mặt */}
               <button
                 onClick={handleSelectAllPresent}
-                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all hover-zoom-btn"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black transition-all hover-zoom-btn uppercase cursor-pointer"
               >
-                <span>Cả Lớp Có Mặt</span>
+                <span>CẢ LỚP CÓ MẶT</span>
+              </button>
+
+              {/* Nút Xuất Báo Cáo ẢNH PNG, PDF & Excel */}
+              <button
+                onClick={() => setIsExportModalOpen(true)}
+                className="px-4 py-2.5 bg-gradient-to-r from-teal-50 to-indigo-50 hover:from-teal-100 hover:to-indigo-100 text-indigo-900 border border-indigo-200 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn uppercase cursor-pointer shadow-xs"
+                title="Xuất ảnh PNG tổng hợp khổ ngang/dọc, file PDF chuẩn in ấn và file Excel"
+              >
+                <ImageIcon className="w-4 h-4 text-teal-600" />
+                <span>XUẤT BÁO CÁO (ẢNH PNG • PDF • EXCEL)</span>
               </button>
             </div>
           </div>
 
-          {/* KPI Summary Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* KPI Summary Strip for Selected Date */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
             <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card">
-              <span className="text-[10px] font-black uppercase text-emerald-700">Có mặt đúng giờ</span>
+              <span className="text-[10px] font-black uppercase text-emerald-700">Có mặt</span>
               <div className="text-2xl font-black font-mono text-emerald-800 mt-1">
-                {presentCount} <span className="text-xs font-bold text-emerald-600">/ {totalStudents}</span>
-              </div>
-            </div>
-
-            <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card">
-              <span className="text-[10px] font-black uppercase text-amber-700">Đi học muộn</span>
-              <div className="text-2xl font-black font-mono text-amber-800 mt-1">
-                {lateCount} <span className="text-xs font-bold text-amber-600">em</span>
-              </div>
-            </div>
-
-            <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card">
-              <span className="text-[10px] font-black uppercase text-purple-700">Nghỉ ốm</span>
-              <div className="text-2xl font-black font-mono text-purple-800 mt-1">
-                {sickCount} <span className="text-xs font-bold text-purple-600">em</span>
+                {selectedDateStats.present} <span className="text-xs font-bold text-emerald-600">/ {currentClassStudents.length}</span>
               </div>
             </div>
 
             <div className="bg-blue-50/80 border border-blue-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card">
               <span className="text-[10px] font-black uppercase text-blue-700">Vắng có phép</span>
               <div className="text-2xl font-black font-mono text-blue-800 mt-1">
-                {excusedCount} <span className="text-xs font-bold text-blue-600">em</span>
+                {selectedDateStats.excused} <span className="text-xs font-bold text-blue-600">em</span>
               </div>
             </div>
 
             <div className="bg-rose-50/80 border border-rose-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card">
-              <span className="text-[10px] font-black uppercase text-rose-700">Không phép</span>
+              <span className="text-[10px] font-black uppercase text-rose-700">Vắng không phép</span>
               <div className="text-2xl font-black font-mono text-rose-800 mt-1">
-                {unexcusedCount} <span className="text-xs font-bold text-rose-600">em</span>
+                {selectedDateStats.unexcused} <span className="text-xs font-bold text-rose-600">em</span>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card">
-              <span className="text-[10px] font-black uppercase text-slate-600">Lý do khác</span>
-              <div className="text-2xl font-black font-mono text-slate-800 mt-1">
-                {otherCount} <span className="text-xs font-bold text-slate-500">em</span>
+            <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card">
+              <span className="text-[10px] font-black uppercase text-purple-700">Nghỉ ốm</span>
+              <div className="text-2xl font-black font-mono text-purple-800 mt-1">
+                {selectedDateStats.sick} <span className="text-xs font-bold text-purple-600">em</span>
+              </div>
+            </div>
+
+            <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3.5 shadow-2xs hover-zoom-card col-span-2 sm:col-span-1">
+              <span className="text-[10px] font-black uppercase text-amber-700">Đi muộn</span>
+              <div className="text-2xl font-black font-mono text-amber-800 mt-1">
+                {selectedDateStats.late} <span className="text-xs font-bold text-amber-600">em</span>
               </div>
             </div>
           </div>
@@ -680,46 +1019,56 @@ export const AttendanceView: React.FC = () => {
           {/* Student Attendance List */}
           <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-4 hover-zoom-card">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Filter Tabs */}
               <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => setFilterType('all')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover-zoom-btn ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
                     filterType === 'all' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600'
                   }`}
                 >
-                  Tất cả ({totalStudents})
+                  Tất cả ({currentClassStudents.length})
                 </button>
                 <button
                   onClick={() => setFilterType('present')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover-zoom-btn ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
                     filterType === 'present' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-600'
                   }`}
                 >
-                  Có mặt ({presentCount})
+                  Có mặt ({selectedDateStats.present})
                 </button>
                 <button
-                  onClick={() => setFilterType('absent')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover-zoom-btn ${
-                    filterType === 'absent' ? 'bg-white text-rose-700 shadow-2xs' : 'text-slate-600'
+                  onClick={() => setFilterType('excused')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
+                    filterType === 'excused' ? 'bg-white text-blue-700 shadow-2xs' : 'text-slate-600'
                   }`}
                 >
-                  Vắng / Ốm ({totalAbsent})
+                  Có phép ({selectedDateStats.excused})
                 </button>
                 <button
-                  onClick={() => setFilterType('late')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover-zoom-btn ${
-                    filterType === 'late' ? 'bg-white text-amber-700 shadow-2xs' : 'text-slate-600'
+                  onClick={() => setFilterType('unexcused')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
+                    filterType === 'unexcused' ? 'bg-white text-rose-700 shadow-2xs' : 'text-slate-600'
                   }`}
                 >
-                  Đi muộn ({lateCount})
+                  Không phép ({selectedDateStats.unexcused})
+                </button>
+                <button
+                  onClick={() => setFilterType('sick')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
+                    filterType === 'sick' ? 'bg-white text-purple-700 shadow-2xs' : 'text-slate-600'
+                  }`}
+                >
+                  Nghỉ ốm ({selectedDateStats.sick})
                 </button>
               </div>
 
+              {/* Search Box */}
               <div className="relative w-full sm:w-64">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Tìm học sinh theo tên..."
+                  placeholder="Tìm học sinh theo tên, STT..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"
@@ -727,9 +1076,11 @@ export const AttendanceView: React.FC = () => {
               </div>
             </div>
 
+            {/* List Rows */}
             <div className="space-y-2 pt-1">
               {filteredAttendanceStudents.map((student) => {
                 const currentStatus = currentStatusMap[student.id] || 'present';
+                const statusCfg = STATUS_CONFIG[currentStatus];
 
                 return (
                   <div
@@ -737,19 +1088,22 @@ export const AttendanceView: React.FC = () => {
                     className="flex flex-col lg:flex-row lg:items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-50 border border-slate-200/80 rounded-2xl gap-3 transition-colors hover-zoom-interactive"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
+                      <span className="w-7 h-7 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center text-xs font-mono font-black shrink-0">
                         {student.stt}
                       </span>
                       <img
                         src={student.avatar}
                         alt={student.name}
-                        className="w-10 h-10 rounded-xl object-cover bg-white border border-slate-200 shrink-0"
+                        className="w-10 h-10 rounded-xl object-cover bg-white border border-slate-200 shrink-0 shadow-2xs"
                       />
                       <div className="truncate">
-                        <div className="text-xs md:text-sm font-black text-slate-900 truncate">
-                          {student.name}
+                        <div className="text-xs md:text-sm font-black text-slate-900 truncate flex items-center gap-2">
+                          <span>{student.name}</span>
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black border ${statusCfg.badgeClass}`}>
+                            {statusCfg.label}
+                          </span>
                         </div>
-                        <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                        <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5 font-medium">
                           <span>{student.gender}</span>
                           <span>• {student.group || 'Tổ 1'}</span>
                           {student.birthDate && <span>• NS: {student.birthDate}</span>}
@@ -757,8 +1111,9 @@ export const AttendanceView: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* 4 Primary Required Status Buttons + Late option */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                      {(['present', 'late', 'sick', 'excused', 'unexcused', 'other'] as AttendanceStatus[]).map((statusKey) => {
+                      {((['present', 'excused', 'unexcused', 'sick', 'late'] as AttendanceStatus[])).map((statusKey) => {
                         const cfg = STATUS_CONFIG[statusKey];
                         const isSelected = currentStatus === statusKey;
 
@@ -766,11 +1121,11 @@ export const AttendanceView: React.FC = () => {
                           <button
                             key={statusKey}
                             onClick={() => handleStatusChange(student.id, statusKey)}
-                            className={`px-3 py-1.5 rounded-xl text-xs transition-all hover-zoom-btn ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all hover-zoom-btn cursor-pointer uppercase ${
                               isSelected ? cfg.activeClass : cfg.inactiveClass
                             }`}
                           >
-                            {cfg.short}
+                            <span>{cfg.short}</span>
                           </button>
                         );
                       })}
@@ -784,121 +1139,165 @@ export const AttendanceView: React.FC = () => {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. VIEW TAB: ĐIỂM DANH ĂN BÁN TRÚ (User Request 3) */}
+      {/* 2. VIEW TAB: ĐIỂM DANH ĂN BÁN TRÚ */}
       {/* ========================================================================= */}
       {activeTab === 'boarding' && (
-        <div className="space-y-6">
-          {/* STATS OVERVIEW: Số lượng học sinh ăn bán trú ngày hôm đó (2 Lựa chọn theo yêu cầu) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Card 1: Tổng số suất ăn bán trú hôm nay */}
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-3xl p-6 shadow-md hover-zoom-card flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-emerald-100">
-                  TỔNG SỐ SUẤT ĂN BÁN TRÚ HÔM NAY
-                </span>
-                <span className="p-2 bg-white/20 rounded-2xl">
+        <div className="space-y-4">
+          {/* BẢNG ĐIỀU KHIỂN BÁN TRÚ: TIÊU ĐỀ, NÚT LỆNH & THÔNG TIN GỌN GÀNG */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs hover-zoom-card space-y-3.5">
+            {/* Hàng 1: Tiêu đề, Badge ngày & Nút xác nhận cốt lõi */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-xs shrink-0">
                   <Utensils className="w-5 h-5 text-white" />
-                </span>
-              </div>
-              <div className="my-2">
-                <div className="text-4xl font-black font-mono tracking-tight">
-                  {boardingEatingCount} <span className="text-base font-bold text-emerald-100">suất ăn</span>
                 </div>
-                <p className="text-xs text-emerald-100 mt-1">
-                  Đạt {totalStudents > 0 ? Math.round((boardingEatingCount / totalStudents) * 100) : 0}% trên tổng số {totalStudents} học sinh
-                </p>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm md:text-base font-black uppercase text-slate-900 tracking-wide">
+                      ĐIỂM DANH ĂN BÁN TRÚ
+                    </h3>
+                    {isPastDateSelected ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-black flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-700" />
+                        <span>Bổ sung ngày {selectedDate}</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-black flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Hôm nay • {selectedDate}</span>
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Quản lý suất ăn bán trú theo ngày • Tự động đồng bộ và nhảy tổng hợp báo cáo 4 kỳ
+                  </p>
+                </div>
               </div>
-              <div className="text-[11px] text-emerald-200">
-                Ngày ghi nhận: <strong>{selectedDate}</strong>
-              </div>
+
+              {/* NÚT LỆNH CỐT LÕI: XÁC NHẬN BÁN TRÚ (TỰ ĐỘNG NHẢY BÁO CÁO) */}
+              <button
+                onClick={handleConfirmAndCompleteBoarding}
+                className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-600/25 transition-all hover-zoom-btn uppercase cursor-pointer shrink-0 self-start md:self-auto"
+                title="Bấm để xác nhận điểm danh bán trú: Tự động lưu suất ăn và tự động nhảy tổng hợp báo cáo 4 kỳ"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-200 shrink-0" />
+                <span>⚡ XÁC NHẬN BÁN TRÚ (NHẢY BÁO CÁO)</span>
+              </button>
             </div>
 
-            {/* Card 2: Không ăn / Về nhà buổi trưa */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex flex-col justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Không Ăn / Về Nhà Buổi Trưa
-              </span>
-              <div className="text-3xl font-black text-slate-800 font-mono mt-2">
-                {boardingNotEatingCount} <span className="text-xs font-bold text-slate-400">em</span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Gia đình đón về ăn trưa tại nhà hoặc học sinh vắng mặt
-              </p>
-            </div>
+            {/* Hàng 2: Các nút lệnh phụ gom nhóm gọn gàng & trực quan */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-0.5">
+              {/* Nhóm thao tác nhanh toàn lớp */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 hidden sm:inline">
+                  Thao tác nhanh:
+                </span>
+                <button
+                  onClick={handleSelectAllBoarding}
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold transition-all hover-zoom-btn flex items-center gap-1.5 cursor-pointer"
+                  title="Ghi nhận tất cả học sinh có mặt trong lớp ăn bán trú (tự động loại trừ học sinh vắng)"
+                >
+                  <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span>Cả lớp ăn bán trú</span>
+                </button>
 
-            {/* Card 3: Vắng chuyên cần (Không được điểm danh ăn) */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs hover-zoom-card flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">
-                  Vắng Chuyên Cần Trong Ngày
-                </span>
-                <span className="p-1.5 bg-rose-50 text-rose-600 rounded-xl">
-                  <AlertTriangle className="w-4 h-4" />
-                </span>
+                <button
+                  onClick={handleSelectAllNotEating}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all hover-zoom-btn flex items-center gap-1.5 cursor-pointer"
+                  title="Đánh dấu cả lớp không ăn / về nhà ăn trưa"
+                >
+                  <span>🏠</span>
+                  <span>Cả lớp về nhà</span>
+                </button>
               </div>
-              <div className="text-3xl font-black text-rose-600 font-mono mt-2">
-                {boardingAbsentCount} <span className="text-xs font-bold text-slate-400">em nghỉ</span>
+
+              {/* Nhóm tiện ích: Báo bếp Zalo & Xuất báo cáo */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleCopyKitchenReport}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all hover-zoom-btn cursor-pointer"
+                  title="Sao chép nội dung báo suất ăn gửi Zalo cho nhà bếp"
+                >
+                  <Copy className="w-3.5 h-3.5 shrink-0" />
+                  <span>{copiedReportToast ? '✓ Đã sao chép!' : 'Báo bếp Zalo'}</span>
+                </button>
+
+                <button
+                  onClick={() => setIsExportModalOpen(true)}
+                  className="px-3 py-1.5 bg-gradient-to-r from-teal-50 to-indigo-50 hover:from-teal-100 hover:to-indigo-100 text-indigo-800 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all hover-zoom-btn cursor-pointer"
+                  title="Xuất báo cáo ảnh PNG khổ ngang/dọc, PDF & Excel chi tiết"
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                  <span>Xuất báo cáo (PNG • PDF)</span>
+                </button>
               </div>
-              <p className="text-xs text-rose-600/90 mt-1 font-semibold">
-                Nghỉ ốm / Có phép / Không phép / Khác (Khóa điểm danh ăn)
-              </p>
             </div>
           </div>
 
-          {/* Date Selector & Kitchen Report Message Box */}
-          <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover-zoom-card">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs font-bold text-slate-600">Ngày ăn bán trú:</span>
-              <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold">
-                <Calendar className="w-4 h-4 text-indigo-600" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-transparent font-black text-slate-800 focus:outline-none"
-                />
+          {/* THÔNG TIN TỔNG QUAN: 3 THẺ SỐ LIỆU GỌN GÀNG, CÂN ĐỐI & RÕ RÀNG */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Thẻ 1: Suất ăn bán trú */}
+            <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-200 rounded-2xl p-3.5 shadow-2xs flex items-center justify-between gap-3 hover-zoom-card">
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase text-emerald-800 tracking-wider">
+                    Ăn bán trú tại trường
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-mono font-bold">
+                    {selectedDateStats.bRate}%
+                  </span>
+                </div>
+                <div className="text-2xl font-black font-mono text-emerald-950">
+                  {selectedDateStats.eating} <span className="text-xs font-bold text-slate-500 font-sans">/ {currentClassStudents.length} học sinh</span>
+                </div>
+                <p className="text-[11px] text-emerald-700 font-medium truncate">
+                  Đã đăng ký ăn bán trú ngày {selectedDate}
+                </p>
               </div>
-
-              {/* Fast Button: Cả lớp ăn bán trú */}
-              <button
-                onClick={handleSelectAllBoarding}
-                className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-black transition-all hover-zoom-btn flex items-center gap-1.5"
-                title="Ghi nhận tất cả học sinh có mặt trong lớp ăn bán trú (tự động loại trừ học sinh vắng)"
-              >
-                <Check className="w-3.5 h-3.5" />
-                <span>Cả Lớp Ăn Bán Trú</span>
-              </button>
-
-              {/* Fast Button: Cả lớp không ăn / về nhà */}
-              <button
-                onClick={handleSelectAllNotEating}
-                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl text-xs font-black transition-all hover-zoom-btn flex items-center gap-1.5"
-                title="Ghi nhận tất cả học sinh không ăn / về nhà buổi trưa"
-              >
-                <span>🏠</span>
-                <span>Cả Lớp Không Ăn / Về Nhà</span>
-              </button>
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                <Utensils className="w-4 h-4" />
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {/* Copy Report to Kitchen */}
-              <button
-                onClick={handleCopyKitchenReport}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all hover-zoom-btn"
-                title="Sao chép nội dung báo suất ăn gửi Zalo cho nhà bếp"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>{copiedReportToast ? '✓ Đã Sao Chép Báo Bếp!' : '📋 Copy Báo Cáo Nhà Bếp'}</span>
-              </button>
+            {/* Thẻ 2: Về nhà buổi trưa */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 shadow-2xs flex items-center justify-between gap-3 hover-zoom-card">
+              <div className="space-y-0.5 min-w-0">
+                <span className="text-[10px] font-black uppercase text-slate-600 tracking-wider">
+                  Không ăn / Về nhà
+                </span>
+                <div className="text-2xl font-black font-mono text-slate-800">
+                  {currentClassStudents.length - selectedDateStats.eating} <span className="text-xs font-bold text-slate-500 font-sans">học sinh</span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium truncate">
+                  Gia đình đón về ăn trưa hoặc vắng mặt
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-slate-200/80 text-slate-700 flex items-center justify-center text-sm shrink-0">
+                🏠
+              </div>
+            </div>
 
-              {/* Export Boarding Report Excel */}
-              <button
-                onClick={handleExportBoardingReport}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all hover-zoom-btn"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Xuất Báo Cáo Excel</span>
-              </button>
+            {/* Thẻ 3: Vắng chuyên cần (Khóa tự động) */}
+            <div className="bg-rose-50/70 border border-rose-200 rounded-2xl p-3.5 shadow-2xs flex items-center justify-between gap-3 hover-zoom-card">
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-black uppercase text-rose-700 tracking-wider">
+                    Vắng chuyên cần
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                    Khóa bán trú
+                  </span>
+                </div>
+                <div className="text-2xl font-black font-mono text-rose-700">
+                  {selectedDateStats.totalAbsent} <span className="text-xs font-bold text-slate-500 font-sans">học sinh</span>
+                </div>
+                <p className="text-[11px] text-rose-600 font-medium truncate">
+                  Đã vắng, tự động khóa không báo ăn
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <Lock className="w-4 h-4" />
+              </div>
             </div>
           </div>
 
@@ -908,27 +1307,27 @@ export const AttendanceView: React.FC = () => {
               <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => setBoardingFilterType('all')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover-zoom-btn ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
                     boardingFilterType === 'all' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600'
                   }`}
                 >
-                  Tất cả ({totalStudents})
+                  Tất cả ({currentClassStudents.length})
                 </button>
                 <button
                   onClick={() => setBoardingFilterType('eating')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover-zoom-btn ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
                     boardingFilterType === 'eating' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-600'
                   }`}
                 >
-                  Ăn bán trú ({boardingEatingCount})
+                  Ăn bán trú ({selectedDateStats.eating})
                 </button>
                 <button
                   onClick={() => setBoardingFilterType('not_eating')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover-zoom-btn ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all hover-zoom-btn cursor-pointer ${
                     boardingFilterType === 'not_eating' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-600'
                   }`}
                 >
-                  Không ăn / Về nhà ({boardingNotEatingCount})
+                  Không ăn / Về nhà ({currentClassStudents.length - selectedDateStats.eating})
                 </button>
               </div>
 
@@ -937,11 +1336,10 @@ export const AttendanceView: React.FC = () => {
                 {filteredBoardingStudents.length > 0 && (
                   <button
                     onClick={handleSelectAllBoardingFiltered}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 hover-zoom-btn shrink-0"
-                    title="Chọn tất cả học sinh đang hiển thị để đổi trạng thái hàng loạt"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 hover-zoom-btn shrink-0 cursor-pointer"
                   >
                     <CheckSquare className="w-3.5 h-3.5" />
-                    <span>{selectedBoardingStudentIds.length === filteredBoardingStudents.length && filteredBoardingStudents.length > 0 ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
+                    <span>{selectedBoardingStudentIds.length === filteredBoardingStudents.length && filteredBoardingStudents.length > 0 ? 'Bỏ chọn' : 'Chọn tất cả'}</span>
                   </button>
                 )}
 
@@ -958,7 +1356,7 @@ export const AttendanceView: React.FC = () => {
               </div>
             </div>
 
-            {/* THANH THAO TÁC NHANH KHI ĐÃ TÍCH CHỌN NHIỀU HỌC SINH */}
+            {/* Batch actions bar */}
             {selectedBoardingStudentIds.length > 0 && (
               <div className="p-3.5 bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in duration-150">
                 <div className="flex items-center gap-2.5">
@@ -969,8 +1367,8 @@ export const AttendanceView: React.FC = () => {
                     <span className="text-xs font-black text-indigo-950 block">
                       Đang chọn {selectedBoardingStudentIds.length} học sinh
                     </span>
-                    <span className="text-[10px] text-indigo-700">
-                      Chọn nhanh trạng thái ăn bán trú áp dụng đồng loạt:
+                    <span className="text-[10px] text-indigo-700 font-medium">
+                      Đổi nhanh trạng thái bán trú đồng loạt (tự động loại trừ các em vắng chuyên cần):
                     </span>
                   </div>
                 </div>
@@ -978,7 +1376,7 @@ export const AttendanceView: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => handleBatchSetSelectedBoarding('eating')}
-                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all hover-zoom-btn"
+                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all hover-zoom-btn cursor-pointer"
                   >
                     <span>🍱</span>
                     <span>Đánh dấu Ăn bán trú</span>
@@ -986,7 +1384,7 @@ export const AttendanceView: React.FC = () => {
 
                   <button
                     onClick={() => handleBatchSetSelectedBoarding('not_eating')}
-                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all hover-zoom-btn"
+                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all hover-zoom-btn cursor-pointer"
                   >
                     <span>🏠</span>
                     <span>Đánh dấu Không ăn / Về nhà</span>
@@ -994,7 +1392,7 @@ export const AttendanceView: React.FC = () => {
 
                   <button
                     onClick={() => setSelectedBoardingStudentIds([])}
-                    className="px-3 py-2 text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold transition-colors"
+                    className="px-3 py-2 text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                   >
                     Hủy chọn
                   </button>
@@ -1002,7 +1400,7 @@ export const AttendanceView: React.FC = () => {
               </div>
             )}
 
-            {/* Rows */}
+            {/* Boarding rows */}
             <div className="space-y-2 pt-1">
               {filteredBoardingStudents.map((student) => {
                 const isAbsent = isStudentAbsent(student.id);
@@ -1015,40 +1413,39 @@ export const AttendanceView: React.FC = () => {
                     key={student.id}
                     className={`flex flex-col lg:flex-row lg:items-center justify-between p-3.5 rounded-2xl gap-3 transition-all hover-zoom-interactive border ${
                       isAbsent
-                        ? 'bg-rose-50/40 border-rose-200 opacity-90'
+                        ? 'bg-rose-50/50 border-rose-200 opacity-90'
                         : isChecked 
-                        ? 'bg-indigo-50/50 border-indigo-300 ring-2 ring-indigo-500/20 shadow-xs' 
+                        ? 'bg-indigo-50/60 border-indigo-300 ring-2 ring-indigo-500/20 shadow-xs' 
                         : 'bg-slate-50/70 hover:bg-slate-50 border-slate-200/80'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      {/* Checkbox tích chọn nhiều học sinh */}
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => toggleSelectBoardingStudent(student.id)}
                         className="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer shrink-0"
-                        title="Tích chọn để đổi trạng thái hàng loạt"
                       />
 
-                      <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
+                      <span className="w-7 h-7 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center text-xs font-mono font-black shrink-0">
                         {student.stt}
                       </span>
                       <img
                         src={student.avatar}
                         alt={student.name}
-                        className="w-10 h-10 rounded-xl object-cover bg-white border border-slate-200 shrink-0"
+                        className="w-10 h-10 rounded-xl object-cover bg-white border border-slate-200 shrink-0 shadow-2xs"
                       />
                       <div className="truncate">
                         <div className="text-xs md:text-sm font-black text-slate-900 truncate flex items-center gap-2">
                           <span>{student.name}</span>
                           {isAbsent && (
-                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-extrabold text-[10px] border border-rose-200">
-                              Chuyên cần: {absentReason}
+                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-extrabold text-[10px] border border-rose-200 flex items-center gap-1">
+                              <Lock className="w-3 h-3" />
+                              <span>Vắng chuyên cần: {absentReason}</span>
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                        <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5 font-medium">
                           <span>{student.gender}</span>
                           <span>• {student.group || 'Tổ 1'}</span>
                           {student.birthDate && <span>• NS: {student.birthDate}</span>}
@@ -1057,14 +1454,13 @@ export const AttendanceView: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 pl-7 lg:pl-0">
-                      {/* Khi học sinh vắng mặt: Hiển thị thông báo khóa điểm danh ăn bán trú */}
+                      {/* QUY ĐỊNH BẮT BUỘC: Học sinh đã điểm danh vắng KHÔNG ĐƯỢC ĐIỂM DANH ĂN BÁN TRÚ NGÀY HÔM ĐÓ */}
                       {isAbsent ? (
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 text-rose-800 rounded-xl text-xs font-bold border border-rose-200">
-                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                          <span>Học sinh {(absentReason || 'vắng mặt').toLowerCase()} - Tự động không ăn / về nhà</span>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 text-rose-800 rounded-xl text-xs font-bold border border-rose-200 shadow-2xs">
+                          <Lock className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                          <span>Học sinh {absentReason?.toLowerCase()} - Khóa không được điểm danh ăn bán trú</span>
                         </div>
                       ) : (
-                        // Khi học sinh có mặt / đi muộn: Có 2 lựa chọn Ăn bán trú & Không ăn/Về nhà
                         ((['eating', 'not_eating'] as const)).map((statusKey) => {
                           const cfg = BOARDING_CONFIG[statusKey];
                           const isSelected = currentStatus === statusKey;
@@ -1073,7 +1469,7 @@ export const AttendanceView: React.FC = () => {
                             <button
                               key={statusKey}
                               onClick={() => handleBoardingChange(student.id, statusKey)}
-                              className={`px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all hover-zoom-btn ${
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn cursor-pointer ${
                                 isSelected ? cfg.activeClass : cfg.inactiveClass
                               }`}
                             >
@@ -1091,6 +1487,38 @@ export const AttendanceView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 3. VIEW TAB: THỐNG KÊ & BIỂU ĐỒ ĐỐI CHIẾU (User Request) */}
+      {/* ========================================================================= */}
+      {activeTab === 'charts' && (
+        <AttendanceChartsView
+          stats={periodStats}
+          groupStats={groupStats}
+          classes={classes}
+          students={students}
+          attendanceRecords={attendanceRecords}
+          boardingRecords={boardingRecords}
+          selectedDate={selectedDate}
+          onOpenFullExportModal={() => setIsExportModalOpen(true)}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* EXPORT MODAL: XUẤT BÁO CÁO TỪNG LỚP / NHIỀU LỚP RA PDF VÀ EXCEL */}
+      {/* ========================================================================= */}
+      <AttendanceExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        selectedDate={selectedDate}
+        activeClass={activeClass}
+        classes={classes}
+        students={students}
+        currentClassStudents={currentClassStudents}
+        attendanceRecords={attendanceRecords}
+        boardingRecords={boardingRecords}
+        teacherProfile={teacherProfile}
+      />
     </div>
   );
 };

@@ -3,9 +3,10 @@ import { useClassroom } from '../../context/ClassroomContext';
 import { Reward } from '../../types';
 import { 
   Gift, Plus, Package, ShoppingBag, 
-  Check, Trash2, Edit3, Clock, AlertCircle, Sparkles 
+  Check, Trash2, Edit3, Clock, AlertCircle, Sparkles, Crop, Camera 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { RewardImageEditorModal } from '../modals/RewardImageEditorModal';
 
 export const RewardsShopView: React.FC = () => {
   const { 
@@ -15,6 +16,15 @@ export const RewardsShopView: React.FC = () => {
 
   const [isAddRewardOpen, setIsAddRewardOpen] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
+
+  // Image Editor Modal state (tải ảnh, zoom, xoay, cắt ảnh, kéo vị trí)
+  const [isImageEditorOpen, setIsImageEditorOpen] = useState(false);
+  const [imageEditorTarget, setImageEditorTarget] = useState<{
+    mode: 'add' | 'edit' | 'direct';
+    rewardId?: string;
+    rewardName?: string;
+    currentImage?: string;
+  } | null>(null);
 
   // New reward form
   const [name, setName] = useState('');
@@ -26,6 +36,26 @@ export const RewardsShopView: React.FC = () => {
   // Fast redeem modal
   const [selectedRewardToRedeem, setSelectedRewardToRedeem] = useState<Reward | null>(null);
   const [redeemNotice, setRedeemNotice] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Xử lý lưu ảnh sau khi cắt từ bộ chỉnh sửa ảnh quà tặng
+  const handleSaveImageFromEditor = (croppedUrl: string) => {
+    if (!imageEditorTarget) return;
+
+    if (imageEditorTarget.mode === 'add') {
+      setImage(croppedUrl);
+    } else if (imageEditorTarget.mode === 'edit') {
+      if (editingReward) {
+        setEditingReward({ ...editingReward, image: croppedUrl });
+      }
+    } else if (imageEditorTarget.mode === 'direct') {
+      if (imageEditorTarget.rewardId) {
+        updateReward(imageEditorTarget.rewardId, { image: croppedUrl });
+        confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } });
+      }
+    }
+    setIsImageEditorOpen(false);
+    setImageEditorTarget(null);
+  };
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,21 +114,21 @@ export const RewardsShopView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <Gift className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-              Kho Quà Tặng & Cửa Hàng Đổi Thưởng Xu
+            <h2 className="text-xl font-black text-slate-800 tracking-tight uppercase">
+              KHO QUÀ TẶNG & CỬA HÀNG ĐỔI THƯỞNG XU
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Quy đổi thành tích học tập lấy quà thực tế · Tự động kích hoạt khi học sinh tích lũy đủ xu
+          <p className="text-xs text-slate-500 mt-1 uppercase">
+            QUY ĐỔI THÀNH TÍCH HỌC TẬP LẤY QUÀ THỰC TẾ · TỰ ĐỘNG KÍCH HOẠT KHI HỌC SINH TÍCH LŨY ĐỦ XU
           </p>
         </div>
 
         <button
           onClick={() => setIsAddRewardOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors uppercase hover-zoom-btn"
         >
           <Plus className="w-4 h-4" />
-          <span>Thêm phần quà mới</span>
+          <span>THÊM PHẦN QUÀ MỚI</span>
         </button>
       </div>
 
@@ -122,6 +152,26 @@ export const RewardsShopView: React.FC = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                   />
+                  {/* Nút sửa ảnh nhanh trực tiếp trên thẻ */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImageEditorTarget({
+                        mode: 'direct',
+                        rewardId: reward.id,
+                        rewardName: reward.name,
+                        currentImage: reward.image
+                      });
+                      setIsImageEditorOpen(true);
+                    }}
+                    className="absolute top-3 left-3 bg-black/60 hover:bg-indigo-600 text-white px-2.5 py-1 rounded-xl text-xs font-bold backdrop-blur-xs shadow-xs transition-all flex items-center gap-1 opacity-85 group-hover:opacity-100 hover:scale-105 active:scale-95 cursor-pointer z-10"
+                    title="Tải ảnh, zoom, xoay, cắt và chỉnh sửa ảnh phần quà này"
+                  >
+                    <Crop className="w-3.5 h-3.5" />
+                    <span>Sửa ảnh</span>
+                  </button>
+
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-xl text-xs font-bold font-mono shadow-xs text-slate-700 flex items-center gap-1">
                     <Package className="w-3.5 h-3.5 text-slate-400" />
                     <span>Kho: {reward.stock} món</span>
@@ -374,14 +424,52 @@ export const RewardsShopView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Link hình ảnh quà tặng</label>
-                <input
-                  type="text"
-                  placeholder="Dán link ảnh hoặc để trống sử dụng ảnh mẫu mặc định"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
-                />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Ảnh minh họa phần quà
+                </label>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-3">
+                    {/* Ảnh xem trước hiện tại */}
+                    <div className="relative w-20 h-16 rounded-xl bg-slate-200 overflow-hidden shrink-0 border border-slate-300 shadow-2xs">
+                      <img
+                        src={image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80'}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+
+                    <div className="flex-1 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageEditorTarget({
+                            mode: 'add',
+                            rewardName: name.trim() || 'Phần quà mới',
+                            currentImage: image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80'
+                          });
+                          setIsImageEditorOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer"
+                      >
+                        <Crop className="w-3.5 h-3.5" />
+                        <span>{image ? 'Chỉnh sửa / Cắt lại ảnh' : 'Tải lên & Cắt ảnh quà'}</span>
+                      </button>
+                      <div className="text-[10px] text-slate-500">
+                        Tải ảnh từ máy, zoom, xoay, kéo vị trí và cắt ảnh sắc nét, siêu nhẹ.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hoặc nhập link thủ công nếu muốn */}
+                  <input
+                    type="text"
+                    placeholder="Hoặc dán trực tiếp đường link ảnh (URL)..."
+                    value={image}
+                    onChange={(e) => setImage(e.target.value)}
+                    className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-[11px] bg-white text-slate-600"
+                  />
+                </div>
               </div>
 
               <div>
@@ -459,13 +547,53 @@ export const RewardsShopView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Link hình ảnh</label>
-                <input
-                  type="text"
-                  value={editingReward.image}
-                  onChange={(e) => setEditingReward({ ...editingReward, image: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
-                />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Ảnh minh họa phần quà
+                </label>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-3">
+                    {/* Ảnh xem trước hiện tại */}
+                    <div className="relative w-20 h-16 rounded-xl bg-slate-200 overflow-hidden shrink-0 border border-slate-300 shadow-2xs">
+                      <img
+                        src={editingReward.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+
+                    <div className="flex-1 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageEditorTarget({
+                            mode: 'edit',
+                            rewardId: editingReward.id,
+                            rewardName: editingReward.name,
+                            currentImage: editingReward.image
+                          });
+                          setIsImageEditorOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer"
+                      >
+                        <Crop className="w-3.5 h-3.5" />
+                        <span>Chỉnh sửa / Cắt lại ảnh</span>
+                      </button>
+                      <div className="text-[10px] text-slate-500">
+                        Zoom, xoay góc, kéo vị trí và cắt ảnh theo đúng chuẩn hiển thị.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hoặc nhập link thủ công nếu muốn */}
+                  <input
+                    type="text"
+                    value={editingReward.image}
+                    onChange={(e) => setEditingReward({ ...editingReward, image: e.target.value })}
+                    className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-[11px] bg-white text-slate-600"
+                    placeholder="Đường link URL ảnh..."
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -486,6 +614,20 @@ export const RewardsShopView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal: Tải ảnh, Xem trước, Zoom, Xoay, Cắt và Di chuyển ảnh phần quà */}
+      {isImageEditorOpen && (
+        <RewardImageEditorModal
+          isOpen={isImageEditorOpen}
+          rewardName={imageEditorTarget?.rewardName || 'phần quà'}
+          initialImage={imageEditorTarget?.currentImage || ''}
+          onClose={() => {
+            setIsImageEditorOpen(false);
+            setImageEditorTarget(null);
+          }}
+          onSave={handleSaveImageFromEditor}
+        />
       )}
     </div>
   );

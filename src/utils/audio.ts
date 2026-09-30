@@ -162,25 +162,154 @@ export function playWarningTick() {
 }
 
 /**
- * Timer expired alarm
+ * Timer expired alarm - School bell / Rich alert chimes
  */
 export function playTimerAlarm() {
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
     
-    // Triple chime
-    [0, 0.25, 0.5, 0.75].forEach(offset => {
+    // Rhythmic school bell / two-tone alert chime (Ding-Dong)
+    const tones = [
+      { f1: 880, f2: 1320, offset: 0, dur: 0.32, gain: 0.32 },
+      { f1: 698.46, f2: 1046.5, offset: 0.25, dur: 0.45, gain: 0.38 }
+    ];
+
+    tones.forEach(({ f1, f2, offset, dur, gain: vol }) => {
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'triangle';
+
+      osc1.frequency.setValueAtTime(f1, now + offset);
+      osc2.frequency.setValueAtTime(f2, now + offset);
+
+      gainNode.gain.setValueAtTime(vol, now + offset);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + offset + dur);
+
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc1.start(now + offset);
+      osc2.start(now + offset);
+      osc1.stop(now + offset + dur);
+      osc2.stop(now + offset + dur);
+    });
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
+/**
+ * 10-second continuous timer alarm with repeating bell chimes every second
+ */
+export function playTenSecondTimerAlarm(): { stop: () => void } {
+  let isStopped = false;
+  let count = 0;
+
+  playTimerAlarm();
+  count++;
+
+  const interval = setInterval(() => {
+    if (isStopped || count >= 10) {
+      clearInterval(interval);
+      return;
+    }
+    playTimerAlarm();
+    count++;
+  }, 1000);
+
+  return {
+    stop: () => {
+      isStopped = true;
+      clearInterval(interval);
+    }
+  };
+}
+
+/**
+ * Sound 1 for "LỚP QUÁ ỒN!" - Melodic Warning Chime (Megaphone / Classroom Chime)
+ */
+export function playLoudAlertSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    // 3 ascending warning bell tones (D5 -> F#5 -> A5)
+    const chords = [
+      { freq: 587.33, time: 0, dur: 0.35 },
+      { freq: 739.99, time: 0.22, dur: 0.35 },
+      { freq: 880.00, time: 0.44, dur: 0.6 }
+    ];
+
+    chords.forEach(({ freq, time, dur }) => {
       const osc = ctx.createOscillator();
+      const oscHarmonic = ctx.createOscillator();
       const gain = ctx.createGain();
+
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1174.66, now + offset); // D6
-      gain.gain.setValueAtTime(0.3, now + offset);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.2);
+      oscHarmonic.type = 'triangle';
+
+      osc.frequency.setValueAtTime(freq, now + time);
+      oscHarmonic.frequency.setValueAtTime(freq * 1.5, now + time);
+
+      gain.gain.setValueAtTime(0.28, now + time);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + time + dur);
+
       osc.connect(gain);
+      oscHarmonic.connect(gain);
       gain.connect(ctx.destination);
-      osc.start(now + offset);
-      osc.stop(now + offset + 0.2);
+
+      osc.start(now + time);
+      oscHarmonic.start(now + time);
+      osc.stop(now + time + dur);
+      oscHarmonic.stop(now + time + dur);
+    });
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
+/**
+ * Sound 2 for "DỪNG LẠI NGAY!" - Sharp Referee Whistle / Urgent Stop Alarm (Distinct from LỚP QUÁ ỒN)
+ */
+export function playStopNowAlertSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    // 2 sharp whistle / siren stop blasts
+    [0, 0.28].forEach(startTime => {
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sawtooth';
+      osc2.type = 'sine';
+
+      // Whistle vibrato effect
+      osc1.frequency.setValueAtTime(2200, now + startTime);
+      osc1.frequency.linearRampToValueAtTime(2600, now + startTime + 0.08);
+      osc1.frequency.linearRampToValueAtTime(2300, now + startTime + 0.22);
+
+      osc2.frequency.setValueAtTime(2800, now + startTime);
+      osc2.frequency.linearRampToValueAtTime(3200, now + startTime + 0.08);
+      osc2.frequency.linearRampToValueAtTime(2900, now + startTime + 0.22);
+
+      gain.gain.setValueAtTime(0.32, now + startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + startTime + 0.24);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now + startTime);
+      osc2.start(now + startTime);
+      osc1.stop(now + startTime + 0.24);
+      osc2.stop(now + startTime + 0.24);
     });
   } catch (e) {
     console.warn(e);
@@ -191,33 +320,330 @@ export function playTimerAlarm() {
  * Classroom silence / noise warning bell
  */
 export function playNoiseAlertSound() {
-  try {
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
+  playLoudAlertSound();
+}
 
-    // School chime bell sound
-    const chords = [
-      { freq: 659.25, time: 0 },    // E5
-      { freq: 523.25, time: 0.3 },  // C5
-      { freq: 587.33, time: 0.6 },  // D5
-      { freq: 392.00, time: 0.9 },  // G4
-    ];
+/**
+ * Continuous "LỚP QUÁ ỒN!" alert sound for 20 seconds - Repeating ascending warning chime
+ * Returns a stop control to cancel early when class is quiet again.
+ */
+export function playLoudAlertSound20s(): { stop: () => void } {
+  let isStopped = false;
+  const ctx = getAudioContext();
+  const intervals: NodeJS.Timeout[] = [];
 
-    chords.forEach(({ freq, time }) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + time);
-      gain.gain.setValueAtTime(0.25, now + time);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + time + 0.7);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now + time);
-      osc.stop(now + time + 0.7);
-    });
-  } catch (e) {
-    console.warn(e);
-  }
+  const fireWarningChime = () => {
+    if (isStopped) return;
+    try {
+      const now = ctx.currentTime;
+      // Ascending warning bell tones (D5 -> F#5 -> A5) with harmonic overlay
+      const chords = [
+        { freq: 587.33, time: 0, dur: 0.35 },
+        { freq: 739.99, time: 0.22, dur: 0.35 },
+        { freq: 880.00, time: 0.44, dur: 0.6 }
+      ];
+      chords.forEach(({ freq, time, dur }) => {
+        const osc = ctx.createOscillator();
+        const oscH = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        oscH.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + time);
+        oscH.frequency.setValueAtTime(freq * 1.5, now + time);
+        gain.gain.setValueAtTime(0.26, now + time);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + time + dur);
+        osc.connect(gain);
+        oscH.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + time);
+        oscH.start(now + time);
+        osc.stop(now + time + dur);
+        oscH.stop(now + time + dur);
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  // Fire immediately
+  fireWarningChime();
+
+  // Repeat every 1.5s
+  const chimeInterval = setInterval(() => {
+    if (isStopped) { clearInterval(chimeInterval); return; }
+    fireWarningChime();
+  }, 1500);
+  intervals.push(chimeInterval);
+
+  // Auto-stop after 20 seconds
+  const autoStopTimeout = setTimeout(() => { stop(); }, 20000);
+
+  const stop = () => {
+    isStopped = true;
+    clearTimeout(autoStopTimeout);
+    intervals.forEach(i => clearInterval(i));
+  };
+
+  return { stop };
+}
+
+/**
+ * Continuous "DỪNG LẠI NGAY!" alert sound for 20 seconds - Repeating sharp whistle / urgent siren
+ * Returns a stop control to cancel early.
+ */
+export function playStopNowAlertSound20s(): { stop: () => void } {
+  let isStopped = false;
+  const ctx = getAudioContext();
+  const intervals: NodeJS.Timeout[] = [];
+
+  const fireWhistleBlast = () => {
+    if (isStopped) return;
+    try {
+      const now = ctx.currentTime;
+      // 2 sharp whistle / siren stop blasts
+      [0, 0.28].forEach(startTime => {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc1.type = 'sawtooth';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(2200, now + startTime);
+        osc1.frequency.linearRampToValueAtTime(2600, now + startTime + 0.08);
+        osc1.frequency.linearRampToValueAtTime(2300, now + startTime + 0.22);
+        osc2.frequency.setValueAtTime(2800, now + startTime);
+        osc2.frequency.linearRampToValueAtTime(3200, now + startTime + 0.08);
+        osc2.frequency.linearRampToValueAtTime(2900, now + startTime + 0.22);
+        gain.gain.setValueAtTime(0.30, now + startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + startTime + 0.24);
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+        osc1.start(now + startTime);
+        osc2.start(now + startTime);
+        osc1.stop(now + startTime + 0.24);
+        osc2.stop(now + startTime + 0.24);
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  // Fire immediately
+  fireWhistleBlast();
+
+  // Repeat every 1.2s
+  const whistleInterval = setInterval(() => {
+    if (isStopped) { clearInterval(whistleInterval); return; }
+    fireWhistleBlast();
+  }, 1200);
+  intervals.push(whistleInterval);
+
+  // Auto-stop after 20 seconds
+  const autoStopTimeout = setTimeout(() => { stop(); }, 20000);
+
+  const stop = () => {
+    isStopped = true;
+    clearTimeout(autoStopTimeout);
+    intervals.forEach(i => clearInterval(i));
+  };
+
+  return { stop };
+}
+
+/**
+ * Continuous "IM LẶNG NÀO!" alert sound for 20 seconds - Soft repeating descending chime (shh reminder)
+ * Returns a stop control to cancel early.
+ */
+export function playShhAlertSound20s(): { stop: () => void } {
+  let isStopped = false;
+  const ctx = getAudioContext();
+  const intervals: NodeJS.Timeout[] = [];
+
+  const fireShhChime = () => {
+    if (isStopped) return;
+    try {
+      const now = ctx.currentTime;
+      // Gentle descending 3-note chime: G5 -> E5 -> C5 (soft reminder tone)
+      const notes = [
+        { freq: 783.99, time: 0, dur: 0.28 },
+        { freq: 659.25, time: 0.20, dur: 0.28 },
+        { freq: 523.25, time: 0.40, dur: 0.45 }
+      ];
+      notes.forEach(({ freq, time, dur }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + time);
+        gain.gain.setValueAtTime(0.22, now + time);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + time + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + time);
+        osc.stop(now + time + dur);
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  // Fire immediately
+  fireShhChime();
+
+  // Repeat every 1.8s (gentler pace for "shh" reminder)
+  const shhInterval = setInterval(() => {
+    if (isStopped) { clearInterval(shhInterval); return; }
+    fireShhChime();
+  }, 1800);
+  intervals.push(shhInterval);
+
+  // Auto-stop after 20 seconds
+  const autoStopTimeout = setTimeout(() => { stop(); }, 20000);
+
+  const stop = () => {
+    isStopped = true;
+    clearTimeout(autoStopTimeout);
+    intervals.forEach(i => clearInterval(i));
+  };
+
+  return { stop };
+}
+
+/**
+ * Continuous applause + happy celebratory music for 20 seconds ("TUYỆT VỜI! VỖ TAY")
+ */
+export function playApplauseWithHappyMusic20s(): { stop: () => void } {
+  let isStopped = false;
+  const ctx = getAudioContext();
+  const intervals: NodeJS.Timeout[] = [];
+
+  // 1. Clapping generator (fires realistic claps repeatedly every 0.5s)
+  const fireClapBurst = () => {
+    if (isStopped) return;
+    try {
+      const now = ctx.currentTime;
+      const bufferSize = Math.floor(ctx.sampleRate * 0.04);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+      }
+
+      // Generate 14 overlapping claps
+      for (let i = 0; i < 14; i++) {
+        const offset = Math.random() * 0.48;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800 + Math.random() * 900, now + offset);
+        filter.Q.setValueAtTime(2.2, now + offset);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.12 + Math.random() * 0.1, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.05);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        noise.start(now + offset);
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  // 2. Upbeat Happy Celebration Melody (Bouncy celebratory tune in C Major)
+  const melodyNotes = [
+    { freq: 523.25, dur: 0.18 }, // C5
+    { freq: 659.25, dur: 0.18 }, // E5
+    { freq: 783.99, dur: 0.18 }, // G5
+    { freq: 1046.50, dur: 0.32 }, // C6
+    { freq: 880.00, dur: 0.2 },  // A5
+    { freq: 783.99, dur: 0.26 }, // G5
+    { freq: 659.25, dur: 0.18 }, // E5
+    { freq: 587.33, dur: 0.22 }, // D5
+    { freq: 523.25, dur: 0.38 }, // C5
+    { freq: 0, dur: 0.12 },      // rest
+    { freq: 659.25, dur: 0.18 }, // E5
+    { freq: 783.99, dur: 0.18 }, // G5
+    { freq: 880.00, dur: 0.24 }, // A5
+    { freq: 1046.50, dur: 0.42 }, // C6
+    { freq: 0, dur: 0.18 }        // rest
+  ];
+
+  let currentStep = 0;
+  const playNextMelodyNote = () => {
+    if (isStopped) return;
+    try {
+      const item = melodyNotes[currentStep % melodyNotes.length];
+      currentStep++;
+      if (item.freq > 0) {
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle'; // marimba / music box feel
+        osc2.type = 'sine';
+
+        osc.frequency.setValueAtTime(item.freq, now);
+        osc2.frequency.setValueAtTime(item.freq * 2, now); // 1 octave higher overtone
+
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + item.dur);
+
+        osc.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc2.start(now);
+        osc.stop(now + item.dur);
+        osc2.stop(now + item.dur);
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  // Initial immediate bursts
+  fireClapBurst();
+  playNextMelodyNote();
+
+  // Repeating clap burst every 500ms
+  const clapInterval = setInterval(() => {
+    if (isStopped) {
+      clearInterval(clapInterval);
+      return;
+    }
+    fireClapBurst();
+  }, 500);
+  intervals.push(clapInterval);
+
+  // Repeating music notes every 210ms
+  const musicInterval = setInterval(() => {
+    if (isStopped) {
+      clearInterval(musicInterval);
+      return;
+    }
+    playNextMelodyNote();
+  }, 210);
+  intervals.push(musicInterval);
+
+  // Auto-stop after 20 seconds
+  const autoStopTimeout = setTimeout(() => {
+    stop();
+  }, 20000);
+
+  const stop = () => {
+    isStopped = true;
+    clearTimeout(autoStopTimeout);
+    intervals.forEach(i => clearInterval(i));
+  };
+
+  return { stop };
 }
 
 /**

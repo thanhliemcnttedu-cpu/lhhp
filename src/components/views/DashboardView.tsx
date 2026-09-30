@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useClassroom } from '../../context/ClassroomContext';
 import { 
-  Users, CheckSquare, Gift, Sparkles, Plus, 
+  Users, User, CheckSquare, Gift, Sparkles, Plus, 
   ArrowUpRight, Award, Calendar, BookOpen, ChevronRight,
   TrendingUp, Brain, School, Trophy, Flame, RotateCcw
 } from 'lucide-react';
@@ -9,6 +9,7 @@ import { playPointClink, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
 import { callGeminiAi } from '../../services/aiService';
 import { APP_AUTHOR_INFO } from '../../data/initialData';
+import { SubjectTeacherDashboard } from './dashboard/SubjectTeacherDashboard';
 
 interface DashboardViewProps {
   onNavigate: (viewId: any) => void;
@@ -22,8 +23,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const { 
     classes, activeClassId, setActiveClassId, students, currentClassStudents, 
     currentDateAttendance, timetable, awardPoints,
-    teacherProfile, resetToDefaultData
+    teacherProfile, resetToDefaultData, teacherRole
   } = useClassroom();
+
+  if (teacherRole === 'subject') {
+    return (
+      <SubjectTeacherDashboard 
+        onNavigate={onNavigate} 
+        onOpenAddStudent={onOpenAddStudent} 
+      />
+    );
+  }
 
   const activeClass = classes.find(c => c.id === activeClassId) || classes[0];
 
@@ -116,17 +126,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
       {/* Empty State Banner if no classes exist */}
       {classes.length === 0 && (
-        <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
-              <School className="w-6 h-6" />
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-sm shadow-amber-500/20">
+              <School className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-black text-amber-950">Chưa có lớp học nào trong hệ thống</h4>
-              <p className="text-xs text-amber-800 mt-0.5">Khôi phục ngay dữ liệu mẫu chuẩn: 1 Lớp 4A1, Cô giáo Nguyễn Thị Hoa và 30 học sinh.</p>
+              <h4 className="text-xs font-black text-amber-950">Chưa có lớp học nào trong hệ thống</h4>
+              <p className="text-[11px] text-amber-800 mt-0.5">Khôi phục ngay dữ liệu mẫu chuẩn: 1 Lớp 4A1, Cô giáo Nguyễn Thị Hoa và 30 học sinh.</p>
             </div>
           </div>
           <button
@@ -135,149 +145,134 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               playFanfareSound();
               confetti({ particleCount: 60, spread: 70 });
             }}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black shrink-0 hover-zoom-btn flex items-center gap-2 shadow-md shadow-indigo-600/20"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shrink-0 hover-zoom-btn flex items-center gap-1.5 shadow-sm shadow-indigo-600/20"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
             <span>Khôi phục Lớp 4A1 ngay</span>
           </button>
         </div>
       )}
 
-      {/* 1. Main Welcome Banner matching PDF Page 1 */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-100 via-indigo-50 to-blue-100 p-6 md:p-8 border border-indigo-200/80 shadow-xs hover-zoom-card">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+      {/* 1. Main Welcome Banner matching Requirement 5: TÊN GIÁO VIÊN, ĐƠN VỊ CÔNG TÁC, NĂM HỌC */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-violet-100 via-indigo-50 to-blue-100 p-2.5 sm:p-3 px-3 sm:px-4 border border-indigo-200/80 shadow-2xs hover-zoom-card">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-10">
           {/* Left Greeting & Avatar */}
-          <div className="flex items-start md:items-center gap-4 md:gap-5">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <div className="relative shrink-0">
               <img
                 src={teacherProfile.avatar}
                 alt={teacherProfile.name}
-                className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover ring-4 ring-white shadow-md bg-white hover-zoom-interactive"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover ring-2 ring-white shadow-xs bg-white hover-zoom-interactive"
               />
-              <span className="absolute -bottom-1.5 -right-1.5 px-2 py-0.5 bg-indigo-600 text-white font-extrabold text-[10px] rounded-full shadow-xs">
+              <span className="absolute -bottom-1 -right-1 px-1 py-0.1 bg-indigo-600 text-white font-black text-[8px] rounded-full shadow-xs uppercase">
                 {teacherProfile.role || 'GVCN'}
               </span>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-xs font-black text-indigo-700 shadow-2xs border border-indigo-100">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Năm học: <strong className="text-indigo-900 font-black">{teacherProfile.academicYear || activeClass?.academicYear || '2026 – 2027'}</strong></span>
-                </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-xs font-black text-emerald-800 border border-emerald-200 shadow-2xs">
-                  <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Đơn vị: <strong className="text-emerald-950 font-black">{teacherProfile.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC'}</strong></span>
-                </div>
+            <div className="space-y-0.5">
+              <div className="flex flex-wrap items-center gap-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md bg-white/95 text-[9.5px] font-black text-indigo-700 shadow-2xs border border-indigo-100 uppercase">
+                  GV: <strong className="text-indigo-950 font-black">{teacherProfile.name}</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md bg-emerald-50 text-[9.5px] font-black text-emerald-800 border border-emerald-200 shadow-2xs uppercase">
+                  {teacherProfile.schoolName || 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN'}
+                </span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-amber-50 text-[9.5px] font-black text-amber-800 border border-amber-200 shadow-2xs uppercase">
+                  NH: {teacherProfile.academicYear || activeClass?.academicYear || '2026–2027'}
+                </span>
               </div>
 
-              <h1 className="text-xl md:text-2xl lg:text-3xl font-black text-indigo-950 tracking-tight">
-                {getGreeting()}, <span className="text-indigo-600">{teacherProfile.name}</span>! 👋
-              </h1>
-
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs md:text-sm text-slate-600 font-semibold">
-                <span>Giáo viên: <strong className="text-indigo-800 font-extrabold">{teacherProfile.name}</strong></span>
-                <span>•</span>
-                <span>Lớp phụ trách: <strong className="text-indigo-700 font-black">{activeClass ? `Lớp ${activeClass.name} (${activeClass.grade})` : 'Chưa có lớp'}</strong></span>
-                {teacherProfile.phone && (
-                  <>
-                    <span>•</span>
-                    <span>SĐT / Zalo: <a href={`https://zalo.me/${teacherProfile.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline font-mono font-bold">{teacherProfile.phone}</a></span>
-                  </>
-                )}
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-sm sm:text-base font-black text-indigo-950 tracking-tight uppercase leading-snug">
+                  {getGreeting()}, <span className="text-indigo-600">{teacherProfile.name}</span>! 👋
+                </h1>
+                <span className="text-[10px] text-slate-500 font-bold uppercase hidden sm:inline">
+                  • LỚP: <strong className="text-indigo-700 font-black">{activeClass ? `LỚP ${activeClass.name}` : 'CHƯA CÓ'}</strong>
+                  {teacherProfile.phone && ` • ZALO: ${teacherProfile.phone}`}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Right 4 Quick Action Buttons */}
-          <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap lg:grid lg:grid-cols-2 shrink-0">
+          {/* Right 5 Quick Action Buttons in Uppercase */}
+          <div className="flex flex-wrap items-center gap-1 shrink-0 pt-1 lg:pt-0">
             <button
               onClick={() => onNavigate('attendance')}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 hover-zoom-btn"
+              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
             >
-              <CheckSquare className="w-4 h-4" />
-              <span>Điểm danh ngay</span>
+              <CheckSquare className="w-3 h-3" />
+              <span>ĐIỂM DANH</span>
             </button>
 
             <button
               onClick={() => onOpenAddStudent ? onOpenAddStudent() : onNavigate('students')}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20 hover-zoom-btn"
+              className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
             >
-              <Plus className="w-4 h-4" />
-              <span>Thêm học sinh</span>
+              <Plus className="w-3 h-3" />
+              <span>THÊM HỌC SINH</span>
             </button>
 
             <button
               onClick={() => onNavigate('wheel')}
-              className="px-4 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md shadow-sky-500/20 hover-zoom-btn"
+              className="px-2.5 py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Vòng quay may mắn</span>
+              <Sparkles className="w-3 h-3" />
+              <span>VÒNG QUAY</span>
             </button>
 
             <button
               onClick={() => onNavigate('rewards')}
-              className="px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md shadow-rose-500/20 hover-zoom-btn"
+              className="px-2.5 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
             >
-              <Gift className="w-4 h-4" />
-              <span>Đổi xu phần thưởng</span>
+              <Gift className="w-3 h-3" />
+              <span>ĐỔI XU</span>
             </button>
 
             <button
               onClick={() => onNavigate('infographic')}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-600/25 hover-zoom-btn col-span-2 sm:col-span-1"
+              className="px-2.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
             >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Infographic Lớp A4</span>
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              <span>INFOGRAPHIC</span>
             </button>
           </div>
         </div>
 
-        {/* AI Daily Inspiration banner & Permanent Author badge */}
-        <div className="mt-5 pt-4 border-t border-indigo-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-indigo-900">
-          <div className="flex items-center gap-2.5 italic flex-1">
-            <Brain className="w-4 h-4 text-indigo-600 shrink-0" />
+        {/* AI Daily Inspiration & Author Information - compact row */}
+        <div className="mt-2 pt-1.5 border-t border-indigo-200/50 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[10.5px] text-indigo-900">
+          <div className="flex items-center gap-1.5 italic flex-1 truncate">
+            <Brain className="w-3 h-3 text-indigo-600 shrink-0" />
             <span className="truncate">{dailyQuote}</span>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 text-[10px]">
             <button
               onClick={fetchAiQuote}
               disabled={loadingQuote}
-              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline hover-zoom-interactive"
+              className="font-black text-indigo-600 hover:text-indigo-800 underline hover-zoom-interactive uppercase"
             >
-              {loadingQuote ? 'Đang tải...' : 'Lấy cảm hứng mới AI'}
+              {loadingQuote ? 'ĐANG TẢI...' : 'LẤY CẢM HỨNG AI'}
             </button>
             <span className="text-slate-300 hidden md:inline">|</span>
-            <span className="text-[11px] text-slate-500 hidden md:inline font-medium">
-              Tác giả: <strong className="text-indigo-700">{APP_AUTHOR_INFO.name}</strong> - {APP_AUTHOR_INFO.schoolName}
+            <span className="text-slate-600 hidden md:inline font-bold uppercase">
+              TÁC GIẢ: <strong className="text-indigo-800 font-black">{APP_AUTHOR_INFO.name}</strong> • ZALO: {APP_AUTHOR_INFO.zalo}
             </span>
-            <span className="text-slate-300 hidden md:inline">|</span>
-            <a 
-              href={APP_AUTHOR_INFO.zaloUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] text-blue-600 hover:text-blue-800 font-bold hover:underline hidden lg:inline-flex items-center gap-1 font-mono"
-            >
-              <span>Zalo hỗ trợ: {APP_AUTHOR_INFO.zalo}</span>
-            </a>
           </div>
         </div>
       </div>
 
       {/* 2. CLASS SELECTOR SWITCHER (When multiple classes exist - Yêu cầu 1) */}
       {classes.length > 1 && (
-        <div className="bg-white rounded-3xl p-4 border border-indigo-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="bg-white rounded-xl p-2.5 px-3 border border-indigo-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-black">
-              <School className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-black">
+              <School className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className="text-xs font-black text-indigo-900 block">CHỌN LỚP XEM BẢNG TIN:</span>
-              <span className="text-[11px] text-slate-500">Hệ thống đang quản lý {classes.length} lớp học</span>
+              <span className="text-[11px] font-black text-indigo-900 block leading-tight">CHỌN LỚP XEM BẢNG TIN:</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 md:pb-0">
             {classes.map(cls => {
               const isSelected = cls.id === activeClassId;
               const count = students.filter(s => s.classId === cls.id).length;
@@ -289,15 +284,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     setSelectedTimetableClassId(cls.id);
                     setSelectedRankingClassId(cls.id);
                   }}
-                  className={`px-3.5 py-1.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 hover-zoom-btn ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 hover-zoom-btn ${
                     isSelected
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/25 scale-103 font-black'
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-2xs font-black'
                       : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-indigo-50'
                   }`}
                 >
-                  <span className="w-2.5 h-2.5 rounded-full ring-2 ring-white/60" style={{ backgroundColor: cls.color || '#3B82F6' }} />
+                  <span className="w-2 h-2 rounded-full ring-1 ring-white/60" style={{ backgroundColor: cls.color || '#3B82F6' }} />
                   <span>Lớp {cls.name}</span>
-                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${isSelected ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                  <span className={`px-1 py-0.1 rounded text-[9.5px] ${isSelected ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-700'}`}>
                     {count} HS
                   </span>
                 </button>
@@ -307,81 +302,89 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       )}
 
-      {/* 3. 4 Metric KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 3. 4 Metric KPI Cards - Compact layout */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
         {/* Card 1: Sĩ số */}
         <div 
           onClick={() => onNavigate('students')}
-          className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover-zoom-card cursor-pointer group"
+          className="bg-white rounded-xl p-2.5 px-3 border border-slate-200/80 shadow-2xs hover-zoom-card cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">
-              <Users className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <Users className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-              Chi tiết <ArrowUpRight className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-black text-blue-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform uppercase">
+              CHI TIẾT <ArrowUpRight className="w-2.5 h-2.5" />
             </span>
           </div>
-          <div className="text-xs font-semibold text-slate-500">Sĩ số học sinh</div>
-          <div className="text-2xl font-black text-indigo-950 tracking-tight mt-0.5">
-            {totalStudents} <span className="text-sm font-semibold text-slate-500">em ({activeClass ? `Lớp ${activeClass.name}` : 'Chưa có lớp'})</span>
+          <div>
+            <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">SĨ SỐ HỌC SINH</div>
+            <div className="text-base sm:text-lg font-black text-indigo-950 tracking-tight font-mono leading-tight">
+              {totalStudents} <span className="text-[10px] font-bold text-slate-500 uppercase">HS ({activeClass ? `LỚP ${activeClass.name}` : 'CHƯA CÓ'})</span>
+            </div>
           </div>
         </div>
 
         {/* Card 2: Hiện diện hôm nay */}
         <div 
           onClick={() => onNavigate('attendance')}
-          className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover-zoom-card cursor-pointer group"
+          className="bg-white rounded-xl p-2.5 px-3 border border-slate-200/80 shadow-2xs hover-zoom-card cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-              <CheckSquare className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-black group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <CheckSquare className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-              Điểm danh <ArrowUpRight className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-black text-emerald-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform uppercase">
+              ĐIỂM DANH <ArrowUpRight className="w-2.5 h-2.5" />
             </span>
           </div>
-          <div className="text-xs font-semibold text-slate-500">Hiện diện hôm nay</div>
-          <div className="text-2xl font-black text-emerald-600 tracking-tight mt-0.5">
-            {presentCount}/{totalStudents} <span className="text-sm font-bold text-slate-500">({attendanceRate}%)</span>
+          <div>
+            <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">HIỆN DIỆN HÔM NAY</div>
+            <div className="text-base sm:text-lg font-black text-emerald-600 tracking-tight font-mono leading-tight">
+              {presentCount}/{totalStudents} <span className="text-[10px] font-bold text-slate-500 uppercase">({attendanceRate}%)</span>
+            </div>
           </div>
         </div>
 
         {/* Card 3: Tổng xu thi đua */}
         <div 
           onClick={() => onNavigate('rewards')}
-          className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover-zoom-card cursor-pointer group"
+          className="bg-white rounded-xl p-2.5 px-3 border border-slate-200/80 shadow-2xs hover-zoom-card cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-black group-hover:bg-rose-600 group-hover:text-white transition-colors">
-              <Award className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-black group-hover:bg-rose-600 group-hover:text-white transition-colors">
+              <Award className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold text-rose-600 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-              Đổi quà <ArrowUpRight className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-black text-rose-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform uppercase">
+              ĐỔI QUÀ <ArrowUpRight className="w-2.5 h-2.5" />
             </span>
           </div>
-          <div className="text-xs font-semibold text-slate-500">Tổng xu thi đua</div>
-          <div className="text-2xl font-black text-rose-600 tracking-tight mt-0.5">
-            {totalCoins} <span className="text-sm font-bold text-slate-500">xu toàn lớp</span>
+          <div>
+            <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">TỔNG XU THI ĐUA</div>
+            <div className="text-base sm:text-lg font-black text-rose-600 tracking-tight font-mono leading-tight">
+              {totalCoins} <span className="text-[10px] font-bold text-slate-500 uppercase">XU CẢ LỚP</span>
+            </div>
           </div>
         </div>
 
         {/* Card 4: Trung bình / học sinh */}
         <div 
           onClick={() => onNavigate('reports')}
-          className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover-zoom-card cursor-pointer group"
+          className="bg-white rounded-xl p-2.5 px-3 border border-slate-200/80 shadow-2xs hover-zoom-card cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-black group-hover:bg-purple-600 group-hover:text-white transition-colors">
-              <TrendingUp className="w-5 h-5" />
+          <div className="flex items-center justify-between mb-1">
+            <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-black group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <TrendingUp className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs font-bold text-purple-600 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-              Báo cáo <ArrowUpRight className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-black text-purple-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform uppercase">
+              BÁO CÁO <ArrowUpRight className="w-2.5 h-2.5" />
             </span>
           </div>
-          <div className="text-xs font-semibold text-slate-500">Trung bình / học sinh</div>
-          <div className="text-2xl font-black text-purple-600 tracking-tight mt-0.5">
-            {avgCoins} <span className="text-sm font-bold text-slate-500">xu / em</span>
+          <div>
+            <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">TRUNG BÌNH / HỌC SINH</div>
+            <div className="text-base sm:text-lg font-black text-purple-600 tracking-tight font-mono leading-tight">
+              {avgCoins} <span className="text-[10px] font-bold text-slate-500 uppercase">XU / EM</span>
+            </div>
           </div>
         </div>
       </div>
@@ -395,20 +398,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <Trophy className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm md:text-base font-black text-amber-950">
-                  Bảng Xếp Hạng Thi Đua Nhận Xu Theo Lớp Học
+                <h3 className="text-sm md:text-base font-black text-amber-950 uppercase">
+                  BẢNG XẾP HẠNG THI ĐUA NHẬN XU THEO LỚP HỌC
                 </h3>
-                <p className="text-xs text-amber-800">
-                  Thống kê tổng điểm xu thi đua, điểm trung bình và học sinh tiêu biểu của từng lớp
+                <p className="text-xs text-amber-800 font-semibold uppercase">
+                  THỐNG KÊ TỔNG ĐIỂM XU THI ĐUA, ĐIỂM TRUNG BÌNH VÀ HỌC SINH TIÊU BIỂU CỦA TỪNG LỚP
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => onNavigate('reports')}
-              className="text-xs font-bold text-amber-800 hover:text-amber-950 flex items-center gap-1 self-start sm:self-auto hover-zoom-interactive"
+              className="text-xs font-black text-amber-800 hover:text-amber-950 flex items-center gap-1 self-start sm:self-auto hover-zoom-interactive uppercase"
             >
-              <span>Xem báo cáo chi tiết</span>
+              <span>XEM BÁO CÁO CHI TIẾT</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -491,20 +494,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <Calendar className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm md:text-base font-black text-indigo-950">
-                    Thời Khóa Biểu Hôm Nay
+                  <h2 className="text-sm md:text-base font-black text-indigo-950 uppercase">
+                    THỜI KHÓA BIỂU HÔM NAY
                   </h2>
-                  <span className="text-[11px] text-indigo-600 font-bold block">
-                    Cố định theo: <strong>Lớp {selectedTimetableClass?.name}</strong>
+                  <span className="text-[11px] text-indigo-600 font-bold block uppercase">
+                    CỐ ĐỊNH THEO: <strong>LỚP {selectedTimetableClass?.name}</strong>
                   </span>
                 </div>
               </div>
 
               <button
                 onClick={() => onNavigate('schedule')}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover-zoom-interactive"
+                className="text-xs font-black text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover-zoom-interactive uppercase"
               >
-                <span>Xem cả tuần</span>
+                <span>XEM CẢ TUẦN</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -512,18 +515,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Class switcher buttons for Timetable if multiple classes (Yêu cầu 1) */}
             {classes.length > 1 && (
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 border-b border-slate-100">
-                <span className="text-[11px] font-bold text-slate-400 shrink-0">Lớp:</span>
+                <span className="text-[11px] font-bold text-slate-400 shrink-0 uppercase">LỚP:</span>
                 {classes.map(cls => (
                   <button
                     key={cls.id}
                     onClick={() => setSelectedTimetableClassId(cls.id)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shrink-0 hover-zoom-btn ${
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shrink-0 hover-zoom-btn uppercase ${
                       selectedTimetableClassId === cls.id
                         ? 'bg-blue-600 text-white font-black shadow-xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    Lớp {cls.name}
+                    LỚP {cls.name}
                   </button>
                 ))}
               </div>
@@ -541,14 +544,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         T{slot.period}
                       </span>
                       <div>
-                        <div className="text-xs md:text-sm font-black text-indigo-950">{slot.subject}</div>
-                        <div className="text-[11px] text-slate-500 font-medium">
-                          {slot.session === 'morning' ? 'Buổi Sáng' : 'Buổi Chiều'} · {slot.teacher || teacherProfile.name}
+                        <div className="text-xs md:text-sm font-black text-indigo-950 uppercase">{slot.subject}</div>
+                        <div className="text-[11px] text-slate-500 font-medium uppercase">
+                          {slot.session === 'morning' ? 'BUỔI SÁNG' : 'BUỔI CHIỀU'} · {slot.teacher || teacherProfile.name}
                         </div>
                       </div>
                     </div>
-                    <span className="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 text-xs font-black">
-                      Tiết {slot.period}
+                    <span className="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 text-xs font-black uppercase">
+                      TIẾT {slot.period}
                     </span>
                   </div>
                 ))}
@@ -556,14 +559,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             ) : (
               <div className="py-10 text-center text-slate-400 space-y-2">
                 <Calendar className="w-10 h-10 mx-auto text-slate-300" />
-                <p className="text-xs md:text-sm font-medium text-slate-600">
-                  Hôm nay không có tiết học nào trong thời khóa biểu Lớp {selectedTimetableClass?.name}.
+                <p className="text-xs md:text-sm font-medium text-slate-600 uppercase">
+                  HÔM NAY KHÔNG CÓ TIẾT HỌC NÀO TRONG THỜI KHÓA BIỂU LỚP {selectedTimetableClass?.name}.
                 </p>
                 <button
                   onClick={() => onNavigate('schedule')}
-                  className="text-xs font-bold text-indigo-600 hover:underline inline-block mt-1 hover-zoom-interactive"
+                  className="text-xs font-bold text-indigo-600 hover:underline inline-block mt-1 hover-zoom-interactive uppercase"
                 >
-                  + Cài đặt thời khóa biểu cố định lớp {selectedTimetableClass?.name}
+                  + CÀI ĐẶT THỜI KHÓA BIỂU CỐ ĐỊNH LỚP {selectedTimetableClass?.name}
                 </button>
               </div>
             )}
@@ -579,20 +582,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <Award className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm md:text-base font-black text-indigo-950">
-                    Top Thi Đua Nhận Xu
+                  <h2 className="text-sm md:text-base font-black text-indigo-950 uppercase">
+                    TOP THI ĐUA NHẬN XU
                   </h2>
-                  <span className="text-[11px] text-amber-700 font-bold block">
-                    Đang xem: <strong>Lớp {classes.find(c => c.id === selectedRankingClassId)?.name || activeClass?.name}</strong>
+                  <span className="text-[11px] text-amber-700 font-bold block uppercase">
+                    ĐANG XEM: <strong>LỚP {classes.find(c => c.id === selectedRankingClassId)?.name || activeClass?.name}</strong>
                   </span>
                 </div>
               </div>
 
               <button
                 onClick={() => onNavigate('reports')}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover-zoom-interactive"
+                className="text-xs font-black text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover-zoom-interactive uppercase"
               >
-                <span>Xem tất cả</span>
+                <span>XEM TẤT CẢ</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -691,6 +694,61 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* 6. BANNER THÔNG TIN GIÁO VIÊN & TÁC GIẢ BẢN QUYỀN CỐ ĐỊNH (Yêu cầu 5 & 6) */}
+      <div className="bg-white rounded-3xl p-5 border border-indigo-100 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 hover-zoom-card">
+        {/* Info Giáo viên: TÊN GIÁO VIÊN, ĐƠN VỊ CÔNG TÁC, NĂM HỌC */}
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <img
+            src={teacherProfile.avatar}
+            alt={teacherProfile.name}
+            className="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-200 shrink-0 bg-indigo-50"
+          />
+          <div className="space-y-0.5">
+            <div className="text-xs font-black text-indigo-950 uppercase flex flex-wrap items-center gap-2">
+              <span>TÊN GIÁO VIÊN: <strong className="text-indigo-600">{teacherProfile.name}</strong></span>
+              <span className="text-slate-300 hidden sm:inline">•</span>
+              <span>ĐƠN VỊ CÔNG TÁC: <strong className="text-emerald-700">{teacherProfile.schoolName || 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN'}</strong></span>
+            </div>
+            <div className="text-[11px] text-slate-500 font-bold uppercase">
+              NĂM HỌC: <strong className="text-amber-700">{teacherProfile.academicYear || '2026–2027'}</strong>
+              {activeClass && (
+                <span className="ml-2 text-indigo-600 font-semibold">• LỚP: {activeClass.name} ({activeClass.grade})</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tác giả ứng dụng cố định (Yêu cầu 6) */}
+        <div className="w-full md:w-auto flex flex-wrap items-center gap-2.5 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 text-xs justify-start md:justify-end">
+          <div className="text-left md:text-right">
+            <div className="flex items-center gap-1.5 md:justify-end">
+              <span className="text-[10px] font-black text-indigo-600 block uppercase">TÁC GIẢ ỨNG DỤNG:</span>
+              <span className="px-1.5 py-0.2 rounded-md bg-indigo-100 text-indigo-800 text-[9px] font-black uppercase">CỐ ĐỊNH</span>
+            </div>
+            <span className="text-xs font-black text-slate-900 uppercase">{APP_AUTHOR_INFO.name}</span>
+            <span className="text-[11px] text-slate-600 block font-bold uppercase">{APP_AUTHOR_INFO.schoolName}</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <a
+              href={APP_AUTHOR_INFO.zaloUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-xs flex items-center gap-1 border border-blue-200 transition-colors uppercase font-mono"
+            >
+              <span>ZALO HỖ TRỢ: {APP_AUTHOR_INFO.zalo}</span>
+            </a>
+            <a
+              href={APP_AUTHOR_INFO.facebook}
+              target="_blank"
+              rel="noreferrer"
+              className="px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold text-xs flex items-center gap-1 border border-indigo-200 transition-colors uppercase"
+            >
+              <span>FACEBOOK</span>
+            </a>
           </div>
         </div>
       </div>
