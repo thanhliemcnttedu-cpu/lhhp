@@ -838,7 +838,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setDbSyncStatus('offline');
         });
       }
-    }, 200);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [

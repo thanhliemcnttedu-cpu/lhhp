@@ -72,7 +72,7 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
 
   // Teacher Profile form state (Yêu cầu 1)
-  const [profileName, setProfileName] = useState(teacherProfile.name || 'NGUYỄN THỊ HOA');
+  const [profileName, setProfileName] = useState(teacherProfile.name || 'Nguyễn Thị Hoa');
   const [profileBirthDate, setProfileBirthDate] = useState(teacherProfile.birthDate || '15/08/1988');
   const [profileRole, setProfileRole] = useState(teacherProfile.role || 'GIÁO VIÊN CHỦ NHIỆM');
   const [profileSchool, setProfileSchool] = useState(teacherProfile.schoolName || 'Trường Tiểu học số 1 Tân Uyên');
@@ -127,13 +127,21 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
       setParentMember1Phone(currentSettingsClass.parentCommittee?.member1?.phone || '');
       setParentMember2Name(currentSettingsClass.parentCommittee?.member2?.name || '');
       setParentMember2Phone(currentSettingsClass.parentCommittee?.member2?.phone || '');
+
+      // Tự động đồng bộ tên giáo viên và năm học nếu lớp học có thông tin mới
+      if (currentSettingsClass.teacherName && !isSubjectTeacher && currentSettingsClass.teacherName !== profileName) {
+        setProfileName(currentSettingsClass.teacherName);
+      }
+      if (currentSettingsClass.academicYear && currentSettingsClass.academicYear !== profileAcademicYear) {
+        setProfileAcademicYear(currentSettingsClass.academicYear);
+      }
     }
-  }, [selectedSettingsClassId, currentSettingsClass]);
+  }, [selectedSettingsClassId, currentSettingsClass, classes]);
 
   // Keep profile inputs in sync if teacherProfile from context changes
   React.useEffect(() => {
     if (teacherProfile) {
-      setProfileName(teacherProfile.name || 'NGUYỄN THỊ HOA');
+      setProfileName(teacherProfile.name || 'Nguyễn Thị Hoa');
       setProfileBirthDate(teacherProfile.birthDate || '15/08/1988');
       setProfileRole(teacherProfile.role || 'GIÁO VIÊN CHỦ NHIỆM');
       setProfileSchool(teacherProfile.schoolName || 'Trường Tiểu học số 1 Tân Uyên');
@@ -167,6 +175,18 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
       facebook: profileFacebook.trim(),
       socialLink: profileSocialLink.trim()
     });
+
+    // Thông tin đồng bộ sang lớp chủ nhiệm (Yêu cầu 2: chỉ cần nhập 1 lần là thông nhau)
+    if (!isSubjectTeacher) {
+      const targetCls = classes.find(c => c.id === selectedSettingsClassId) || activeClass || classes[0];
+      if (targetCls) {
+        updateClass(targetCls.id, {
+          teacherName: profileName.trim(),
+          academicYear: profileAcademicYear.trim()
+        });
+      }
+    }
+
     setProfileSavedToast(true);
     confetti({ particleCount: 35, spread: 50 });
     setTimeout(() => setProfileSavedToast(false), 3000);
@@ -210,11 +230,13 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
       socialLink: profileSocialLink.trim()
     });
 
-    // Lưu ban phụ huynh & slogan (Chỉ áp dụng với Giáo viên chủ nhiệm)
+    // Lưu ban phụ huynh & slogan & tên GV (Chỉ áp dụng với Giáo viên chủ nhiệm)
     if (!isSubjectTeacher) {
       const targetCls = classes.find(c => c.id === selectedSettingsClassId) || activeClass || classes[0];
       if (targetCls) {
         updateClass(targetCls.id, {
+          teacherName: profileName.trim(),
+          academicYear: profileAcademicYear.trim(),
           slogan: classSlogan.trim(),
           parentCommittee: {
             head: { name: parentHeadName.trim(), phone: parentHeadPhone.trim(), roleTitle: 'Trưởng ban phụ huynh' },
@@ -1458,8 +1480,8 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
                     type="text"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    placeholder="Ví dụ: NGUYỄN THỊ HOA"
-                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-2xl text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-black text-slate-900 uppercase"
+                    placeholder="Ví dụ: Cô Nguyễn Thị Hoa"
+                    className="w-full px-3.5 py-2.5 border border-slate-200 rounded-2xl text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-slate-900"
                     required
                   />
                 </div>

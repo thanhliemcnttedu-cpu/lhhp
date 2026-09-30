@@ -29,7 +29,7 @@ export const SYSTEM_AVATARS = [
 
 // Thông tin giáo viên mặc định trong cài đặt (Yêu cầu 7)
 export const DEFAULT_TEACHER: TeacherProfile = {
-  name: 'NGUYỄN THỊ HOA',
+  name: 'Nguyễn Thị Hoa',
   birthDate: '15/08/1988',
   role: 'GIÁO VIÊN CHỦ NHIỆM',
   teachingSubject: 'Giáo viên chủ nhiệm',
@@ -50,7 +50,7 @@ export const INITIAL_CLASSES: Classroom[] = [
     grade: 'Khối 4',
     color: '#3B82F6', // Blue
     academicYear: '2026–2027',
-    teacherName: 'NGUYỄN THỊ HOA',
+    teacherName: 'Nguyễn Thị Hoa',
     avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
     slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng',
     parentCommittee: {

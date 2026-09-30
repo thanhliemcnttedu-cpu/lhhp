@@ -20,6 +20,55 @@ let supabaseClient: SupabaseClient | null = null;
 let realtimeChannel: RealtimeChannel | null = null;
 const realtimeListeners: Set<(event: { type: string; username?: string; targetUsername?: string; timestamp: number; originClientId?: string; message?: string }) => void> = new Set();
 
+// Local inter-tab & cross-browser broadcast channel on same machine
+const localBroadcastChannel = typeof window !== 'undefined' && 'BroadcastChannel' in window 
+  ? new BroadcastChannel('lop_hoc_realtime_bus') 
+  : null;
+
+if (localBroadcastChannel) {
+  localBroadcastChannel.onmessage = (event) => {
+    const data = event.data;
+    if (data && data.originClientId !== CLIENT_ID) {
+      realtimeListeners.forEach(listener => {
+        try {
+          listener({
+            type: 'DATA_CHANGED',
+            username: data.username,
+            targetUsername: data.targetUsername,
+            originClientId: data.originClientId,
+            timestamp: data.timestamp || Date.now(),
+            message: data.message || 'Cập nhật từ tab/cửa sổ khác'
+          });
+        } catch (_) {}
+      });
+    }
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'lop_hoc_realtime_ping' && e.newValue) {
+      try {
+        const data = JSON.parse(e.newValue);
+        if (data && data.originClientId !== CLIENT_ID) {
+          realtimeListeners.forEach(listener => {
+            try {
+              listener({
+                type: 'DATA_CHANGED',
+                username: data.username,
+                targetUsername: data.targetUsername,
+                originClientId: data.originClientId,
+                timestamp: data.timestamp || Date.now(),
+                message: 'Cập nhật trực quan đa trình duyệt'
+              });
+            } catch (_) {}
+          });
+        }
+      } catch (_) {}
+    }
+  });
+}
+
 export function getBrowserSupabase(): SupabaseClient | null {
   if (supabaseClient) return supabaseClient;
   try {
@@ -753,6 +802,24 @@ export const databaseService = {
       isSuccess = true;
     } catch (_) {}
 
+    // 4. Instant multi-tab & cross-window notification
+    try {
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage({
+          type: 'DATA_CHANGED',
+          username: cleanUser,
+          originClientId: CLIENT_ID,
+          timestamp: data.updatedAt || Date.now()
+        });
+      }
+      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        username: cleanUser,
+        originClientId: CLIENT_ID,
+        timestamp: data.updatedAt || Date.now(),
+        r: Math.random()
+      }));
+    } catch (_) {}
+
     return isSuccess;
   },
 
@@ -934,6 +1001,25 @@ export const databaseService = {
             }
           }).catch(() => {});
         }
+
+        // Multi-tab broadcast
+        try {
+          if (localBroadcastChannel) {
+            localBroadcastChannel.postMessage({
+              type: 'DATA_CHANGED',
+              username: 'all',
+              originClientId: CLIENT_ID,
+              timestamp: nowTs
+            });
+          }
+          localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+            username: 'all',
+            originClientId: CLIENT_ID,
+            timestamp: nowTs,
+            r: Math.random()
+          }));
+        } catch (_) {}
+
         synced = true;
       } catch (err) {
         console.warn('Supabase syncAdminAllData error:', err);

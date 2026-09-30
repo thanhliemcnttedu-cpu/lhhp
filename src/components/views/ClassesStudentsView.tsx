@@ -73,7 +73,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     bulkAddStudents, clearClassStudents, resetStudentsCoins,
     awardPoints, deductPoints, subjects, addSubject, updateSubject, deleteSubject,
     toggleSubjectApplied, setAppliedSubjects, resetDefaultSubjects,
-    criteria, teacherProfile, resetToDefaultData,
+    criteria, teacherProfile, updateTeacherProfile, resetToDefaultData,
     teacherRole, subjectTeacherConfig, seedSample20SubjectClasses,
     isAdmin, allTeachers, currentUser, syncDatabaseNow
   } = useClassroom();
@@ -371,13 +371,17 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const handleSaveEditClass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingClass || !editingClass.name.trim()) return;
+
+    const trimmedTeacherName = editingClass.teacherName?.trim() || teacherProfile.name || 'Cô Nguyễn Thị Hoa';
+    const trimmedAcademicYear = editingClass.academicYear?.trim() || teacherProfile.academicYear || '2026–2027';
+
     updateClass(editingClass.id, {
       name: editingClass.name.trim(),
       grade: editingClass.grade,
       teacherUsername: editingClass.teacherUsername,
       teacherRole: editingClass.teacherRole,
-      teacherName: editingClass.teacherName?.trim() || teacherProfile.name || 'Cô Nguyễn Thị Hoa',
-      academicYear: editingClass.academicYear?.trim() || teacherProfile.academicYear || '2026–2027',
+      teacherName: trimmedTeacherName,
+      academicYear: trimmedAcademicYear,
       color: editingClass.color,
       avatar: editingClass.avatar,
       originalAvatar: editingClass.originalAvatar,
@@ -386,6 +390,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       slogan: editingClass.slogan,
       parentCommittee: editingClass.parentCommittee
     });
+
+    // Yêu cầu 2: Thông tin giáo viên và ban phụ huynh thông nhau 2 chiều giữa Cài đặt và Quản lý lớp học
+    // Cập nhật ngược lại vào hồ sơ giáo viên và thông tin tài khoản nếu là GVCN hoặc đang thao tác lớp chủ nhiệm
+    if (teacherRole === 'homeroom' || !isAdmin || editingClass.id === activeClassId) {
+      updateTeacherProfile({
+        name: trimmedTeacherName,
+        academicYear: trimmedAcademicYear
+      });
+    }
+
     setEditingClass(null);
   };
 
@@ -2772,374 +2786,443 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       {/* ========================================================================= */}
       {/* MODAL: SỬA LỚP HỌC CÓ ẢNH ĐẠI DIỆN LỚP (User Request 1) */}
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* MODAL: SỬA LỚP HỌC - THIẾT KẾ THEO HƯỚNG NGANG GỌN GÀNG KHÔNG CUỘN (User Request) */}
+      {/* ========================================================================= */}
       {editingClass && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
-              <div>
-                <h3 className="text-base font-black text-indigo-950">Sửa Thông Tin Lớp Học</h3>
-                <p className="text-xs text-indigo-700 mt-0.5">Cập nhật tên lớp, giáo viên, năm học & ảnh đại diện</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3 sm:p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-4xl lg:max-w-5xl w-full p-5 sm:p-6 space-y-3.5 animate-in fade-in zoom-in-95 duration-150 max-h-[95vh] overflow-y-auto">
+            {/* Header modal */}
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-100">
+              <div className="flex items-center gap-2.5">
+                <div 
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-xs"
+                  style={{ backgroundColor: editingClass.color || '#6366F1' }}
+                >
+                  <School className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-indigo-950">Sửa Thông Tin Lớp Học</h3>
+                    <span 
+                      className="px-2 py-0.5 rounded-lg text-[10px] font-black text-white"
+                      style={{ backgroundColor: editingClass.color || '#6366F1' }}
+                    >
+                      LỚP {editingClass.name}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-indigo-700">
+                    Bố cục ngang toàn diện: Thông tin lớp, giáo viên, ban phụ huynh & ảnh đại diện
+                  </p>
+                </div>
               </div>
               <button 
                 onClick={() => setEditingClass(null)}
-                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-colors"
+                title="Đóng"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditClass} className="space-y-4">
-              {/* Chọn ảnh đại diện của lớp & Tải từ máy tính (User Request 1) */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700">Ảnh đại diện của lớp (To, rõ nét)</label>
+            <form onSubmit={handleSaveEditClass} className="space-y-3.5">
+              {/* Bố cục 2 cột ngang thông minh (lg:grid-cols-12) */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-start">
                 
-                <div className="flex items-center gap-3.5 p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                  <div className="relative shrink-0">
-                    <img 
-                      src={editingClass.avatar || CLASS_AVATARS[0].url} 
-                      alt="Xem trước ảnh lớp" 
-                      className="w-16 h-16 rounded-2xl object-cover border-2 shadow-md bg-white"
-                      style={{ borderColor: editingClass.color || '#6366F1' }}
-                    />
-                    <span 
-                      className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full ring-2 ring-white"
-                      style={{ backgroundColor: editingClass.color || '#6366F1' }}
-                    />
+                {/* CỘT TRÁI (5 phần 12): THÔNG TIN LỚP HỌC & GIÁO VIÊN & ẢNH ĐẠI DIỆN */}
+                <div className="lg:col-span-5 space-y-3">
+                  {/* Khối 1: Ảnh đại diện lớp học */}
+                  <div className="p-3 bg-slate-50/90 rounded-2xl border border-slate-200/90 space-y-2">
+                    <label className="block text-[11px] font-bold text-slate-700">
+                      Ảnh đại diện lớp học:
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <div className="relative shrink-0">
+                        <img 
+                          src={editingClass.avatar || CLASS_AVATARS[0].url} 
+                          alt="Xem trước ảnh lớp" 
+                          className="w-14 h-14 rounded-2xl object-cover border-2 shadow-xs bg-white"
+                          style={{ borderColor: editingClass.color || '#6366F1' }}
+                        />
+                        <span 
+                          className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full ring-2 ring-white"
+                          style={{ backgroundColor: editingClass.color || '#6366F1' }}
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => editClassAvatarInputRef.current?.click()}
+                            className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-xs transition-all hover-zoom-btn"
+                          >
+                            <Upload className="w-3 h-3" />
+                            <span>Tải từ máy tính</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAvatarEditingClass(editingClass)}
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-xs transition-all hover-zoom-btn"
+                            title="Thu phóng và căn chỉnh góc nhìn ảnh lớp"
+                          >
+                            <ZoomIn className="w-3 h-3" />
+                            <span>Căn chỉnh ảnh</span>
+                          </button>
+                        </div>
+                        <input
+                          type="file"
+                          ref={editClassAvatarInputRef}
+                          accept="image/*"
+                          onChange={handleUploadEditClassAvatar}
+                          className="hidden"
+                        />
+                        <span className="text-[9.5px] text-slate-400 block truncate">
+                          Hoặc bấm chọn nhanh mẫu hoạt hình bên dưới:
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5">
+                      {CLASS_AVATARS.map((av) => (
+                        <button
+                          key={av.id}
+                          type="button"
+                          onClick={() => setEditingClass({ ...editingClass, avatar: av.url })}
+                          className={`w-9 h-9 rounded-xl overflow-hidden border-2 transition-transform shrink-0 ${
+                            editingClass.avatar === av.url ? 'scale-110 ring-2 ring-indigo-500 border-indigo-500' : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                          title={av.label}
+                        >
+                          <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5 flex-1 min-w-0">
-                    <span className="text-[11px] font-bold text-slate-600 block">
-                      Tải ảnh đại diện lớp từ máy tính lên:
-                    </span>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => editClassAvatarInputRef.current?.click()}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all hover-zoom-btn"
+                  {/* Khối 2: Tên lớp, Khối, Năm học (3 cột trên 1 hàng ngang) */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Tên lớp *</label>
+                      <input
+                        type="text"
+                        value={editingClass.name}
+                        onChange={(e) => setEditingClass({ ...editingClass, name: e.target.value })}
+                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                        placeholder="4A1"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Khối lớp</label>
+                      <select
+                        value={editingClass.grade}
+                        onChange={(e) => setEditingClass({ ...editingClass, grade: e.target.value })}
+                        className="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
                       >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Chọn ảnh từ máy tính...</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAvatarEditingClass(editingClass)}
-                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all hover-zoom-btn"
-                        title="Thu phóng và căn chỉnh góc nhìn ảnh lớp"
-                      >
-                        <ZoomIn className="w-3.5 h-3.5" />
-                        <span>Phóng to & Căn chỉnh ảnh</span>
-                      </button>
+                        {['Khối 1', 'Khối 2', 'Khối 3', 'Khối 4', 'Khối 5', 'Khối 6', 'Khối 7', 'Khối 8', 'Khối 9'].map(g => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Năm học</label>
+                      <input
+                        type="text"
+                        value={editingClass.academicYear || ''}
+                        onChange={(e) => setEditingClass({ ...editingClass, academicYear: e.target.value })}
+                        placeholder="2026–2027"
+                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Khối 3: Tên giáo viên chủ nhiệm */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        Tên giáo viên chủ nhiệm / phụ trách:
+                      </label>
+                      <span className="text-[9.5px] text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">
+                        Đồng bộ Hồ sơ GV
+                      </span>
                     </div>
                     <input
-                      type="file"
-                      ref={editClassAvatarInputRef}
-                      accept="image/*"
-                      onChange={handleUploadEditClassAvatar}
-                      className="hidden"
+                      type="text"
+                      value={editingClass.teacherName || ''}
+                      onChange={(e) => setEditingClass({ ...editingClass, teacherName: e.target.value })}
+                      placeholder="Ví dụ: Cô Nguyễn Thị Hoa"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
                     />
-                    <span className="text-[10px] text-slate-400 block">
-                      Hoặc chọn nhanh từ các mẫu hoạt hình dưới đây:
-                    </span>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1">
-                  {CLASS_AVATARS.map((av) => (
-                    <button
-                      key={av.id}
-                      type="button"
-                      onClick={() => setEditingClass({ ...editingClass, avatar: av.url })}
-                      className={`w-11 h-11 rounded-2xl overflow-hidden border-2 transition-transform shrink-0 ${
-                        editingClass.avatar === av.url ? 'scale-110 ring-2 ring-indigo-500 border-indigo-500' : 'border-slate-200'
-                      }`}
-                    >
-                      <img src={av.url} alt={av.label} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              </div>
+                  {/* Khối 4: Phân công giáo viên quản lý lớp (chỉ dành cho Admin) */}
+                  {isAdmin && (
+                    <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10.5px] font-black text-amber-900 uppercase">
+                          👑 Phân công GV phụ trách:
+                        </label>
+                        <span className="text-[9px] bg-amber-200/60 text-amber-900 px-1.5 py-0.5 rounded-full font-bold">
+                          Admin
+                        </span>
+                      </div>
+                      <select
+                        value={editingClass.teacherUsername || ''}
+                        onChange={(e) => {
+                          const selectedU = e.target.value;
+                          const teacher = allTeachers.find(t => t.username.toLowerCase() === selectedU.toLowerCase());
+                          setEditingClass({
+                            ...editingClass,
+                            teacherUsername: selectedU,
+                            teacherRole: teacher ? (teacher.role === 'subject' ? 'subject' : 'homeroom') : (editingClass.teacherRole || 'homeroom'),
+                            teacherName: teacher?.fullName || editingClass.teacherName || ''
+                          });
+                        }}
+                        className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500"
+                      >
+                        <option value="">-- Chưa chỉ định tài khoản --</option>
+                        {allTeachers.map(t => (
+                          <option key={t.username} value={t.username}>
+                            {t.fullName} ({t.username}) — {t.role === 'homeroom' ? '🏫 GVCN' : '💻 GVBM'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tên lớp học *</label>
-                <input
-                  type="text"
-                  value={editingClass.name}
-                  onChange={(e) => setEditingClass({ ...editingClass, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tên giáo viên chủ nhiệm / phụ trách</label>
-                <input
-                  type="text"
-                  value={editingClass.teacherName || ''}
-                  onChange={(e) => setEditingClass({ ...editingClass, teacherName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Phân công giáo viên quản lý lớp (Dành cho Quản trị viên Admin) */}
-              {isAdmin && (
-                <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/90 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-black text-amber-900 uppercase">
-                      👑 Phân Công Giáo Viên Phụ Trách Lớp Học:
+                  {/* Khối 5: Màu sắc nhận diện lớp */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
+                      Màu sắc nhận diện lớp:
                     </label>
-                    <span className="text-[10px] bg-amber-200/60 text-amber-900 px-2 py-0.5 rounded-full font-bold">
-                      Quyền Quản Trị
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {CLASS_COLORS.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setEditingClass({ ...editingClass, color: c })}
+                          className={`w-6 h-6 rounded-full transition-transform ${
+                            editingClass.color === c ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2' : 'hover:scale-110'
+                          }`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <select
-                    value={editingClass.teacherUsername || ''}
-                    onChange={(e) => {
-                      const selectedU = e.target.value;
-                      const teacher = allTeachers.find(t => t.username.toLowerCase() === selectedU.toLowerCase());
-                      setEditingClass({
-                        ...editingClass,
-                        teacherUsername: selectedU,
-                        teacherRole: teacher ? (teacher.role === 'subject' ? 'subject' : 'homeroom') : (editingClass.teacherRole || 'homeroom'),
-                        teacherName: teacher?.fullName || editingClass.teacherName || ''
-                      });
-                    }}
-                    className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500"
-                  >
-                    <option value="">-- Chưa chỉ định tài khoản giáo viên --</option>
-                    {allTeachers.map(t => (
-                      <option key={t.username} value={t.username}>
-                        {t.fullName} ({t.username}) — {t.role === 'homeroom' ? '🏫 GV Chủ nhiệm' : '💻 GV Bộ môn'}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[11px] text-amber-800 font-medium">
-                    Thay đổi tại đây sẽ lập tức đồng bộ lớp và học sinh vào tài khoản giáo viên tương ứng trên toàn hệ thống.
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Khối lớp</label>
-                  <select
-                    value={editingClass.grade}
-                    onChange={(e) => setEditingClass({ ...editingClass, grade: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
-                  >
-                    {['Khối 1', 'Khối 2', 'Khối 3', 'Khối 4', 'Khối 5', 'Khối 6', 'Khối 7', 'Khối 8', 'Khối 9'].map(g => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Năm học</label>
-                  <input
-                    type="text"
-                    value={editingClass.academicYear || ''}
-                    onChange={(e) => setEditingClass({ ...editingClass, academicYear: e.target.value })}
-                    placeholder="2026 - 2027"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
-                  />
-                </div>
-              </div>
-
-              {/* Slogan của lớp học */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  ⭐ Slogan của lớp học
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng"
-                  value={editingClass.slogan || ''}
-                  onChange={(e) => setEditingClass({ ...editingClass, slogan: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-amber-900 focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Ban Phụ Huynh Lớp Học */}
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-rose-500" />
-                  <span className="text-xs font-black text-indigo-950 uppercase tracking-wide">
-                    Ban Đại Diện Cha Mẹ Học Sinh (Ban Phụ Huynh)
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                  {/* Trưởng ban */}
-                  <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100">
-                    <label className="block font-bold text-indigo-700 text-[11px]">Trưởng ban phụ huynh:</label>
+                {/* CỘT PHẢI (7 phần 12): KHẨU HIỆU & BAN ĐẠI DIỆN CHA MẸ HỌC SINH */}
+                <div className="lg:col-span-7 space-y-3">
+                  {/* Slogan của lớp học */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Slogan / Khẩu hiệu lớp học (Hiển thị trên Infographic):</span>
+                    </label>
                     <input
                       type="text"
-                      placeholder="Họ và tên..."
-                      value={editingClass.parentCommittee?.head?.name || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: { name: e.target.value, phone: editingClass.parentCommittee?.head?.phone || '', roleTitle: 'Trưởng ban phụ huynh' },
-                          deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
-                          member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
-                          member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Số điện thoại..."
-                      value={editingClass.parentCommittee?.head?.phone || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: { name: editingClass.parentCommittee?.head?.name || '', phone: e.target.value, roleTitle: 'Trưởng ban phụ huynh' },
-                          deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
-                          member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
-                          member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
+                      placeholder="Ví dụ: Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng"
+                      value={editingClass.slogan || ''}
+                      onChange={(e) => setEditingClass({ ...editingClass, slogan: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-amber-900 focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
-                  {/* Phó ban */}
-                  <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100">
-                    <label className="block font-bold text-indigo-700 text-[11px]">Phó ban phụ huynh:</label>
-                    <input
-                      type="text"
-                      placeholder="Họ và tên..."
-                      value={editingClass.parentCommittee?.deputy?.name || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: editingClass.parentCommittee?.head || { name: '', phone: '' },
-                          deputy: { name: e.target.value, phone: editingClass.parentCommittee?.deputy?.phone || '', roleTitle: 'Phó ban phụ huynh' },
-                          member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
-                          member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Số điện thoại..."
-                      value={editingClass.parentCommittee?.deputy?.phone || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: editingClass.parentCommittee?.head || { name: '', phone: '' },
-                          deputy: { name: editingClass.parentCommittee?.deputy?.name || '', phone: e.target.value, roleTitle: 'Phó ban phụ huynh' },
-                          member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
-                          member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
-                    />
-                  </div>
+                  {/* Ban Phụ Huynh Lớp Học (Lưới 2x2 gọn gàng, đồng bộ) */}
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/70 to-purple-50/50 border border-indigo-100 space-y-2.5">
+                    <div className="flex items-center justify-between pb-1 border-b border-indigo-100/70">
+                      <div className="flex items-center gap-1.5">
+                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
+                        <span className="text-xs font-black text-indigo-950 uppercase tracking-wide">
+                          Ban Đại Diện Cha Mẹ Học Sinh (4 Vị Trí)
+                        </span>
+                      </div>
+                      <span className="text-[9.5px] text-indigo-700 font-bold bg-white px-2 py-0.5 rounded-full border border-indigo-200/80 shadow-2xs">
+                        ⚡ Đồng bộ 2 chiều với Cài đặt
+                      </span>
+                    </div>
 
-                  {/* Ủy viên 1 */}
-                  <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100">
-                    <label className="block font-bold text-slate-700 text-[11px]">Ủy viên phụ huynh 1:</label>
-                    <input
-                      type="text"
-                      placeholder="Họ và tên..."
-                      value={editingClass.parentCommittee?.member1?.name || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: editingClass.parentCommittee?.head || { name: '', phone: '' },
-                          deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
-                          member1: { name: e.target.value, phone: editingClass.parentCommittee?.member1?.phone || '', roleTitle: 'Ủy viên ban phụ huynh' },
-                          member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Số điện thoại..."
-                      value={editingClass.parentCommittee?.member1?.phone || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: editingClass.parentCommittee?.head || { name: '', phone: '' },
-                          deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
-                          member1: { name: editingClass.parentCommittee?.member1?.name || '', phone: e.target.value, roleTitle: 'Ủy viên ban phụ huynh' },
-                          member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
-                    />
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                      {/* 1. Trưởng ban */}
+                      <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <label className="block font-black text-indigo-800 text-[11px]">
+                            1. Trưởng ban phụ huynh:
+                          </label>
+                          <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1 rounded font-bold">Trưởng ban</span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Họ và tên..."
+                          value={editingClass.parentCommittee?.head?.name || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: { name: e.target.value, phone: editingClass.parentCommittee?.head?.phone || '', roleTitle: 'Trưởng ban phụ huynh' },
+                              deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
+                              member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
+                              member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Số điện thoại liên hệ..."
+                          value={editingClass.parentCommittee?.head?.phone || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: { name: editingClass.parentCommittee?.head?.name || '', phone: e.target.value, roleTitle: 'Trưởng ban phụ huynh' },
+                              deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
+                              member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
+                              member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-mono"
+                        />
+                      </div>
 
-                  {/* Ủy viên 2 */}
-                  <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100">
-                    <label className="block font-bold text-slate-700 text-[11px]">Ủy viên phụ huynh 2:</label>
-                    <input
-                      type="text"
-                      placeholder="Họ và tên..."
-                      value={editingClass.parentCommittee?.member2?.name || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: editingClass.parentCommittee?.head || { name: '', phone: '' },
-                          deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
-                          member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
-                          member2: { name: e.target.value, phone: editingClass.parentCommittee?.member2?.phone || '', roleTitle: 'Ủy viên ban phụ huynh' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Số điện thoại..."
-                      value={editingClass.parentCommittee?.member2?.phone || ''}
-                      onChange={(e) => setEditingClass({
-                        ...editingClass,
-                        parentCommittee: {
-                          head: editingClass.parentCommittee?.head || { name: '', phone: '' },
-                          deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
-                          member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
-                          member2: { name: editingClass.parentCommittee?.member2?.name || '', phone: e.target.value, roleTitle: 'Ủy viên ban phụ huynh' }
-                        }
-                      })}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono"
-                    />
+                      {/* 2. Phó ban */}
+                      <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <label className="block font-black text-indigo-800 text-[11px]">
+                            2. Phó ban phụ huynh:
+                          </label>
+                          <span className="text-[9px] bg-purple-50 text-purple-600 px-1 rounded font-bold">Phó ban</span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Họ và tên..."
+                          value={editingClass.parentCommittee?.deputy?.name || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: editingClass.parentCommittee?.head || { name: '', phone: '' },
+                              deputy: { name: e.target.value, phone: editingClass.parentCommittee?.deputy?.phone || '', roleTitle: 'Phó ban phụ huynh' },
+                              member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
+                              member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Số điện thoại liên hệ..."
+                          value={editingClass.parentCommittee?.deputy?.phone || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: editingClass.parentCommittee?.head || { name: '', phone: '' },
+                              deputy: { name: editingClass.parentCommittee?.deputy?.name || '', phone: e.target.value, roleTitle: 'Phó ban phụ huynh' },
+                              member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
+                              member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-mono"
+                        />
+                      </div>
+
+                      {/* 3. Ủy viên 1 */}
+                      <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <label className="block font-bold text-slate-700 text-[11px]">
+                            3. Ủy viên phụ huynh 1:
+                          </label>
+                          <span className="text-[9px] bg-slate-100 text-slate-600 px-1 rounded font-medium">Ủy viên</span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Họ và tên..."
+                          value={editingClass.parentCommittee?.member1?.name || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: editingClass.parentCommittee?.head || { name: '', phone: '' },
+                              deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
+                              member1: { name: e.target.value, phone: editingClass.parentCommittee?.member1?.phone || '', roleTitle: 'Ủy viên ban phụ huynh' },
+                              member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Số điện thoại liên hệ..."
+                          value={editingClass.parentCommittee?.member1?.phone || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: editingClass.parentCommittee?.head || { name: '', phone: '' },
+                              deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
+                              member1: { name: editingClass.parentCommittee?.member1?.name || '', phone: e.target.value, roleTitle: 'Ủy viên ban phụ huynh' },
+                              member2: editingClass.parentCommittee?.member2 || { name: '', phone: '' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-mono"
+                        />
+                      </div>
+
+                      {/* 4. Ủy viên 2 */}
+                      <div className="space-y-1 p-2 rounded-xl bg-white border border-indigo-100 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <label className="block font-bold text-slate-700 text-[11px]">
+                            4. Ủy viên phụ huynh 2:
+                          </label>
+                          <span className="text-[9px] bg-slate-100 text-slate-600 px-1 rounded font-medium">Ủy viên</span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Họ và tên..."
+                          value={editingClass.parentCommittee?.member2?.name || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: editingClass.parentCommittee?.head || { name: '', phone: '' },
+                              deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
+                              member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
+                              member2: { name: e.target.value, phone: editingClass.parentCommittee?.member2?.phone || '', roleTitle: 'Ủy viên ban phụ huynh' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Số điện thoại liên hệ..."
+                          value={editingClass.parentCommittee?.member2?.phone || ''}
+                          onChange={(e) => setEditingClass({
+                            ...editingClass,
+                            parentCommittee: {
+                              head: editingClass.parentCommittee?.head || { name: '', phone: '' },
+                              deputy: editingClass.parentCommittee?.deputy || { name: '', phone: '' },
+                              member1: editingClass.parentCommittee?.member1 || { name: '', phone: '' },
+                              member2: { name: editingClass.parentCommittee?.member2?.name || '', phone: e.target.value, roleTitle: 'Ủy viên ban phụ huynh' }
+                            }
+                          })}
+                          className="w-full px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-mono"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Màu sắc nhận diện</label>
-                <div className="flex items-center gap-2">
-                  {CLASS_COLORS.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setEditingClass({ ...editingClass, color: c })}
-                      className={`w-7 h-7 rounded-full transition-transform ${
-                        editingClass.color === c ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2' : ''
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              {/* Footer action buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingClass(null)}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/20 hover-zoom-btn"
+                  className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/25 hover-zoom-btn flex items-center gap-1.5"
                 >
-                  Lưu Thông Tin
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Lưu Toàn Bộ Thông Tin</span>
                 </button>
               </div>
             </form>
