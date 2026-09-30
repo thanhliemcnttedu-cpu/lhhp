@@ -23,25 +23,25 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const navItems = [
     {
       id: 'dashboard' as NavigationMenuId,
-      label: 'TRANG CHỦ',
+      label: 'Trang chủ',
       icon: Home,
       action: () => onNavigate('dashboard')
     },
     {
       id: 'students' as NavigationMenuId,
-      label: 'HỌC SINH',
+      label: 'Học sinh',
       icon: Users,
       action: () => onNavigate('students')
     },
     {
       id: 'rewards' as NavigationMenuId,
-      label: 'ĐỔI THƯỞNG',
+      label: 'Đổi thưởng',
       icon: Award,
       action: () => onNavigate('rewards')
     },
     {
       id: 'reports' as NavigationMenuId,
-      label: 'BÁO CÁO',
+      label: 'Báo cáo',
       icon: BarChart3,
       action: () => onNavigate('reports')
     },
@@ -61,10 +61,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             key={item.id}
             type="button"
             onClick={item.action}
-            className={`flex-1 py-1 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all relative focus:outline-hidden ${
+            className={`flex-1 py-1 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all relative focus:outline-hidden normal-case ${
               isActive
-                ? 'text-indigo-600 font-black'
-                : 'text-slate-600 hover:text-indigo-600 font-bold'
+                ? 'text-indigo-600 font-bold'
+                : 'text-slate-600 hover:text-indigo-600 font-semibold'
             }`}
           >
             {isActive && (
@@ -75,7 +75,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             }`}>
               <Icon className="w-5 h-5" />
             </div>
-            <span className="text-[10px] tracking-tight leading-none uppercase truncate max-w-[64px]">
+            <span className="text-[10.5px] tracking-tight leading-none normal-case truncate max-w-[64px]">
               {item.label}
             </span>
           </button>
@@ -86,14 +86,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       <button
         type="button"
         onClick={onOpenMenu}
-        className="flex-1 py-1 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-700 hover:text-indigo-600 font-black transition-all focus:outline-hidden active:scale-95"
+        className="flex-1 py-1 px-1 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-slate-700 hover:text-indigo-600 font-bold transition-all focus:outline-hidden active:scale-95 normal-case"
         title="Mở toàn bộ 16 chức năng Lớp Học Hạnh Phúc"
       >
         <div className="p-1 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white shadow-xs shadow-indigo-600/30">
           <Menu className="w-5 h-5" />
         </div>
-        <span className="text-[10px] tracking-tight leading-none uppercase text-indigo-700 font-black">
-          MENU
+        <span className="text-[10.5px] tracking-tight leading-none normal-case text-indigo-700 font-bold">
+          Menu
         </span>
       </button>
     </nav>
