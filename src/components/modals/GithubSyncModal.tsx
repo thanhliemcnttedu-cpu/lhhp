@@ -22,7 +22,7 @@ export const GithubSyncModal: React.FC<GithubSyncModalProps> = ({
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Form states - Pre-filled with user repository
-  const [repoUrl, setRepoUrl] = useState('https://github.com/thanhliemcnttedu-cpu/lhhp.git');
+  const [repoUrl, setRepoUrl] = useState('https://github.com/thanhliemcnttedu-cpu/lophochanhphuc.git');
   const [token, setToken] = useState('');
   const [branch, setBranch] = useState('main');
   const [autoPush, setAutoPush] = useState(true);
@@ -37,7 +37,7 @@ export const GithubSyncModal: React.FC<GithubSyncModalProps> = ({
         if (data.remoteUrl) {
           setRepoUrl(data.remoteUrl);
         } else if (!repoUrl) {
-          setRepoUrl('https://github.com/thanhliemcnttedu-cpu/lhhp.git');
+          setRepoUrl('https://github.com/thanhliemcnttedu-cpu/lophochanhphuc.git');
         }
         if (data.branch) {
           setBranch(data.branch);
