@@ -372,13 +372,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
               <div className="flex items-center gap-1.5 min-w-0">
                 <img 
-                  src={currentUser?.avatar || teacherProfile.avatar} 
-                  alt={currentUser?.fullName}
+                  src={teacherProfile.avatar || currentUser?.avatar} 
+                  alt={teacherProfile.name || currentUser?.fullName}
                   className="w-6 h-6 rounded-full border border-slate-200 object-cover bg-white shrink-0"
                 />
                 <div className="min-w-0">
                   <div className="text-[10.5px] font-black text-slate-800 truncate leading-tight">
-                    {currentUser?.fullName || teacherProfile.name}
+                    {teacherProfile.name || currentUser?.fullName}
                   </div>
                   <div className="text-[8.5px] font-bold text-slate-400 truncate leading-tight">
                     {currentUser?.role === 'admin' ? 'Quản trị viên' : currentUser?.role === 'homeroom' ? 'GVCN Lớp ' + (currentUser?.assignedClassName || '4A1') : 'GVBM ' + (currentUser?.subjectName || 'Tin học')}

@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-09-30T10:40:46.675Z",
+  "lastSync": "2026-09-30T10:40:53.330Z",
   "users": [
     {
       "id": "user-admin",
@@ -21,7 +21,7 @@
       "id": "user-gvcn4a1",
       "username": "gvcn4a1",
       "password": "123456",
-      "fullName": "Cô Mai Hoa (GVCN 4A1)",
+      "fullName": "TRỊNH THỊ CÚC",
       "role": "homeroom",
       "assignedClassName": "4A1",
       "email": "gvcn4a1@lophoc.edu.vn",
@@ -3753,7 +3753,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790764838714
+    "lastGithubPushAt": 1790764853330
   },
   "auditLogs": [
     {

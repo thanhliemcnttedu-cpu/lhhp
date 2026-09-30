@@ -410,14 +410,14 @@ export const TopBar: React.FC<TopBarProps> = ({
             title="Nhấn để đổi tài khoản hoặc xem thông tin giáo viên"
           >
             <img 
-              src={currentUser?.avatar || teacherProfile.avatar} 
-              alt={currentUser?.fullName || teacherProfile.name}
+              src={teacherProfile.avatar || currentUser?.avatar} 
+              alt={teacherProfile.name || currentUser?.fullName}
               className="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover ring-2 ring-indigo-200 group-hover:ring-indigo-600 transition-all bg-slate-100 shadow-2xs shrink-0"
               referrerPolicy="no-referrer"
             />
             <div className="hidden md:block text-left">
               <div className="text-[11px] font-black text-slate-800 leading-tight flex items-center gap-1">
-                <span>{currentUser?.fullName || teacherProfile.name}</span>
+                <span>{teacherProfile.name || currentUser?.fullName}</span>
                 <ChevronDown className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-700" />
               </div>
               <div className="text-[9.5px] text-slate-400 leading-none truncate max-w-[120px]">
@@ -435,13 +435,13 @@ export const TopBar: React.FC<TopBarProps> = ({
               <div className="p-3 bg-gradient-to-r from-indigo-50 to-slate-50 rounded-2xl border border-indigo-100 mb-2.5">
                 <div className="flex items-center gap-2.5">
                   <img 
-                    src={currentUser?.avatar || teacherProfile.avatar} 
-                    alt={currentUser?.fullName}
+                    src={teacherProfile.avatar || currentUser?.avatar} 
+                    alt={teacherProfile.name || currentUser?.fullName}
                     className="w-10 h-10 rounded-full border border-indigo-200 object-cover bg-white shrink-0"
                   />
                   <div className="min-w-0">
                     <div className="text-xs font-black text-slate-900 truncate">
-                      {currentUser?.fullName || teacherProfile.name}
+                      {teacherProfile.name || currentUser?.fullName}
                     </div>
                     <div className="text-[11px] font-mono text-slate-500 font-bold truncate">
                       @{currentUser?.username}

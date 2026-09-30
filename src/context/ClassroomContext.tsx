@@ -426,6 +426,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     if (data.teacherProfile) {
       setTeacherProfile(data.teacherProfile);
+      const tpName = data.teacherProfile.name ? data.teacherProfile.name.trim() : '';
+      const tpAvatar = data.teacherProfile.avatar || '';
+      if (tpName) {
+        setCurrentUser(prevUser => {
+          if (!prevUser) return null;
+          if (prevUser.fullName !== tpName || (tpAvatar && prevUser.avatar !== tpAvatar)) {
+            const updated: UserAccount = {
+              ...prevUser,
+              fullName: tpName,
+              avatar: tpAvatar || prevUser.avatar
+            };
+            try {
+              localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(updated));
+            } catch (_) {}
+            return updated;
+          }
+          return prevUser;
+        });
+      }
     }
     if (data.quizBank && Array.isArray(data.quizBank)) {
       setQuizBank(data.quizBank);
@@ -1862,6 +1881,53 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Teacher Profile
   const updateTeacherProfile = (data: Partial<TeacherProfile>) => {
     setTeacherProfile(prev => ({ ...prev, ...data }));
+
+    const newName = data.name ? data.name.trim() : '';
+    const newAvatar = data.avatar || '';
+
+    // Cập nhật ngay lập tức vào thông tin tài khoản đăng nhập (currentUser)
+    setCurrentUser(prevUser => {
+      if (!prevUser) return null;
+      const updatedUser: UserAccount = {
+        ...prevUser,
+        fullName: newName || prevUser.fullName,
+        avatar: newAvatar || prevUser.avatar,
+        phone: data.phone !== undefined ? data.phone.trim() : prevUser.phone,
+        schoolName: data.schoolName !== undefined ? data.schoolName.trim() : prevUser.schoolName
+      };
+
+      try {
+        localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(updatedUser));
+      } catch (_) {}
+
+      // Đồng bộ cập nhật lên Supabase Cloud & database users table
+      databaseService.updateUser(updatedUser.id, {
+        fullName: updatedUser.fullName,
+        avatar: updatedUser.avatar,
+        phone: updatedUser.phone,
+        schoolName: updatedUser.schoolName
+      }).catch(err => console.warn('Lỗi cập nhật user database:', err));
+
+      return updatedUser;
+    });
+
+    // Cập nhật tên giáo viên trong danh sách lớp học nếu có
+    if (newName) {
+      setClasses(prevClasses => prevClasses.map(cls => {
+        if (!cls.teacherName || cls.teacherName === teacherProfile.name || cls.teacherName.includes('Hoa')) {
+          return { ...cls, teacherName: newName };
+        }
+        return cls;
+      }));
+
+      // Cập nhật danh sách allUsers (allTeachers được tính toán tự động từ allUsers)
+      setAllUsers(prev => prev.map(u => {
+        if (currentUser && (u.id === currentUser.id || u.username.toLowerCase() === currentUser.username.toLowerCase())) {
+          return { ...u, fullName: newName, avatar: newAvatar || u.avatar };
+        }
+        return u;
+      }));
+    }
   };
 
   // Backup & Restore
