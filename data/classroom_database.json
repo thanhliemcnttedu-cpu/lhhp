@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-09-30T10:40:28.124Z",
+  "lastSync": "2026-09-30T10:40:42.370Z",
   "users": [
     {
       "id": "user-admin",
@@ -1353,7 +1353,7 @@
         }
       ],
       "teacherProfile": {
-        "name": "Cô Mai Hoa (GVCN 4A1)",
+        "name": "TRỊNH THỊ CÚC",
         "birthDate": "15/08/1988",
         "role": "GIÁO VIÊN CHỦ NHIỆM",
         "teachingSubject": "Giáo viên chủ nhiệm",
@@ -1363,7 +1363,13 @@
         "zalo": "0977058363",
         "facebook": "https://www.facebook.com/tieuhocso1tanuyen/",
         "socialLink": "https://zalo.me/0977058363",
-        "academicYear": "2026–2027"
+        "academicYear": "2026–2027",
+        "originalAvatar": "https://api.dicebear.com/7.x/bottts/svg?seed=CoNguyenThiHoa&backgroundColor=ffd5dc",
+        "avatarScale": 1,
+        "avatarPosition": {
+          "x": 0,
+          "y": 0
+        }
       },
       "quizBank": [
         {
@@ -1540,7 +1546,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790764828124
+      "updatedAt": 1790764842370
     },
     "admin": {
       "classes": [
@@ -3747,7 +3753,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790764791995
+    "lastGithubPushAt": 1790764838714
   },
   "auditLogs": [
     {
