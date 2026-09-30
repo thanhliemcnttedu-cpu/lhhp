@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-09-30T22:56:17.936Z",
+  "lastSync": "2026-09-30T22:57:07.728Z",
   "users": [
     {
       "id": "user-admin",
@@ -920,75 +920,11 @@
       "timetable": [
         {
           "day": 2,
-          "period": 1,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Chào cờ",
-          "teacher": "GV: TPT"
-        },
-        {
-          "day": 2,
-          "period": 2,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Toán",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 2,
-          "period": 3,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tiếng Việt",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 2,
-          "period": 4,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tiếng Anh",
-          "teacher": "Cô Mai"
-        },
-        {
-          "day": 2,
           "period": 5,
           "classId": "class-4a1",
           "session": "morning",
           "subject": "Hoạt động trải nghiệm",
           "teacher": "Cô Hoa"
-        },
-        {
-          "day": 3,
-          "period": 1,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Toán",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 3,
-          "period": 2,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tiếng Việt",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 3,
-          "period": 3,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Khoa học",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 3,
-          "period": 4,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Âm nhạc",
-          "teacher": "Thầy Hưng"
         },
         {
           "day": 3,
@@ -1000,75 +936,11 @@
         },
         {
           "day": 4,
-          "period": 1,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tiếng Việt",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 4,
-          "period": 2,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Toán",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 4,
-          "period": 3,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Lịch sử & Địa lý",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 4,
-          "period": 4,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tin học",
-          "teacher": "Thầy Liêm"
-        },
-        {
-          "day": 4,
           "period": 5,
           "classId": "class-4a1",
           "session": "morning",
           "subject": "Đạo đức",
           "teacher": "Cô Hoa"
-        },
-        {
-          "day": 5,
-          "period": 1,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Toán",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 5,
-          "period": 2,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tiếng Việt",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 5,
-          "period": 3,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tiếng Anh",
-          "teacher": "Cô Mai"
-        },
-        {
-          "day": 5,
-          "period": 4,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Mĩ thuật",
-          "teacher": "Cô Lan"
         },
         {
           "day": 5,
@@ -1080,43 +952,256 @@
         },
         {
           "day": 6,
-          "period": 1,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Toán",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 6,
-          "period": 2,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Tiếng Việt",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 6,
-          "period": 3,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Khoa học",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 6,
-          "period": 4,
-          "classId": "class-4a1",
-          "session": "morning",
-          "subject": "Sinh hoạt lớp",
-          "teacher": "Cô Hoa"
-        },
-        {
-          "day": 6,
           "period": 5,
           "classId": "class-4a1",
           "session": "morning",
           "subject": "Hoạt động trải nghiệm",
           "teacher": "Cô Hoa"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 1,
+          "subject": "Chào cờ",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 4,
+          "subject": "Toán",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 2,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Tiếng Anh",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 2,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Tiếng Anh",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 2,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Tự học có hướng dẫn",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 4,
+          "subject": "Tự nhiên & Xã hội",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 3,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Tin học",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 3,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Tin học",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 3,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Đọc sách thư viện",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Anh",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 4,
+          "subject": "Âm nhạc",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 4,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Công nghệ",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 4,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Mĩ thuật",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 4,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "HĐTN",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 4,
+          "subject": "Lịch sử & Địa lí",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 5,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Tiếng Anh",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 5,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Tiếng Anh",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 5,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Tự học có hướng dẫn",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 4,
+          "subject": "Khoa học",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 6,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "HĐTN",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 6,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Hoạt động trải nghiệm",
+          "classId": "class-4a1"
+        },
+        {
+          "day": 6,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Vệ sinh lớp học",
+          "classId": "class-4a1"
         }
       ],
       "timetableConfig": {
@@ -1563,7 +1648,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790808977936
+      "updatedAt": 1790809027728
     },
     "admin": {
       "classes": [
@@ -4165,7 +4250,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790764853330
+    "lastGithubPushAt": 1790808986562
   },
   "auditLogs": [
     {
