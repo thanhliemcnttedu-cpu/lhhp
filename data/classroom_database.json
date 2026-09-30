@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-09-30T22:56:12.645Z",
+  "lastSync": "2026-09-30T22:56:17.936Z",
   "users": [
     {
       "id": "user-admin",
@@ -693,7 +693,7 @@
           "icon": "Globe",
           "name": "TIẾNG ANH",
           "color": "#8B5CF6",
-          "enabled": true
+          "enabled": false
         },
         {
           "id": "sub-tnxh",
@@ -1563,7 +1563,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790808972645
+      "updatedAt": 1790808977936
     },
     "admin": {
       "classes": [
