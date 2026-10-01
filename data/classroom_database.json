@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T06:38:47.221Z",
+  "lastSync": "2026-10-01T06:56:33.283Z",
   "users": [
     {
       "id": "user-admin",
@@ -87,15 +87,16 @@
       "password": "123456",
       "fullName": "Nguyễn Thị Trang",
       "role": "homeroom",
-      "tenantType": "guest",
+      "tenantType": "school",
       "assignedClassName": "2A1",
-      "schoolName": "Giáo viên Tự do / Cá nhân",
+      "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN",
       "email": "nguyenthitrangtu1@lophoc.edu.vn",
       "phone": "0987654321",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiTrang1991&backgroundColor=fde047",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790834269001
+      "lastLoginAt": 1790834269001,
+      "isGuestAdmin": false
     },
     {
       "id": "user-adminths1",
@@ -3496,6 +3497,251 @@
           "session": "morning",
           "subject": "Hoạt động trải nghiệm",
           "teacher": "Cô Hoa"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 1,
+          "subject": "Chào cờ",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 2,
+          "session": "morning",
+          "period": 4,
+          "subject": "Toán",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 2,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Tiếng Anh",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 2,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Tiếng Anh",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 2,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Tự học có hướng dẫn",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 3,
+          "session": "morning",
+          "period": 4,
+          "subject": "Tự nhiên & Xã hội",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 3,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Tin học",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 3,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Tin học",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 3,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Đọc sách thư viện",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Anh",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 4,
+          "session": "morning",
+          "period": 4,
+          "subject": "Âm nhạc",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 4,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Công nghệ",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 4,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Mĩ thuật",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 4,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "HĐTN",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 5,
+          "session": "morning",
+          "period": 4,
+          "subject": "Lịch sử & Địa lí",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 5,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "Tiếng Anh",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 5,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Tiếng Anh",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 5,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Tự học có hướng dẫn",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 1,
+          "subject": "Toán",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 2,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 3,
+          "subject": "Tiếng Việt",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 6,
+          "session": "morning",
+          "period": 4,
+          "subject": "Khoa học",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 6,
+          "session": "afternoon",
+          "period": 1,
+          "subject": "HĐTN",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 6,
+          "session": "afternoon",
+          "period": 2,
+          "subject": "Hoạt động trải nghiệm",
+          "classId": "class-gvcn3a1-ninh"
+        },
+        {
+          "day": 6,
+          "session": "afternoon",
+          "period": 3,
+          "subject": "Vệ sinh lớp học",
+          "classId": "class-gvcn3a1-ninh"
         }
       ],
       "timetableConfig": {
@@ -3943,7 +4189,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790836727220
+      "updatedAt": 1790837793282
     },
     "nguyenthanhliem": {
       "classes": [
@@ -4832,7 +5078,8 @@
           "teacherUsername": "nguyenthitrangtu1",
           "teacherRole": "homeroom",
           "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Class2A1Trang&backgroundColor=f59e0b",
-          "slogan": "Lớp 2A1 • Chăm chỉ rèn đức - Vui vẻ luyện tài"
+          "slogan": "Lớp 2A1 • Chăm chỉ rèn đức - Vui vẻ luyện tài",
+          "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
         }
       ],
       "activeClassId": "class-trang-2a1",
@@ -5507,7 +5754,10 @@
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1790834208386
+      "updatedAt": 1790837466371,
+      "teacherProfile": {
+        "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
+      }
     }
   },
   "systemSettings": {
@@ -5518,9 +5768,33 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790835984585
+    "lastGithubPushAt": 1790836736331
   },
   "auditLogs": [
+    {
+      "id": "log-1790837781081-v4xs9y",
+      "timestamp": 1790837781081,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790837466372-pgflo9",
+      "timestamp": 1790837466372,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Di chuyển CSDL giáo viên \"Nguyễn Thị Trang\" (@nguyenthitrangtu1) từ [Giáo viên Tự do / Cá nhân] sang [TIỂU HỌC SỐ 1 TÂN UYÊN] (Bảo toàn 1 lớp, 35 học sinh).",
+      "details": {
+        "targetUsername": "nguyenthitrangtu1",
+        "targetSchoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN",
+        "classesCount": 1,
+        "studentsCount": 35
+      }
+    },
     {
       "id": "log-1790836726647-snya55",
       "timestamp": 1790836726647,
