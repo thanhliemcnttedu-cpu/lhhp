@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T17:09:33.576Z",
+  "lastSync": "2026-10-01T17:09:46.315Z",
   "users": [
     {
       "id": "user-admin",
@@ -16029,77 +16029,21 @@
       },
       "teacherRole": "subject",
       "subjectTeacherConfig": {
-        "roomDefault": "Phòng thực hành Âm nhạc - TIỂU HỌC SỐ 1 TÂN UYÊN",
-        "subjectName": "ÂM NHẠC",
-        "taughtSubjects": [
-          "ÂM NHẠC"
-        ],
-        "teacherDisplayName": "Nguyễn Viết Hiền",
         "subject2": "",
         "subject3": "",
         "subject4": "",
         "periodName": "Học kì I (Từ ngày 05/9/2026)",
+        "hasSaturday": false,
+        "roomDefault": "Phòng thực hành Âm nhạc - TIỂU HỌC SỐ 1 TÂN UYÊN",
+        "subjectName": "ÂM NHẠC",
         "morningPeriods": 4,
+        "taughtSubjects": [
+          "ÂM NHẠC"
+        ],
         "afternoonPeriods": 3,
-        "hasSaturday": false
+        "teacherDisplayName": "Nguyễn Viết Hiền"
       },
-      "subjectTimetable": [
-        {
-          "id": "sbj-img-4-m2",
-          "day": 4,
-          "note": "Tin học 5A1",
-          "room": "Phòng máy Tin học",
-          "period": 2,
-          "classId": "class-5a1",
-          "session": "morning",
-          "subject": "Tin học",
-          "className": "5A1"
-        },
-        {
-          "id": "sbj-img-4-m3",
-          "day": 4,
-          "note": "Tin học 5A2",
-          "room": "Phòng máy Tin học",
-          "period": 3,
-          "classId": "class-5a2",
-          "session": "morning",
-          "subject": "Tin học",
-          "className": "5A2"
-        },
-        {
-          "id": "sbj-img-4-m4",
-          "day": 4,
-          "note": "Tin học 5A3",
-          "room": "Phòng máy Tin học",
-          "period": 4,
-          "classId": "class-5a3",
-          "session": "morning",
-          "subject": "Tin học",
-          "className": "5A3"
-        },
-        {
-          "id": "sbj-img-4-a2",
-          "day": 4,
-          "note": "Tin học 5A4",
-          "room": "Phòng máy Tin học",
-          "period": 2,
-          "classId": "class-5a4",
-          "session": "afternoon",
-          "subject": "Tin học",
-          "className": "5A4"
-        },
-        {
-          "id": "sbj-img-6-m2",
-          "day": 6,
-          "note": "Tin học 5A5",
-          "room": "Phòng máy Tin học",
-          "period": 2,
-          "classId": "class-5a5",
-          "session": "morning",
-          "subject": "Tin học",
-          "className": "5A5"
-        }
-      ],
+      "subjectTimetable": [],
       "quickLinks": [
         {
           "id": "link-1",
@@ -16317,7 +16261,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790874573576
+      "updatedAt": 1790874586315
     },
     "gvcn1a1demo": {
       "classes": [
@@ -18043,7 +17987,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790874539323
+    "lastGithubPushAt": 1790874583123
   },
   "auditLogs": [
     {
