@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T06:26:15.129Z",
+  "lastSync": "2026-10-01T06:38:47.221Z",
   "users": [
     {
       "id": "user-admin",
@@ -111,7 +111,7 @@
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminTHS1TanUyen&backgroundColor=bbf7d0",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790834269054
+      "lastLoginAt": 1790836056625
     },
     {
       "id": "user-bghdths1",
@@ -3943,7 +3943,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790835975129
+      "updatedAt": 1790836727220
     },
     "nguyenthanhliem": {
       "classes": [
@@ -5518,9 +5518,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790835567585
+    "lastGithubPushAt": 1790835984585
   },
   "auditLogs": [
+    {
+      "id": "log-1790836726647-snya55",
+      "timestamp": 1790836726647,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
     {
       "id": "log-1790835972119-4fwnob",
       "timestamp": 1790835972119,
