@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T15:27:26.349Z",
+  "lastSync": "2026-10-01T15:28:57.765Z",
   "users": [
     {
       "id": "user-admin",
@@ -180,7 +180,7 @@
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790865862452
+      "lastLoginAt": 1790868466362
     },
     {
       "id": "user-gvcndemo",
@@ -12640,7 +12640,7 @@
           "grade": "Khối 4",
           "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6",
           "slogan": "Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng",
-          "teacherName": "Nguyễn Thị Hoa",
+          "teacherName": "Ban Giám Hiệu DEMO",
           "academicYear": "2026–2027",
           "parentCommittee": {
             "head": {
@@ -13980,14 +13980,14 @@
         }
       ],
       "teacherProfile": {
-        "name": "Nguyễn Thị Hoa",
+        "name": "Ban Giám Hiệu DEMO",
         "role": "GIÁO VIÊN CHỦ NHIỆM",
         "zalo": "0977058363",
         "phone": "0977058363",
-        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=CoNguyenThiHoa&backgroundColor=ffd5dc",
+        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a",
         "facebook": "https://www.facebook.com/tieuhocso1tanuyen/",
         "birthDate": "15/08/1988",
-        "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN",
+        "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
         "socialLink": "https://zalo.me/0977058363",
         "academicYear": "2026–2027",
         "teachingSubject": "Giáo viên chủ nhiệm"
@@ -14167,7 +14167,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790868337610
+      "updatedAt": 1790868537764
     }
   },
   "systemSettings": {
@@ -14178,9 +14178,27 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790868346159
+    "lastGithubPushAt": 1790868456348
   },
   "auditLogs": [
+    {
+      "id": "log-1790868537346-92s7fw",
+      "timestamp": 1790868537346,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790868466430-bn33en",
+      "timestamp": 1790868466430,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
     {
       "id": "log-1790868444864-t4redi",
       "timestamp": 1790868444864,
