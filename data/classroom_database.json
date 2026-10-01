@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T14:44:16.160Z",
+  "lastSync": "2026-10-01T14:49:16.762Z",
   "users": [
     {
       "id": "user-admin",
@@ -180,7 +180,7 @@
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790865630006
+      "lastLoginAt": 1790865862452
     },
     {
       "id": "user-gvcndemo",
@@ -2810,7 +2810,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790865728945
+      "updatedAt": 1790866156762
     },
     "gvbmdemo": {
       "classes": [
@@ -13975,9 +13975,27 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790865738140
+    "lastGithubPushAt": 1790865866385
   },
   "auditLogs": [
+    {
+      "id": "log-1790866156510-hugujd",
+      "timestamp": 1790866156510,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790865862526-6e68uc",
+      "timestamp": 1790865862526,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
     {
       "id": "log-1790865855570-apbh5o",
       "timestamp": 1790865855570,
