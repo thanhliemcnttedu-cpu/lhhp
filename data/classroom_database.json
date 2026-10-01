@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T18:52:16.424Z",
+  "lastSync": "2026-10-01T18:52:21.403Z",
   "users": [
     {
       "id": "user-admin",
@@ -18520,7 +18520,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790880736423
+      "updatedAt": 1790880741403
     },
     "gvbmdemo2": {
       "classes": [
