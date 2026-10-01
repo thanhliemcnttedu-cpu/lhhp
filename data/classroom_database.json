@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T17:13:54.162Z",
+  "lastSync": "2026-10-01T17:14:10.668Z",
   "users": [
     {
       "id": "user-admin",
@@ -14256,8 +14256,13 @@
           "grade": "Khối 4",
           "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6",
           "slogan": "Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng",
+          "avatarScale": 1,
           "teacherName": "Trịnh Thị Cúc",
           "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
           "parentCommittee": {
             "head": {
               "name": "Trần Văn Mạnh",
@@ -14279,11 +14284,6 @@
               "phone": "0903 890 123",
               "roleTitle": "Ủy viên ban phụ huynh 2"
             }
-          },
-          "avatarScale": 1,
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
           }
         }
       ],
@@ -15784,7 +15784,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790874834162
+      "updatedAt": 1790874850667
     },
     "nguyenviethien": {
       "classes": [
@@ -19329,9 +19329,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790874796310
+    "lastGithubPushAt": 1790874843478
   },
   "auditLogs": [
+    {
+      "id": "log-1790874849724-pke9dl",
+      "timestamp": 1790874849724,
+      "username": "gvcn4a1",
+      "userFullName": "Trịnh Thị Cúc",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
     {
       "id": "log-1790874833530-1l7zt2",
       "timestamp": 1790874833530,
