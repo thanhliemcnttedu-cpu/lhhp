@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T14:20:00.812Z",
+  "lastSync": "2026-10-01T14:20:32.203Z",
   "users": [
     {
       "id": "user-admin",
@@ -13135,7 +13135,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790864400812
+      "updatedAt": 1790864432202
     }
   },
   "systemSettings": {
@@ -13146,9 +13146,27 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790864376676
+    "lastGithubPushAt": 1790864414400
   },
   "auditLogs": [
+    {
+      "id": "log-1790864429239-y1e1lh",
+      "timestamp": 1790864429239,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phan Hữu Phi"
+    },
+    {
+      "id": "log-1790864409639-z3jgau",
+      "timestamp": 1790864409639,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đặng Thu Ngọc"
+    },
     {
       "id": "log-1790864395209-02fgxw",
       "timestamp": 1790864395209,
