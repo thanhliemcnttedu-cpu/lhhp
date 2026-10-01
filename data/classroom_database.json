@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T14:29:28.999Z",
+  "lastSync": "2026-10-01T14:29:55.141Z",
   "users": [
     {
       "id": "user-admin",
@@ -13139,7 +13139,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790864968998
+      "updatedAt": 1790864995141
     }
   },
   "systemSettings": {
@@ -13150,7 +13150,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790864854103
+    "lastGithubPushAt": 1790864980327
   },
   "auditLogs": [
     {
