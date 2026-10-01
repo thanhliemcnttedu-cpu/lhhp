@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T14:41:55.694Z",
+  "lastSync": "2026-10-01T14:42:08.945Z",
   "users": [
     {
       "id": "user-admin",
@@ -198,7 +198,7 @@
       "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790865588261
+      "lastLoginAt": 1790865719727
     },
     {
       "id": "user-gvbmdemo",
@@ -2810,7 +2810,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790865715693
+      "updatedAt": 1790865728945
     },
     "gvbmdemo": {
       "classes": [
@@ -13975,9 +13975,27 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790865659831
+    "lastGithubPushAt": 1790865726022
   },
   "auditLogs": [
+    {
+      "id": "log-1790865728661-olrx46",
+      "timestamp": 1790865728661,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790865719790-7b0jst",
+      "timestamp": 1790865719790,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
     {
       "id": "log-1790865715357-dcb9um",
       "timestamp": 1790865715357,
