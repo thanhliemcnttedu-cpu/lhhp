@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T14:54:51.137Z",
+  "lastSync": "2026-10-01T14:55:58.341Z",
   "users": [
     {
       "id": "user-admin",
@@ -2810,7 +2810,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790866164340
+      "updatedAt": 1790866558341
     },
     "gvbmdemo": {
       "classes": [
@@ -13976,9 +13976,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790866173090
+    "lastGithubPushAt": 1790866506415
   },
   "auditLogs": [
+    {
+      "id": "log-1790866558072-u8k6cc",
+      "timestamp": 1790866558072,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
     {
       "id": "log-1790866489809-0dwe2f",
       "timestamp": 1790866489809,
