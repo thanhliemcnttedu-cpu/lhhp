@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T17:08:44.268Z",
+  "lastSync": "2026-10-01T17:09:33.576Z",
   "users": [
     {
       "id": "user-admin",
@@ -16034,7 +16034,14 @@
         "taughtSubjects": [
           "ÂM NHẠC"
         ],
-        "teacherDisplayName": "Nguyễn Viết Hiền"
+        "teacherDisplayName": "Nguyễn Viết Hiền",
+        "subject2": "",
+        "subject3": "",
+        "subject4": "",
+        "periodName": "Học kì I (Từ ngày 05/9/2026)",
+        "morningPeriods": 4,
+        "afternoonPeriods": 3,
+        "hasSaturday": false
       },
       "subjectTimetable": [
         {
@@ -16310,7 +16317,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790874524268
+      "updatedAt": 1790874573576
     },
     "gvcn1a1demo": {
       "classes": [
@@ -18036,7 +18043,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790874496198
+    "lastGithubPushAt": 1790874539323
   },
   "auditLogs": [
     {
