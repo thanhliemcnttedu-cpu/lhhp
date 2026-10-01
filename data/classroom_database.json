@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T17:11:21.688Z",
+  "lastSync": "2026-10-01T17:11:57.031Z",
   "users": [
     {
       "id": "user-admin",
@@ -16145,8 +16145,8 @@
           "day": 6,
           "session": "morning",
           "period": 2,
-          "classId": "class-sub-5a5",
-          "className": "5A5",
+          "classId": "class-sub-5a2",
+          "className": "5A2",
           "subject": "ÂM NHẠC",
           "room": "Phòng thực hành Âm nhạc - TIỂU HỌC SỐ 1 TÂN UYÊN",
           "note": "",
@@ -16370,7 +16370,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790874681688
+      "updatedAt": 1790874717031
     },
     "gvcn1a1demo": {
       "classes": [
@@ -18096,7 +18096,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790874680416
+    "lastGithubPushAt": 1790874691253
   },
   "auditLogs": [
     {
