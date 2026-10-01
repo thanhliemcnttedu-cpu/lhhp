@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T17:09:46.315Z",
+  "lastSync": "2026-10-01T17:09:59.907Z",
   "users": [
     {
       "id": "user-admin",
@@ -16043,7 +16043,20 @@
         "afternoonPeriods": 3,
         "teacherDisplayName": "Nguyễn Viết Hiền"
       },
-      "subjectTimetable": [],
+      "subjectTimetable": [
+        {
+          "id": "sbj-2-morning-2-1790874599548",
+          "day": 2,
+          "session": "morning",
+          "period": 2,
+          "classId": "class-sub-5a1",
+          "className": "5A1",
+          "subject": "ÂM NHẠC",
+          "room": "Phòng thực hành Âm nhạc - TIỂU HỌC SỐ 1 TÂN UYÊN",
+          "note": "",
+          "periodName": "Học kì I (Từ ngày 05/9/2026)"
+        }
+      ],
       "quickLinks": [
         {
           "id": "link-1",
@@ -16261,7 +16274,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790874586315
+      "updatedAt": 1790874599906
     },
     "gvcn1a1demo": {
       "classes": [
@@ -17987,7 +18000,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790874583123
+    "lastGithubPushAt": 1790874596831
   },
   "auditLogs": [
     {
