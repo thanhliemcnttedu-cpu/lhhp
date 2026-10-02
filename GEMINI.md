@@ -106,11 +106,14 @@ Sử dụng các lệnh sau để kích hoạt quy trình tác chiến chuyên s
   5. Trước khi bàn giao bất kỳ thay đổi nào, phải xác nhận kiểm thử không có lỗi type/lint (`npm run lint`) và 16 view vẫn hoạt động chuẩn xác 100%.
 
 ### 🚀 QUY TRÌNH BÀN GIAO & ĐỒNG BỘ GITHUB (Local-First Verification Gate)
-1. **Kiểm tra & Báo cáo trên Localhost**: Sau khi hoàn thành điều chỉnh code và kiểm tra kỹ thuật (`npm run lint`, dev server), agent báo cáo kết quả và giữ nguyên ứng dụng trên môi trường `localhost:3000` để người dùng trải nghiệm thực tế.
-2. **CẤM Tự Ý Push lên GitHub**: Tuyệt đối KHÔNG tự ý chạy lệnh git commit và git push lên GitHub khi người dùng chưa trực tiếp kiểm tra và xác nhận.
-3. **Câu hỏi chuẩn mực bắt buộc**: Ở cuối mỗi báo cáo hoàn thành công việc trên localhost, agent luôn hỏi người dùng bằng câu hỏi chuẩn:
+1. **Kiểm tra & Chạy thử trên Localhost**: Khi thực hiện bất kỳ lệnh điều khiển, chỉnh sửa thiết kế web hoặc thêm tính năng, Agent **LUÔN LUÔN** chạy thử nghiệm trước trên môi trường Localhost (`http://localhost:3000`), kiểm tra kỹ thuật (`npm run lint`, kiểm thử view).
+2. **CẤM Tự Ý Push lên GitHub**: Tuyệt đối **KHÔNG** tự ý chạy lệnh git commit và git push lên GitHub khi người dùng chưa kiểm tra và xác nhận.
+3. **Câu hỏi chuẩn mực bắt buộc**: Ở cuối mỗi báo cáo hoàn thành công việc trên localhost, Agent luôn hỏi người dùng:
    > *"Mọi nội dung đã được điều chỉnh xong trên localhost, hãy test kiểm tra. Bạn có muốn thực hiện đồng bộ lên web GitHub hay không?"*
-4. **Xác nhận mới Push**: Chỉ khi người dùng chạy thử nghiệm trên localhost thấy ưng ý và trả lời đồng ý, agent mới tiến hành commit và push lên GitHub.
+4. **Chỉ Push khi có Mệnh lệnh & Đẩy toàn bộ lên Kho Chính `lhhp`**:
+   - Chỉ khi người dùng test thành công và **ra mệnh lệnh rõ ràng** yêu cầu đồng bộ lên GitHub, Agent mới thực hiện đẩy toàn bộ dữ liệu (Database + Giao diện + Mã nguồn).
+   - **Kho tiếp nhận duy nhất**: Cổng kho chính **`https://github.com/thanhliemcnttedu-cpu/lhhp.git`** (`thanhliemcnttedu-cpu / lhhp`).
+   - **Tuyệt đối KHÔNG đẩy lên kho phụ**: Kho phụ `thanhliemcnttedu-cpu / lophochanhphuc` đang khai thác cho mục đích khác, nghiêm cấm mọi thao tác đồng bộ lên kho này.
 
 ---
 *Được tạo bởi Antigravity IDE*

@@ -1,7 +1,7 @@
 {
   "partition": "truong_demo",
   "title": "Cơ Sở Dữ Liệu Trường Học DEMO (TRƯỜNG HỌC HẠNH PHÚC DEMO)",
-  "lastSync": "2026-10-01T18:52:33.227Z",
+  "lastSync": "2026-10-02T05:49:56.210Z",
   "schools": [
     {
       "id": "school-demo-hp",
@@ -3620,12 +3620,12 @@
           "group": "Tổ 3",
           "avatar": "/avatars/demo/student-avatar-50.jpg",
           "gender": "Nam",
-          "points": 34,
+          "points": 36,
           "classId": "class-1a1demo",
           "birthDate": "16/07/2019",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 34
+            "GHI CHUNG / NỀ NẾP": 36
           },
           "avatarPosition": {
             "x": 0,
@@ -3877,7 +3877,28 @@
           "category": "Học tập"
         }
       ],
-      "transactions": [],
+      "transactions": [
+        {
+          "id": "tx-1790920185505-hs-gvcn1a1demo-7",
+          "studentId": "hs-gvcn1a1demo-7",
+          "studentName": "Đặng Minh Khang",
+          "classId": "class-1a1demo",
+          "amount": 2,
+          "reason": "Vô địch giải đua vịt hồ bơi (8s)",
+          "subjectName": "GHI CHUNG / NỀ NẾP",
+          "timestamp": 1790920185505
+        },
+        {
+          "id": "tx-1790920185505-hs-gvcn1a1demo-7",
+          "studentId": "hs-gvcn1a1demo-7",
+          "studentName": "Đặng Minh Khang",
+          "classId": "class-1a1demo",
+          "amount": 2,
+          "reason": "Vô địch giải đua vịt hồ bơi (8s)",
+          "subjectName": "GHI CHUNG / NỀ NẾP",
+          "timestamp": 1790920185505
+        }
+      ],
       "rewards": [
         {
           "id": "rew-1",
@@ -4589,7 +4610,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790880741403
+      "updatedAt": 1790920187349
     },
     "gvbmdemo2": {
       "classes": [
