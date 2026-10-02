@@ -1,0 +1,32 @@
+[
+  {
+    "id": "user-admin",
+    "username": "admin",
+    "password": "Tanuyen@2026",
+    "fullName": "Quản trị viên Hệ thống",
+    "role": "admin",
+    "email": "admin@lophoc.edu.vn",
+    "phone": "0901234567",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9",
+    "schoolName": "Hệ thống Quản lý Lớp học Hạnh phúc",
+    "createdAt": 1790689856611,
+    "status": "active",
+    "lastLoginAt": 1790830498403,
+    "tenantType": "school"
+  },
+  {
+    "id": "user-adminquantri",
+    "username": "adminquantri",
+    "password": "Tanuyen@2026",
+    "fullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "tenantType": "school",
+    "email": "adminquantri@lophoc.edu.vn",
+    "phone": "0888358363",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9",
+    "schoolName": "Hệ thống Quản trị Lớp học Hạnh phúc",
+    "createdAt": 1790834208376,
+    "status": "active",
+    "lastLoginAt": 1790868370158
+  }
+]

@@ -259,28 +259,28 @@ export const LuckyWheelView: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: Interactive Canvas Wheel (7 cols) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs flex flex-col items-center justify-center relative min-h-[550px]">
+        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-2xs flex flex-col items-center justify-center relative min-h-[380px] sm:min-h-[550px]">
           {/* Wheel Pointer at Top */}
-          <div className="absolute top-8 z-20 flex flex-col items-center">
-            <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[28px] border-t-rose-600 filter drop-shadow-md" />
+          <div className="absolute top-4 sm:top-8 z-20 flex flex-col items-center pointer-events-none">
+            <div className="w-0 h-0 border-l-[12px] sm:border-l-[14px] border-l-transparent border-r-[12px] sm:border-r-[14px] border-r-transparent border-t-[24px] sm:border-t-[28px] border-t-rose-600 filter drop-shadow-md" />
           </div>
 
-          {/* Canvas */}
-          <div className="relative mt-4">
+          {/* Canvas with responsive dimension */}
+          <div className="relative mt-2 sm:mt-4 flex items-center justify-center">
             <canvas
               ref={canvasRef}
               width={460}
               height={460}
-              className="max-w-full h-auto drop-shadow-lg"
+              className="w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] max-w-full drop-shadow-lg"
             />
           </div>
 
           {/* Controls */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 w-full">
+          <div className="mt-4 sm:mt-6 flex flex-wrap items-center justify-center gap-3 w-full">
             <button
               onClick={spinWheel}
               disabled={isSpinning || activeItems.length === 0}
-              className="px-8 py-3 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 uppercase cursor-pointer"
+              className="w-full sm:w-auto px-8 py-3 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 uppercase cursor-pointer text-center"
             >
               {isSpinning ? 'ĐANG QUAY...' : 'BẮT ĐẦU QUAY NGAY'}
             </button>

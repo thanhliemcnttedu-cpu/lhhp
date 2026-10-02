@@ -30,6 +30,76 @@ const FEMALE_GIVEN_NAMES = [
   'Thảo', 'Thi', 'Thu', 'Thư', 'Thúy', 'Trang', 'Trâm', 'Tuyết', 'Uyên', 'Vy', 'Yến'
 ];
 
+export const DEMO_STUDENT_AVATARS: string[] = [
+  '/avatars/demo/student-avatar-01.webp',
+  '/avatars/demo/student-avatar-02.webp',
+  '/avatars/demo/student-avatar-03.webp',
+  '/avatars/demo/student-avatar-04.jpg',
+  '/avatars/demo/student-avatar-05.webp',
+  '/avatars/demo/student-avatar-06.webp',
+  '/avatars/demo/student-avatar-07.webp',
+  '/avatars/demo/student-avatar-08.webp',
+  '/avatars/demo/student-avatar-09.webp',
+  '/avatars/demo/student-avatar-10.webp',
+  '/avatars/demo/student-avatar-11.avif',
+  '/avatars/demo/student-avatar-12.webp',
+  '/avatars/demo/student-avatar-13.webp',
+  '/avatars/demo/student-avatar-14.webp',
+  '/avatars/demo/student-avatar-15.jpg',
+  '/avatars/demo/student-avatar-16.jpg',
+  '/avatars/demo/student-avatar-17.jpg',
+  '/avatars/demo/student-avatar-18.jpg',
+  '/avatars/demo/student-avatar-19.jpg',
+  '/avatars/demo/student-avatar-20.jpg',
+  '/avatars/demo/student-avatar-21.jpg',
+  '/avatars/demo/student-avatar-22.jpg',
+  '/avatars/demo/student-avatar-23.jpg',
+  '/avatars/demo/student-avatar-24.jpg',
+  '/avatars/demo/student-avatar-25.jpg',
+  '/avatars/demo/student-avatar-26.jpg',
+  '/avatars/demo/student-avatar-27.jpg',
+  '/avatars/demo/student-avatar-28.jpg',
+  '/avatars/demo/student-avatar-29.jpg',
+  '/avatars/demo/student-avatar-30.jpg',
+  '/avatars/demo/student-avatar-31.jpg',
+  '/avatars/demo/student-avatar-32.jpg',
+  '/avatars/demo/student-avatar-33.jpg',
+  '/avatars/demo/student-avatar-34.jpg',
+  '/avatars/demo/student-avatar-35.jpg',
+  '/avatars/demo/student-avatar-36.jpg',
+  '/avatars/demo/student-avatar-37.jpg',
+  '/avatars/demo/student-avatar-38.jpg',
+  '/avatars/demo/student-avatar-39.jpg',
+  '/avatars/demo/student-avatar-40.jpg',
+  '/avatars/demo/student-avatar-41.webp',
+  '/avatars/demo/student-avatar-42.webp',
+  '/avatars/demo/student-avatar-43.webp',
+  '/avatars/demo/student-avatar-44.png',
+  '/avatars/demo/student-avatar-45.avif',
+  '/avatars/demo/student-avatar-46.webp',
+  '/avatars/demo/student-avatar-47.jpg',
+  '/avatars/demo/student-avatar-48.jpg',
+  '/avatars/demo/student-avatar-49.jpg',
+  '/avatars/demo/student-avatar-50.jpg',
+  '/avatars/demo/student-avatar-51.webp'
+];
+
+/**
+ * Lấy avatar ngẫu nhiên hoặc theo thứ tự từ danh sách ảnh thật
+ */
+export function getStudentRealAvatar(seedIndex: number, classId: string = ''): string {
+  if (DEMO_STUDENT_AVATARS.length === 0) {
+    return `https://api.dicebear.com/7.x/bottts/svg?seed=student-${seedIndex}&backgroundColor=b6e3f4`;
+  }
+  // Tạo hash nhẹ từ classId để các lớp khác nhau không lấy trùng chuỗi ảnh giống hệt nhau
+  let hash = 0;
+  for (let i = 0; i < classId.length; i++) {
+    hash = (hash * 31 + classId.charCodeAt(i)) & 0xffffffff;
+  }
+  const idx = Math.abs((seedIndex + Math.abs(hash)) % DEMO_STUDENT_AVATARS.length);
+  return DEMO_STUDENT_AVATARS[idx];
+}
+
 /**
  * Returns birth year based on grade string (e.g. 'Khối 4' -> 2016)
  */
@@ -105,7 +175,7 @@ export function generateStudentsForClass(
       name: fullName,
       birthDate,
       gender,
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${className}-${i}&backgroundColor=b6e3f4`,
+      avatar: getStudentRealAvatar(i, classId),
       avatarScale: 1,
       avatarPosition: { x: 0, y: 0 },
       points,

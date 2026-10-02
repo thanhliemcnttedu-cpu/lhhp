@@ -630,8 +630,8 @@ export const InfographicView: React.FC = () => {
     : (studentListColumns === '2col' ? 2 : 1);
 
   const pageContainerClass = isLandscape
-    ? 'w-full max-w-[1140px] min-h-[794px] p-4 sm:p-5 flex flex-col justify-between shadow-2xl rounded-2xl border border-slate-300'
-    : 'w-full max-w-[800px] min-h-[1130px] p-4 sm:p-6 flex flex-col justify-between shadow-2xl rounded-2xl border border-slate-300';
+    ? 'w-full max-w-[1140px] min-h-[794px] p-2.5 sm:p-5 flex flex-col justify-between shadow-2xl rounded-2xl border border-slate-300'
+    : 'w-full max-w-[800px] min-h-[1130px] p-2 sm:p-6 flex flex-col justify-between shadow-2xl rounded-2xl border border-slate-300';
 
   // Render Layer Action Controls (Shown only when in Edit Mode)
   const renderLayerControls = (layer: InfographicLayer) => {
@@ -1099,7 +1099,7 @@ export const InfographicView: React.FC = () => {
           {/* SƠ ĐỒ GỐC NGUYÊN BẢN */}
           <div 
             ref={seatingDiagramRef}
-            className={`p-3.5 sm:p-4 rounded-2xl ${seatingStyleConfig.wrap} shadow-sm space-y-2.5 sm:space-y-3 relative group select-none flex-1 flex flex-col justify-between w-full h-full`}
+            className={`p-1.5 sm:p-4 rounded-2xl ${seatingStyleConfig.wrap} shadow-sm space-y-1.5 sm:space-y-3 relative group select-none flex-1 flex flex-col justify-between w-full h-full`}
             style={{
               minHeight: seatingTransform.isAutoHeight 
                 ? (config.orientation === 'landscape' ? '580px' : '780px') 
@@ -1124,54 +1124,54 @@ export const InfographicView: React.FC = () => {
             )}
 
             {/* Tiêu đề & Thông tin Sơ đồ */}
-            <div className="flex items-center justify-between text-xs font-black uppercase">
-              <div className="flex items-center gap-1.5 text-slate-900">
-                <Grid3X3 className="w-4 h-4 text-indigo-600" />
-                <span>SƠ ĐỒ CHỖ NGỒI NGUYÊN BẢN ({seatingColumns} DÃY BÀN)</span>
+            <div className="flex items-center justify-between text-[10px] sm:text-xs font-black uppercase gap-1 flex-wrap">
+              <div className="flex items-center gap-1 text-slate-900">
+                <Grid3X3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 shrink-0" />
+                <span className="truncate">SƠ ĐỒ CHỖ NGỒI ({seatingColumns} DÃY BÀN)</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-bold">
-                <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700">
-                  {deskNumberingOrder === 'vertical' ? 'Đánh số theo dọc' : 'Đánh số theo ngang'}
+              <div className="flex items-center gap-1 text-[8.5px] sm:text-[10px] font-bold">
+                <span className="px-1.5 py-0.2 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 whitespace-nowrap">
+                  {deskNumberingOrder === 'vertical' ? 'Đánh số dọc' : 'Đánh số ngang'}
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700">
+                <span className="px-1.5 py-0.2 rounded-md bg-white border border-slate-200 text-slate-700 whitespace-nowrap hidden sm:inline-block">
                   {config.seatingChartStyle.includes('3d') ? 'Phối cảnh 3D Bàn Gỗ' : 'Sơ đồ 2D Sư Phạm'}
                 </span>
               </div>
             </div>
 
             {/* BỤC GIẢNG CHÍNH ĐỒNG BỘ 100% VỚI MỤC SƠ ĐỒ LỚP */}
-            <div className="grid grid-cols-12 gap-2 items-center text-[10px] font-bold">
+            <div className="grid grid-cols-12 gap-1 sm:gap-2 items-center text-[8px] sm:text-[10px] font-bold">
               {/* Cột Trái */}
-              <div className={`col-span-3 py-1.5 text-center rounded-xl shadow-2xs border ${
+              <div className={`col-span-3 py-1 sm:py-1.5 text-center rounded-lg sm:rounded-xl shadow-2xs border truncate ${
                 doorPos === 'left' 
-                  ? 'bg-amber-100 border-amber-300 text-amber-900' 
+                  ? 'bg-amber-100 border-amber-300 text-amber-900 font-black' 
                   : teacherDeskPos === 'left' 
-                  ? 'bg-amber-50 border-amber-300 text-amber-900' 
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 font-black' 
                   : 'bg-white border-slate-200 text-slate-700'
               }`}>
-                {doorPos === 'left' ? '🚪 CỬA RA VÀO (TRÁI)' : (teacherDeskPos === 'left' ? '⭐ BÀN GIÁO VIÊN' : '⭐ BỤC GIẢNG')}
+                {doorPos === 'left' ? '🚪 CỬA RA VÀO' : (teacherDeskPos === 'left' ? '⭐ BÀN GV' : '⭐ BỤC GIẢNG')}
               </div>
 
               {/* Bảng Lớp Xanh Ở Giữa */}
-              <div className={`col-span-6 py-2 text-center rounded-xl font-black tracking-wide shadow-xs ${seatingStyleConfig.board}`}>
+              <div className={`col-span-6 py-1.5 sm:py-2 text-center rounded-lg sm:rounded-xl font-black tracking-wide shadow-xs truncate text-[9px] sm:text-xs ${seatingStyleConfig.board}`}>
                 ★ BẢNG LỚP HỌC HẠNH PHÚC ★
               </div>
 
               {/* Cột Phải */}
-              <div className={`col-span-3 py-1.5 text-center rounded-xl shadow-2xs border ${
+              <div className={`col-span-3 py-1 sm:py-1.5 text-center rounded-lg sm:rounded-xl shadow-2xs border truncate ${
                 doorPos === 'right' 
-                  ? 'bg-amber-100 border-amber-300 text-amber-900' 
+                  ? 'bg-amber-100 border-amber-300 text-amber-900 font-black' 
                   : teacherDeskPos === 'right' 
-                  ? 'bg-amber-50 border-amber-300 text-amber-900' 
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 font-black' 
                   : 'bg-white border-slate-200 text-slate-700'
               }`}>
-                {doorPos === 'right' ? '🚪 CỬA RA VÀO (PHẢI)' : (teacherDeskPos === 'right' ? '⭐ BÀN GIÁO VIÊN' : '⭐ BỤC GIẢNG')}
+                {doorPos === 'right' ? '🚪 CỬA RA VÀO' : (teacherDeskPos === 'right' ? '⭐ BÀN GV' : '⭐ BỤC GIẢNG')}
               </div>
             </div>
 
             {/* LƯỚI CÁC DÃY BÀN & CHỖ NGỒI HỌC SINH (NGUYÊN BẢN TỪ MỤC SƠ ĐỒ LỚP - DÀN ĐỀU 100% CHIỀU CAO TRANG) */}
             <div 
-              className="grid gap-2.5 sm:gap-3 pt-1 flex-1 items-stretch"
+              className="grid gap-1 sm:gap-2.5 pt-1 flex-1 items-stretch"
               style={{
                 gridTemplateColumns: `repeat(${seatingColumns}, minmax(0, 1fr))`
               }}
@@ -1179,17 +1179,17 @@ export const InfographicView: React.FC = () => {
               {Array.from({ length: seatingColumns }).map((_, colIdx) => {
                 const colDeskCount = deskCountsPerColumn[colIdx] || 4;
                 return (
-                  <div key={colIdx} className="space-y-2 p-2 sm:p-2.5 rounded-xl bg-white/85 border border-slate-200 shadow-2xs flex flex-col justify-between flex-1">
+                  <div key={colIdx} className="space-y-1 sm:space-y-2 p-1 sm:p-2.5 rounded-lg sm:rounded-xl bg-white/85 border border-slate-200 shadow-2xs flex flex-col justify-between flex-1 min-w-0">
                     {/* Column Badge */}
-                    <div className={`text-center py-1 text-[10px] font-black rounded-lg flex items-center justify-between px-2 ${seatingStyleConfig.badge}`}>
+                    <div className={`text-center py-0.5 sm:py-1 text-[8.5px] sm:text-[10px] font-black rounded-md sm:rounded-lg flex items-center justify-between px-1 sm:px-2 ${seatingStyleConfig.badge}`}>
                       <span>DÃY {colIdx + 1}</span>
-                      <span className="text-[9px] opacity-90">{colDeskCount} bàn</span>
+                      <span className="text-[7.5px] sm:text-[9px] opacity-90">{colDeskCount} bàn</span>
                     </div>
 
                     {/* Rows for this column with dynamic row spacing */}
                     <div 
                       className="flex-1 flex flex-col justify-between pt-0.5"
-                      style={{ gap: `${seatingTransform.rowSpacing}px` }}
+                      style={{ gap: `${Math.max(4, Math.min(seatingTransform.rowSpacing, 16))}px` }}
                     >
                       {Array.from({ length: colDeskCount }).map((_, rIdx) => {
                         const deskNumber = getDeskNumber(colIdx, rIdx);
@@ -1201,17 +1201,17 @@ export const InfographicView: React.FC = () => {
                         const sR = classStudents.find(s => s.id === sRId);
 
                         return (
-                          <div key={rIdx} className={`p-1.5 sm:p-2 rounded-xl border ${seatingStyleConfig.desk} shadow-2xs space-y-1 flex flex-col justify-between flex-1`}>
+                          <div key={rIdx} className={`p-1 sm:p-2 rounded-lg sm:rounded-xl border ${seatingStyleConfig.desk} shadow-2xs space-y-0.5 sm:space-y-1 flex flex-col justify-between flex-1 min-w-0`}>
                             {/* Desk Header Badge */}
-                            <div className="flex items-center justify-between text-[8px] sm:text-[8.5px] font-black text-slate-500 px-1 border-b border-slate-200/60 pb-0.5">
+                            <div className="flex items-center justify-between text-[7px] sm:text-[8.5px] font-black text-slate-500 px-0.5 sm:px-1 border-b border-slate-200/60 pb-0.5">
                               <span className="text-amber-800">BÀN {deskNumber}</span>
                               <span>Hàng {rIdx + 1}</span>
                             </div>
 
                             {/* 2 Chỗ ngồi: Ghế Trái & Ghế Phải (Chỉ hiển thị Ảnh Avatar & Họ và Tên, KHÔNG hiển thị xu) */}
-                            <div className="grid grid-cols-2 gap-1.5 flex-1 items-stretch">
+                            <div className="grid grid-cols-2 gap-0.5 sm:gap-1.5 flex-1 items-stretch">
                               {/* Ghế Trái */}
-                              <div className={`p-1 sm:p-1.5 rounded-lg border text-center flex flex-col items-center justify-center transition-all ${
+                              <div className={`p-0.5 sm:p-1.5 rounded sm:rounded-lg border text-center flex flex-col items-center justify-center transition-all min-w-0 ${
                                 sL ? 'bg-white border-amber-200 shadow-2xs' : 'border-dashed border-slate-200 bg-slate-50/60'
                               }`}>
                                 {sL ? (
@@ -1219,25 +1219,25 @@ export const InfographicView: React.FC = () => {
                                     <img
                                       src={sL.avatar}
                                       alt={sL.name}
-                                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5"
+                                      className="w-6 h-6 sm:w-9 sm:h-9 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5 shrink-0"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100&auto=format&fit=crop&q=80';
                                       }}
                                     />
-                                    <span className="text-[9px] sm:text-[9.5px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5" title={sL.name}>
+                                    <span className="text-[7.5px] sm:text-[9.5px] font-black text-slate-900 line-clamp-2 leading-[1.1] text-center px-0.5 break-words w-full" title={sL.name}>
                                       {sL.name}
                                     </span>
                                   </>
                                 ) : (
-                                  <div className="py-1 text-center text-slate-400">
-                                    <Users className="w-3.5 h-3.5 mx-auto opacity-40 mb-0.5" />
-                                    <span className="text-[8px] font-medium">Ghế Trái</span>
+                                  <div className="py-0.5 sm:py-1 text-center text-slate-400">
+                                    <Users className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 mx-auto opacity-40 mb-0.5" />
+                                    <span className="text-[6.5px] sm:text-[8px] font-medium block">Ghế Trái</span>
                                   </div>
                                 )}
                               </div>
 
                               {/* Ghế Phải */}
-                              <div className={`p-1 sm:p-1.5 rounded-lg border text-center flex flex-col items-center justify-center transition-all ${
+                              <div className={`p-0.5 sm:p-1.5 rounded sm:rounded-lg border text-center flex flex-col items-center justify-center transition-all min-w-0 ${
                                 sR ? 'bg-white border-amber-200 shadow-2xs' : 'border-dashed border-slate-200 bg-slate-50/60'
                               }`}>
                                 {sR ? (
@@ -1245,19 +1245,19 @@ export const InfographicView: React.FC = () => {
                                     <img
                                       src={sR.avatar}
                                       alt={sR.name}
-                                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5"
+                                      className="w-6 h-6 sm:w-9 sm:h-9 rounded-full object-cover border border-amber-300 bg-sky-100 shadow-2xs mb-0.5 shrink-0"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=100&auto=format&fit=crop&q=80';
                                       }}
                                     />
-                                    <span className="text-[9px] sm:text-[9.5px] font-black text-slate-900 line-clamp-2 leading-tight text-center px-0.5" title={sR.name}>
+                                    <span className="text-[7.5px] sm:text-[9.5px] font-black text-slate-900 line-clamp-2 leading-[1.1] text-center px-0.5 break-words w-full" title={sR.name}>
                                       {sR.name}
                                     </span>
                                   </>
                                 ) : (
-                                  <div className="py-1 text-center text-slate-400">
-                                    <Users className="w-3.5 h-3.5 mx-auto opacity-40 mb-0.5" />
-                                    <span className="text-[8px] font-medium">Ghế Phải</span>
+                                  <div className="py-0.5 sm:py-1 text-center text-slate-400">
+                                    <Users className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 mx-auto opacity-40 mb-0.5" />
+                                    <span className="text-[6.5px] sm:text-[8px] font-medium block">Ghế Phải</span>
                                   </div>
                                 )}
                               </div>
@@ -2044,42 +2044,42 @@ export const InfographicView: React.FC = () => {
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
           {/* Nút Bật/Tắt Chế độ chỉnh sửa Layer */}
           <button
             type="button"
             onClick={() => setIsEditMode(!isEditMode)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-black rounded-2xl shadow-xs transition-all hover-zoom-btn ${
+            className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black rounded-2xl shadow-xs transition-all hover-zoom-btn ${
               isEditMode 
                 ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/25 ring-2 ring-amber-300' 
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'
             }`}
             title="Bật/Tắt chế độ chỉnh sửa layer trực tiếp trên trang thiết kế"
           >
-            <Edit3 className="w-4 h-4" />
-            <span>{isEditMode ? 'ĐANG CHỈNH SỬA LAYER (BẬT)' : 'BẬT CHẾ ĐỘ THIẾT KẾ'}</span>
+            <Edit3 className="w-4 h-4 shrink-0" />
+            <span className="truncate">{isEditMode ? 'ĐANG CHỈNH SỬA' : 'CHẾ ĐỘ THIẾT KẾ'}</span>
           </button>
 
           {/* Quản lý Layer */}
           <button
             type="button"
             onClick={() => setIsLayerManagerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-black text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-2xl shadow-xs transition-all hover-zoom-btn"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-2xl shadow-xs transition-all hover-zoom-btn"
             title="Mở danh sách các layer, khôi phục thành phần đã xóa hoặc thêm mới"
           >
-            <Layers className="w-4 h-4 text-indigo-600" />
-            <span>QUẢN LÝ LAYER ({layers.filter(l => l.visible).length})</span>
+            <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
+            <span className="truncate">LAYER ({layers.filter(l => l.visible).length})</span>
           </button>
 
           {/* Cấu hình Wizard */}
           <button
             type="button"
             onClick={() => setIsConfigModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn uppercase"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn uppercase"
             title="Cấu hình số trang (1, 2, 3), khổ giấy A4 dọc/ngang, chọn mẫu sơ đồ và TKB"
           >
-            <Wand2 className="w-4 h-4 text-amber-300" />
-            <span>TÙY CHỈNH KHỔ & TRANG</span>
+            <Wand2 className="w-4 h-4 text-amber-300 shrink-0" />
+            <span className="truncate">KHỔ & TRANG</span>
           </button>
 
           {/* Nút Tải PNG */}
@@ -2087,23 +2087,23 @@ export const InfographicView: React.FC = () => {
             type="button"
             onClick={() => handleExportPng('all')}
             disabled={isExportingPng}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-2xl shadow-xs transition-all hover-zoom-btn disabled:opacity-50 uppercase"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-2xl shadow-xs transition-all hover-zoom-btn disabled:opacity-50 uppercase"
             title="Tải ảnh PNG sắc nét từng trang hoặc toàn bộ các trang"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-600" />
-            <span>{isExportingPng ? 'ĐANG XUẤT...' : 'TẢI ẢNH PNG'}</span>
+            <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">{isExportingPng ? 'ĐANG XUẤT...' : 'TẢI ẢNH PNG'}</span>
           </button>
 
-          {/* Nút Xuất PDF */}
+          {/* Nút Xuất PDF (trải rộng full width trên mobile) */}
           <button
             type="button"
             onClick={handleExportPdf}
             disabled={isExportingPdf}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn disabled:opacity-50 uppercase"
+            className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn disabled:opacity-50 uppercase"
             title="Xuất file Infographic chuẩn in PDF A4 (1, 2 hoặc 3 trang theo định dạng dọc/ngang đã chọn)"
           >
-            <Printer className="w-3.5 h-3.5" />
-            <span>{isExportingPdf ? 'ĐANG XUẤT PDF...' : `XUẤT PDF (${config.pageCount} TRANG A4)`}</span>
+            <Printer className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{isExportingPdf ? 'ĐANG XUẤT PDF...' : `XUẤT PDF (${config.pageCount} TRANG A4)`}</span>
           </button>
         </div>
       </div>
@@ -2290,7 +2290,7 @@ export const InfographicView: React.FC = () => {
       {/* ========================================================================= */}
       {/* CANVAS KHỔ GIẤY A4 (1, 2 HOẶC 3 TRANG; KHỔ DỌC HOẶC KHỔ NGANG) */}
       {/* ========================================================================= */}
-      <div className="flex flex-col items-center gap-8 bg-slate-200/50 p-3 sm:p-6 rounded-3xl border border-slate-300/80 overflow-x-auto">
+      <div className="flex flex-col items-center gap-6 sm:gap-8 bg-slate-200/50 p-1 sm:p-6 rounded-3xl border border-slate-300/80 w-full overflow-x-hidden sm:overflow-x-auto">
         
         {/* ======================== TRANG 1 ======================== */}
         {(activeTab === 'all' || activeTab === 'page1') && (

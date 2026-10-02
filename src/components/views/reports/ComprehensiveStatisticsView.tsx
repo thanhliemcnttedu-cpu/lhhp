@@ -25,8 +25,9 @@ export const ComprehensiveStatisticsView: React.FC = () => {
     exportBackupJson 
   } = useClassroom();
 
-  // 1. Timeframe selection: 'day' | 'week' | 'month'
-  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('day');
+  // 1. Timeframe selection: 'day' | 'week' | 'month' | 'semester'
+  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month' | 'semester'>('day');
+  const [selectedSemester, setSelectedSemester] = useState<'hk1' | 'hk2' | 'year'>('hk1');
 
   // Calendar dates
   const todayStr = useMemo(() => {
@@ -216,6 +217,34 @@ export const ComprehensiveStatisticsView: React.FC = () => {
     return { start: fmt(start), end: fmt(end) };
   }, [selectedDate]);
 
+  // Semester Range (Học kì I, Học kì II, Cả năm học)
+  const currentSemesterRange = useMemo(() => {
+    const cur = new Date(selectedDate);
+    const curYear = cur.getFullYear();
+    const startYear = cur.getMonth() >= 8 ? curYear : curYear - 1;
+    const endYear = startYear + 1;
+
+    if (selectedSemester === 'hk1') {
+      return {
+        start: `${startYear}-09-05`,
+        end: `${endYear}-01-15`,
+        label: `Học kì I (${startYear} - ${endYear})`
+      };
+    } else if (selectedSemester === 'hk2') {
+      return {
+        start: `${endYear}-01-16`,
+        end: `${endYear}-05-31`,
+        label: `Học kì II (${startYear} - ${endYear})`
+      };
+    } else {
+      return {
+        start: `${startYear}-09-05`,
+        end: `${endYear}-05-31`,
+        label: `Cả Năm Học (${startYear} - ${endYear})`
+      };
+    }
+  }, [selectedDate, selectedSemester]);
+
   // Target students based on selectedClassId
   const targetStudents = useMemo(() => {
     if (selectedClassId === 'all') return students;
@@ -317,13 +346,15 @@ export const ComprehensiveStatisticsView: React.FC = () => {
   const selectedDayStats = useMemo(() => aggregateRangeStats(selectedDate, selectedDate), [selectedDate, selectedClassId, attendanceRecords, boardingRecords]);
   const weekStats = useMemo(() => aggregateRangeStats(currentWeekRange.start, currentWeekRange.end), [currentWeekRange, selectedClassId, attendanceRecords, boardingRecords]);
   const monthStats = useMemo(() => aggregateRangeStats(currentMonthRange.start, currentMonthRange.end), [currentMonthRange, selectedClassId, attendanceRecords, boardingRecords]);
+  const semesterStats = useMemo(() => aggregateRangeStats(currentSemesterRange.start, currentSemesterRange.end), [currentSemesterRange, selectedClassId, attendanceRecords, boardingRecords]);
 
   // Current Active Timeframe Stats
   const activeTimeframeStats = useMemo(() => {
     if (timeframe === 'day') return selectedDayStats;
     if (timeframe === 'week') return weekStats;
-    return monthStats;
-  }, [timeframe, selectedDayStats, weekStats, monthStats]);
+    if (timeframe === 'month') return monthStats;
+    return semesterStats;
+  }, [timeframe, selectedDayStats, weekStats, monthStats, semesterStats]);
 
   // Detailed class comparison table
   const classDetailedRows = useMemo(() => {
@@ -333,8 +364,8 @@ export const ComprehensiveStatisticsView: React.FC = () => {
       const girls = clsStudents.filter(s => s.gender === 'Nữ').length;
 
       // Stats in active timeframe for this specific class
-      const fromDate = timeframe === 'day' ? selectedDate : timeframe === 'week' ? currentWeekRange.start : currentMonthRange.start;
-      const toDate = timeframe === 'day' ? selectedDate : timeframe === 'week' ? currentWeekRange.end : currentMonthRange.end;
+      const fromDate = timeframe === 'day' ? selectedDate : timeframe === 'week' ? currentWeekRange.start : timeframe === 'month' ? currentMonthRange.start : currentSemesterRange.start;
+      const toDate = timeframe === 'day' ? selectedDate : timeframe === 'week' ? currentWeekRange.end : timeframe === 'month' ? currentMonthRange.end : currentSemesterRange.end;
       const stats = aggregateRangeStats(fromDate, toDate, cls.id);
 
       // Average coin points
@@ -958,54 +989,68 @@ export const ComprehensiveStatisticsView: React.FC = () => {
       </div>
 
       {/* 4. CONTROL TOOLBAR: TIMEFRAME (NGÀY / TUẦN / THÁNG) & EXPORT ACTIONS */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 p-4 md:p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover-zoom-card">
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-3.5 sm:p-4 md:p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 hover-zoom-card">
         {/* Left: View by NGÀY / TUẦN / THÁNG */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
+          <div className="grid grid-cols-3 sm:flex items-center gap-1 sm:gap-1.5 bg-slate-100 p-1 sm:p-1.5 rounded-2xl border border-slate-200 w-full sm:w-auto">
             <button
               onClick={() => setTimeframe('day')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer uppercase ${
+              className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer uppercase ${
                 timeframe === 'day' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Calendar className="w-4 h-4" />
-              <span>1. XEM THEO NGÀY</span>
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="sm:hidden">1. NGÀY</span>
+              <span className="hidden sm:inline">1. XEM THEO NGÀY</span>
             </button>
 
             <button
               onClick={() => setTimeframe('week')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer uppercase ${
+              className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer uppercase ${
                 timeframe === 'week' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Clock className="w-4 h-4" />
-              <span>2. XEM THEO TUẦN</span>
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="sm:hidden">2. TUẦN</span>
+              <span className="hidden sm:inline">2. XEM THEO TUẦN</span>
             </button>
 
             <button
               onClick={() => setTimeframe('month')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer uppercase ${
+              className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer uppercase ${
                 timeframe === 'month' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Layers className="w-4 h-4" />
-              <span>3. XEM THEO THÁNG</span>
+              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="sm:hidden">3. THÁNG</span>
+              <span className="hidden sm:inline">3. XEM THEO THÁNG</span>
+            </button>
+
+            <button
+              onClick={() => setTimeframe('semester')}
+              className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer uppercase ${
+                timeframe === 'semester' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="sm:hidden">4. HỌC KÌ</span>
+              <span className="hidden sm:inline">4. XEM THEO HỌC KÌ</span>
             </button>
           </div>
 
           {/* Time Navigation & Switcher */}
           {timeframe === 'day' && (
-            <div className="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 text-xs">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 bg-slate-50 p-1 sm:p-1.5 rounded-2xl border border-slate-200 text-xs w-full sm:w-auto">
               <button
                 onClick={() => changeDateBy(-1)}
-                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg cursor-pointer"
+                className="p-1 sm:p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg cursor-pointer"
                 title="Lùi 1 ngày"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setSelectedDate(todayStr)}
-                className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold cursor-pointer text-xs ${
                   selectedDate === todayStr ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -1013,7 +1058,7 @@ export const ComprehensiveStatisticsView: React.FC = () => {
               </button>
               <button
                 onClick={() => setSelectedDate(yesterdayOfTodayStr)}
-                className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg font-bold cursor-pointer text-xs ${
                   selectedDate === yesterdayOfTodayStr ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -1023,11 +1068,11 @@ export const ComprehensiveStatisticsView: React.FC = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold focus:outline-none cursor-pointer"
+                className="px-2 py-0.5 bg-white border border-slate-200 rounded-lg text-slate-900 font-bold focus:outline-none cursor-pointer text-xs"
               />
               <button
                 onClick={() => changeDateBy(1)}
-                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg cursor-pointer"
+                className="p-1 sm:p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg cursor-pointer"
                 title="Tiến 1 ngày"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -1036,13 +1081,13 @@ export const ComprehensiveStatisticsView: React.FC = () => {
           )}
 
           {timeframe === 'week' && (
-            <div className="px-3.5 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl text-xs font-black flex items-center gap-2">
+            <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl text-xs font-black flex items-center gap-2">
               <span>Tuần: {currentWeekRange.start} đến {currentWeekRange.end}</span>
             </div>
           )}
 
           {timeframe === 'month' && (
-            <div className="flex items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-2xl border border-purple-200 text-xs">
+            <div className="flex flex-wrap items-center gap-2 bg-purple-50 px-3 py-1.5 rounded-2xl border border-purple-200 text-xs">
               <span className="font-black text-purple-900">{currentMonthRange.monthLabel}</span>
               <span className="text-[10px] text-purple-700 font-bold bg-white px-2 py-0.5 rounded-full border border-purple-200">
                 Bảo toàn 100% học sinh & xu
@@ -1050,13 +1095,31 @@ export const ComprehensiveStatisticsView: React.FC = () => {
             </div>
           )}
 
+          {timeframe === 'semester' && (
+            <div className="flex flex-wrap items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-2xl border border-amber-200 text-xs">
+              <span className="font-bold text-amber-900">Học kì:</span>
+              <select
+                value={selectedSemester}
+                onChange={(e) => setSelectedSemester(e.target.value as any)}
+                className="bg-white border border-amber-300 rounded-lg px-2 py-0.5 font-black text-amber-950 text-xs focus:outline-none cursor-pointer"
+              >
+                <option value="hk1">Học kì I (05/09 - 15/01)</option>
+                <option value="hk2">Học kì II (16/01 - 31/05)</option>
+                <option value="year">Cả Năm Học (05/09 - 31/05)</option>
+              </select>
+              <span className="text-[10px] text-amber-800 font-bold bg-amber-100/70 px-2 py-0.5 rounded-full border border-amber-300">
+                {currentSemesterRange.start} đến {currentSemesterRange.end}
+              </span>
+            </div>
+          )}
+
           {/* Scope Selector: Toàn trường vs Lớp cụ thể */}
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-200">
+          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-2xl border border-slate-200 w-full sm:w-auto">
             <span className="text-[11px] font-bold text-slate-500 uppercase">Phạm vi:</span>
             <select
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-black text-slate-900 focus:outline-none cursor-pointer flex-1"
             >
               <option value="all">🏫 Toàn trường ({classes.length} lớp)</option>
               {classes.map(c => (
@@ -1067,12 +1130,12 @@ export const ComprehensiveStatisticsView: React.FC = () => {
         </div>
 
         {/* Right: Export Reports (PDF A4, EXCEL, PNG with DATA + CHARTS) */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2 w-full lg:w-auto shrink-0">
           {/* Orientation switch for PDF & PNG */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 col-span-2 sm:col-span-1 justify-center">
             <button
               onClick={() => setExportOrientation('landscape')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex-1 sm:flex-initial text-center ${
                 exportOrientation === 'landscape' ? 'bg-white text-indigo-700 shadow-2xs font-black' : 'text-slate-600'
               }`}
               title="Khổ ngang rộng rãi - Phù hợp màn hình, bảng rộng & biểu đồ"
@@ -1081,7 +1144,7 @@ export const ComprehensiveStatisticsView: React.FC = () => {
             </button>
             <button
               onClick={() => setExportOrientation('portrait')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex-1 sm:flex-initial text-center ${
                 exportOrientation === 'portrait' ? 'bg-white text-indigo-700 shadow-2xs font-black' : 'text-slate-600'
               }`}
               title="Khổ dọc chuẩn A4"
@@ -1094,7 +1157,7 @@ export const ComprehensiveStatisticsView: React.FC = () => {
           <button
             onClick={handleExportPng}
             disabled={isExporting}
-            className="px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all hover-zoom-btn uppercase cursor-pointer"
+            className="px-3 sm:px-3.5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all hover-zoom-btn uppercase cursor-pointer"
             title="Xuất ảnh PNG chứa cả bảng số liệu + biểu đồ sắc nét 2x"
           >
             <ImageIcon className="w-3.5 h-3.5 text-emerald-100" />
@@ -1105,7 +1168,7 @@ export const ComprehensiveStatisticsView: React.FC = () => {
           <button
             onClick={handleExportPdf}
             disabled={isExporting}
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all hover-zoom-btn uppercase cursor-pointer"
+            className="px-3 sm:px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all hover-zoom-btn uppercase cursor-pointer"
             title="Xuất bản PDF A4 chứa cả bảng số liệu + biểu đồ"
           >
             <Download className="w-3.5 h-3.5" />
@@ -1115,7 +1178,7 @@ export const ComprehensiveStatisticsView: React.FC = () => {
           {/* Xuất Excel */}
           <button
             onClick={handleExportExcel}
-            className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm transition-all hover-zoom-btn uppercase cursor-pointer"
+            className="px-3 sm:px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all hover-zoom-btn uppercase cursor-pointer"
             title="Xuất file Excel chuẩn bảng số liệu và tổng hợp đa sheet kèm biểu đồ"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
@@ -1127,12 +1190,12 @@ export const ComprehensiveStatisticsView: React.FC = () => {
       {/* 5. MAIN REPORT EXPORT CONTAINER (CAPTURED FOR PDF / PNG) */}
       <div 
         ref={reportContainerRef}
-        className={`mx-auto bg-white p-5 md:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-6 ${
+        className={`mx-auto bg-white p-3.5 sm:p-5 md:p-8 rounded-3xl border border-slate-200/90 shadow-sm space-y-4 sm:space-y-6 ${
           exportOrientation === 'landscape' ? 'max-w-7xl' : 'max-w-5xl'
         }`}
       >
         {/* Document Header (For Prints, PDF & PNG) */}
-        <div className="flex justify-between items-start border-b border-slate-200 pb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start border-b border-slate-200 pb-4 gap-3">
           <div>
             <div className="font-bold uppercase text-[11px] text-slate-600">
               {teacherProfile.schoolName || 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN'}
@@ -1145,39 +1208,44 @@ export const ComprehensiveStatisticsView: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-right text-[11px] text-slate-500">
+          <div className="text-left sm:text-right text-[11px] text-slate-500">
             <div className="font-bold uppercase text-slate-700">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
             <div className="italic text-[10px]">Độc lập - Tự do - Hạnh phúc</div>
             <div className="mt-1 font-semibold">
-              Kỳ báo cáo: {timeframe === 'day' ? `Ngày ${selectedDate}` : timeframe === 'week' ? `Tuần (${currentWeekRange.start} - ${currentWeekRange.end})` : currentMonthRange.monthLabel}
+              Kỳ báo cáo: {timeframe === 'day' ? `Ngày ${selectedDate}` : timeframe === 'week' ? `Tuần (${currentWeekRange.start} - ${currentWeekRange.end})` : timeframe === 'month' ? currentMonthRange.monthLabel : currentSemesterRange.label}
             </div>
           </div>
         </div>
 
-        {/* 4 Periods Breakdown Matrix for Attendance & Boarding (Hôm nay, Hôm qua, Tuần, Tháng) */}
+        {/* 4 Periods Breakdown Matrix for Attendance & Boarding (Hôm nay, Hôm qua, Tuần, Tháng, Học kì) */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
             <h3 className="text-xs font-black uppercase text-slate-800 tracking-wide flex items-center gap-1.5">
-              <span>I. BẢNG CHI TIẾT CHUYÊN CẦN & BÁN TRÚ (HÔM NAY • HÔM QUA • THEO TUẦN • THEO THÁNG)</span>
+              <span>I. BẢNG CHI TIẾT CHUYÊN CẦN & BÁN TRÚ (HÔM NAY • HÔM QUA • THEO TUẦN • THEO THÁNG • THEO HỌC KÌ)</span>
             </h3>
             <span className="text-[10px] text-slate-500 font-bold uppercase">
               Có mặt • Có phép • Không phép • Nghỉ ốm • Lý do khác • Suất ăn bán trú
             </span>
           </div>
 
-          <div className="overflow-x-auto border border-slate-300 rounded-2xl">
-            <table className="w-full text-[11px] text-center border-collapse">
+          {/* Gợi ý cuộn ngang trên điện thoại */}
+          <div className="sm:hidden flex items-center gap-1.5 text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-xl font-bold w-fit mb-2">
+            <span>⇄ Vuốt ngang để xem đủ 10 cột báo cáo</span>
+          </div>
+
+          <div className="overflow-x-auto border border-slate-300 rounded-2xl scrollbar-thin">
+            <table className="min-w-[680px] w-full text-[11px] text-center border-collapse">
               <thead className="bg-slate-100 font-black text-slate-800 border-b border-slate-300">
                 <tr>
-                  <th className="p-2 border-r border-slate-300 text-left">Kỳ Thống Kê</th>
-                  <th className="p-2 border-r border-slate-300">Số buổi</th>
-                  <th className="p-2 border-r border-slate-300 text-emerald-700">Có mặt</th>
-                  <th className="p-2 border-r border-slate-300 text-blue-700">Có phép</th>
-                  <th className="p-2 border-r border-slate-300 text-rose-700">Không phép</th>
-                  <th className="p-2 border-r border-slate-300 text-purple-700">Nghỉ ốm</th>
-                  <th className="p-2 border-r border-slate-300 text-slate-700">Khác</th>
-                  <th className="p-2 border-r border-slate-300 bg-emerald-50 text-emerald-900">% Chuyên cần</th>
-                  <th className="p-2 border-r border-slate-300 text-indigo-700">Suất ăn bán trú</th>
+                  <th className="p-2 border-r border-slate-300 text-left whitespace-nowrap">Kỳ Thống Kê</th>
+                  <th className="p-2 border-r border-slate-300 whitespace-nowrap">Số buổi</th>
+                  <th className="p-2 border-r border-slate-300 text-emerald-700 whitespace-nowrap">Có mặt</th>
+                  <th className="p-2 border-r border-slate-300 text-blue-700 whitespace-nowrap">Có phép</th>
+                  <th className="p-2 border-r border-slate-300 text-rose-700 whitespace-nowrap">Không phép</th>
+                  <th className="p-2 border-r border-slate-300 text-purple-700 whitespace-nowrap">Nghỉ ốm</th>
+                  <th className="p-2 border-r border-slate-300 text-slate-700 whitespace-nowrap">Khác</th>
+                  <th className="p-2 border-r border-slate-300 bg-emerald-50 text-emerald-900 whitespace-nowrap">% Chuyên cần</th>
+                  <th className="p-2 border-r border-slate-300 text-indigo-700 whitespace-nowrap">Suất ăn bán trú</th>
                   <th className="p-2 bg-indigo-50 text-indigo-900">% Bán trú</th>
                 </tr>
               </thead>
@@ -1267,6 +1335,23 @@ export const ComprehensiveStatisticsView: React.FC = () => {
                   <td className="p-2 border-r border-slate-300 font-black text-emerald-800 bg-emerald-50/60">{monthStats.attRate}%</td>
                   <td className="p-2 border-r border-slate-300 font-bold text-indigo-700">{monthStats.eating}</td>
                   <td className="p-2 font-black text-indigo-800 bg-indigo-50/60">{monthStats.bRate}%</td>
+                </tr>
+
+                {/* 6. THEO HỌC KÌ */}
+                <tr className={timeframe === 'semester' ? 'bg-amber-50/70 font-bold' : ''}>
+                  <td className="p-2 text-left font-black text-slate-900 border-r border-slate-300 flex items-center justify-between">
+                    <span>THEO HỌC KÌ ({currentSemesterRange.label})</span>
+                    {timeframe === 'semester' && <span className="text-[9px] bg-amber-600 text-white px-1.5 py-0.2 rounded font-bold">Đang xem</span>}
+                  </td>
+                  <td className="p-2 border-r border-slate-300">{semesterStats.sessions}</td>
+                  <td className="p-2 border-r border-slate-300 text-emerald-700 font-bold">{semesterStats.present}</td>
+                  <td className="p-2 border-r border-slate-300">{semesterStats.excused}</td>
+                  <td className="p-2 border-r border-slate-300">{semesterStats.unexcused}</td>
+                  <td className="p-2 border-r border-slate-300">{semesterStats.sick}</td>
+                  <td className="p-2 border-r border-slate-300">{semesterStats.other}</td>
+                  <td className="p-2 border-r border-slate-300 font-black text-emerald-800 bg-emerald-50/60">{semesterStats.attRate}%</td>
+                  <td className="p-2 border-r border-slate-300 font-bold text-indigo-700">{semesterStats.eating}</td>
+                  <td className="p-2 font-black text-indigo-800 bg-indigo-50/60">{semesterStats.bRate}%</td>
                 </tr>
               </tbody>
             </table>
@@ -1626,7 +1711,7 @@ export const ComprehensiveStatisticsView: React.FC = () => {
             <div>
               <h3 className="text-xs font-black uppercase text-slate-800 tracking-wide flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                <span>IV. BẢNG THEO DÕI & SO SÁNH TIẾN BỘ HỌC SINH ({timeframe === 'month' ? 'THEO THÁNG' : 'THEO TUẦN'})</span>
+                <span>IV. BẢNG THEO DÕI & SO SÁNH TIẾN BỘ HỌC SINH ({timeframe === 'semester' ? 'THEO HỌC KÌ' : timeframe === 'month' ? 'THEO THÁNG' : 'THEO TUẦN'})</span>
               </h3>
               <p className="text-[11px] text-slate-500 font-medium">
                 So sánh mức tăng trưởng điểm xu thi đua, tỷ lệ chuyên cần và danh hiệu tiến bộ giữa kỳ này so với kỳ trước
@@ -1670,35 +1755,40 @@ export const ComprehensiveStatisticsView: React.FC = () => {
             </div>
           </div>
 
-          <div className={`overflow-x-auto border border-slate-300 rounded-2xl ${isExporting ? '' : 'max-h-80 overflow-y-auto'}`}>
-            <table className="w-full text-[11px] text-center border-collapse">
+          {/* Gợi ý cuộn ngang trên điện thoại */}
+          <div className="sm:hidden flex items-center gap-1.5 text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-xl font-bold w-fit mb-2">
+            <span>⇄ Vuốt ngang để xem đủ 11 cột học sinh</span>
+          </div>
+
+          <div className={`overflow-x-auto border border-slate-300 rounded-2xl scrollbar-thin ${isExporting ? '' : 'max-h-80 overflow-y-auto'}`}>
+            <table className="min-w-[760px] w-full text-[11px] text-center border-collapse">
               <thead className="bg-slate-100 font-black text-slate-800 border-b border-slate-300 sticky top-0">
                 <tr>
-                  <th className="p-2 border-r border-slate-300 w-10">STT</th>
-                  <th className="p-2 border-r border-slate-300 text-left">Học sinh</th>
-                  <th className="p-2 border-r border-slate-300">Phái</th>
-                  <th className="p-2 border-r border-slate-300 text-left">Lớp</th>
-                  <th className="p-2 border-r border-slate-300">Tổ</th>
-                  <th className="p-2 border-r border-slate-300">Xu hiện có</th>
-                  <th className="p-2 border-r border-slate-300 text-indigo-700">Xu kỳ này</th>
-                  <th className="p-2 border-r border-slate-300 text-slate-500">Xu kỳ trước</th>
-                  <th className="p-2 border-r border-slate-300 text-emerald-700">Tăng trưởng</th>
-                  <th className="p-2 border-r border-slate-300">Chuyên cần</th>
-                  <th className="p-2">Xếp loại tiến bộ</th>
+                  <th className="p-2 border-r border-slate-300 w-10 whitespace-nowrap">STT</th>
+                  <th className="p-2 border-r border-slate-300 text-left whitespace-nowrap">Học sinh</th>
+                  <th className="p-2 border-r border-slate-300 whitespace-nowrap">Phái</th>
+                  <th className="p-2 border-r border-slate-300 text-left whitespace-nowrap">Lớp</th>
+                  <th className="p-2 border-r border-slate-300 whitespace-nowrap">Tổ</th>
+                  <th className="p-2 border-r border-slate-300 whitespace-nowrap">Xu hiện có</th>
+                  <th className="p-2 border-r border-slate-300 text-indigo-700 whitespace-nowrap">Xu kỳ này</th>
+                  <th className="p-2 border-r border-slate-300 text-slate-500 whitespace-nowrap">Xu kỳ trước</th>
+                  <th className="p-2 border-r border-slate-300 text-emerald-700 whitespace-nowrap">Tăng trưởng</th>
+                  <th className="p-2 border-r border-slate-300 whitespace-nowrap">Chuyên cần</th>
+                  <th className="p-2 whitespace-nowrap">Xếp loại tiến bộ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 font-semibold">
                 {studentProgressData.slice(0, isExporting ? undefined : progressDisplayLimit).map((s, idx) => (
                   <tr key={s.id} className="hover:bg-slate-50">
-                    <td className="p-2 border-r border-slate-300 font-mono">{idx + 1}</td>
-                    <td className="p-2 border-r border-slate-300 text-left font-black text-slate-900">{s.name}</td>
-                    <td className="p-2 border-r border-slate-300 text-slate-600">{s.gender}</td>
-                    <td className="p-2 border-r border-slate-300 text-left text-slate-700 font-bold">{s.className}</td>
-                    <td className="p-2 border-r border-slate-300">{s.group}</td>
-                    <td className="p-2 border-r border-slate-300 font-mono font-bold text-amber-700">{s.totalPoints} xu</td>
-                    <td className="p-2 border-r border-slate-300 font-mono font-bold text-indigo-700">+{s.curPointsGained}</td>
-                    <td className="p-2 border-r border-slate-300 font-mono text-slate-500">+{s.prevPointsGained}</td>
-                    <td className="p-2 border-r border-slate-300 font-mono font-black">
+                    <td className="p-2 border-r border-slate-300 font-mono whitespace-nowrap">{idx + 1}</td>
+                    <td className="p-2 border-r border-slate-300 text-left font-black text-slate-900 whitespace-nowrap">{s.name}</td>
+                    <td className="p-2 border-r border-slate-300 text-slate-600 whitespace-nowrap">{s.gender}</td>
+                    <td className="p-2 border-r border-slate-300 text-left text-slate-700 font-bold whitespace-nowrap">{s.className}</td>
+                    <td className="p-2 border-r border-slate-300 whitespace-nowrap">{s.group}</td>
+                    <td className="p-2 border-r border-slate-300 font-mono font-bold text-amber-700 whitespace-nowrap">{s.totalPoints} xu</td>
+                    <td className="p-2 border-r border-slate-300 font-mono font-bold text-indigo-700 whitespace-nowrap">+{s.curPointsGained}</td>
+                    <td className="p-2 border-r border-slate-300 font-mono text-slate-500 whitespace-nowrap">+{s.prevPointsGained}</td>
+                    <td className="p-2 border-r border-slate-300 font-mono font-black whitespace-nowrap">
                       {s.deltaPoints > 0 ? (
                         <span className="text-emerald-600 flex items-center justify-center gap-0.5">
                           <ArrowUpRight className="w-3.5 h-3.5" /> +{s.deltaPoints}
@@ -1711,8 +1801,8 @@ export const ComprehensiveStatisticsView: React.FC = () => {
                         <span className="text-slate-400">0</span>
                       )}
                     </td>
-                    <td className="p-2 border-r border-slate-300 font-mono font-bold text-emerald-800">{s.attRate}%</td>
-                    <td className="p-2">
+                    <td className="p-2 border-r border-slate-300 font-mono font-bold text-emerald-800 whitespace-nowrap">{s.attRate}%</td>
+                    <td className="p-2 whitespace-nowrap">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] border ${s.progressColor}`}>
                         {s.progressBadge}
                       </span>

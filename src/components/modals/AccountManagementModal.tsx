@@ -5,9 +5,10 @@ import {
   Database, Download, Upload, CheckCircle2, AlertCircle, RefreshCw, 
   School, Laptop, Check, Search, ShieldCheck, FileSpreadsheet,
   FileUp, ArrowDownToLine, AlertTriangle, Sparkles, History, Eye,
-  Activity, Calendar, Clock, Filter, RotateCcw, GitBranch
+  Activity, Calendar, Clock, Filter, RotateCcw, GitBranch,
+  FolderTree, Building2, Plus, Crown, ArrowRightLeft, FileText
 } from 'lucide-react';
-import { UserAccount, UserRole } from '../../types';
+import { UserAccount, UserRole, SchoolEntity } from '../../types';
 import { databaseService, DatabaseStats, AuditLogItem, UserSummaryItem } from '../../services/databaseService';
 import { useClassroom } from '../../context/ClassroomContext';
 
@@ -29,12 +30,60 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   onSwitchToUser
 }) => {
   const { setIsGithubModalOpen } = useClassroom();
-  const [activeTab, setActiveTab] = useState<'accounts' | 'add' | 'import' | 'real_data' | 'logs' | 'database'>('accounts');
+  const [activeTab, setActiveTab] = useState<'accounts' | 'schools' | 'add' | 'import' | 'real_data' | 'logs' | 'database' | 'registrations'>('accounts');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // 🎯 QUYỀN HẠN PHÂN CẤP 3 NHÓM CHÍNH (Yêu cầu e, c, d)
+  const isSuperAdmin = currentUser?.role === 'admin';
+  const isSchoolAdmin = currentUser?.role === 'school_admin' || Boolean(currentUser?.isSchoolAdmin);
+  const isGuestAdmin = currentUser?.role === 'guest_admin' || Boolean(currentUser?.isGuestAdmin);
+  const currentSchoolScope = currentUser?.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+
+  // Quản lý CSDL Trường Học
+  const [schoolsList, setSchoolsList] = useState<SchoolEntity[]>([]);
+  const [editingSchool, setEditingSchool] = useState<SchoolEntity | null>(null);
+  const [schoolModalOpen, setSchoolModalOpen] = useState(false);
+  const [schoolFormData, setSchoolFormData] = useState({
+    name: '',
+    code: '',
+    address: '',
+    phone: '',
+    adminUsername: 'adminths1'
+  });
+
+  // Tenant categorization filter: Trường học vs Giáo viên vãng lai vs Demo
+  const [tenantFilter, setTenantFilter] = useState<string>('all');
+
+  // Academic Year Reset states
+  const [schoolResetModalOpen, setSchoolResetModalOpen] = useState(false);
+  const [schoolResetMode, setSchoolResetMode] = useState<'keep_teachers' | 'full'>('keep_teachers');
+  const [targetResetScope, setTargetResetScope] = useState<'school' | 'guest'>('school');
+  const [selectedResetSchoolName, setSelectedResetSchoolName] = useState<string>(currentSchoolScope);
+  const [schoolResetConfirmCode, setSchoolResetConfirmCode] = useState('');
+  const [isResettingSchool, setIsResettingSchool] = useState(false);
+
+  // 🚀 DI CHUYỂN TOÀN BỘ CSDL GIÁO VIÊN VÃNG LAI VÀO NHÀ TRƯỜNG (SUPER ADMIN)
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [userToTransfer, setUserToTransfer] = useState<UserAccount | null>(null);
+  const [targetSchoolName, setTargetSchoolName] = useState<string>('');
+  const [customSchoolName, setCustomSchoolName] = useState<string>('');
+  const [isTransferring, setIsTransferring] = useState(false);
+
+  // Registrations state
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [currentRejectId, setCurrentRejectId] = useState<string>('');
+  const [rejectReason, setRejectReason] = useState<string>('');
+
+  const [editRegistrationModalOpen, setEditRegistrationModalOpen] = useState(false);
+  const [currentEditReg, setCurrentEditReg] = useState<any>(null);
+  const [editRegStatus, setEditRegStatus] = useState<'approved' | 'rejected'>('rejected');
+  const [editRegNote, setEditRegNote] = useState<string>('');
 
   // Real data state
   const [userSummaries, setUserSummaries] = useState<UserSummaryItem[]>([]);
@@ -73,50 +122,38 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     email: '',
     assignedClassName: '4A1',
     subjectName: 'Tin học',
-    schoolName: 'Trường Tiểu học số 1 Tân Uyên'
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    tenantType: 'school' as 'school' | 'guest'
   });
 
   const [localUsage, setLocalUsage] = useState<{ bytes: number; sizeKB: number; formatted: string } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
+      loadSchools();
       loadStats();
       onRefreshUsers();
       loadSummaries();
       loadAuditLogs();
+      loadRegistrations();
       setLocalUsage(databaseService.getLocalStorageUsage());
     }
   }, [isOpen]);
 
-  const handleCompactDatabase = async () => {
-    setLoading(true);
+  const loadSchools = async () => {
     try {
-      const res = await databaseService.compactDatabase();
-      if (res.success) {
-        showNotify('success', res.message || 'Đã nén và tối ưu hóa database thành công!');
-        if (res.stats) setStats(res.stats);
-        setLocalUsage(databaseService.getLocalStorageUsage());
-      } else {
-        showNotify('error', res.message || 'Lỗi khi tối ưu hóa database.');
+      const list = await databaseService.getSchools();
+      if (Array.isArray(list)) {
+        setSchoolsList(list);
       }
-    } catch (err: any) {
-      showNotify('error', err?.message || 'Lỗi kết nối.');
-    } finally {
-      setLoading(false);
-    }
+    } catch (_) {}
   };
 
-  useEffect(() => {
-    if (activeTab === 'real_data') {
-      loadSummaries();
-    } else if (activeTab === 'logs') {
-      loadAuditLogs();
-    }
-  }, [activeTab, selectedLogUser, selectedLogAction]);
-
   const loadStats = async () => {
-    const s = await databaseService.getDatabaseStats();
-    if (s) setStats(s);
+    try {
+      const s = await databaseService.getDatabaseStats();
+      if (s) setStats(s);
+    } catch (_) {}
   };
 
   const loadSummaries = async () => {
@@ -143,6 +180,333 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     finally {
       setLoadingLogs(false);
     }
+  };
+
+  const loadRegistrations = async () => {
+    setLoadingRegistrations(true);
+    try {
+      const data = await databaseService.getRegistrations();
+      if (Array.isArray(data)) setRegistrations(data);
+    } catch (_) {}
+    finally {
+      setLoadingRegistrations(false);
+    }
+  };
+
+  const handleApproveRegistration = async (reg: any) => {
+    try {
+      const res = await databaseService.updateRegistrationStatus(reg.id, 'approved');
+      if (res.success) {
+        showNotify('success', 'Đã duyệt đơn đăng ký!');
+        loadRegistrations();
+        
+        // Chuyển luôn đến giao diện khởi tạo tài khoản csdl database cho nhà trường
+        setActiveTab('schools');
+        setEditingSchool(null);
+        setSchoolFormData({
+          name: reg.schoolName || reg.organization || '',
+          code: '',
+          address: '',
+          phone: reg.phone || '',
+          adminUsername: 'adminths1'
+        });
+        setSchoolModalOpen(true);
+      } else {
+        showNotify('error', res.message || 'Lỗi khi duyệt.');
+      }
+    } catch (_) {
+      showNotify('error', 'Lỗi khi cập nhật trạng thái.');
+    }
+  };
+
+  const handleOpenRejectModal = (id: string) => {
+    setCurrentRejectId(id);
+    setRejectReason('');
+    setRejectModalOpen(true);
+  };
+
+  const handleConfirmReject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectReason.trim()) {
+      showNotify('error', 'Vui lòng nhập lý do không duyệt.');
+      return;
+    }
+    setLoadingRegistrations(true);
+    try {
+      const res = await databaseService.updateRegistrationStatus(currentRejectId, 'rejected', rejectReason);
+      if (res.success) {
+        showNotify('success', 'Đã từ chối đơn đăng ký.');
+        setRejectModalOpen(false);
+        loadRegistrations();
+      } else {
+        showNotify('error', res.message || 'Lỗi khi từ chối.');
+      }
+    } catch (_) {
+      showNotify('error', 'Lỗi khi cập nhật trạng thái.');
+    } finally {
+      setLoadingRegistrations(false);
+    }
+  };
+
+  const handleOpenEditRegistrationModal = (reg: any) => {
+    setCurrentEditReg(reg);
+    setEditRegStatus(reg.status === 'approved' ? 'approved' : 'rejected');
+    setEditRegNote(reg.rejectReason || '');
+    setEditRegistrationModalOpen(true);
+  };
+
+  const handleConfirmEditRegistration = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentEditReg) return;
+    setLoadingRegistrations(true);
+    try {
+      const res = await databaseService.updateRegistrationStatus(currentEditReg.id, editRegStatus, editRegNote);
+      if (res.success) {
+        showNotify('success', 'Cập nhật đơn đăng ký thành công.');
+        setEditRegistrationModalOpen(false);
+        loadRegistrations();
+      } else {
+        showNotify('error', res.message || 'Lỗi khi cập nhật.');
+      }
+    } catch (_) {
+      showNotify('error', 'Lỗi khi cập nhật.');
+    } finally {
+      setLoadingRegistrations(false);
+    }
+  };
+
+  const handleDeleteRegistration = async (id: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa đơn đăng ký này?')) return;
+    setLoadingRegistrations(true);
+    try {
+      const res = await databaseService.deleteRegistration(id);
+      if (res.success) {
+        showNotify('success', 'Đã xóa đơn đăng ký.');
+        loadRegistrations();
+      } else {
+        showNotify('error', res.message || 'Lỗi khi xóa.');
+      }
+    } catch (_) {
+      showNotify('error', 'Lỗi khi xóa.');
+    } finally {
+      setLoadingRegistrations(false);
+    }
+  };
+  const handleCompactDatabase = async () => {
+    setLoading(true);
+    try {
+      const res = await databaseService.compactDatabase();
+      if (res.success) {
+        showNotify('success', res.message || 'Đã nén và tối ưu hóa database thành công!');
+        if (res.stats) setStats(res.stats);
+        setLocalUsage(databaseService.getLocalStorageUsage());
+      } else {
+        showNotify('error', res.message || 'Lỗi khi tối ưu hóa database.');
+      }
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi kết nối.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartCreateSchool = () => {
+    setEditingSchool(null);
+    setSchoolFormData({
+      name: '',
+      code: '',
+      address: '',
+      phone: '',
+      adminUsername: 'adminths1'
+    });
+    setSchoolModalOpen(true);
+  };
+
+  const handleStartEditSchool = (school: SchoolEntity) => {
+    setEditingSchool(school);
+    setSchoolFormData({
+      name: school.name,
+      code: school.code,
+      address: school.address || '',
+      phone: school.phone || '',
+      adminUsername: school.adminUsername || 'adminths1'
+    });
+    setSchoolModalOpen(true);
+  };
+
+  const handleSaveSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!schoolFormData.name.trim()) {
+      showNotify('error', 'Vui lòng nhập tên trường học.');
+      return;
+    }
+    setLoading(true);
+    try {
+      if (editingSchool) {
+        const res = await databaseService.updateSchool(editingSchool.id, schoolFormData);
+        if (res.success) {
+          showNotify('success', 'Đã cập nhật thông tin trường thành công!');
+          setSchoolModalOpen(false);
+          loadSchools();
+          onRefreshUsers();
+        } else {
+          showNotify('error', res.message || 'Không thể cập nhật trường.');
+        }
+      } else {
+        const res = await databaseService.createSchool(schoolFormData);
+        if (res.success) {
+          showNotify('success', 'Đã khởi tạo cơ sở dữ liệu trường học mới thành công!');
+          setSchoolModalOpen(false);
+          loadSchools();
+          onRefreshUsers();
+        } else {
+          showNotify('error', res.message || 'Không thể tạo trường mới.');
+        }
+      }
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi khi lưu thông tin trường.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSchool = async (school: SchoolEntity) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa cơ sở dữ liệu trường "${school.name}" (${school.code})?`)) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await databaseService.deleteSchool(school.id);
+      if (res.success) {
+        showNotify('success', res.message || 'Đã xóa trường học thành công.');
+        loadSchools();
+        onRefreshUsers();
+      } else {
+        showNotify('error', res.message || 'Không thể xóa trường học.');
+      }
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi khi xóa trường.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExecuteResetSchool = async () => {
+    if (schoolResetConfirmCode.trim().toUpperCase() !== 'DONG Y XOA') {
+      showNotify('error', 'Vui lòng gõ chính xác cụm từ "DONG Y XOA" để xác nhận.');
+      return;
+    }
+
+    setIsResettingSchool(true);
+    try {
+      const scope = isGuestAdmin ? 'guest' : (isSchoolAdmin ? 'school' : targetResetScope);
+      const targetSchool = scope === 'school' ? (isSchoolAdmin ? currentSchoolScope : selectedResetSchoolName) : '';
+      const res = await databaseService.resetSchoolAcademicYear(targetSchool, schoolResetMode, scope);
+      if (res.success) {
+        showNotify('success', res.message || 'Đã dọn dẹp dữ liệu năm học thành công!');
+        setSchoolResetModalOpen(false);
+        setSchoolResetConfirmCode('');
+        onRefreshUsers();
+        loadStats();
+        loadSummaries();
+      } else {
+        showNotify('error', res.message || 'Không thể dọn dẹp dữ liệu năm học.');
+      }
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi kết nối khi dọn dẹp dữ liệu.');
+    } finally {
+      setIsResettingSchool(false);
+    }
+  };
+
+  // 🚀 Mở hộp thoại Di chuyển CSDL Giáo viên vào Nhà trường (Super Admin)
+  const handleOpenTransferModal = (user: UserAccount) => {
+    setUserToTransfer(user);
+    const defaultTarget = schoolsList[0]?.name || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+    setTargetSchoolName(defaultTarget);
+    setCustomSchoolName('');
+    setTransferModalOpen(true);
+  };
+
+  // 🚀 Thực thi di chuyển CSDL & phân vùng sang Nhà trường
+  const handleConfirmTransfer = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!userToTransfer) return;
+    const finalSchoolName = targetSchoolName === '__custom__' ? customSchoolName.trim() : targetSchoolName.trim();
+    if (!finalSchoolName) {
+      showNotify('error', 'Vui lòng chọn hoặc nhập tên trường học cần gán.');
+      return;
+    }
+
+    setIsTransferring(true);
+    try {
+      const res = await databaseService.transferUserToSchool(userToTransfer.id, finalSchoolName);
+      if (res.success) {
+        showNotify('success', res.message || `Đã di chuyển thành công cô giáo "${userToTransfer.fullName}" sang trường "${finalSchoolName}"!`);
+        setTransferModalOpen(false);
+        setUserToTransfer(null);
+        onRefreshUsers();
+        loadStats();
+        loadSummaries();
+      } else {
+        showNotify('error', res.message || 'Không thể di chuyển tài khoản vào trường.');
+      }
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi kết nối khi di chuyển tài khoản.');
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
+  const handleExportScoped = async (scope: 'school' | 'guest' | 'all') => {
+    try {
+      const targetSchool = scope === 'school' ? currentSchoolScope : '';
+      const json = await databaseService.exportScopedData(scope, targetSchool);
+      if (!json) {
+        showNotify('error', 'Không thể trích xuất dữ liệu.');
+        return;
+      }
+      const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filenameScope = scope === 'guest' ? 'giao_vien_ca_nhan' : (targetSchool ? targetSchool.replace(/[^a-zA-Z0-9]/g, '_') : 'toan_he_thong');
+      link.download = `data_${filenameScope}_${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showNotify('success', 'Đã tải về tệp Data JSON thành công!');
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi khi tải file JSON.');
+    }
+  };
+
+  const handleImportScoped = (e: React.ChangeEvent<HTMLInputElement>, scope: 'school' | 'guest' | 'all') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const json = JSON.parse(ev.target?.result as string);
+        setLoading(true);
+        const targetSchool = scope === 'school' ? currentSchoolScope : '';
+        const res = await databaseService.importScopedData(json, scope, targetSchool);
+        if (res.success) {
+          showNotify('success', res.message || 'Đã nạp file Data JSON thành công!');
+          onRefreshUsers();
+          loadStats();
+          loadSummaries();
+        } else {
+          showNotify('error', res.message || 'Lỗi nạp file JSON.');
+        }
+      } catch (err: any) {
+        showNotify('error', 'Tệp tin không đúng định dạng JSON.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   const handleClearLogs = async () => {
@@ -176,7 +540,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || currentUser?.role === 'bgh' || currentUser?.isBgh) return null;
 
   const showNotify = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -187,6 +551,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
   const handleStartCreate = () => {
     setEditingUser(null);
+    const defaultSchool = isSchoolAdmin ? currentSchoolScope : (schoolsList[0]?.name || 'TIỂU HỌC SỐ 1 TÂN UYÊN');
+    const defaultTenant = isGuestAdmin ? 'guest' : 'school';
     setFormData({
       username: '',
       password: '123456',
@@ -196,12 +562,17 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       email: '',
       assignedClassName: '4A1',
       subjectName: 'Tin học',
-      schoolName: 'Trường Tiểu học số 1 Tân Uyên'
+      schoolName: isGuestAdmin ? 'Giáo Viên Cá Nhân' : defaultSchool,
+      tenantType: defaultTenant
     });
     setActiveTab('add');
   };
 
   const handleStartEdit = (user: UserAccount) => {
+    if (isSchoolAdmin && (user.schoolName !== currentSchoolScope || user.role === 'admin' || user.isGuestAdmin)) {
+      showNotify('error', 'Bạn chỉ có quyền chỉnh sửa tài khoản thuộc trường của mình.');
+      return;
+    }
     setEditingUser(user);
     setFormData({
       username: user.username,
@@ -212,7 +583,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       email: user.email || '',
       assignedClassName: user.assignedClassName || '4A1',
       subjectName: user.subjectName || 'Tin học',
-      schoolName: user.schoolName || 'Trường Tiểu học số 1 Tân Uyên'
+      schoolName: user.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+      tenantType: user.tenantType || 'school'
     });
     setActiveTab('add');
   };
@@ -223,6 +595,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       showNotify('error', 'Vui lòng nhập họ và tên giáo viên.');
       return;
     }
+
+    const finalSchoolName = isSchoolAdmin ? currentSchoolScope : formData.schoolName;
 
     setLoading(true);
     try {
@@ -235,7 +609,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           email: formData.email,
           assignedClassName: formData.assignedClassName,
           subjectName: formData.subjectName,
-          schoolName: formData.schoolName
+          schoolName: finalSchoolName,
+          tenantType: isSchoolAdmin ? 'school' : formData.tenantType
         });
         if (res.success) {
           showNotify('success', 'Đã cập nhật thông tin tài khoản thành công!');
@@ -260,7 +635,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           email: formData.email,
           assignedClassName: formData.assignedClassName,
           subjectName: formData.subjectName,
-          schoolName: formData.schoolName
+          schoolName: finalSchoolName,
+          tenantType: isSchoolAdmin ? 'school' : formData.tenantType
         });
         if (res.success) {
           showNotify('success', `Đã thêm tài khoản "${formData.username}" thành công!`);
@@ -279,8 +655,12 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   };
 
   const handleDeleteUser = async (user: UserAccount) => {
-    if (user.username.toLowerCase() === 'admin') {
+    if (user.role === 'admin' || user.username.toLowerCase() === 'adminquantri') {
       showNotify('error', 'Không được phép xóa tài khoản quản trị tối cao.');
+      return;
+    }
+    if (isSchoolAdmin && (user.schoolName !== currentSchoolScope || user.isGuestAdmin)) {
+      showNotify('error', 'Bạn chỉ có quyền xóa tài khoản giáo viên thuộc trường của mình.');
       return;
     }
     if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản "${user.fullName}" (${user.username})?`)) {
@@ -305,6 +685,17 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   };
 
   const handleResetPassword = async (user: UserAccount) => {
+    if (user.role === 'admin' || user.username.toLowerCase() === 'adminquantri') {
+      if (!isSuperAdmin) {
+        showNotify('error', 'Chỉ Quản trị tối cao mới có thể đặt lại mật khẩu cho tài khoản này.');
+        return;
+      }
+    }
+    if (isSchoolAdmin && (user.schoolName !== currentSchoolScope || user.isGuestAdmin)) {
+      showNotify('error', 'Bạn chỉ có quyền đổi mật khẩu cho tài khoản thuộc trường của mình.');
+      return;
+    }
+
     const newPass = window.prompt(`Nhập mật khẩu mới cho tài khoản "${user.username}":`, '123456');
     if (!newPass) return;
 
@@ -324,6 +715,14 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   };
 
   const handleQuickSwitch = async (username: string) => {
+    if (isSchoolAdmin) {
+      const targetUser = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+      if (targetUser && (targetUser.schoolName !== currentSchoolScope || targetUser.role === 'admin' || targetUser.isGuestAdmin)) {
+        showNotify('error', 'Bạn chỉ có thể truy cập không gian của giáo viên thuộc trường của mình.');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       await onSwitchToUser(username);
@@ -371,9 +770,14 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   };
 
   // 1. Chức năng xuất file Excel tài khoản user của giáo viên (User requirement)
-  const handleExportUsersToExcel = () => {
+  const handleExportUsersToExcel = (usersToExport: UserAccount[], fileNamePrefix: string = 'Danh_sach_tai_khoan_giao_vien') => {
     try {
-      const dataRows = allUsers.map((u, idx) => ({
+      if (usersToExport.length === 0) {
+        showNotify('error', 'Không có dữ liệu để xuất Excel');
+        return;
+      }
+
+      const dataRows = usersToExport.map((u, idx) => ({
         'STT': idx + 1,
         'Tên đăng nhập': u.username,
         'Mật khẩu': u.password || '123456',
@@ -382,7 +786,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         'Lớp chủ nhiệm / Môn dạy': u.role === 'homeroom' ? (u.assignedClassName || 'Chưa gán') : (u.subjectName || 'Tin học'),
         'Số điện thoại': u.phone || '',
         'Email': u.email || '',
-        'Đơn vị trường học': u.schoolName || 'Trường Tiểu học số 1 Tân Uyên',
+        'Đơn vị trường học': u.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
         'Trạng thái': u.status === 'locked' ? 'Tạm khóa' : 'Đang hoạt động',
         'Ngày tạo': u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : 'Mặc định'
       }));
@@ -405,10 +809,10 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'TaiKhoanGiaoVien');
 
-      const fileName = `Danh_sach_tai_khoan_giao_vien_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const fileName = `${fileNamePrefix}_${new Date().toISOString().slice(0, 10)}.xlsx`;
       XLSX.writeFile(workbook, fileName);
 
-      showNotify('success', `Đã xuất thành công danh sách ${allUsers.length} tài khoản giáo viên ra file Excel!`);
+      showNotify('success', `Đã xuất thành công danh sách ${usersToExport.length} tài khoản giáo viên ra file Excel!`);
     } catch (err: any) {
       showNotify('error', err?.message || 'Có lỗi xảy ra khi xuất file Excel tài khoản.');
     }
@@ -427,7 +831,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': '1A1',
           'Số điện thoại': '0912345671',
           'Email': 'co.lan@truong.edu.vn',
-          'Đơn vị trường học': 'Trường Tiểu học số 1 Tân Uyên'
+          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
         },
         {
           'STT': 2,
@@ -438,7 +842,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': '2A1',
           'Số điện thoại': '0912345672',
           'Email': 'thay.bach@truong.edu.vn',
-          'Đơn vị trường học': 'Trường Tiểu học số 1 Tân Uyên'
+          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
         },
         {
           'STT': 3,
@@ -449,7 +853,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': 'Tiếng Anh',
           'Số điện thoại': '0912345673',
           'Email': 'co.thu@truong.edu.vn',
-          'Đơn vị trường học': 'Trường Tiểu học số 1 Tân Uyên'
+          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
         },
         {
           'STT': 4,
@@ -460,7 +864,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': 'Âm nhạc',
           'Số điện thoại': '0912345674',
           'Email': 'thay.huy@truong.edu.vn',
-          'Đơn vị trường học': 'Trường Tiểu học số 1 Tân Uyên'
+          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
         }
       ];
 
@@ -526,7 +930,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           const classOrSubject = getVal(['lớp', 'môn', 'phụ trách', 'bộ môn', 'chủ nhiệm']);
           const phone = getVal(['điện thoại', 'sđt', 'phone', 'mobile']);
           const email = getVal(['email', 'thư điện tử']);
-          const schoolName = getVal(['trường', 'đơn vị', 'school']) || 'Trường Tiểu học số 1 Tân Uyên';
+          const schoolName = getVal(['trường', 'đơn vị', 'school']) || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
 
           // Chuẩn hóa username: không dấu, viết thường, không khoảng cách
           const cleanUsername = usernameRaw
@@ -628,37 +1032,108 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     }
   };
 
-  const filteredUsers = allUsers.filter(u => 
-    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (u.phone && u.phone.includes(searchTerm)) ||
-    (u.assignedClassName && u.assignedClassName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (u.subjectName && u.subjectName.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const scopedUsers = allUsers.filter(u => {
+    if (isSchoolAdmin) {
+      return (u.schoolName === currentSchoolScope) && u.role !== 'admin' && !u.isGuestAdmin && u.username.toLowerCase() !== 'adminquantri';
+    }
+    if (isGuestAdmin) {
+      return (u.tenantType === 'guest') && u.role !== 'admin' && !u.isSchoolAdmin && u.username.toLowerCase() !== 'adminquantri';
+    }
+    return true;
+  });
+
+  const filteredUsers = scopedUsers.filter(u => {
+    const matchSearch = 
+      u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.phone && u.phone.includes(searchTerm)) ||
+      (u.assignedClassName && u.assignedClassName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (u.subjectName && u.subjectName.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (!matchSearch) return false;
+
+    if (!isSuperAdmin) return true; // School admin only sees scoped users of their school
+
+    if (tenantFilter === 'admin_super') {
+      return u.role === 'admin' || u.username.toLowerCase() === 'adminquantri';
+    }
+    if (tenantFilter === 'th1_tu') {
+      return !!u.schoolName?.toUpperCase().includes('TÂN UYÊN') || !!u.schoolName?.toUpperCase().includes('TH1_TU');
+    }
+    if (tenantFilter === 'demo_hp') {
+      return !!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO');
+    }
+    if (tenantFilter === 'guest') {
+      return u.tenantType === 'guest' && !u.isDemo;
+    }
+    return true;
+  }).sort((a, b) => {
+    const roleOrder: Record<string, number> = {
+      'admin': 1,
+      'school_admin': 2,
+      'guest_admin': 3,
+      'bgh': 4,
+      'homeroom': 5,
+      'subject': 6
+    };
+    
+    const orderA = roleOrder[a.role] || 99;
+    const orderB = roleOrder[b.role] || 99;
+    
+    if (orderA !== orderB) return orderA - orderB;
+    return (a.fullName || '').localeCompare(b.fullName || '');
+  });
+
+  // Dữ liệu lớp & học sinh thực tế theo phân quyền
+  const scopedSummaries = userSummaries.filter(u => {
+    if (isSuperAdmin) return true;
+    const acc = allUsers.find(au => au.username.toLowerCase() === u.username.toLowerCase());
+    if (isSchoolAdmin) return (u.schoolName === currentSchoolScope) || (acc?.schoolName === currentSchoolScope);
+    if (isGuestAdmin) return (acc?.tenantType === 'guest');
+    return true;
+  });
+
+  // Thống kê dung lượng database theo phân quyền
+  const scopedUserBreakdown = (stats?.userBreakdown || []).filter(item => {
+    if (isSuperAdmin) return true;
+    const acc = allUsers.find(au => au.username.toLowerCase() === item.username.toLowerCase());
+    if (isSchoolAdmin) return (acc?.schoolName === currentSchoolScope);
+    if (isGuestAdmin) return (acc?.tenantType === 'guest');
+    return true;
+  });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-slate-950/65 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl h-[88vh] max-h-[820px] overflow-hidden flex flex-col"
+        className="bg-white shadow-2xl w-full h-full max-w-none max-h-none overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 p-5 md:px-7 md:py-5 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center shadow-lg font-black shrink-0">
-              <ShieldCheck className="w-6 h-6" />
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg font-black shrink-0 ${
+              isSuperAdmin ? 'bg-amber-400 text-slate-950' : (isSchoolAdmin ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white')
+            }`}>
+              {isSuperAdmin ? <Crown className="w-6 h-6" /> : (isSchoolAdmin ? <School className="w-6 h-6" /> : <Users className="w-6 h-6" />)}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base md:text-lg font-black uppercase tracking-tight">
-                  Quản Trị Tài Khoản & Cơ Sở Dữ Liệu
+                  {isSuperAdmin 
+                    ? 'Quản Trị Hệ Thống Cấp Cao (Admin Super)' 
+                    : (isSchoolAdmin ? `Quản Trị Nhà Trường: ${currentSchoolScope}` : 'Quản Trị Tài Khoản Cá Nhân')}
                 </h2>
-                <span className="bg-rose-500 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
-                  Admin Super
+                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider ${
+                  isSuperAdmin ? 'bg-rose-500 text-white' : (isSchoolAdmin ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white')
+                }`}>
+                  {isSuperAdmin ? 'Admin Super' : (isSchoolAdmin ? 'Quản Trị Trường' : 'Quản Trị Cá Nhân')}
                 </span>
               </div>
               <p className="text-xs text-slate-300 font-medium">
-                Tài khoản độc lập • Lưu database trực tuyến trên ứng dụng • Đồng bộ GitHub Server
+                {isSuperAdmin 
+                  ? 'Quản trị cây thư mục CSDL Trường học & Tài khoản toàn diện • Đồng bộ GitHub Server' 
+                  : (isSchoolAdmin 
+                      ? 'Quản lý mô hình lớp, giáo viên, học sinh nhà trường • Tải/Nạp Data JSON • Dọn dẹp năm học' 
+                      : 'Quản lý giáo viên tự do các tỉnh thành lẻ • Tải/Nạp Data JSON • Dọn dẹp năm học')}
               </p>
             </div>
           </div>
@@ -674,6 +1149,21 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         {/* Tab navigation & quick action */}
         <div className="bg-slate-100/80 border-b border-slate-200 px-4 md:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+            {/* Tab CSDL Trường học dành cho Super Admin (Yêu cầu e) */}
+            {isSuperAdmin && (
+              <button
+                onClick={() => setActiveTab('schools')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 uppercase ${
+                  activeTab === 'schools'
+                    ? 'bg-rose-600 text-white shadow-xs shadow-rose-600/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>CSDL Trường Học ({schoolsList.length})</span>
+              </button>
+            )}
+
             <button
               onClick={() => setActiveTab('accounts')}
               className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 uppercase ${
@@ -683,7 +1173,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>Tài Khoản ({allUsers.length})</span>
+              <span>{isSchoolAdmin ? 'GV Trong Trường' : (isGuestAdmin ? 'GV Cá Nhân' : 'Tài Khoản')} ({scopedUsers.length})</span>
             </button>
 
             <button
@@ -695,20 +1185,22 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              <span>Dữ Liệu Thực Tế</span>
+              <span>Mô Hình Lớp & HS</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('logs')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 uppercase ${
-                activeTab === 'logs'
-                  ? 'bg-violet-600 text-white shadow-xs shadow-violet-600/20'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <History className="w-3.5 h-3.5" />
-              <span>Lịch Sử Thao Tác</span>
-            </button>
+            {isSuperAdmin && (
+              <button
+                onClick={() => setActiveTab('logs')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 uppercase ${
+                  activeTab === 'logs'
+                    ? 'bg-violet-600 text-white shadow-xs shadow-violet-600/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>Lịch Sử Thao Tác</span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveTab('import')}
@@ -743,8 +1235,25 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               }`}
             >
               <Database className="w-3.5 h-3.5" />
-              <span>Database & GitHub</span>
+              <span>Data JSON & Năm Học</span>
             </button>
+
+            {isSuperAdmin && (
+              <button
+                onClick={() => {
+                  setActiveTab('registrations');
+                  loadRegistrations();
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 uppercase ${
+                  activeTab === 'registrations'
+                    ? 'bg-amber-600 text-white shadow-xs shadow-amber-600/20'
+                    : 'text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Đơn Đăng Ký ({registrations.length})</span>
+              </button>
+            )}
           </div>
 
           {/* Quick Refresh */}
@@ -780,6 +1289,155 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           </div>
         )}
 
+        {/* Tab 0: Super Admin Tree View & School Database Management (Yêu cầu e) */}
+        {activeTab === 'schools' && isSuperAdmin && (
+          <div className="flex-1 overflow-y-auto p-5 md:p-7 flex flex-col space-y-5">
+            {/* Top Bar for School Management */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-rose-50 to-indigo-50 p-4 rounded-2xl border border-rose-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase">
+                    Quản Lý Danh Mục & Cơ Sở Dữ Liệu Trường Học
+                  </h3>
+                  <p className="text-xs text-slate-600">
+                    Khởi tạo CSDL mới cho trường, phân bổ tài khoản quản trị trường, sao lưu và đồng bộ
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleStartCreateSchool}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Khởi Tạo CSDL Trường Mới</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-5 flex-1 min-h-0">
+              {/* Left Column: Tree View */}
+              <div className="lg:w-1/3 flex flex-col p-4 rounded-2xl bg-slate-900 text-white border border-slate-800 space-y-3 overflow-y-auto">
+                <div className="text-xs font-black text-amber-400 uppercase flex items-center gap-2">
+                  <FolderTree className="w-4 h-4" />
+                  <span>SƠ ĐỒ CÂY QUẢN TRỊ (SUPER ADMIN)</span>
+                </div>
+
+                <div className="text-xs font-mono space-y-1.5 pl-2 border-l-2 border-slate-700">
+                  <div className="text-rose-400 font-bold flex items-center gap-1.5">
+                    <span>👑 [Hệ Thống] (admin)</span>
+                  </div>
+
+                  <div className="pl-4 space-y-2 border-l border-slate-700 ml-2 mt-1">
+                    {/* Nhánh 1: CSDL Trường học */}
+                    <div className="space-y-1">
+                      <div className="text-blue-300 font-bold flex items-center gap-1.5">
+                        <span>📁 Nhánh 1: Nhà Trường ({schoolsList.length})</span>
+                      </div>
+                      <div className="pl-4 space-y-1 text-slate-300 text-[11px]">
+                        {schoolsList.map((s) => {
+                          const countGV = allUsers.filter(u => u.schoolName === s.name && u.role !== 'admin').length;
+                          return (
+                            <div key={s.id} className="flex flex-col py-1 hover:text-white border-b border-slate-800/50">
+                              <div className="flex items-center gap-1">
+                                <span>├── 🏫</span>
+                                <span className="font-bold text-slate-200 truncate" title={s.name}>{s.name}</span>
+                              </div>
+                              <div className="pl-5 text-[10px] text-slate-400">
+                                Mã: {s.code} • GV: {countGV}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Nhánh 2: Giáo viên cá nhân */}
+                    <div className="space-y-1 mt-3">
+                      <div className="text-purple-300 font-bold flex items-center gap-1.5">
+                        <span>👤 Nhánh 2: GV Cá Nhân ({allUsers.filter(u => u.tenantType === 'guest').length})</span>
+                      </div>
+                      <div className="pl-4 space-y-1 text-slate-300 text-[11px]">
+                        <div className="flex flex-col py-1">
+                          <span>└── 🛡️ Phụ trách: <span className="text-purple-300">@admin_canhan</span></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: School Table */}
+              <div className="lg:w-2/3 flex-1 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white flex flex-col min-h-[250px]">
+                <div className="flex-1 overflow-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+                      <tr>
+                        <th className="py-2 px-2 text-center w-12">STT</th>
+                        <th className="py-2 px-2">Tên Trường Học</th>
+                        <th className="py-2 px-2">Mã Trường</th>
+                        <th className="py-2 px-2 hidden md:table-cell">Số Điện Thoại</th>
+                        <th className="py-2 px-2 text-right">Thao Tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {schoolsList.map((school, idx) => (
+                        <tr key={school.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-2 px-2 text-center font-bold text-slate-400">{idx + 1}</td>
+                          <td className="py-2 px-2">
+                            <div className="font-black text-slate-900 flex items-center gap-1.5">
+                              <School className="w-4 h-4 text-blue-600 shrink-0" />
+                              <span>{school.name}</span>
+                            </div>
+                            <div className="text-[10px] font-mono text-amber-600 mt-0.5">TK: @{school.adminUsername || 'adminths1'}</div>
+                          </td>
+                          <td className="py-2 px-2 font-mono font-bold text-blue-700">{school.code}</td>
+                          <td className="py-2 px-2 text-slate-600 font-mono hidden md:table-cell">{school.phone || '—'}</td>
+                          <td className="py-2 px-2 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTenantFilter('school');
+                                  setSearchTerm(school.name);
+                                  setActiveTab('accounts');
+                                }}
+                                className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition-colors"
+                                title="Quản lý tài khoản thuộc trường"
+                              >
+                                <Users className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditSchool(school)}
+                                className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors"
+                                title="Chỉnh sửa thông tin trường"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSchool(school)}
+                                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                                title="Xóa CSDL trường này"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tab 1: Account List */}
         {activeTab === 'accounts' && (
           <div className="flex-1 overflow-y-auto p-5 md:p-7 flex flex-col">
@@ -801,12 +1459,21 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               {/* Action Buttons: Export to Excel & Import Template (User requirements) */}
               <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={handleExportUsersToExcel}
+                  onClick={() => handleExportUsersToExcel(filteredUsers, 'TaiKhoan_TabHienTai')}
                   className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase shadow-xs transition-all hover-zoom-btn"
-                  title="Xuất danh sách toàn bộ tài khoản giáo viên thành file Excel (.xlsx)"
+                  title="Xuất danh sách tài khoản theo Tab hiện tại thành file Excel"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>XUẤT EXCEL TÀI KHOẢN</span>
+                  <span>XUẤT EXCEL TAB NÀY</span>
+                </button>
+
+                <button
+                  onClick={() => handleExportUsersToExcel(allUsers, 'TaiKhoan_TatCa')}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-black uppercase shadow-xs transition-all hover-zoom-btn"
+                  title="Xuất danh sách toàn bộ tài khoản thành file Excel"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>XUẤT TẤT CẢ</span>
                 </button>
 
                 <button
@@ -832,31 +1499,131 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               </div>
             </div>
 
+            {/* Filter Tabs by Partition / Role (Yêu cầu 2 & 3) - Chỉ hiển thị cho Quản trị tối cao */}
+            {isSuperAdmin && (
+              <div className="flex flex-wrap items-center gap-2 mb-3 bg-slate-100/70 p-1.5 rounded-2xl border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => setTenantFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    tenantFilter === 'all'
+                      ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Tất cả ({allUsers.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTenantFilter('admin_super')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                    tenantFilter === 'admin_super'
+                      ? 'bg-rose-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-rose-700'
+                  }`}
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>Quản trị Tối cao ({allUsers.filter(u => u.role === 'admin' || u.username.toLowerCase() === 'adminquantri').length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTenantFilter('demo_hp')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                    tenantFilter === 'demo_hp'
+                      ? 'bg-amber-500 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-amber-700'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Khối TRƯỜNG HỌC HẠNH PHÚC DEMO ({allUsers.filter(u => !!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO')).length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTenantFilter('th1_tu')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                    tenantFilter === 'th1_tu'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-blue-700'
+                  }`}
+                >
+                  <School className="w-3.5 h-3.5" />
+                  <span>Khối TIỂU HỌC SỐ 1 TÂN UYÊN ({allUsers.filter(u => !!u.schoolName?.toUpperCase().includes('TÂN UYÊN') || !!u.schoolName?.toUpperCase().includes('TH1_TU')).length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTenantFilter('guest')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                    tenantFilter === 'guest'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-purple-700'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Khối Giáo viên Cá nhân / Vãng lai ({allUsers.filter(u => u.tenantType === 'guest' && !u.isDemo).length})</span>
+                </button>
+              </div>
+            )}
+
+            {isSchoolAdmin && (
+              <div className="flex items-center justify-between gap-2 mb-3 p-3 bg-blue-50 border border-blue-200 rounded-2xl text-xs font-bold text-blue-900 shrink-0">
+                <div className="flex items-center gap-2">
+                  <School className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>
+                    Phạm vi quản trị: <strong>{currentSchoolScope}</strong> ({scopedUsers.length} tài khoản) • Bạn chỉ có quyền xem và quản lý các tài khoản thuộc trường của mình.
+                  </span>
+                </div>
+                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-blue-200 text-blue-800 shrink-0">
+                  Nội Bộ Trường
+                </span>
+              </div>
+            )}
+
             {/* Table of Users */}
             <div className="flex-1 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
               <div className="overflow-x-auto h-full">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
                     <tr>
-                      <th className="py-3 px-3.5 text-center w-12">STT</th>
-                      <th className="py-3 px-3.5">Họ & Tên Giáo Viên</th>
-                      <th className="py-3 px-3.5">Tên Đăng Nhập</th>
-                      <th className="py-3 px-3.5 text-center">Vai Trò Được Gán</th>
-                      <th className="py-3 px-3.5">Lớp / Môn Phụ Trách</th>
-                      <th className="py-3 px-3.5">Số Điện Thoại</th>
-                      <th className="py-3 px-3.5 text-right">Thao Tác Quản Trị</th>
+                      <th className="py-2 px-2 text-center w-10 whitespace-nowrap">STT</th>
+                      <th className="py-2 px-2 whitespace-nowrap">Họ & Tên Giáo Viên</th>
+                      <th className="py-2 px-2 whitespace-nowrap">Tên Đăng Nhập</th>
+                      <th className="py-2 px-2 whitespace-nowrap">Mật Khẩu</th>
+                      <th className="py-2 px-2 text-center whitespace-nowrap">Vai Trò Được Gán</th>
+                      <th className="py-2 px-2 text-center whitespace-nowrap">Tài Khoản Cấp</th>
+                      <th className="py-2 px-2 text-center whitespace-nowrap">Chi Tiết</th>
+                      <th className="py-2 px-2 text-center whitespace-nowrap">Xem Chi Tiết Phân Quyền</th>
+                      <th className="py-2 px-2 text-right whitespace-nowrap">Thao Tác Quản Trị</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {filteredUsers.map((u, idx) => {
                       const isSelf = currentUser ? u.id === currentUser.id : false;
                       const isDefaultAdmin = u.username.toLowerCase() === 'admin';
+                      const getAccountLevel = (user: any) => {
+                        if (user.role === 'admin') return (user.schoolName?.toUpperCase().includes('TÂN UYÊN') || user.schoolName?.toUpperCase().includes('DEMO')) ? 'Cấp 2' : 'Cấp 1';
+                        if (user.role === 'guest_admin' || user.isGuestAdmin || user.isSchoolAdmin) return 'Cấp 2';
+                        if (user.role === 'bgh' || user.isBgh) return 'Cấp 3';
+                        if (user.role === 'homeroom') return 'Cấp 5';
+                        if (user.role === 'subject') return 'Cấp 6';
+                        return 'Cấp 4';
+                      };
+                      const accountLevel = getAccountLevel(u);
+                      
+                      const getRoleDescription = (user: any) => {
+                        if (user.role === 'admin') return 'Toàn quyền Hệ thống';
+                        if (user.role === 'guest_admin' || user.isGuestAdmin || user.isSchoolAdmin) return 'Quản trị Cấp Trường / Vùng';
+                        if (user.role === 'bgh' || user.isBgh) return 'Xem & Thống kê toàn trường';
+                        if (user.role === 'homeroom') return 'Quản lý toàn diện Lớp CN';
+                        if (user.role === 'subject') return 'Nhập điểm & Đánh giá Bộ Môn';
+                        return 'Quyền hạn cơ bản';
+                      };
+
                       return (
                         <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3.5 text-center font-bold text-slate-400">
+                          <td className="py-2 px-2 text-center font-bold text-slate-400">
                             {idx + 1}
                           </td>
-                          <td className="py-3 px-3.5">
+                          <td className="py-2 px-2">
                             <div className="flex items-center gap-2.5">
                               <img 
                                 src={u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username} 
@@ -865,52 +1632,125 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                               />
                               <div>
                                 <div className="font-black text-slate-900 flex items-center gap-1.5">
-                                  <span>{u.fullName}</span>
+                                  <span className="whitespace-nowrap">{u.fullName}</span>
                                   {isSelf && (
-                                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200">
+                                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200 whitespace-nowrap">
                                       BẠN
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400">{u.email || u.schoolName}</div>
+                                <div className="text-[10px] text-slate-400 whitespace-nowrap">{u.email || u.schoolName}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-3.5">
-                            <code className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 font-mono font-bold text-[11px] border border-slate-200">
+                          <td className="py-2 px-2">
+                            <code className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 font-mono font-bold text-[11px] border border-slate-200 whitespace-nowrap">
                               {u.username}
                             </code>
                           </td>
-                          <td className="py-3 px-3.5 text-center">
-                            {u.role === 'admin' && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700 border border-rose-200">
-                                <ShieldCheck className="w-3 h-3" />
-                                Quản trị viên
-                              </span>
-                            )}
-                            {u.role === 'homeroom' && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-700 border border-indigo-200">
-                                <School className="w-3 h-3" />
-                                GV Chủ nhiệm
-                              </span>
-                            )}
-                            {u.role === 'subject' && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700 border border-emerald-200">
-                                <Laptop className="w-3 h-3" />
-                                GV Bộ môn
-                              </span>
-                            )}
+                          <td className="py-2 px-2">
+                            <code className="px-2 py-0.5 rounded-lg bg-red-50 text-red-700 font-mono font-bold text-[11px] border border-red-200 whitespace-nowrap inline-block">
+                              {u.password || (u.username.toLowerCase() === 'admin' ? 'Tanuyen@2026' : '123456')}
+                            </code>
                           </td>
-                          <td className="py-3 px-3.5 font-bold text-slate-700">
-                            {u.role === 'homeroom' && (u.assignedClassName ? `Lớp ${u.assignedClassName}` : 'Chưa gán')}
-                            {u.role === 'subject' && (u.subjectName ? `Môn ${u.subjectName}` : 'Chưa gán')}
-                            {u.role === 'admin' && <span className="text-slate-400 italic">Toàn quyền hệ thống</span>}
+                          <td className="py-2 px-2 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              {u.role === 'admin' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700 border border-rose-200 whitespace-nowrap">
+                                  <ShieldCheck className="w-3 h-3" />
+                                  Quản trị viên
+                                </span>
+                              )}
+                              {(u.role === 'bgh' || u.isBgh) && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
+                                  <ShieldAlert className="w-3 h-3" />
+                                  Ban Giám Hiệu
+                                </span>
+                              )}
+                              {u.role === 'homeroom' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                  <School className="w-3 h-3" />
+                                  GV Chủ nhiệm
+                                </span>
+                              )}
+                              {u.role === 'subject' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                  <Laptop className="w-3 h-3" />
+                                  GV Bộ môn
+                                </span>
+                              )}
+                              <div className="flex items-center gap-1">
+                                {u.isDemo && (
+                                  <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-black text-[9px] border border-amber-300">
+                                    DEMO (10 HS)
+                                  </span>
+                                )}
+                                {u.tenantType === 'guest' ? (
+                                  <span className="px-1.5 py-0.2 rounded bg-fuchsia-100 text-fuchsia-800 font-bold text-[9px] border border-fuchsia-200">
+                                    Vãng lai
+                                  </span>
+                                ) : (
+                                  <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-bold text-[9px] border border-slate-200">
+                                    Nhà trường
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </td>
-                          <td className="py-3 px-3.5 text-slate-500 font-mono">
-                            {u.phone || '—'}
+                          <td className="py-2 px-2 text-center">
+                            <span className="px-2 py-1 rounded-lg bg-orange-100 text-orange-800 font-black text-[11px] border border-orange-200 whitespace-nowrap shadow-xs">
+                              {accountLevel}
+                            </span>
                           </td>
-                          <td className="py-3 px-3.5 text-right">
+                          <td className="py-2 px-2 text-center">
+                            <button
+                              onClick={() => {
+                                const details = [
+                                  `👤 Tên hiển thị: ${u.fullName || 'Chưa cập nhật'}`,
+                                  `🔑 Tên đăng nhập: ${u.username}`,
+                                  `🔒 Mật khẩu: ${u.password || (u.username.toLowerCase() === 'admin' ? 'Tanuyen@2026' : '123456')}`,
+                                  `🛡️ Vai trò: ${u.role === 'admin' ? 'Quản trị hệ thống cấp cao' : u.role === 'school_admin' ? 'Quản trị nhà trường' : u.role === 'bgh' ? 'Ban giám hiệu' : u.role === 'homeroom' ? 'Giáo viên chủ nhiệm' : 'Giáo viên bộ môn'}`,
+                                  `🏢 Thuộc đơn vị/trường: ${u.schoolName || (u.tenantType === 'guest' ? 'Giáo Viên Cá Nhân' : 'Chưa rõ khối')}`,
+                                  `📚 Phụ trách: ${u.role === 'homeroom' && u.assignedClassName ? 'Chủ nhiệm lớp ' + u.assignedClassName : u.role === 'subject' && u.subjectName ? 'Giảng dạy môn ' + u.subjectName : u.role === 'admin' ? 'Quản lý toàn bộ hệ thống' : u.role === 'school_admin' || u.role === 'bgh' ? 'Quản lý toàn trường' : 'Chưa gán'}`,
+                                  `⚙️ Chức năng: ${getRoleDescription(u)}`,
+                                  `📞 SĐT: ${u.phone || 'Chưa cập nhật'}`
+                                ].join('\n');
+                                window.alert(`THÔNG TIN TÀI KHOẢN\n\n${details}`);
+                              }}
+                              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] border border-indigo-200 transition-colors flex items-center gap-1 mx-auto whitespace-nowrap shadow-xs"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              Xem Chi Tiết
+                            </button>
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => showNotify('success', `Phân quyền chi tiết: ${getRoleDescription(u)}`)}
+                              className="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-[10px] border border-teal-200 transition-colors flex items-center gap-1 mx-auto whitespace-nowrap"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              {getRoleDescription(u)}
+                            </button>
+                          </td>
+                          <td className="py-2 px-2 text-right">
                             <div className="flex items-center justify-end gap-1">
+                              {/* Chuyển / Gán vào Trường học (Super Admin) */}
+                              {isSuperAdmin && !isDefaultAdmin && (u.tenantType === 'guest' || !u.tenantType || u.role !== 'admin') && (
+                                <button
+                                  onClick={() => handleOpenTransferModal(u)}
+                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-black text-[11px] border transition-colors shadow-2xs hover-zoom-btn ${
+                                    u.tenantType === 'guest'
+                                      ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200'
+                                      : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'
+                                  }`}
+                                  title="Di chuyển toàn bộ database cá nhân (tài khoản, mật khẩu, lớp học, học sinh) sang Nhà Trường trực thuộc"
+                                >
+                                  <Building2 className="w-3.5 h-3.5" />
+                                  <span>{u.tenantType === 'guest' ? 'Gán Trường' : 'Chuyển Trường'}</span>
+                                </button>
+                              )}
+
                               {/* Switch / View as user */}
                               <button
                                 onClick={() => handleQuickSwitch(u.username)}
@@ -1020,12 +1860,13 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                   />
                 </div>
 
-                {/* Role selection (User requirement: Gán chức năng cho tài khoản là GVCN hay GVBM) */}
+                {/* Role selection (Theo quyền phân cấp: Super Admin, School Admin, Guest Admin) */}
                 <div className="md:col-span-2">
                   <label className="block text-xs font-black text-slate-700 uppercase mb-2">
                     Gán Vai Trò & Chức Năng Hoạt Động <span className="text-rose-500">*</span>
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* GVCN */}
                     <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
                       formData.role === 'homeroom' 
                         ? 'border-indigo-600 bg-indigo-50/60 shadow-xs' 
@@ -1049,6 +1890,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                       </p>
                     </label>
 
+                    {/* GVBM */}
                     <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
                       formData.role === 'subject' 
                         ? 'border-emerald-600 bg-emerald-50/60 shadow-xs' 
@@ -1072,29 +1914,171 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                       </p>
                     </label>
 
-                    <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
-                      formData.role === 'admin' 
-                        ? 'border-rose-600 bg-rose-50/60 shadow-xs' 
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-4 h-4 text-rose-600" />
-                          <span className="font-black text-xs text-slate-900 uppercase">QUẢN TRỊ VIÊN</span>
+                    {/* Các quyền quản trị mở rộng chỉ dành cho Super Admin */}
+                    {isSuperAdmin && (
+                      <>
+                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                          formData.role === 'school_admin' 
+                            ? 'border-blue-600 bg-blue-50/60 shadow-xs' 
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-blue-600" />
+                              <span className="font-black text-xs text-slate-900 uppercase">QUẢN TRỊ TRƯỜNG</span>
+                            </div>
+                            <input
+                              type="radio"
+                              name="role"
+                              checked={formData.role === 'school_admin'}
+                              onChange={() => setFormData({ ...formData, role: 'school_admin', tenantType: 'school' })}
+                              className="w-4 h-4 text-blue-600"
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-tight">
+                            Quản lý toàn bộ GV, lớp, học sinh trong trường, cấp pass, reset năm học.
+                          </p>
+                        </label>
+
+                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                          formData.role === 'guest_admin' 
+                            ? 'border-purple-600 bg-purple-50/60 shadow-xs' 
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4 text-purple-600" />
+                              <span className="font-black text-xs text-slate-900 uppercase">QUẢN TRỊ CÁ NHÂN</span>
+                            </div>
+                            <input
+                              type="radio"
+                              name="role"
+                              checked={formData.role === 'guest_admin'}
+                              onChange={() => setFormData({ ...formData, role: 'guest_admin', tenantType: 'guest', schoolName: 'Giáo Viên Cá Nhân' })}
+                              className="w-4 h-4 text-purple-600"
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-tight">
+                            Quản trị các tài khoản giáo viên tự do, tỉnh lẻ, không thuộc trường.
+                          </p>
+                        </label>
+
+                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                          formData.role === 'bgh' 
+                            ? 'border-amber-600 bg-amber-50/60 shadow-xs' 
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <ShieldAlert className="w-4 h-4 text-amber-600" />
+                              <span className="font-black text-xs text-slate-900 uppercase">BAN GIÁM HIỆU</span>
+                            </div>
+                            <input
+                              type="radio"
+                              name="role"
+                              checked={formData.role === 'bgh'}
+                              onChange={() => setFormData({ ...formData, role: 'bgh' })}
+                              className="w-4 h-4 text-amber-600"
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-tight">
+                            Xem toàn quyền mọi lớp, báo cáo, thi đua trường (không quản lý tài khoản).
+                          </p>
+                        </label>
+
+                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                          formData.role === 'admin' 
+                            ? 'border-rose-600 bg-rose-50/60 shadow-xs' 
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <ShieldCheck className="w-4 h-4 text-rose-600" />
+                              <span className="font-black text-xs text-slate-900 uppercase">SUPER ADMIN</span>
+                            </div>
+                            <input
+                              type="radio"
+                              name="role"
+                              checked={formData.role === 'admin'}
+                              onChange={() => setFormData({ ...formData, role: 'admin' })}
+                              className="w-4 h-4 text-rose-600"
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-tight">
+                            Toàn quyền tối cao quản lý cây CSDL trường, tất cả tài khoản, reset pass, database.
+                          </p>
+                        </label>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Phân vùng lưu trữ: Nhà trường vs Giáo viên cá nhân */}
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-black text-slate-700 uppercase mb-2">
+                    Phân Vùng Triển Khai & Quản Lý Dữ Liệu <span className="text-rose-500">*</span>
+                  </label>
+                  {isSuperAdmin ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <label className={`p-3 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
+                        formData.tenantType === 'school'
+                          ? 'border-blue-600 bg-blue-50/60 shadow-xs'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}>
+                        <div className="flex items-center gap-2.5">
+                          <School className="w-4 h-4 text-blue-600" />
+                          <div>
+                            <div className="text-xs font-black text-slate-900 uppercase">Cấp Cho Tổ Chức Nhà Trường</div>
+                            <div className="text-[11px] text-slate-500">Lưu trong cơ sở dữ liệu dùng chung của trường</div>
+                          </div>
                         </div>
                         <input
                           type="radio"
-                          name="role"
-                          checked={formData.role === 'admin'}
-                          onChange={() => setFormData({ ...formData, role: 'admin' })}
-                          className="w-4 h-4 text-rose-600"
+                          name="tenantType"
+                          checked={formData.tenantType === 'school'}
+                          onChange={() => setFormData({ ...formData, tenantType: 'school' })}
+                          className="w-4 h-4 text-blue-600"
                         />
+                      </label>
+
+                      <label className={`p-3 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
+                        formData.tenantType === 'guest'
+                          ? 'border-purple-600 bg-purple-50/60 shadow-xs'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}>
+                        <div className="flex items-center gap-2.5">
+                          <Users className="w-4 h-4 text-purple-600" />
+                          <div>
+                            <div className="text-xs font-black text-slate-900 uppercase">Cấp Cho Giáo Viên Cá Nhân</div>
+                            <div className="text-[11px] text-slate-500">Thuộc quản lý của Quản trị Tài khoản Cá nhân</div>
+                          </div>
+                        </div>
+                        <input
+                          type="radio"
+                          name="tenantType"
+                          checked={formData.tenantType === 'guest'}
+                          onChange={() => setFormData({ ...formData, tenantType: 'guest', schoolName: 'Giáo Viên Cá Nhân' })}
+                          className="w-4 h-4 text-purple-600"
+                        />
+                      </label>
+                    </div>
+                  ) : isSchoolAdmin ? (
+                    <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-center gap-3 text-blue-950">
+                      <School className="w-5 h-5 text-blue-600 shrink-0" />
+                      <div>
+                        <div className="text-xs font-black uppercase">Phân Vùng Nhà Trường: {currentSchoolScope}</div>
+                        <div className="text-[11px] text-blue-800">Tài khoản này được lưu trong CSDL của nhà trường và chịu sự quản trị của Quản trị Trường</div>
                       </div>
-                      <p className="text-[11px] text-slate-500 leading-tight">
-                        Toàn quyền quản lý tài khoản, gán quyền, reset pass, quản trị database.
-                      </p>
-                    </label>
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 bg-purple-50/70 border border-purple-200 rounded-2xl flex items-center gap-3 text-purple-950">
+                      <Users className="w-5 h-5 text-purple-600 shrink-0" />
+                      <div>
+                        <div className="text-xs font-black uppercase">Phân Vùng: Khối Giáo Viên Cá Nhân / Vãng Lai</div>
+                        <div className="text-[11px] text-purple-800">Tài khoản này thuộc quyền quản lý của Quản trị Tài khoản Cá nhân</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Conditional fields based on role */}
@@ -1158,13 +2142,32 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                   <label className="block text-xs font-black text-slate-700 uppercase mb-1.5">
                     Đơn Vị Trường Học
                   </label>
-                  <input
-                    type="text"
-                    value={formData.schoolName}
-                    onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
-                    placeholder="Trường Tiểu học số 1 Tân Uyên"
-                    className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 text-xs font-bold text-slate-800"
-                  />
+                  {isSchoolAdmin ? (
+                    <input
+                      type="text"
+                      value={currentSchoolScope}
+                      disabled
+                      className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600 cursor-not-allowed"
+                    />
+                  ) : isGuestAdmin ? (
+                    <input
+                      type="text"
+                      value="Giáo Viên Cá Nhân"
+                      disabled
+                      className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-100 text-xs font-bold text-slate-600 cursor-not-allowed"
+                    />
+                  ) : (
+                    <select
+                      value={formData.schoolName}
+                      onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                    >
+                      {schoolsList.map(s => (
+                        <option key={s.id} value={s.name}>{s.name} ({s.code})</option>
+                      ))}
+                      <option value="Giáo Viên Cá Nhân">-- Giáo Viên Cá Nhân / Vãng Lai --</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
@@ -1397,24 +2400,28 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
             {/* Quick Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs">
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Tổng Giáo Viên</div>
-                <div className="text-lg font-black text-slate-800 mt-1">{allUsers.length} tài khoản</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                  {isSchoolAdmin ? 'GV Thuộc Trường' : (isGuestAdmin ? 'GV Khối Cá Nhân' : 'Tổng Giáo Viên')}
+                </div>
+                <div className="text-lg font-black text-slate-800 mt-1">{scopedUsers.length} tài khoản</div>
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs">
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Tổng Lớp Đang Dạy</div>
                 <div className="text-lg font-black text-blue-600 mt-1">
-                  {userSummaries.reduce((sum, u) => sum + (u.classCount || 0), 0)} lớp
+                  {scopedSummaries.reduce((sum, u) => sum + (u.classCount || 0), 0)} lớp
                 </div>
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs">
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Tổng Học Sinh Thực Tế</div>
                 <div className="text-lg font-black text-emerald-600 mt-1">
-                  {userSummaries.reduce((sum, u) => sum + (u.studentCount || 0), 0)} học sinh
+                  {scopedSummaries.reduce((sum, u) => sum + (u.studentCount || 0), 0)} học sinh
                 </div>
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs">
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Nhật Ký Thao Tác</div>
-                <div className="text-lg font-black text-violet-600 mt-1">{auditLogs.length} bản ghi</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Phạm Vi Quản Lý</div>
+                <div className="text-xs font-black text-violet-600 mt-2 truncate">
+                  {isSchoolAdmin ? currentSchoolScope : (isGuestAdmin ? 'Khối Giáo Viên Cá Nhân' : 'Toàn Bộ Hệ Thống')}
+                </div>
               </div>
             </div>
 
@@ -1424,24 +2431,24 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
                     <tr>
-                      <th className="py-3 px-3.5 text-center w-12">STT</th>
-                      <th className="py-3 px-3.5">Giáo Viên & Tài Khoản</th>
-                      <th className="py-3 px-3.5 text-center">Vai Trò</th>
-                      <th className="py-3 px-3.5">Lớp Học Thực Tế & Sĩ Số</th>
-                      <th className="py-3 px-3.5 text-center">Tổng HS</th>
-                      <th className="py-3 px-3.5">Cập Nhật Gần Nhất</th>
-                      <th className="py-3 px-3.5 text-right">Xem & Tải Dữ Liệu</th>
+                      <th className="py-2 px-2 text-center w-12">STT</th>
+                      <th className="py-2 px-2">Giáo Viên & Tài Khoản</th>
+                      <th className="py-2 px-2 text-center">Vai Trò</th>
+                      <th className="py-2 px-2">Lớp Học Thực Tế & Sĩ Số</th>
+                      <th className="py-2 px-2 text-center">Tổng HS</th>
+                      <th className="py-2 px-2">Cập Nhật Gần Nhất</th>
+                      <th className="py-2 px-2 text-right">Xem & Tải Dữ Liệu</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {userSummaries.map((u, idx) => {
+                    {scopedSummaries.map((u, idx) => {
                       const isCurrent = currentUser?.username.toLowerCase() === u.username.toLowerCase();
                       return (
                         <tr key={u.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3.5 text-center font-bold text-slate-400">
+                          <td className="py-2 px-2 text-center font-bold text-slate-400">
                             {idx + 1}
                           </td>
-                          <td className="py-3 px-3.5">
+                          <td className="py-2 px-2">
                             <div className="flex items-center gap-2.5">
                               <img 
                                 src={`https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}&backgroundColor=b6e3f4`}
@@ -1461,7 +2468,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                               </div>
                             </div>
                           </td>
-                          <td className="py-3 px-3.5 text-center">
+                          <td className="py-2 px-2 text-center">
                             <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
                               u.role === 'admin'
                                 ? 'bg-rose-100 text-rose-700 border border-rose-200'
@@ -1472,7 +2479,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                               {u.role === 'admin' ? 'Quản trị' : u.role === 'subject' ? 'GV Bộ môn' : 'GV Chủ nhiệm'}
                             </span>
                           </td>
-                          <td className="py-3 px-3.5">
+                          <td className="py-2 px-2">
                             <div className="flex flex-wrap gap-1 max-w-xs">
                               {u.classes && u.classes.length > 0 ? (
                                 u.classes.map((c, cIdx) => (
@@ -1489,13 +2496,13 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                               )}
                             </div>
                           </td>
-                          <td className="py-3 px-3.5 text-center font-black text-slate-800">
+                          <td className="py-2 px-2 text-center font-black text-slate-800">
                             {u.studentCount || 0}
                           </td>
-                          <td className="py-3 px-3.5 text-slate-500 text-[11px]">
+                          <td className="py-2 px-2 text-slate-500 text-[11px]">
                             {u.lastUpdated ? new Date(u.lastUpdated).toLocaleString('vi-VN') : 'Mặc định'}
                           </td>
-                          <td className="py-3 px-3.5 text-right space-x-1.5 whitespace-nowrap">
+                          <td className="py-2 px-2 text-right space-x-1.5 whitespace-nowrap">
                             <button
                               onClick={() => handleQuickSwitch(u.username)}
                               disabled={loading || isCurrent}
@@ -1610,11 +2617,11 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
                     <tr>
-                      <th className="py-3 px-3.5 text-center w-12">STT</th>
-                      <th className="py-3 px-3.5 w-40">Thời Gian</th>
-                      <th className="py-3 px-3.5 w-48">Tài Khoản Thao Tác</th>
-                      <th className="py-3 px-3.5 w-36 text-center">Phân Loại</th>
-                      <th className="py-3 px-3.5">Chi Tiết Thao Tác Thực Tế</th>
+                      <th className="py-2 px-2 text-center w-12">STT</th>
+                      <th className="py-2 px-2 w-40">Thời Gian</th>
+                      <th className="py-2 px-2 w-48">Tài Khoản Thao Tác</th>
+                      <th className="py-2 px-2 w-36 text-center">Phân Loại</th>
+                      <th className="py-2 px-2">Chi Tiết Thao Tác Thực Tế</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
@@ -1873,15 +2880,15 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                   </p>
                 </div>
                 <span className="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-700 font-black text-xs border border-indigo-200 uppercase">
-                  {stats?.userBreakdown?.length || allUsers.length} Tài Khoản
+                  {scopedUserBreakdown.length} Tài Khoản
                 </span>
               </div>
 
-              <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+              <div className="flex-1 overflow-x-auto border border-slate-200 rounded-2xl bg-white min-h-[250px]">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-700 font-black uppercase text-[11px] border-b border-slate-200">
+                  <thead className="bg-slate-50 text-slate-700 font-black uppercase text-[11px] border-b border-slate-200 sticky top-0 z-10">
                     <tr>
-                      <th className="py-3 px-3.5">Tài Khoản / Họ Tên</th>
+                      <th className="py-2 px-2">Tài Khoản / Họ Tên</th>
                       <th className="py-3 px-3">Vai Trò</th>
                       <th className="py-3 px-3 text-center">Số Lớp</th>
                       <th className="py-3 px-3 text-center">Số Học Sinh</th>
@@ -1891,10 +2898,10 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {stats?.userBreakdown && stats.userBreakdown.length > 0 ? (
-                      stats.userBreakdown.map((item) => (
+                    {scopedUserBreakdown.length > 0 ? (
+                      scopedUserBreakdown.map((item) => (
                         <tr key={item.username} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3.5">
+                          <td className="py-2 px-2">
                             <div className="font-black text-slate-900">{item.fullName}</div>
                             <div className="text-[11px] font-mono text-indigo-600">@{item.username}</div>
                           </td>
@@ -1948,7 +2955,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     ) : (
                       allUsers.map((u) => (
                         <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3 px-3.5">
+                          <td className="py-2 px-2">
                             <div className="font-black text-slate-900">{u.fullName}</div>
                             <div className="text-[11px] font-mono text-indigo-600">@{u.username}</div>
                           </td>
@@ -2063,18 +3070,888 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               </div>
             </div>
 
+            {/* KHU VỰC QUẢN LÝ DỮ LIỆU & CHUẨN BỊ NĂM HỌC MỚI (Yêu cầu c, d, e) */}
+            <div className="bg-gradient-to-br from-indigo-900 via-blue-950 to-slate-900 border-2 border-indigo-500/30 rounded-3xl p-6 text-white shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400 text-indigo-300 flex items-center justify-center font-black">
+                    {isGuestAdmin ? <Users className="w-6 h-6" /> : <School className="w-6 h-6" />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm md:text-base font-black uppercase tracking-wide">
+                        {isSchoolAdmin 
+                          ? `Khởi Động & Chuẩn Bị Cho Năm Học Mới`
+                          : isGuestAdmin 
+                            ? `Khởi Động & Chuẩn Bị Năm Học Mới (Khối Cá Nhân)`
+                            : `Khởi Động & Chuẩn Bị Cho Năm Học Mới`}
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase border border-amber-500/30">
+                        {isSchoolAdmin ? 'Cấp Trường' : isGuestAdmin ? 'Khối Cá Nhân' : 'Phân Vùng Hệ Thống'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-indigo-200 mt-0.5">
+                      {isSchoolAdmin 
+                        ? `Tải về Data JSON của ${currentSchoolScope}, nạp dữ liệu hoặc dọn dẹp dữ liệu cũ đón năm học mới.`
+                        : isGuestAdmin 
+                          ? `Tải về Data JSON khối giáo viên cá nhân, nạp dữ liệu hoặc dọn dẹp dữ liệu cũ đón năm học mới.`
+                          : `Quản trị Data JSON theo từng trường hoặc khối cá nhân, dọn dẹp và bảo toàn tài khoản đón năm học mới.`}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isGuestAdmin) {
+                      setTargetResetScope('guest');
+                    } else if (isSchoolAdmin) {
+                      setTargetResetScope('school');
+                      setSelectedResetSchoolName(currentSchoolScope);
+                    }
+                    setSchoolResetMode('keep_teachers');
+                    setSchoolResetConfirmCode('');
+                    setSchoolResetModalOpen(true);
+                  }}
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-xs uppercase shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2 shrink-0 cursor-pointer hover:scale-102"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Dọn Dẹp Dữ Liệu Năm Học Mới</span>
+                </button>
+              </div>
+
+              {/* Action Buttons: Scoped by Role */}
+              {isGuestAdmin ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-black text-white">Xuất Data JSON Khối Cá Nhân</div>
+                      <div className="text-[11px] text-slate-300">Tải về toàn bộ thông tin lớp & học sinh của GV cá nhân</div>
+                    </div>
+                    <button
+                      onClick={() => handleExportScoped('guest')}
+                      className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black uppercase transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Tải Về</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-black text-white">Nhập Data JSON Khối Cá Nhân</div>
+                      <div className="text-[11px] text-slate-300">Khôi phục danh sách GV cá nhân từ file đã lưu</div>
+                    </div>
+                    <label className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase transition-colors flex items-center gap-1.5 cursor-pointer">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload</span>
+                      <input type="file" accept=".json" onChange={(e) => handleImportScoped(e, 'guest')} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+              ) : isSchoolAdmin ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-black text-white">Xuất Data JSON Nhà Trường</div>
+                      <div className="text-[11px] text-slate-300">Tải về toàn bộ thông tin lớp & học sinh của {currentSchoolScope}</div>
+                    </div>
+                    <button
+                      onClick={() => handleExportScoped('school')}
+                      className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Tải Về</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-black text-white">Nhập Data JSON Nhà Trường</div>
+                      <div className="text-[11px] text-slate-300">Khôi phục danh sách trường từ file backup</div>
+                    </div>
+                    <label className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase transition-colors flex items-center gap-1.5 cursor-pointer">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload</span>
+                      <input type="file" accept=".json" onChange={(e) => handleImportScoped(e, 'school')} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-black text-white">Xuất Data JSON Khối Nhà Trường</div>
+                        <div className="text-[11px] text-slate-300">Tải về dữ liệu các trường học đã cấu hình</div>
+                      </div>
+                      <button
+                        onClick={() => handleExportScoped('school')}
+                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Tải Về</span>
+                      </button>
+                    </div>
+
+                    <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-black text-white">Xuất Data JSON Khối Cá Nhân</div>
+                        <div className="text-[11px] text-slate-300">Tải về dữ liệu khối giáo viên vãng lai</div>
+                      </div>
+                      <button
+                        onClick={() => handleExportScoped('guest')}
+                        className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black uppercase transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Tải Về</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Architecture note */}
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 leading-relaxed">
               <span className="font-black">📌 Hướng dẫn vận hành với GitHub Server:</span>
               <ul className="list-disc pl-5 mt-1.5 space-y-1">
                 <li>Dữ liệu được lưu trữ tự động trong thư mục <code className="bg-amber-100 px-1 rounded font-mono font-bold">data/classroom_database.json</code> ngay trên máy chủ Node.js/Express.</li>
                 <li>Khi bạn đẩy mã nguồn lên GitHub (git commit & git push), file database này được bảo toàn và mang theo đầy đủ thông tin các giáo viên và lớp học.</li>
-                <li>Khi tắt trình duyệt hoặc đổi thiết bị, đăng nhập bằng tài khoản cá nhân sẽ truy xuất đúng dữ liệu độc lập của giáo viên đó.</li>
+                <li>Tài khoản giáo viên vãng lai được phân vùng lưu trữ độc lập, không bị ảnh hưởng khi nhà trường dọn dẹp dữ liệu năm học mới.</li>
               </ul>
             </div>
           </div>
         )}
+
+        {/* Tab: Registrations (Danh sách đơn đăng ký sử dụng bản quyền - Yêu cầu 4) */}
+        {activeTab === 'registrations' && (
+          <div className="flex-1 overflow-y-auto p-5 md:p-7 flex flex-col space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-2xl border border-amber-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase">
+                    Danh Sách Đơn Đăng Ký Sử Dụng Phần Mềm
+                  </h3>
+                  <p className="text-xs text-slate-600">
+                    Tổng hợp các yêu cầu đăng ký bản quyền từ Quý Thầy/Cô và các Tổ chức Nhà trường
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={loadRegistrations}
+                  disabled={loadingRegistrations}
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-black uppercase transition-colors flex items-center gap-1.5 shadow-2xs"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-amber-600 ${loadingRegistrations ? 'animate-spin' : ''}`} />
+                  <span>Làm Mới</span>
+                </button>
+                <span className="px-3 py-1.5 rounded-xl bg-amber-600 text-white font-black text-xs uppercase shadow-xs">
+                  {registrations.length} Đơn Đăng Ký
+                </span>
+              </div>
+            </div>
+
+            {/* Table of Registrations */}
+            <div className="flex-1 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+              <div className="overflow-x-auto h-full">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-white border-b-2 border-slate-300 text-[11px] font-black text-emerald-500 tracking-wider sticky top-0 z-10">
+                    <tr>
+                      <th rowSpan={2} className="py-2 px-2 text-center w-12 border-r border-slate-300 border-l border-slate-300 border-t border-slate-300">STT</th>
+                      <th rowSpan={2} className="py-2 px-2 border-r border-slate-300 border-t border-slate-300 text-center">Họ và tên Thầy / Cô</th>
+                      <th rowSpan={2} className="py-2 px-2 border-r border-slate-300 border-t border-slate-300 text-center">Chức vụ công tác</th>
+                      <th rowSpan={2} className="py-2 px-2 border-r border-slate-300 border-t border-slate-300 text-center">Đơn vị trường học / Công tác</th>
+                      <th rowSpan={2} className="py-2 px-2 border-r border-slate-300 border-t border-slate-300 text-center">Số điện thoại ZALO</th>
+                      <th rowSpan={2} className="py-2 px-2 border-r border-slate-300 border-t border-slate-300 text-center">Yêu cầu đề nghị</th>
+                      <th rowSpan={2} className="py-2 px-2 border-r border-slate-300 border-t border-slate-300 text-center">Vai trò tài khoản</th>
+                      <th rowSpan={2} className="py-2 px-2 border-r border-slate-300 border-t border-slate-300 text-center">Thời gian gửi yêu cầu</th>
+                      <th colSpan={2} className="py-1 px-2 text-center border-b border-slate-300 border-r border-slate-300 border-t border-slate-300">Trạng thái hồ sơ</th>
+                      <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-300 border-t border-slate-300">Ghi chú</th>
+                      <th rowSpan={2} className="py-2 px-2 text-center border-r border-slate-300 border-t border-slate-300 w-20">Thao tác</th>
+                    </tr>
+                    <tr>
+                      <th className="py-1 px-2 text-center text-green-600 border-r border-slate-300">Đã giải quyết</th>
+                      <th className="py-1 px-2 text-center text-red-600 border-r border-slate-300">Chưa giải quyết</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-300 font-medium bg-white">
+                    {registrations.map((reg, idx) => (
+                      <tr key={reg.id || idx} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-2 px-2 text-center text-slate-700 border-r border-slate-300 border-l border-slate-300">{idx + 1}</td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">{reg.fullName}</td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">{reg.roleTitle || 'Giáo viên'}</td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">{reg.schoolName || '—'}</td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">{reg.phone}</td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">
+                          {reg.requestType || (reg.type === 'school' ? 'Cấp cho tổ chức nhà trường' : 'Cấp tài khoản cá nhân')}
+                        </td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">
+                          {reg.accountRole || (reg.type === 'school' ? 'Quản trị nhà trường' : (reg.roleTitle || 'Giáo viên bộ môn'))}
+                        </td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">
+                          {reg.createdAt ? (
+                            <>
+                              {new Date(reg.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} Ngày {new Date(reg.createdAt).toLocaleDateString('vi-VN')}
+                            </>
+                          ) : 'Mới đây'}
+                        </td>
+                        <td className="py-2 px-2 text-center border-r border-slate-300">
+                          <button
+                            onClick={() => { if (reg.status !== 'approved') handleApproveRegistration(reg); }}
+                            className={`w-4 h-4 mx-auto rounded-sm flex items-center justify-center transition-colors border ${
+                              reg.status === 'approved' ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-slate-400 hover:border-green-500'
+                            }`}
+                            title="Đánh dấu Đã giải quyết (Duyệt)"
+                          >
+                            {reg.status === 'approved' && <Check className="w-3 h-3" strokeWidth={3} />}
+                          </button>
+                        </td>
+                        <td className="py-2 px-2 text-center border-r border-slate-300">
+                          <button
+                            onClick={() => { if (reg.status === 'approved') handleOpenRejectModal(reg.id); }}
+                            className={`w-4 h-4 mx-auto rounded-sm flex items-center justify-center transition-colors border ${
+                              reg.status !== 'approved' ? 'bg-red-500 border-red-500 text-white' : 'bg-white border-slate-400 hover:border-red-500'
+                            }`}
+                            title={reg.status !== 'approved' ? "Đang Chưa giải quyết" : "Hủy duyệt / Đánh dấu Chưa giải quyết"}
+                          >
+                            {reg.status !== 'approved' && <Check className="w-3 h-3" strokeWidth={3} />}
+                          </button>
+                        </td>
+                        <td className="py-2 px-2 text-slate-700 border-r border-slate-300 text-center">
+                          {reg.status === 'approved' ? 'Đã khởi tạo' : (reg.rejectReason || '')}
+                        </td>
+                        <td className="py-2 px-2 text-center border-r border-slate-300">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEditRegistrationModal(reg)}
+                              className="p-1 hover:bg-slate-100 rounded text-indigo-600 transition-colors"
+                              title="Sửa"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRegistration(reg.id)}
+                              className="p-1 hover:bg-slate-100 rounded text-red-600 transition-colors"
+                              title="Xóa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {registrations.length === 0 && (
+                      <tr>
+                        <td colSpan={11} className="py-12 text-center text-slate-400 italic">
+                          Chưa có đơn đăng ký sử dụng nào được gửi lên.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Modal Xác Nhận Dọn Dẹp / Xóa Dữ Liệu Năm Học Mới (Yêu cầu 3 & c, d, e) */}
+      {schoolResetModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-black shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 uppercase">
+                  {isSchoolAdmin 
+                    ? `Dọn Dẹp Dữ Liệu Năm Học Mới (${currentSchoolScope})`
+                    : isGuestAdmin 
+                      ? `Dọn Dẹp Dữ Liệu Năm Học Mới (Khối Cá Nhân)`
+                      : `Dọn Dẹp Dữ Liệu Năm Học Mới`}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {isSchoolAdmin 
+                    ? `Làm mới thông tin lớp, học sinh cho trường ${currentSchoolScope}`
+                    : isGuestAdmin
+                      ? `Làm mới thông tin lớp, học sinh cho khối giáo viên cá nhân`
+                      : `Làm mới dữ liệu để chuẩn bị cho năm học tiếp theo`}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {/* Scope selector for Super Admin */}
+              {isSuperAdmin && (
+                <div className="p-3 bg-slate-100 rounded-2xl space-y-2">
+                  <label className="text-xs font-black text-slate-700 uppercase block">
+                    Chọn Phân Vùng Cần Dọn Dẹp:
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTargetResetScope('school')}
+                      className={`p-2 rounded-xl text-xs font-black uppercase border transition-all ${
+                        targetResetScope === 'school' ? 'bg-blue-600 text-white border-blue-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      🏫 Áp Dụng Cho Trường
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTargetResetScope('guest')}
+                      className={`p-2 rounded-xl text-xs font-black uppercase border transition-all ${
+                        targetResetScope === 'guest' ? 'bg-purple-600 text-white border-purple-600 shadow-xs' : 'bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      👤 Khối GV Cá Nhân
+                    </button>
+                  </div>
+                  {targetResetScope === 'school' && (
+                    <div className="pt-1">
+                      <label className="text-[11px] font-bold text-slate-600 block mb-1">Chọn Trường Cần Dọn Dẹp:</label>
+                      <select
+                        value={selectedResetSchoolName}
+                        onChange={(e) => setSelectedResetSchoolName(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                      >
+                        {schoolsList.map(s => (
+                          <option key={s.id} value={s.name}>{s.name} ({s.code})</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <label className="text-xs font-black text-slate-700 uppercase block">
+                Chọn phương án dọn dẹp dữ liệu:
+              </label>
+
+              {/* Option 1: Keep Teachers */}
+              <div 
+                onClick={() => setSchoolResetMode('keep_teachers')}
+                className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                  schoolResetMode === 'keep_teachers'
+                    ? 'border-indigo-600 bg-indigo-50/70'
+                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-indigo-900 uppercase">
+                    Phương án 1 (Khuyên Dùng)
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
+                    Bảo Toàn User
+                  </span>
+                </div>
+                <div className="text-xs text-slate-700 mt-1 font-bold">
+                  Xóa dữ liệu lớp học, học sinh, điểm thi đua để nhập lớp mới.
+                </div>
+                <div className="text-[11px] text-emerald-700 font-bold mt-0.5">
+                  ✓ GIỮ NGUYÊN tài khoản đăng nhập của các giáo viên thuộc phạm vi này.
+                </div>
+              </div>
+
+              {/* Option 2: Full Wipe */}
+              <div 
+                onClick={() => setSchoolResetMode('full')}
+                className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                  schoolResetMode === 'full'
+                    ? 'border-rose-600 bg-rose-50/70'
+                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-rose-900 uppercase">
+                    Phương án 2 (Triệt để)
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-black uppercase">
+                    Xóa Hết
+                  </span>
+                </div>
+                <div className="text-xs text-slate-700 mt-1 font-bold">
+                  Xóa toàn bộ thông tin lớp học, học sinh VÀ toàn bộ tài khoản giáo viên thuộc phạm vi này.
+                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5">
+                  (Chỉ giữ lại tài khoản Quản trị Admin và các tài khoản Demo).
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                  Nhập chính xác cụm từ <strong className="text-rose-600 font-mono">DONG Y XOA</strong> để xác nhận:
+                </label>
+                <input
+                  type="text"
+                  value={schoolResetConfirmCode}
+                  onChange={(e) => setSchoolResetConfirmCode(e.target.value)}
+                  placeholder="DONG Y XOA"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSchoolResetModalOpen(false)}
+                disabled={isResettingSchool}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteResetSchool}
+                disabled={isResettingSchool || schoolResetConfirmCode.trim().toUpperCase() !== 'DONG Y XOA'}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-40 text-white text-xs font-black uppercase shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5"
+              >
+                {isResettingSchool ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>Xác Nhận Dọn Dẹp</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Thêm Mới / Sửa CSDL Trường Học (Yêu cầu e: Super Admin) */}
+      {schoolModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-black">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase">
+                    {editingSchool ? 'Chỉnh Sửa Thông Tin CSDL Trường' : 'Khởi Tạo Cơ Sở Dữ Liệu Trường Mới'}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Quản trị danh mục và CSDL trường trong hệ thống</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSchoolModalOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSchool} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-black text-slate-700 uppercase mb-1">
+                  Tên Trường Học <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={schoolFormData.name}
+                  onChange={(e) => setSchoolFormData({ ...schoolFormData, name: e.target.value })}
+                  placeholder="Ví dụ: Trường Tiểu học số 1 Tân Uyên"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-black text-slate-700 uppercase mb-1">
+                    Mã Trường
+                  </label>
+                  <input
+                    type="text"
+                    value={schoolFormData.code}
+                    onChange={(e) => setSchoolFormData({ ...schoolFormData, code: e.target.value })}
+                    placeholder="Ví dụ: TH-TU01"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-slate-700 uppercase mb-1">
+                    TK Quản Trị Trường
+                  </label>
+                  <input
+                    type="text"
+                    value={schoolFormData.adminUsername}
+                    onChange={(e) => setSchoolFormData({ ...schoolFormData, adminUsername: e.target.value })}
+                    placeholder="adminths1"
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-indigo-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 uppercase mb-1">
+                  Địa Chỉ Trường
+                </label>
+                <input
+                  type="text"
+                  value={schoolFormData.address}
+                  onChange={(e) => setSchoolFormData({ ...schoolFormData, address: e.target.value })}
+                  placeholder="Ví dụ: Thị xã Tân Uyên, Tỉnh Bình Dương"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 uppercase mb-1">
+                  Số Điện Thoại Liên Hệ
+                </label>
+                <input
+                  type="text"
+                  value={schoolFormData.phone}
+                  onChange={(e) => setSchoolFormData({ ...schoolFormData, phone: e.target.value })}
+                  placeholder="0274 382 1234"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setSchoolModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{editingSchool ? 'LƯU CSDL TRƯỜNG' : 'TẠO CSDL TRƯỜNG'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🚀 MODAL DI CHUYỂN TOÀN BỘ CSDL GIÁO VIÊN VÀO NHÀ TRƯỜNG (SUPER ADMIN) */}
+      {transferModalOpen && userToTransfer && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 md:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-blue-900 p-5 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/30 border border-purple-300/40 text-white flex items-center justify-center font-black shadow-inner">
+                  <Building2 className="w-5 h-5 text-purple-200" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
+                    <span>GÁN CSDL GIÁO VIÊN VÀO NHÀ TRƯỜNG</span>
+                    <span className="text-[10px] bg-purple-400/30 text-purple-200 px-2 py-0.5 rounded-full border border-purple-300/30 font-bold">
+                      Bảo Toàn 100%
+                    </span>
+                  </h4>
+                  <p className="text-xs text-purple-200/90 font-medium">
+                    Di chuyển tài khoản, lớp học, học sinh từ Vãng Lai sang Nhà Trường trực thuộc
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setTransferModalOpen(false)}
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleConfirmTransfer} className="p-5 md:p-6 space-y-4 text-xs">
+              {/* Card thông tin giáo viên đang chọn */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-start gap-3">
+                <img
+                  src={userToTransfer.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + userToTransfer.username}
+                  alt={userToTransfer.fullName}
+                  className="w-11 h-11 rounded-2xl border border-purple-200 bg-white object-cover shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <div className="font-black text-slate-900 text-sm">{userToTransfer.fullName}</div>
+                    <code className="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 font-mono font-bold text-[11px] border border-indigo-200">
+                      @{userToTransfer.username}
+                    </code>
+                  </div>
+                  <div className="text-slate-500 mt-0.5 flex flex-wrap items-center gap-2 text-[11px]">
+                    <span className="font-bold text-slate-700">
+                      {userToTransfer.role === 'homeroom' ? `GV Chủ nhiệm (${userToTransfer.assignedClassName || 'Lớp chưa gán'})` : `GV Bộ môn (${userToTransfer.subjectName || 'Môn chưa gán'})`}
+                    </span>
+                    <span>• SĐT: <strong>{userToTransfer.phone || 'Chưa cập nhật'}</strong></span>
+                  </div>
+
+                  {/* Thống kê dữ liệu hiện có từ userSummaries */}
+                  {(() => {
+                    const summary = userSummaries.find(s => s.username.toLowerCase() === userToTransfer.username.toLowerCase());
+                    return (
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-black text-[10px] border border-purple-200">
+                          {userToTransfer.tenantType === 'guest' ? '📍 Đang là: Vãng Lai Tỉnh Lẻ' : `📍 Trường cũ: ${userToTransfer.schoolName || 'Chưa có'}`}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">
+                          📚 {summary ? summary.classCount : 1} Lớp học
+                        </span>
+                        <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-800 font-bold text-[10px] border border-blue-200">
+                          🎒 {summary ? summary.studentCount : 0} Học sinh
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Chọn Trường học đích cần gán */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-black text-slate-800 uppercase flex items-center justify-between">
+                  <span>CHỌN ĐƠN VỊ TRƯỜNG HỌC ĐÍCH ĐƯỢC GÁN <span className="text-rose-500">*</span></span>
+                  <span className="text-[10px] text-blue-600 font-bold">({schoolsList.length} trường khả dụng)</span>
+                </label>
+                <select
+                  value={targetSchoolName}
+                  onChange={(e) => setTargetSchoolName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 text-xs font-black text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                >
+                  {schoolsList.map(s => (
+                    <option key={s.id} value={s.name}>
+                      🏫 {s.name} ({s.code}) - Quản trị: @{s.adminUsername || 'adminths1'}
+                    </option>
+                  ))}
+                  <option value="__custom__">➕ Nhập tên trường học mới khác...</option>
+                </select>
+
+                {targetSchoolName === '__custom__' && (
+                  <div className="pt-1 animate-in fade-in duration-100">
+                    <input
+                      type="text"
+                      value={customSchoolName}
+                      onChange={(e) => setCustomSchoolName(e.target.value)}
+                      placeholder="Nhập tên trường học mới cần gán (Ví dụ: TIỂU HỌC NGUYỄN DU)..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-purple-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      required
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Cam kết nghiệp vụ & Bảo toàn dữ liệu (Zero Data Loss Protocol) */}
+              <div className="p-3.5 bg-gradient-to-br from-emerald-50/70 to-blue-50/70 border border-emerald-200 rounded-2xl space-y-2">
+                <div className="text-[11px] font-black text-emerald-900 uppercase flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>CAM KẾT BẢO TOÀN DỮ LIỆU & PHÂN QUYỀN ĐƠN VỊ (CHUẨN HÓA)</span>
+                </div>
+                <ul className="space-y-1.5 text-[11px] text-slate-700 font-medium">
+                  <li className="flex items-start gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>Bảo toàn tài khoản:</strong> Mật khẩu và thông tin đăng nhập của cô giáo giữ nguyên 100%, cô giáo vẫn đăng nhập bình thường.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>Bảo toàn cơ sở dữ liệu:</strong> Toàn bộ lớp học, danh sách học sinh, điểm sao thi đua và chuyên cần không bị ảnh hưởng.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>Phân quyền cho Nhà trường:</strong> Quản trị trường và Ban Giám Hiệu được gán có toàn quyền xem lớp, xem học sinh, cấp lại mật khẩu và hỗ trợ cô giáo như các giáo viên khác trong đơn vị.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><strong>Tự động phân vùng:</strong> Hệ thống tự động chuyển dữ liệu từ thư mục <code>data/database_ca_nhan</code> sang <code>data/database_nha_truong</code>.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Nút thao tác */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setTransferModalOpen(false)}
+                  disabled={isTransferring}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors cursor-pointer"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={isTransferring}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-black uppercase shadow-lg shadow-purple-600/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isTransferring ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Đang Di Chuyển CSDL...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="w-4 h-4" />
+                      <span>XÁC NHẬN GÁN VÀO NHÀ TRƯỜNG</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Registration Modal */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <X className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-800 uppercase text-sm">Từ Chối Đăng Ký</h3>
+                  <p className="text-xs text-slate-500">Vui lòng nhập lý do để ghi chú lại</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setRejectModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-200/50 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleConfirmReject} className="p-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-700 uppercase">Lý Do Từ Chối <span className="text-rose-500">*</span></label>
+                <textarea
+                  required
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Nhập lý do chi tiết..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 resize-none h-24"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setRejectModalOpen(false)}
+                  disabled={loadingRegistrations}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingRegistrations}
+                  className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase shadow-lg shadow-red-600/20 transition-colors flex items-center gap-2"
+                >
+                  {loadingRegistrations ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  <span>Xác Nhận Không Duyệt</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Registration Modal */}
+      {editRegistrationModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-800 uppercase text-sm">Chỉnh Sửa Đơn Đăng Ký</h3>
+                  <p className="text-xs text-slate-500">Cập nhật trạng thái và ghi chú</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setEditRegistrationModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-200/50 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleConfirmEditRegistration} className="p-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-700 uppercase">Trạng Thái Hồ Sơ <span className="text-rose-500">*</span></label>
+                <div className="flex gap-4 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="editStatus" 
+                      value="approved" 
+                      checked={editRegStatus === 'approved'} 
+                      onChange={() => setEditRegStatus('approved')}
+                      className="w-4 h-4 text-green-600 focus:ring-green-500" 
+                    />
+                    <span className="text-sm font-medium text-slate-700">Đã giải quyết</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="editStatus" 
+                      value="rejected" 
+                      checked={editRegStatus === 'rejected'} 
+                      onChange={() => setEditRegStatus('rejected')}
+                      className="w-4 h-4 text-red-600 focus:ring-red-500" 
+                    />
+                    <span className="text-sm font-medium text-slate-700">Chưa giải quyết</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-700 uppercase">Ghi Chú</label>
+                <textarea
+                  value={editRegNote}
+                  onChange={(e) => setEditRegNote(e.target.value)}
+                  placeholder="Nhập ghi chú chi tiết..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none h-24"
+                ></textarea>
+              </div>
+              
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditRegistrationModalOpen(false)}
+                  disabled={loadingRegistrations}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingRegistrations}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase shadow-lg shadow-indigo-600/20 transition-colors flex items-center gap-2"
+                >
+                  {loadingRegistrations ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  <span>Lưu Thay Đổi</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

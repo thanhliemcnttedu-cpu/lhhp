@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T18:52:21.403Z",
+  "lastSync": "2026-10-01T18:52:33.227Z",
   "users": [
     {
       "id": "user-admin",
@@ -20004,9 +20004,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790879474380
+    "lastGithubPushAt": 1790880753226
   },
   "auditLogs": [
+    {
+      "id": "log-1790880748060-n7uvxr",
+      "timestamp": 1790880748060,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Trừ 1 xu của 1 học sinh (Lý do: Trừ -1 xu nề nếp môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
     {
       "id": "log-1790880733076-1vhmei",
       "timestamp": 1790880733076,

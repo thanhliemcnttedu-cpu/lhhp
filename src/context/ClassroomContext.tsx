@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { AlertCircle, X } from 'lucide-react';
 import JSZip from 'jszip';
 import { 
   Classroom, Student, Subject, PointCriterion, PointTransaction, 
@@ -7,9 +8,9 @@ import {
   SeatingColumnsCount, TeacherDeskPosition, DoorPosition, BlackboardPosition,
   DeskNumberingOrder, BoardingStatus, DailyBoardingMeal,
   TeacherRole, SubjectTimetableSlot, SubjectTeacherConfig, InitSubjectClassItem,
-  UserAccount, UserRole, UserClassroomData, QuestionItem
+  UserAccount, UserRole, UserClassroomData, QuestionItem, LoginRoleScope
 } from '../types';
-import { generateStudentsForClass } from '../utils/studentGenerator';
+import { generateStudentsForClass, getStudentRealAvatar } from '../utils/studentGenerator';
 import { 
   INITIAL_CLASSES, INITIAL_STUDENTS_CLASS_4A1, INITIAL_SUBJECTS, 
   INITIAL_CRITERIA, INITIAL_REWARDS, INITIAL_TIMETABLE, 
@@ -40,6 +41,7 @@ interface ClassroomContextType {
   bulkDeleteStudents: (studentIds: string[]) => void;
   clearClassStudents: (classId: string) => void;
   bulkAddStudents: (students: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }>) => void;
+  autoAssignRealAvatarsToClass: (classId?: string) => void;
   resetStudentsCoins: (studentIds?: string[], classId?: string) => void;
 
   subjects: Subject[];
@@ -138,7 +140,7 @@ interface ClassroomContextType {
   currentUser: UserAccount | null;
   allUsers: UserAccount[];
   allTeachers: UserAccount[];
-  loginUser: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  loginUser: (username: string, password: string, selectedRoleScope?: LoginRoleScope, selectedSchoolName?: string) => Promise<{ success: boolean; message?: string }>;
   logoutUser: () => void;
   switchUserAccount: (username: string) => Promise<boolean>;
   refreshUsersList: () => Promise<void>;
@@ -153,8 +155,17 @@ interface ClassroomContextType {
   lastDbSyncTime: string;
   syncDatabaseNow: (overrideStudents?: any, overrideClasses?: any) => Promise<void>;
   isAdmin: boolean;
+  isSchoolAdmin: boolean;
+  isGuestAdmin: boolean;
   isHomeroom: boolean;
   isSubject: boolean;
+  isDemo: boolean;
+  isBgh: boolean;
+  canManageAccounts: boolean;
+  isRegistrationModalOpen: boolean;
+  setIsRegistrationModalOpen: (open: boolean) => void;
+  demoWarningMessage: string | null;
+  setDemoWarningMessage: (msg: string | null) => void;
 }
 
 const ClassroomContext = createContext<ClassroomContextType | undefined>(undefined);
@@ -174,11 +185,27 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
   const [isAccountManagerOpen, setIsAccountManagerOpen] = useState(false);
   const [isGithubModalOpen, setIsGithubModalOpen] = useState(false);
+  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  const [demoWarningMessage, setDemoWarningMessage] = useState<string | null>(() => {
+    const user = databaseService.getCurrentUser();
+    if (user && (user.isDemo || user.username?.toLowerCase().startsWith('demo'))) {
+      return 'Bạn đang sử dụng tài khoản Demo, vui lòng liên hệ cấp tài khoản full chức năng';
+    }
+    return null;
+  });
   const [dbSyncStatus, setDbSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
   const [lastDbSyncTime, setLastDbSyncTime] = useState<string>(() => {
     const now = new Date();
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   });
+  const [permissionAlert, setPermissionAlert] = useState<string | null>(null);
+
+  const isDemo = Boolean(currentUser?.isDemo || currentUser?.username?.toLowerCase().startsWith('demo'));
+  const isBgh = Boolean(currentUser?.isBgh || currentUser?.role === 'bgh');
+  const isSchoolAdmin = Boolean(currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin);
+  const isGuestAdmin = Boolean(currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin);
+  const isAdmin = Boolean(currentUser?.role === 'admin' || isBgh || isSchoolAdmin || isGuestAdmin);
+  const canManageAccounts = Boolean((currentUser?.role === 'admin' || isSchoolAdmin || isGuestAdmin) && !isBgh);
 
   const currentUserRef = useRef<UserAccount | null>(currentUser);
   useEffect(() => {
@@ -355,6 +382,21 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Helper to apply dataset snapshot into state hooks
   const applyUserClassroomData = (data: Partial<UserClassroomData>) => {
+    // Fix bug: Ensure demo accounts always use their designated profile names
+    if (currentUserRef.current?.isDemo) {
+      if (data.teacherProfile) {
+        data.teacherProfile.name = currentUserRef.current.fullName;
+        data.teacherProfile.schoolName = currentUserRef.current.schoolName || data.teacherProfile.schoolName;
+        data.teacherProfile.avatar = currentUserRef.current.avatar || data.teacherProfile.avatar;
+      }
+      // 🌟 Tuyệt đối KHÔNG ghi đè c.teacherName của lớp học thành tên BGH/Admin!
+      if (currentUserRef.current.role === 'homeroom' && data.classes && Array.isArray(data.classes)) {
+        data.classes.forEach(c => {
+          c.teacherName = currentUserRef.current?.fullName || c.teacherName;
+        });
+      }
+    }
+
     if (data.classes && Array.isArray(data.classes)) {
       setClasses(data.classes);
     }
@@ -362,7 +404,17 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setActiveClassId(data.activeClassId);
     }
     if (data.students && Array.isArray(data.students)) {
-      setStudents(data.students);
+      // 🌟 Tự động nâng cấp các ảnh đại diện bottts robot cũ sang ảnh thật từ thư mục anh demo avata
+      const upgradedStudents = data.students.map((s, idx) => {
+        if (!s.avatar || s.avatar.includes('api.dicebear.com/7.x/bottts') || s.avatar.includes('seed=student-')) {
+          return {
+            ...s,
+            avatar: getStudentRealAvatar(idx, s.classId)
+          };
+        }
+        return s;
+      });
+      setStudents(upgradedStudents);
     }
     if (data.subjects && Array.isArray(data.subjects) && data.subjects.length > 0) {
       setSubjects(data.subjects);
@@ -428,7 +480,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setTeacherProfile(data.teacherProfile);
       const tpName = data.teacherProfile.name ? data.teacherProfile.name.trim() : '';
       const tpAvatar = data.teacherProfile.avatar || '';
-      if (tpName) {
+      // 🌟 Chỉ đồng bộ tên người dùng vào hồ sơ khi vai trò là Giáo viên chủ nhiệm (homeroom)
+      // Tuyệt đối KHÔNG ghi đè tên của BGH/Quản trị viên
+      if (tpName && currentUserRef.current?.role === 'homeroom') {
         setCurrentUser(prevUser => {
           if (!prevUser) return null;
           if (prevUser.fullName !== tpName || (tpAvatar && prevUser.avatar !== tpAvatar)) {
@@ -456,34 +510,107 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Helper to build initial independent default data for a user
   const buildDefaultDataForUser = (user: UserAccount): UserClassroomData => {
-    if (user.role === 'subject') {
-      // Yêu cầu: Mặc định tài khoản giáo viên bộ môn sẽ có 1 lớp demo là lớp 3A1 với 20 học sinh
-      const demoClass3A1: Classroom = {
-        id: 'class-sub-3a1',
-        name: '3A1',
-        grade: 'Khối 3',
-        color: '#3B82F6',
-        academicYear: '2026–2027',
-        teacherName: user.fullName || 'Nguyễn Thanh Liêm',
-        avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=SubClass_3A1&backgroundColor=3b82f6',
-        slogan: 'Lớp 3A1 • Học tập hăng say, rèn luyện chăm chỉ'
-      };
-      const subClasses: Classroom[] = [demoClass3A1];
+    const isExecutive = Boolean(
+      user.role === 'admin' || 
+      user.role === 'school_admin' || 
+      user.role === 'bgh' || 
+      user.isBgh || 
+      user.isSchoolAdmin || 
+      user.role === 'guest_admin' || 
+      user.isGuestAdmin
+    );
 
-      const allSubStudents: Student[] = generateStudentsForClass(
-        'class-sub-3a1',
-        '3A1',
-        20,
-        'Khối 3',
-        user.subjectName || 'Tin học'
-      );
+    if (isExecutive) {
+      // 🌟 Ban Giám Hiệu và Quản trị KHÔNG CÓ LỚP HỌC & HỌC SINH RIÊNG
+      // Dữ liệu sẽ được kết nối và tổng hợp từ tất cả giáo viên trong trường
+      const profile: TeacherProfile = {
+        ...DEFAULT_TEACHER,
+        name: user.fullName || 'BAN GIÁM HIỆU / QUẢN TRỊ VIÊN',
+        role: (user.role === 'bgh' || user.isBgh) ? 'BAN GIÁM HIỆU' : ((user.role === 'school_admin' || user.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
+        teachingSubject: 'Quản trị & Giám sát',
+        phone: user.phone || '0888358363',
+        zalo: user.phone || '0888358363',
+        schoolName: user.schoolName || 'Hệ thống Quản lý Lớp học Hạnh phúc',
+        avatar: user.avatar || DEFAULT_TEACHER.avatar
+      };
+
+      return {
+        classes: [],
+        activeClassId: '',
+        students: [],
+        subjects: INITIAL_SUBJECTS,
+        criteria: INITIAL_CRITERIA,
+        transactions: [],
+        rewards: INITIAL_REWARDS,
+        redemptions: [],
+        seatingColumns: 4,
+        deskCountsPerColumn: [4, 4, 4, 4],
+        deskNumberingOrder: 'vertical',
+        teacherDeskPos: 'left',
+        doorPos: 'right',
+        blackboardPos: 'center',
+        seatingAssignments: {},
+        attendanceRecords: [],
+        boardingRecords: [],
+        timetable: INITIAL_TIMETABLE,
+        timetableConfig: { morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false },
+        teacherRole: 'homeroom',
+        subjectTeacherConfig: DEFAULT_SUBJECT_TEACHER_CONFIG,
+        subjectTimetable: [],
+        quickLinks: INITIAL_QUICK_LINKS,
+        teacherProfile: profile,
+        quizBank: [...DEFAULT_QUESTIONS],
+        infographicConfig: null
+      };
+    }
+
+    if (user.role === 'subject') {
+      let classNames = ['3A1'];
+      let studentCount = 20;
+
+      if (user.username === 'nguyenthanhliem') {
+        classNames = ['4A1', '4A2', '4A3', '4A4'];
+        studentCount = 10;
+      } else if (user.username === 'gvbmdemo') {
+        classNames = ['4A1DEMO', '4A2DEMO', '4A3DEMO', '4A4DEMO'];
+        studentCount = 10;
+      } else if (user.username === 'nguyenviethien') {
+        classNames = ['5A1', '5A2', '5A3', '5A4', '5A5'];
+        studentCount = 10;
+      } else if (user.username === 'gvbmdemo2') {
+        classNames = ['4A1', '4A2', '4A3', '4A4', '4A5', '4A6'];
+        studentCount = 12;
+      }
+
+      const subClasses: Classroom[] = classNames.map((name, idx) => ({
+        id: `class-sub-${name.toLowerCase()}`,
+        name: name,
+        grade: name.startsWith('1') ? 'Khối 1' : name.startsWith('2') ? 'Khối 2' : name.startsWith('3') ? 'Khối 3' : name.startsWith('5') ? 'Khối 5' : 'Khối 4',
+        color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'][idx % 6],
+        academicYear: '2026–2027',
+        teacherName: user.fullName || 'Giáo viên bộ môn',
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=SubClass_${name}&backgroundColor=3b82f6`,
+        slogan: `Lớp ${name} • Học tập hăng say, rèn luyện chăm chỉ`
+      }));
+
+      let allSubStudents: Student[] = [];
+      subClasses.forEach(c => {
+        const stds = generateStudentsForClass(
+          c.id,
+          c.name,
+          studentCount,
+          c.grade,
+          user.subjectName || 'Tin học'
+        );
+        allSubStudents = [...allSubStudents, ...stds];
+      });
 
       const profile: TeacherProfile = {
-        name: user.fullName || 'NGUYỄN THANH LIÊM',
+        name: user.fullName || 'Giáo viên bộ môn',
         role: 'GIÁO VIÊN BỘ MÔN',
         teachingSubject: user.subjectName || 'Tin học',
-        schoolName: user.schoolName || 'Trường Tiểu học số 1 Tân Uyên',
-        avatar: user.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=ThayNguyenThanhLiem&backgroundColor=b6e3f4',
+        schoolName: user.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+        avatar: user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}&backgroundColor=b6e3f4`,
         phone: user.phone || '0888358363',
         zalo: user.phone || '0888358363',
         academicYear: '2026–2027'
@@ -492,7 +619,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const cfg: SubjectTeacherConfig = {
         ...DEFAULT_SUBJECT_TEACHER_CONFIG,
         subjectName: user.subjectName || 'Tin học',
-        teacherDisplayName: user.fullName || 'Nguyễn Thanh Liêm'
+        teacherDisplayName: user.fullName || 'Giáo viên bộ môn'
       };
 
       return {
@@ -525,20 +652,28 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
     }
 
+    let studentCount = 32;
+    if (user.username === 'nguyenthitrangtu1') studentCount = 35;
+    if (user.username === 'gvcn3a1') studentCount = 10;
+    if (user.username === 'gvcndemo') studentCount = 10;
+    if (user.username === 'gvcn4a1') studentCount = 15;
+    if (user.username === 'gvcn1a1demo') studentCount = 11;
+    if (user.maxStudentsAllowed) studentCount = user.maxStudentsAllowed;
+
     const homeroomClass: Classroom = {
       id: `class-${(user.assignedClassName || '4a1').toLowerCase().replace(/\s+/g, '')}`,
       name: user.assignedClassName || '4A1',
-      grade: 'Khối 4',
+      grade: (user.assignedClassName || '4A1').startsWith('1') ? 'Khối 1' : (user.assignedClassName || '4A1').startsWith('2') ? 'Khối 2' : (user.assignedClassName || '4A1').startsWith('3') ? 'Khối 3' : (user.assignedClassName || '4A1').startsWith('5') ? 'Khối 5' : 'Khối 4',
       color: '#3B82F6',
       academicYear: '2026–2027',
-      teacherName: user.fullName || 'NGUYỄN THỊ HOA',
-      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
+      teacherName: user.fullName || 'Giáo viên chủ nhiệm',
+      teacherUsername: user.username,
+      teacherRole: 'homeroom',
+      avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=Class${user.assignedClassName || '4A1'}&backgroundColor=3b82f6`,
       slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng'
     };
 
-    const initialStds = user.username.toLowerCase() === 'gvcn4a1'
-      ? INITIAL_STUDENTS_CLASS_4A1
-      : generateStudentsForClass(homeroomClass.id, homeroomClass.name, 32, 'Khối 4', 'GHI CHUNG / NỀ NẾP');
+    const initialStds = generateStudentsForClass(homeroomClass.id, homeroomClass.name, studentCount, homeroomClass.grade, 'GHI CHUNG / NỀ NẾP');
 
     const profile: TeacherProfile = {
       ...DEFAULT_TEACHER,
@@ -639,20 +774,37 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const initUserData = async () => {
       setDbSyncStatus('syncing');
       try {
-        if (currentUser.role === 'admin') {
-          // Admin Unified Sync: load all classes and students from all teachers
-          const adminAll = await databaseService.getAdminAllData();
-          if (adminAll && Array.isArray(adminAll.classes)) {
-            markRemoteUpdateActive(1200);
-            lastRemoteTimestampRef.current = adminAll.timestamp || Date.now();
-            setClasses(adminAll.classes);
-            setStudents(adminAll.students);
-            if (adminAll.classes.length > 0) {
-              setActiveClassId(prev => {
-                const exists = adminAll.classes.some(c => c.id === prev);
-                return exists ? prev : adminAll.classes[0].id;
-              });
+        const isExecutive = Boolean(
+          currentUser.role === 'admin' || 
+          currentUser.role === 'school_admin' || 
+          currentUser.role === 'bgh' || 
+          currentUser.isBgh || 
+          currentUser.isSchoolAdmin || 
+          currentUser.role === 'guest_admin' || 
+          currentUser.isGuestAdmin
+        );
+
+        if (isExecutive) {
+          // Xóa bỏ dữ liệu rác cũ nếu có lưu nhầm trong browser cho tài khoản BGH/Quản trị
+          try {
+            if (currentUser.role !== 'admin') {
+              localStorage.removeItem(LOCAL_DB_PREFIX + currentUser.username.toLowerCase());
             }
+          } catch (_) {}
+
+          // 🌟 Ban Giám Hiệu & Quản trị: Tự động kết nối và tổng hợp toàn bộ lớp, học sinh, chuyên cần, bán trú từ các giáo viên trong trường
+          const scoped = await databaseService.getExecutiveScopedData(currentUser);
+          markRemoteUpdateActive(1200);
+          setClasses(scoped.classes);
+          setStudents(scoped.students);
+          setAttendanceRecords(scoped.attendanceRecords);
+          setBoardingRecords(scoped.boardingRecords);
+          setTransactions(scoped.transactions);
+          if (scoped.classes.length > 0) {
+            setActiveClassId(prev => {
+              const exists = scoped.classes.some(c => c.id === prev);
+              return exists ? prev : scoped.classes[0].id;
+            });
           }
         } else {
           const savedData = await databaseService.loadUserData(currentUser.username);
@@ -690,17 +842,27 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const unsubscribe = databaseService.subscribeRealtimeUpdates(currentUser.username, async (event) => {
       try {
-        if (currentUser.role === 'admin') {
-          const adminAll = await databaseService.getAdminAllData();
-          if (adminAll && Array.isArray(adminAll.classes)) {
-            markRemoteUpdateActive(1200);
-            lastRemoteTimestampRef.current = adminAll.timestamp || Date.now();
-            setClasses(adminAll.classes);
-            setStudents(adminAll.students);
-            setDbSyncStatus('synced');
-            const now = new Date();
-            setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
-          }
+        const isExecutive = Boolean(
+          currentUser.role === 'admin' || 
+          currentUser.role === 'school_admin' || 
+          currentUser.role === 'bgh' || 
+          currentUser.isBgh || 
+          currentUser.isSchoolAdmin || 
+          currentUser.role === 'guest_admin' || 
+          currentUser.isGuestAdmin
+        );
+
+        if (isExecutive) {
+          const scoped = await databaseService.getExecutiveScopedData(currentUser);
+          markRemoteUpdateActive(1200);
+          setClasses(scoped.classes);
+          setStudents(scoped.students);
+          setAttendanceRecords(scoped.attendanceRecords);
+          setBoardingRecords(scoped.boardingRecords);
+          setTransactions(scoped.transactions);
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
         } else {
           const target = event.username?.toLowerCase();
           const me = currentUser.username.toLowerCase();
@@ -734,6 +896,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (Date.now() < remoteUpdateLockUntilRef.current) return;
       isChecking = true;
       try {
+        const isExecutive = Boolean(
+          currentUser.role === 'school_admin' || 
+          currentUser.role === 'bgh' || 
+          currentUser.isBgh || 
+          currentUser.isSchoolAdmin || 
+          currentUser.role === 'guest_admin' || 
+          currentUser.isGuestAdmin
+        );
+
         if (currentUser.role === 'admin') {
           const adminAll = await databaseService.getAdminAllData();
           if (adminAll && adminAll.timestamp && adminAll.timestamp > (lastRemoteTimestampRef.current + 50)) {
@@ -744,6 +915,17 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setDbSyncStatus('synced');
             const now = new Date();
             setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+          }
+        } else if (isExecutive) {
+          // BGH & Quản trị trường: tự động tổng hợp số liệu mới nhất từ giáo viên chủ nhiệm
+          const scoped = await databaseService.getExecutiveScopedData(currentUser);
+          if (scoped && scoped.classes.length > 0) {
+            setClasses(scoped.classes);
+            setStudents(scoped.students);
+            setAttendanceRecords(scoped.attendanceRecords);
+            setBoardingRecords(scoped.boardingRecords);
+            setTransactions(scoped.transactions);
+            setDbSyncStatus('synced');
           }
         } else {
           const remote = await databaseService.loadUserData(currentUser.username);
@@ -817,6 +999,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const nowTs = Date.now();
       lastRemoteTimestampRef.current = nowTs;
 
+      const isExecutive = Boolean(
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+
       if (currentUser.role === 'admin') {
         databaseService.syncAdminAllData(classes, students).then(() => {
           setDbSyncStatus('synced');
@@ -825,6 +1016,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }).catch(() => {
           setDbSyncStatus('offline');
         });
+      } else if (isExecutive) {
+        // BGH & Quản trị trường chỉ xem và giám sát số liệu tổng hợp toàn trường, không tự ý ghi đè dữ liệu học sinh
+        setDbSyncStatus('synced');
       } else {
         const payload: UserClassroomData = {
           ...getCurrentUserData(),
@@ -851,7 +1045,12 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   ]);
 
   // User Auth Actions
-  const loginUser = async (username: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  const loginUser = async (
+    username: string, 
+    password: string, 
+    selectedRoleScope?: LoginRoleScope, 
+    selectedSchoolName?: string
+  ): Promise<{ success: boolean; message?: string }> => {
     // 1. Save current workspace before switching if logged in
     if (currentUser) {
       const currentData = getCurrentUserData();
@@ -859,10 +1058,17 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     // 2. Perform login
-    const res = await databaseService.login(username, password);
+    const res = await databaseService.login(username, password, selectedRoleScope, selectedSchoolName);
     if (res.success && res.user) {
       const newUser = res.user;
       setCurrentUser(newUser);
+
+      // Cập nhật cảnh báo tài khoản Demo theo yêu cầu
+      if (newUser.isDemo || newUser.username.toLowerCase().startsWith('demo')) {
+        setDemoWarningMessage('Bạn đang sử dụng tài khoản Demo, vui lòng liên hệ cấp tài khoản full chức năng');
+      } else {
+        setDemoWarningMessage(null);
+      }
 
       // Ghi nhật ký đăng nhập
       databaseService.addAuditLog({
@@ -881,13 +1087,42 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // 3. Load target user's workspace
-      const targetData = await databaseService.loadUserData(newUser.username);
-      if (targetData) {
-        applyUserClassroomData(targetData);
+      const isNewExecutive = Boolean(
+        newUser.role === 'admin' || 
+        newUser.role === 'school_admin' || 
+        newUser.role === 'bgh' || 
+        newUser.isBgh || 
+        newUser.isSchoolAdmin || 
+        newUser.role === 'guest_admin' || 
+        newUser.isGuestAdmin
+      );
+
+      if (isNewExecutive) {
+        try {
+          if (newUser.role !== 'admin') {
+            localStorage.removeItem(LOCAL_DB_PREFIX + newUser.username.toLowerCase());
+          }
+        } catch (_) {}
+
+        const scoped = await databaseService.getExecutiveScopedData(newUser);
+        markRemoteUpdateActive(1200);
+        setClasses(scoped.classes);
+        setStudents(scoped.students);
+        setAttendanceRecords(scoped.attendanceRecords);
+        setBoardingRecords(scoped.boardingRecords);
+        setTransactions(scoped.transactions);
+        if (scoped.classes.length > 0) {
+          setActiveClassId(scoped.classes[0].id);
+        }
       } else {
-        const defaultData = buildDefaultDataForUser(newUser);
-        applyUserClassroomData(defaultData);
-        await databaseService.saveUserData(newUser.username, defaultData);
+        const targetData = await databaseService.loadUserData(newUser.username);
+        if (targetData) {
+          applyUserClassroomData(targetData);
+        } else {
+          const defaultData = buildDefaultDataForUser(newUser);
+          applyUserClassroomData(defaultData);
+          await databaseService.saveUserData(newUser.username, defaultData);
+        }
       }
 
       await refreshUsersList();
@@ -897,6 +1132,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const logoutUser = () => {
+    setDemoWarningMessage(null);
     // Save current data & record logout
     if (currentUser) {
       databaseService.addAuditLog({
@@ -906,8 +1142,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         actionType: 'OTHER',
         description: `Đăng xuất khỏi hệ thống (${currentUser.fullName})`
       });
-      const currentData = getCurrentUserData();
-      databaseService.saveUserData(currentUser.username, currentData);
+      const isExecutive = Boolean(
+        currentUser.role === 'admin' || 
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+      if (!isExecutive) {
+        const currentData = getCurrentUserData();
+        databaseService.saveUserData(currentUser.username, currentData);
+      }
     }
     databaseService.logout();
     setCurrentUser(null);
@@ -928,8 +1175,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // 1. Save current workspace
     if (currentUser) {
-      const currentData = getCurrentUserData();
-      await databaseService.saveUserData(currentUser.username, currentData);
+      const isCurrentExecutive = Boolean(
+        currentUser.role === 'admin' || 
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+      if (!isCurrentExecutive) {
+        const currentData = getCurrentUserData();
+        await databaseService.saveUserData(currentUser.username, currentData);
+      }
     }
 
     // 2. Switch current user
@@ -938,13 +1196,36 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     databaseService.touchSession();
 
     // 3. Load target data
-    const targetData = await databaseService.loadUserData(targetUser.username);
-    if (targetData) {
-      applyUserClassroomData(targetData);
+    const isTargetExecutive = Boolean(
+      targetUser.role === 'admin' || 
+      targetUser.role === 'school_admin' || 
+      targetUser.role === 'bgh' || 
+      targetUser.isBgh || 
+      targetUser.isSchoolAdmin || 
+      targetUser.role === 'guest_admin' || 
+      targetUser.isGuestAdmin
+    );
+
+    if (isTargetExecutive) {
+      const scoped = await databaseService.getExecutiveScopedData(targetUser);
+      markRemoteUpdateActive(1200);
+      setClasses(scoped.classes);
+      setStudents(scoped.students);
+      setAttendanceRecords(scoped.attendanceRecords);
+      setBoardingRecords(scoped.boardingRecords);
+      setTransactions(scoped.transactions);
+      if (scoped.classes.length > 0) {
+        setActiveClassId(scoped.classes[0].id);
+      }
     } else {
-      const defaultData = buildDefaultDataForUser(targetUser);
-      applyUserClassroomData(defaultData);
-      await databaseService.saveUserData(targetUser.username, defaultData);
+      const targetData = await databaseService.loadUserData(targetUser.username);
+      if (targetData) {
+        applyUserClassroomData(targetData);
+      } else {
+        const defaultData = buildDefaultDataForUser(targetUser);
+        applyUserClassroomData(defaultData);
+        await databaseService.saveUserData(targetUser.username, defaultData);
+      }
     }
 
     return true;
@@ -966,9 +1247,23 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     lastRemoteTimestampRef.current = nowTs;
 
     setDbSyncStatus('syncing');
+    const isExecutive = Boolean(
+      currentUser.role === 'school_admin' || 
+      currentUser.role === 'bgh' || 
+      currentUser.isBgh || 
+      currentUser.isSchoolAdmin || 
+      currentUser.role === 'guest_admin' || 
+      currentUser.isGuestAdmin
+    );
+
     if (currentUser.role === 'admin') {
       const ok = await databaseService.syncAdminAllData(curClasses, curStudents);
       setDbSyncStatus(ok ? 'synced' : 'offline');
+    } else if (isExecutive) {
+      const scoped = await databaseService.getExecutiveScopedData(currentUser);
+      setClasses(scoped.classes);
+      setStudents(scoped.students);
+      setDbSyncStatus('synced');
     } else {
       const payload: UserClassroomData = {
         ...getCurrentUserData(),
@@ -999,8 +1294,26 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     .filter(s => s.classId === (effectiveActiveClassId || activeClassId))
     .sort((a, b) => a.stt - b.stt);
 
+  // BGH check helper
+  const checkBghPermission = () => {
+    if (isBgh && !isSchoolAdmin && currentUser?.role !== 'admin') {
+      setPermissionAlert("Bạn chỉ có quyền xem thông tin, hãy tôn trọng tính chính xác của giáo viên đã cập nhật.");
+      return false;
+    }
+    return true;
+  };
+
+  const checkAttendancePermission = () => {
+    if ((isBgh || isSchoolAdmin) && currentUser?.role !== 'admin') {
+      setPermissionAlert("Bạn không có quyền điểm danh, công việc này thuộc về giáo viên chủ nhiệm.");
+      return false;
+    }
+    return true;
+  };
+
   // Class methods
   const addClass = (cls: Omit<Classroom, 'id'>) => {
+    if (!checkBghPermission()) return;
     const newId = `class-${Date.now()}`;
     const newCls: Classroom = { ...cls, id: newId };
     setClasses(prev => [...prev, newCls]);
@@ -1009,6 +1322,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateClass = (id: string, updated: Partial<Classroom>) => {
+    if (!checkBghPermission()) return;
     // Release anti-echo locks immediately so user actions always take precedence
     isApplyingRemoteUpdateRef.current = false;
     remoteUpdateLockUntilRef.current = 0;
@@ -1062,6 +1376,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const deleteClass = (id: string) => {
+    if (!checkBghPermission()) return;
     const target = classes.find(c => c.id === id);
     const remaining = classes.filter(c => c.id !== id);
     setClasses(remaining);
@@ -1090,6 +1405,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const bulkDeleteClasses = (ids: string[]) => {
+    if (!checkBghPermission()) return;
     if (!ids || ids.length === 0) return;
     const targetSet = new Set(ids);
     const targetClasses = classes.filter(c => targetSet.has(c.id));
@@ -1131,6 +1447,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const bulkUpdateClasses = (ids: string[], updates: Partial<Classroom>) => {
+    if (!checkBghPermission()) return;
     if (!ids || ids.length === 0) return;
     const targetSet = new Set(ids);
     setClasses(prev => prev.map(c => targetSet.has(c.id) ? { ...c, ...updates } : c));
@@ -1138,6 +1455,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const deleteAllClasses = () => {
+    if (!checkBghPermission()) return;
     setClasses([]);
     setActiveClassId('');
     setStudents([]);
@@ -1150,12 +1468,24 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Student methods
   const addStudent = (st: Omit<Student, 'id' | 'points' | 'stt'>) => {
+    if (!checkBghPermission()) return;
     const classStudents = students.filter(s => s.classId === activeClassId);
+    if (isDemo && classStudents.length >= 10) {
+      alert('⚠️ Bạn đang sử dụng tài khoản Demo.\nTài khoản Demo chỉ được phép tạo tối đa 10 học sinh trong lớp để xem và trải nghiệm tính năng.\n\nVui lòng bấm nút "ĐĂNG KÝ SỬ DỤNG" để được cấp tài khoản Full chức năng!');
+      setIsRegistrationModalOpen(true);
+      return;
+    }
+
     const newStt = classStudents.length + 1;
+    const realAvatar = (st.avatar && !st.avatar.includes('api.dicebear.com/7.x/bottts'))
+      ? st.avatar
+      : getStudentRealAvatar(newStt - 1, activeClassId);
+
     const newStudent: Student = {
       ...st,
       id: `hs-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       stt: newStt,
+      avatar: realAvatar,
       points: 0,
       avatarScale: st.avatarScale || 1,
       avatarPosition: st.avatarPosition || { x: 0, y: 0 }
@@ -1166,6 +1496,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateStudent = (id: string, data: Partial<Student>) => {
+    if (!checkBghPermission()) return;
     // Release anti-echo locks immediately so user actions always take precedence
     isApplyingRemoteUpdateRef.current = false;
     remoteUpdateLockUntilRef.current = 0;
@@ -1219,6 +1550,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const deleteStudent = (id: string) => {
+    if (!checkBghPermission()) return;
     const st = students.find(s => s.id === id);
     const currentClass = classes.find(c => c.id === st?.classId);
     setStudents(prev => prev.filter(s => s.id !== id));
@@ -1234,6 +1566,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const bulkDeleteStudents = (studentIds: string[]) => {
+    if (!checkBghPermission()) return;
     if (studentIds.length === 0) return;
     const idSet = new Set(studentIds);
     const currentClass = classes.find(c => c.id === activeClassId);
@@ -1249,12 +1582,13 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const clearClassStudents = (classId: string) => {
+    if (!checkBghPermission()) return;
     const targetClass = classes.find(c => c.id === classId);
     const count = students.filter(s => s.classId === classId).length;
+    const targetIds = new Set(students.filter(s => s.classId === classId).map(s => s.id));
     setStudents(prev => prev.filter(s => s.classId !== classId));
     setSeatingAssignments(prev => {
       const next = { ...prev };
-      const targetIds = new Set(students.filter(s => s.classId === classId).map(s => s.id));
       Object.keys(next).forEach(k => {
         if (targetIds.has(next[k])) delete next[k];
       });
@@ -1264,6 +1598,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const resetStudentsCoins = (studentIds?: string[], classId?: string) => {
+    if (!checkBghPermission()) return;
     const targetClassId = classId || activeClassId;
     setStudents(prev => prev.map(s => {
       if (s.classId !== targetClassId) return s;
@@ -1274,7 +1609,22 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const bulkAddStudents = (items: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }>) => {
+    if (!checkBghPermission()) return;
     const currentList = students.filter(s => s.classId === activeClassId);
+
+    if (isDemo) {
+      if (currentList.length >= 10) {
+        alert('⚠️ Bạn đang sử dụng tài khoản Demo.\nLớp học đã đạt giới hạn 10 học sinh demo.\n\nVui lòng bấm nút "ĐĂNG KÝ SỬ DỤNG" để nâng cấp tài khoản Full chức năng!');
+        setIsRegistrationModalOpen(true);
+        return;
+      }
+      const allowedToAdd = 10 - currentList.length;
+      if (items.length > allowedToAdd) {
+        alert(`⚠️ Bạn đang dùng tài khoản Demo (giới hạn tối đa 10 học sinh). Hệ thống chỉ thêm ${allowedToAdd} học sinh đầu tiên để trải nghiệm.\n\nVui lòng liên hệ Tác giả hoặc bấm "ĐĂNG KÝ SỬ DỤNG" để nhận bản Full!`);
+        items = items.slice(0, allowedToAdd);
+      }
+    }
+
     let startStt = currentList.length + 1;
 
     const newItems: Student[] = items.map((item, idx) => {
@@ -1290,7 +1640,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         name: item.name,
         birthDate: item.birthDate || '',
         gender: item.gender,
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(item.name)}&backgroundColor=b6e3f4`,
+        avatar: getStudentRealAvatar(currentList.length + idx, activeClassId),
         avatarScale: 1,
         avatarPosition: { x: 0, y: 0 },
         points: 0,
@@ -1304,6 +1654,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setStudents(prev => [...prev, ...newItems]);
     const currentClass = classes.find(c => c.id === activeClassId);
     logUserActivity('BATCH_STUDENTS', `Thêm mới danh sách ${newItems.length} học sinh vào lớp ${currentClass?.name || ''}`);
+  };
+
+  // Tự động gán ảnh đại diện thật cho toàn bộ học sinh trong lớp
+  const autoAssignRealAvatarsToClass = (targetClassId?: string) => {
+    const cId = targetClassId || activeClassId;
+    if (!cId) return;
+    setStudents(prev => {
+      let counter = 0;
+      return prev.map(s => {
+        if (s.classId === cId) {
+          const newAvatar = getStudentRealAvatar(counter++, cId);
+          return {
+            ...s,
+            avatar: newAvatar
+          };
+        }
+        return s;
+      });
+    });
   };
 
   // Subjects (Cấu hình nhận xu: Thêm, sửa, xóa, thiết lập áp dụng cho lớp/giáo viên)
@@ -1366,6 +1735,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Points Award / Deduct (Lưu theo học sinh và theo môn, không làm mất tổng xu hiện tại)
   const awardPoints = (studentIds: string[], amount: number, reason: string, subjectName?: string) => {
+    if (!checkBghPermission()) return;
     if (studentIds.length === 0 || amount <= 0) return;
     playCoinSound();
 
@@ -1589,6 +1959,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const currentDateAttendance = currentDateRecord?.records || {};
 
   const setStudentAttendance = (studentId: string, status: AttendanceStatus, date = todayStr) => {
+    if (!checkAttendancePermission()) return;
     setAttendanceRecords(prev => {
       const existingIdx = prev.findIndex(r => r.date === date && r.classId === activeClassId);
       if (existingIdx >= 0) {
@@ -1646,6 +2017,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const currentDateBoarding = currentDateBoardingRecord?.records || {};
 
   const setStudentBoarding = (studentId: string, status: BoardingStatus, date = todayStr) => {
+    if (!checkAttendancePermission()) return;
     setBoardingRecords(prev => {
       const existingIdx = prev.findIndex(r => r.date === date && r.classId === activeClassId);
       if (existingIdx >= 0) {
@@ -2109,7 +2481,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       grade: 'Khối 4',
       color: '#3B82F6',
       academicYear: '2026–2027',
-      teacherName: 'NGUYỄN THỊ HOA',
+      teacherName: 'Trịnh Thị Hương',
+      teacherUsername: 'gvcndemo',
+      teacherRole: 'homeroom',
       avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
       slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng',
       parentCommittee: {
@@ -2190,6 +2564,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       bulkDeleteStudents,
       clearClassStudents,
       bulkAddStudents,
+      autoAssignRealAvatarsToClass,
       resetStudentsCoins,
 
       subjects,
@@ -2301,11 +2676,45 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       dbSyncStatus,
       lastDbSyncTime,
       syncDatabaseNow,
-      isAdmin: currentUser?.role === 'admin',
+      isAdmin,
+      isSchoolAdmin,
+      isGuestAdmin,
       isHomeroom: currentUser?.role === 'homeroom',
-      isSubject: currentUser?.role === 'subject'
+      isSubject: currentUser?.role === 'subject',
+      isDemo,
+      isBgh,
+      canManageAccounts,
+      isRegistrationModalOpen,
+      setIsRegistrationModalOpen,
+      demoWarningMessage,
+      setDemoWarningMessage
     }}>
       {children}
+      {permissionAlert && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 p-4 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-6 h-6 text-white" />
+                <h3 className="text-white font-bold text-lg shadow-sm">Cảnh Báo Phân Quyền</h3>
+              </div>
+              <button onClick={() => setPermissionAlert(null)} className="text-white/80 hover:text-white hover:bg-white/20 p-1.5 rounded-full transition-all">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700 text-base leading-relaxed text-center font-medium">
+                {permissionAlert}
+              </p>
+            </div>
+            <div className="bg-gray-50/80 p-4 flex justify-end border-t border-gray-100">
+              <button onClick={() => setPermissionAlert(null)} className="px-6 py-2.5 bg-gray-800 text-white font-medium rounded-xl hover:bg-gray-900 transition-colors shadow-sm w-full sm:w-auto">
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ClassroomContext.Provider>
   );
 };

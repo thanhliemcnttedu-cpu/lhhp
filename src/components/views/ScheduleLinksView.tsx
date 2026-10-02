@@ -185,7 +185,7 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
       academicYear: teacherProfile.academicYear || '2026 – 2027',
       semester: 'Học kỳ I',
       appliedDate: '05/09/2026',
-      teacherName: selectedClass?.teacherName || teacherProfile.name || 'Cô Nguyễn Thị Hoa',
+      teacherName: selectedClass?.teacherName || teacherProfile.name || 'Cô Trịnh Thị Hương',
       slogan: 'Mỗi ngày đến trường là một ngày vui • Chăm ngoan - Học giỏi',
       showTimeSlots: true,
       showTeacherInfo: true,
@@ -815,7 +815,7 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
                     )}
                   </div>
 
-                  <div className="text-right text-xs text-slate-600 space-y-0.5">
+                  <div className="text-left sm:text-right text-xs text-slate-600 space-y-0.5">
                     {displaySettings.showTeacherInfo && (
                       <p>
                         GVCN: <strong className="text-indigo-900 font-black">{displaySettings.teacherName}</strong>
@@ -827,18 +827,23 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
                   </div>
                 </div>
 
+                {/* Gợi ý cuộn ngang trên điện thoại */}
+                <div className="sm:hidden flex items-center gap-1.5 text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-xl font-bold w-fit mb-2">
+                  <span>⇄ Vuốt ngang để xem đủ thời khóa biểu từ Thứ Hai đến Thứ Bảy</span>
+                </div>
+
                 {/* Table */}
-                <div className="overflow-x-auto rounded-2xl border border-indigo-200">
-                  <table className="w-full text-xs text-left border-collapse">
+                <div className="overflow-x-auto rounded-2xl border border-indigo-200 scrollbar-thin">
+                  <table className="min-w-[760px] w-full text-xs text-left border-collapse">
                     <thead>
                       <tr className="bg-gradient-to-r from-indigo-700 to-violet-700 text-white font-black uppercase text-[11px]">
-                        <th className="py-3 px-3 w-16 text-center border-r border-indigo-600/50">Buổi</th>
-                        <th className="py-3 px-2 w-14 text-center border-r border-indigo-600/50">Tiết</th>
+                        <th className="py-3 px-3 w-16 text-center border-r border-indigo-600/50 whitespace-nowrap">Buổi</th>
+                        <th className="py-3 px-2 w-14 text-center border-r border-indigo-600/50 whitespace-nowrap">Tiết</th>
                         {displaySettings.showTimeSlots && (
-                          <th className="py-3 px-2 w-28 text-center border-r border-indigo-600/50">Khung Giờ</th>
+                          <th className="py-3 px-2 w-28 text-center border-r border-indigo-600/50 whitespace-nowrap">Khung Giờ</th>
                         )}
                         {daysToShow.map(d => (
-                          <th key={d.day} className="py-3 px-3 text-center border-r border-indigo-600/50 last:border-r-0 min-w-[130px]">
+                          <th key={d.day} className="py-3 px-3 text-center border-r border-indigo-600/50 last:border-r-0 min-w-[130px] whitespace-nowrap">
                             {d.label}
                           </th>
                         ))}
@@ -1105,8 +1110,8 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
                 </div>
 
                 {/* Peacock Styled Table */}
-                <div className="overflow-x-auto rounded-2xl border-2 border-emerald-300 bg-white">
-                  <table className="w-full text-xs text-left border-collapse">
+                <div className="overflow-x-auto rounded-2xl border-2 border-emerald-300 bg-white scrollbar-thin">
+                  <table className="min-w-[760px] w-full text-xs text-left border-collapse">
                     <thead>
                       <tr className="bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-800 text-white font-black uppercase text-[11px]">
                         <th className="py-3 px-3 w-16 text-center border-r border-emerald-600">Buổi</th>
@@ -1593,7 +1598,8 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
                 </div>
 
                 {/* Monochrome Printable Grid */}
-                <table className="w-full text-xs border-collapse border border-slate-800">
+                <div className="overflow-x-auto border border-slate-800 rounded-xl scrollbar-thin">
+                  <table className="min-w-[760px] w-full text-xs border-collapse border border-slate-800">
                   <thead>
                     <tr className="bg-slate-100 border border-slate-800 font-bold text-center">
                       <th className="border border-slate-800 py-2 px-2 w-16">Buổi</th>
@@ -1684,6 +1690,7 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
                     })}
                   </tbody>
                 </table>
+                </div>
 
                 {/* Signatures */}
                 <div className="pt-6 grid grid-cols-2 text-xs">

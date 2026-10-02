@@ -523,20 +523,20 @@ export const SeatingChartView: React.FC = () => {
       </div>
 
       {/* SELECT PERSPECTIVE THEME BAR (User Request: Bổ sung thêm nhiều phối cảnh 2D & 3D) */}
-      <div className="bg-white/95 p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white/95 p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-2 text-xs font-black text-slate-800 uppercase">
           <Palette className="w-4 h-4 text-indigo-600" />
           <span>CHỌN MẪU PHỐI CẢNH LỚP HỌC ({Object.keys(SEATING_THEMES).length} KIỂU):</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full scrollbar-thin">
           {Object.values(SEATING_THEMES).map((theme) => {
             const isSelected = perspectiveTheme === theme.id;
             return (
               <button
                 key={theme.id}
                 onClick={() => handleSelectTheme(theme.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 hover-zoom-btn uppercase ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 hover-zoom-btn uppercase ${
                   isSelected
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-102 ring-2 ring-indigo-400'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
@@ -863,13 +863,18 @@ export const SeatingChartView: React.FC = () => {
         {/* ========================================================================= */}
         <div 
           ref={chartContainerRef}
-          className="lg:col-span-9 bg-slate-200/60 border border-slate-300 rounded-3xl p-4 sm:p-6 shadow-inner relative overflow-x-auto min-h-[640px]"
+          className="lg:col-span-9 bg-slate-200/60 border border-slate-300 rounded-3xl p-3 sm:p-6 shadow-inner relative overflow-x-auto min-h-[640px] scrollbar-thin"
         >
+          {/* Gợi ý cuộn ngang trên điện thoại */}
+          <div className="sm:hidden flex items-center gap-1.5 text-[10px] text-indigo-700 bg-white/90 border border-indigo-200 px-2.5 py-1 rounded-xl font-bold w-fit mb-2 shadow-xs">
+            <span>⇄ Vuốt ngang để xem đủ các dãy bàn và tên học sinh</span>
+          </div>
+
           {/* PRINTABLE CONTAINER CAPTURED FOR PNG & PDF EXPORT */}
           <div 
             ref={printableAreaRef}
             id="printable-seating-chart"
-            className={`w-full ${currentTheme.containerBg} ${currentTheme.containerBorder} rounded-2xl shadow-xl p-4 sm:p-6 space-y-4 transition-all duration-300`}
+            className={`min-w-[580px] sm:min-w-0 w-full ${currentTheme.containerBg} ${currentTheme.containerBorder} rounded-2xl shadow-xl p-3.5 sm:p-6 space-y-4 transition-all duration-300`}
             style={{
               backgroundImage: perspectiveTheme === 'wood_3d' 
                 ? 'radial-gradient(#e9dac6 1px, transparent 1px)' 

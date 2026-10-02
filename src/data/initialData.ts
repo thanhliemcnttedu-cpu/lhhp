@@ -27,22 +27,22 @@ export const SYSTEM_AVATARS = [
   { id: 'av-pet-2', label: 'Gấu Trúc', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=GauTruc&backgroundColor=b6e3f4', gender: 'Linh vật' }
 ];
 
-// Thông tin giáo viên mặc định trong cài đặt (Yêu cầu 7)
+// Thông tin giáo viên mặc định trong cài đặt (Khối Demo: Cô Trịnh Thị Hương)
 export const DEFAULT_TEACHER: TeacherProfile = {
-  name: 'Nguyễn Thị Hoa',
+  name: 'Trịnh Thị Hương',
   birthDate: '15/08/1988',
   role: 'GIÁO VIÊN CHỦ NHIỆM',
   teachingSubject: 'Giáo viên chủ nhiệm',
-  schoolName: 'Trường Tiểu học số 1 Tân Uyên',
-  avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoNguyenThiHoa&backgroundColor=ffd5dc',
-  phone: '0977058363',
-  zalo: '0977058363',
+  schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+  avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiHuong&backgroundColor=ffd5dc',
+  phone: '0888358363',
+  zalo: '0888358363',
   facebook: 'https://www.facebook.com/tieuhocso1tanuyen/',
-  socialLink: 'https://zalo.me/0977058363',
+  socialLink: 'https://zalo.me/0888358363',
   academicYear: '2026–2027'
 };
 
-// Mặc định ban đầu: Chỉ có 1 lớp là 4A1 (Yêu cầu 7)
+// Mặc định ban đầu: Chỉ có 1 lớp là 4A1 (GVCN: Cô Trịnh Thị Hương)
 export const INITIAL_CLASSES: Classroom[] = [
   {
     id: 'class-4a1',
@@ -50,7 +50,9 @@ export const INITIAL_CLASSES: Classroom[] = [
     grade: 'Khối 4',
     color: '#3B82F6', // Blue
     academicYear: '2026–2027',
-    teacherName: 'Nguyễn Thị Hoa',
+    teacherName: 'Trịnh Thị Hương',
+    teacherUsername: 'gvcndemo',
+    teacherRole: 'homeroom',
     avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
     slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng',
     parentCommittee: {
@@ -179,34 +181,34 @@ export const INITIAL_QUICK_LINKS: QuickLink[] = [
 // Thời khóa biểu cố định của lớp 4A1 (Yêu cầu 1)
 export const INITIAL_TIMETABLE: TimetableSlot[] = [
   { day: 2, session: 'morning', period: 1, subject: 'Chào cờ', teacher: 'GV: TPT', classId: 'class-4a1' },
-  { day: 2, session: 'morning', period: 2, subject: 'Toán', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 2, session: 'morning', period: 3, subject: 'Tiếng Việt', teacher: 'Cô Hoa', classId: 'class-4a1' },
+  { day: 2, session: 'morning', period: 2, subject: 'Toán', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 2, session: 'morning', period: 3, subject: 'Tiếng Việt', teacher: 'Cô Hương', classId: 'class-4a1' },
   { day: 2, session: 'morning', period: 4, subject: 'Tiếng Anh', teacher: 'Cô Mai', classId: 'class-4a1' },
-  { day: 2, session: 'morning', period: 5, subject: 'Hoạt động trải nghiệm', teacher: 'Cô Hoa', classId: 'class-4a1' },
+  { day: 2, session: 'morning', period: 5, subject: 'Hoạt động trải nghiệm', teacher: 'Cô Hương', classId: 'class-4a1' },
 
-  { day: 3, session: 'morning', period: 1, subject: 'Toán', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 3, session: 'morning', period: 2, subject: 'Tiếng Việt', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 3, session: 'morning', period: 3, subject: 'Khoa học', teacher: 'Cô Hoa', classId: 'class-4a1' },
+  { day: 3, session: 'morning', period: 1, subject: 'Toán', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 3, session: 'morning', period: 2, subject: 'Tiếng Việt', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 3, session: 'morning', period: 3, subject: 'Khoa học', teacher: 'Cô Hương', classId: 'class-4a1' },
   { day: 3, session: 'morning', period: 4, subject: 'Âm nhạc', teacher: 'Thầy Hưng', classId: 'class-4a1' },
   { day: 3, session: 'morning', period: 5, subject: 'Giáo dục thể chất', teacher: 'Thầy Dũng', classId: 'class-4a1' },
 
-  { day: 4, session: 'morning', period: 1, subject: 'Tiếng Việt', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 4, session: 'morning', period: 2, subject: 'Toán', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 4, session: 'morning', period: 3, subject: 'Lịch sử & Địa lý', teacher: 'Cô Hoa', classId: 'class-4a1' },
+  { day: 4, session: 'morning', period: 1, subject: 'Tiếng Việt', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 4, session: 'morning', period: 2, subject: 'Toán', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 4, session: 'morning', period: 3, subject: 'Lịch sử & Địa lý', teacher: 'Cô Hương', classId: 'class-4a1' },
   { day: 4, session: 'morning', period: 4, subject: 'Tin học', teacher: 'Thầy Liêm', classId: 'class-4a1' },
-  { day: 4, session: 'morning', period: 5, subject: 'Đạo đức', teacher: 'Cô Hoa', classId: 'class-4a1' },
+  { day: 4, session: 'morning', period: 5, subject: 'Đạo đức', teacher: 'Cô Hương', classId: 'class-4a1' },
 
-  { day: 5, session: 'morning', period: 1, subject: 'Toán', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 5, session: 'morning', period: 2, subject: 'Tiếng Việt', teacher: 'Cô Hoa', classId: 'class-4a1' },
+  { day: 5, session: 'morning', period: 1, subject: 'Toán', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 5, session: 'morning', period: 2, subject: 'Tiếng Việt', teacher: 'Cô Hương', classId: 'class-4a1' },
   { day: 5, session: 'morning', period: 3, subject: 'Tiếng Anh', teacher: 'Cô Mai', classId: 'class-4a1' },
   { day: 5, session: 'morning', period: 4, subject: 'Mĩ thuật', teacher: 'Cô Lan', classId: 'class-4a1' },
-  { day: 5, session: 'morning', period: 5, subject: 'Công nghệ', teacher: 'Cô Hoa', classId: 'class-4a1' },
+  { day: 5, session: 'morning', period: 5, subject: 'Công nghệ', teacher: 'Cô Hương', classId: 'class-4a1' },
 
-  { day: 6, session: 'morning', period: 1, subject: 'Toán', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 6, session: 'morning', period: 2, subject: 'Tiếng Việt', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 6, session: 'morning', period: 3, subject: 'Khoa học', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 6, session: 'morning', period: 4, subject: 'Sinh hoạt lớp', teacher: 'Cô Hoa', classId: 'class-4a1' },
-  { day: 6, session: 'morning', period: 5, subject: 'Hoạt động trải nghiệm', teacher: 'Cô Hoa', classId: 'class-4a1' }
+  { day: 6, session: 'morning', period: 1, subject: 'Toán', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 6, session: 'morning', period: 2, subject: 'Tiếng Việt', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 6, session: 'morning', period: 3, subject: 'Khoa học', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 6, session: 'morning', period: 4, subject: 'Sinh hoạt lớp', teacher: 'Cô Hương', classId: 'class-4a1' },
+  { day: 6, session: 'morning', period: 5, subject: 'Hoạt động trải nghiệm', teacher: 'Cô Hương', classId: 'class-4a1' }
 ];
 
 // Cấu hình mặc định cho Giáo viên bộ môn (Yêu cầu GVBM Tin học dạy nhiều lớp)

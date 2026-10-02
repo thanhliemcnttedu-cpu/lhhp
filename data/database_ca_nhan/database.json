@@ -1,0 +1,1621 @@
+{
+  "partition": "ca_nhan",
+  "title": "Cơ Sở Dữ Liệu Giáo Viên Cá Nhân & Quản Trị Cá Nhân",
+  "lastSync": "2026-10-01T18:52:33.227Z",
+  "users": [
+    {
+      "id": "user-gv-canhan01",
+      "username": "gv_canhan01",
+      "password": "123456",
+      "fullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "tenantType": "guest",
+      "assignedClassName": "Lớp Tự Do 4",
+      "schoolName": "Tự do / Vãng lai",
+      "email": "gv.canhan@lophoc.edu.vn",
+      "phone": "0912345678",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=CoLeHoangYen&backgroundColor=fed7aa",
+      "createdAt": 1790830437216,
+      "status": "active",
+      "lastLoginAt": 1790830530752
+    },
+    {
+      "id": "user-quantricanhan",
+      "username": "quantricanhan",
+      "password": "Tanuyen@2026",
+      "fullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "isGuestAdmin": true,
+      "tenantType": "guest",
+      "schoolName": "Khu vực Giáo viên Cá nhân / Vãng lai",
+      "email": "quantricanhan@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=QuanTriCaNhan&backgroundColor=fbcfe8",
+      "createdAt": 1790834208376,
+      "status": "active",
+      "lastLoginAt": 1790834268969
+    },
+    {
+      "id": "user-admin-canhan",
+      "username": "admin_canhan",
+      "password": "123456",
+      "fullName": "Quản trị Tài khoản Cá Nhân (Phụ)",
+      "role": "guest_admin",
+      "isGuestAdmin": true,
+      "tenantType": "guest",
+      "schoolName": "Khu vực Giáo viên Cá nhân / Vãng lai",
+      "email": "admin.canhan@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8",
+      "createdAt": 1790860883623,
+      "status": "active"
+    }
+  ],
+  "userData": {
+    "quantricanhan": {
+      "classes": [
+        {
+          "id": "class-4a1",
+          "name": "4A1",
+          "color": "#3B82F6",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6",
+          "slogan": "Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng",
+          "teacherName": "Quản trị Tài khoản Cá Nhân",
+          "academicYear": "2026–2027",
+          "teacherUsername": "quantricanhan",
+          "teacherRole": "guest_admin"
+        }
+      ],
+      "activeClassId": "class-4a1",
+      "students": [
+        {
+          "id": "hs-class-4a1-1",
+          "stt": 1,
+          "name": "Nguyễn Văn An",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "roles": [
+            "LỚP TRƯỞNG"
+          ],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 19,
+          "classId": "class-4a1",
+          "birthDate": "01/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 19
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-2",
+          "stt": 2,
+          "name": "Phạm Thảo Ánh",
+          "role": "LỚP PHÓ HỌC TẬP",
+          "group": "Tổ 2",
+          "roles": [
+            "LỚP PHÓ HỌC TẬP"
+          ],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-1&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 20,
+          "classId": "class-4a1",
+          "birthDate": "02/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 20
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-3",
+          "stt": 3,
+          "name": "Phan Gia Bình",
+          "role": "LỚP PHÓ VĂN THỂ",
+          "group": "Tổ 3",
+          "roles": [
+            "LỚP PHÓ VĂN THỂ"
+          ],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 14,
+          "classId": "class-4a1",
+          "birthDate": "03/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 14
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-4",
+          "stt": 4,
+          "name": "Đặng Hải Châu",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-3&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 26,
+          "classId": "class-4a1",
+          "birthDate": "04/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 26
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-5",
+          "stt": 5,
+          "name": "Hồ Hữu Dũng",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 27,
+          "classId": "class-4a1",
+          "birthDate": "05/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-6",
+          "stt": 6,
+          "name": "Lý Thu Diệp",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-5&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 16,
+          "classId": "class-4a1",
+          "birthDate": "06/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 16
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-7",
+          "stt": 7,
+          "name": "Lâm Đình Đức",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 16,
+          "classId": "class-4a1",
+          "birthDate": "07/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 16
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-8",
+          "stt": 8,
+          "name": "Đào Ánh Dương",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-7&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 13,
+          "classId": "class-4a1",
+          "birthDate": "08/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 13
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-9",
+          "stt": 9,
+          "name": "Lưu Quang Hiếu",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 24,
+          "classId": "class-4a1",
+          "birthDate": "09/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 24
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-10",
+          "stt": 10,
+          "name": "Châu Thị Hạnh",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-9&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 20,
+          "classId": "class-4a1",
+          "birthDate": "10/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 20
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-11",
+          "stt": 11,
+          "name": "Nguyễn Minh Hùng",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-10&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 24,
+          "classId": "class-4a1",
+          "birthDate": "11/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 24
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-12",
+          "stt": 12,
+          "name": "Phạm Mai Hoa",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-11&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 18,
+          "classId": "class-4a1",
+          "birthDate": "12/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 18
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-13",
+          "stt": 13,
+          "name": "Phan Tuấn Khoa",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-12&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 29,
+          "classId": "class-4a1",
+          "birthDate": "13/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-14",
+          "stt": 14,
+          "name": "Đặng Minh Huyền",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-13&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 18,
+          "classId": "class-4a1",
+          "birthDate": "14/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 18
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-15",
+          "stt": 15,
+          "name": "Hồ Thành Lâm",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-14&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 10,
+          "classId": "class-4a1",
+          "birthDate": "15/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 10
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-16",
+          "stt": 16,
+          "name": "Lý Diệu Lan",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-15&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 13,
+          "classId": "class-4a1",
+          "birthDate": "16/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 13
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-17",
+          "stt": 17,
+          "name": "Lâm Khánh Minh",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-16&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 23,
+          "classId": "class-4a1",
+          "birthDate": "17/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 23
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-18",
+          "stt": 18,
+          "name": "Đào Như Loan",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-17&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 29,
+          "classId": "class-4a1",
+          "birthDate": "18/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-19",
+          "stt": 19,
+          "name": "Lưu Văn Nghĩa",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-18&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 24,
+          "classId": "class-4a1",
+          "birthDate": "19/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 24
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-20",
+          "stt": 20,
+          "name": "Châu Thảo Mai",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-19&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 18,
+          "classId": "class-4a1",
+          "birthDate": "20/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 18
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-21",
+          "stt": 21,
+          "name": "Nguyễn Gia Nhân",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-20&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 10,
+          "classId": "class-4a1",
+          "birthDate": "21/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 10
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-22",
+          "stt": 22,
+          "name": "Phạm Hải Nga",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-21&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 21,
+          "classId": "class-4a1",
+          "birthDate": "22/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 21
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-23",
+          "stt": 23,
+          "name": "Phan Hữu Phi",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-22&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 19,
+          "classId": "class-4a1",
+          "birthDate": "23/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 19
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-24",
+          "stt": 24,
+          "name": "Đặng Thu Ngọc",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-23&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 22,
+          "classId": "class-4a1",
+          "birthDate": "24/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 22
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-25",
+          "stt": 25,
+          "name": "Hồ Đình Phúc",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-24&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 27,
+          "classId": "class-4a1",
+          "birthDate": "25/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-26",
+          "stt": 26,
+          "name": "Lý Ánh Như",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-25&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 17,
+          "classId": "class-4a1",
+          "birthDate": "26/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 17
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-27",
+          "stt": 27,
+          "name": "Lâm Quang Quang",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-26&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 29,
+          "classId": "class-4a1",
+          "birthDate": "27/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-28",
+          "stt": 28,
+          "name": "Đào Thị Oanh",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-27&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 29,
+          "classId": "class-4a1",
+          "birthDate": "28/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-29",
+          "stt": 29,
+          "name": "Lưu Minh Tài",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-28&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 19,
+          "classId": "class-4a1",
+          "birthDate": "01/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 19
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-30",
+          "stt": 30,
+          "name": "Châu Mai Quỳnh",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-29&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 21,
+          "classId": "class-4a1",
+          "birthDate": "02/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 21
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-31",
+          "stt": 31,
+          "name": "Nguyễn Tuấn Thắng",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-30&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 29,
+          "classId": "class-4a1",
+          "birthDate": "03/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-4a1-32",
+          "stt": 32,
+          "name": "Phạm Minh Thi",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=4A1-31&backgroundColor=b6e3f4",
+          "gender": "Nữ",
+          "points": 17,
+          "classId": "class-4a1",
+          "birthDate": "04/10/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 17
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "id": "sub-general",
+          "icon": "Star",
+          "name": "GHI CHUNG / NỀ NẾP",
+          "color": "#F59E0B",
+          "enabled": true,
+          "isDefault": true
+        },
+        {
+          "id": "sub-toan",
+          "icon": "Calculator",
+          "name": "TOÁN",
+          "color": "#3B82F6",
+          "enabled": true,
+          "isDefault": true
+        },
+        {
+          "id": "sub-tiengviet",
+          "icon": "BookOpen",
+          "name": "TIẾNG VIỆT",
+          "color": "#EF4444",
+          "enabled": true,
+          "isDefault": true
+        },
+        {
+          "id": "sub-daoduc",
+          "icon": "Heart",
+          "name": "ĐẠO ĐỨC",
+          "color": "#E11D48",
+          "enabled": true,
+          "isDefault": true
+        },
+        {
+          "id": "sub-tnxh",
+          "icon": "Compass",
+          "name": "TN & XÃ HỘI",
+          "color": "#10B981",
+          "enabled": true,
+          "isDefault": true
+        },
+        {
+          "id": "sub-lichsu",
+          "icon": "Map",
+          "name": "LỊCH SỬ & ĐỊA LÝ",
+          "color": "#F97316",
+          "enabled": true,
+          "isDefault": true
+        },
+        {
+          "id": "sub-khoahoc",
+          "icon": "Atom",
+          "name": "KHOA HỌC",
+          "color": "#06B6D4",
+          "enabled": true,
+          "isDefault": true
+        },
+        {
+          "id": "sub-tienganh",
+          "icon": "Globe",
+          "name": "TIẾNG ANH",
+          "color": "#8B5CF6",
+          "enabled": false
+        },
+        {
+          "id": "sub-tinhoc",
+          "icon": "Monitor",
+          "name": "TIN HỌC",
+          "color": "#6366F1",
+          "enabled": false
+        },
+        {
+          "id": "sub-congnghe",
+          "icon": "Cpu",
+          "name": "CÔNG NGHỆ",
+          "color": "#14B8A6",
+          "enabled": false
+        },
+        {
+          "id": "sub-mythuat",
+          "icon": "Palette",
+          "name": "MĨ THUẬT",
+          "color": "#EC4899",
+          "enabled": false
+        },
+        {
+          "id": "sub-amnhac",
+          "icon": "Music",
+          "name": "ÂM NHẠC",
+          "color": "#A855F7",
+          "enabled": false
+        },
+        {
+          "id": "sub-gdtc",
+          "icon": "Activity",
+          "name": "GIÁO DỤC THỂ CHẤT",
+          "color": "#3B82F6",
+          "enabled": false
+        },
+        {
+          "id": "sub-trainghiem",
+          "icon": "Sparkles",
+          "name": "HOẠT ĐỘNG TRẢI NGHIỆM",
+          "color": "#F59E0B",
+          "enabled": false
+        }
+      ],
+      "criteria": [
+        {
+          "id": "crit-1",
+          "type": "positive",
+          "title": "Phát biểu tích cực",
+          "points": 3,
+          "category": "Học tập"
+        },
+        {
+          "id": "crit-2",
+          "type": "positive",
+          "title": "Hăng hái xây dựng bài",
+          "points": 1,
+          "category": "Học tập"
+        },
+        {
+          "id": "crit-3",
+          "type": "positive",
+          "title": "Làm bài tập đầy đủ, sạch đẹp",
+          "points": 2,
+          "category": "Học tập"
+        },
+        {
+          "id": "crit-4",
+          "type": "positive",
+          "title": "Đi học đúng giờ, nề nếp tốt",
+          "points": 2,
+          "category": "Kỷ luật"
+        },
+        {
+          "id": "crit-5",
+          "type": "positive",
+          "title": "Đạt điểm 9, 10 bài kiểm tra",
+          "points": 5,
+          "category": "Học tập"
+        },
+        {
+          "id": "crit-6",
+          "type": "positive",
+          "title": "Việc tốt - Giúp đỡ bạn bè",
+          "points": 5,
+          "category": "Đạo đức"
+        },
+        {
+          "id": "crit-7",
+          "type": "positive",
+          "title": "Học sinh xuất sắc trong tuần",
+          "points": 10,
+          "category": "Khen thưởng"
+        },
+        {
+          "id": "crit-8",
+          "type": "negative",
+          "title": "Mất trật tự trong giờ học",
+          "points": -2,
+          "category": "Kỷ luật"
+        },
+        {
+          "id": "crit-9",
+          "type": "negative",
+          "title": "Quên sách vở / Chưa làm bài",
+          "points": -2,
+          "category": "Học tập"
+        }
+      ],
+      "transactions": [],
+      "rewards": [
+        {
+          "id": "rew-1",
+          "cost": 10,
+          "name": "Thước Kẻ Thông Minh",
+          "image": "https://images.unsplash.com/photo-1588072432836-e10032774350?w=400&auto=format&fit=crop&q=80",
+          "stock": 15,
+          "classId": "class-4a1",
+          "description": "Dụng cụ học tập"
+        },
+        {
+          "id": "rew-2",
+          "cost": 15,
+          "name": "Bút Mực Sao Đỏ",
+          "image": "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400&auto=format&fit=crop&q=80",
+          "stock": 20,
+          "classId": "class-4a1",
+          "description": "Dụng cụ học tập"
+        },
+        {
+          "id": "rew-3",
+          "cost": 25,
+          "name": "Bộ Nhãn Dán & Vé Miễn Bài Tập",
+          "image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+          "stock": 10,
+          "classId": "class-4a1",
+          "description": "Quà tặng khuyến khích"
+        }
+      ],
+      "redemptions": [],
+      "seatingColumns": 4,
+      "deskCountsPerColumn": [
+        4,
+        4,
+        4,
+        4
+      ],
+      "deskNumberingOrder": "vertical",
+      "teacherDeskPos": "left",
+      "doorPos": "right",
+      "blackboardPos": "center",
+      "seatingAssignments": {},
+      "attendanceRecords": [],
+      "boardingRecords": [],
+      "timetable": [
+        {
+          "day": 2,
+          "period": 1,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Chào cờ",
+          "teacher": "GV: TPT"
+        },
+        {
+          "day": 2,
+          "period": 2,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Toán",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 2,
+          "period": 3,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tiếng Việt",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 2,
+          "period": 4,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tiếng Anh",
+          "teacher": "Cô Mai"
+        },
+        {
+          "day": 2,
+          "period": 5,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Hoạt động trải nghiệm",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 3,
+          "period": 1,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Toán",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 3,
+          "period": 2,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tiếng Việt",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 3,
+          "period": 3,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Khoa học",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 3,
+          "period": 4,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Âm nhạc",
+          "teacher": "Thầy Hưng"
+        },
+        {
+          "day": 3,
+          "period": 5,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Giáo dục thể chất",
+          "teacher": "Thầy Dũng"
+        },
+        {
+          "day": 4,
+          "period": 1,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tiếng Việt",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 4,
+          "period": 2,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Toán",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 4,
+          "period": 3,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Lịch sử & Địa lý",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 4,
+          "period": 4,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tin học",
+          "teacher": "Thầy Liêm"
+        },
+        {
+          "day": 4,
+          "period": 5,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Đạo đức",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 5,
+          "period": 1,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Toán",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 5,
+          "period": 2,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tiếng Việt",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 5,
+          "period": 3,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tiếng Anh",
+          "teacher": "Cô Mai"
+        },
+        {
+          "day": 5,
+          "period": 4,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Mĩ thuật",
+          "teacher": "Cô Lan"
+        },
+        {
+          "day": 5,
+          "period": 5,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Công nghệ",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 6,
+          "period": 1,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Toán",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 6,
+          "period": 2,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tiếng Việt",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 6,
+          "period": 3,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Khoa học",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 6,
+          "period": 4,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Sinh hoạt lớp",
+          "teacher": "Cô Hoa"
+        },
+        {
+          "day": 6,
+          "period": 5,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Hoạt động trải nghiệm",
+          "teacher": "Cô Hoa"
+        }
+      ],
+      "timetableConfig": {
+        "hasSaturday": false,
+        "morningPeriods": 4,
+        "afternoonPeriods": 3
+      },
+      "teacherRole": "homeroom",
+      "subjectTeacherConfig": {
+        "semester": "I",
+        "subject2": "CÔNG NGHỆ",
+        "subject3": "",
+        "subject4": "",
+        "periodName": "Học kì I (Từ ngày 05/9/2026)",
+        "hasSaturday": false,
+        "roomDefault": "Phòng máy Tin học",
+        "subjectName": "TIN HỌC",
+        "scheduleScope": "semester",
+        "morningPeriods": 4,
+        "taughtSubjects": [
+          "TIN HỌC",
+          "CÔNG NGHỆ"
+        ],
+        "afternoonPeriods": 3,
+        "effectiveStartDate": "05/9/2026",
+        "teacherDisplayName": "Nguyễn Thanh Liêm"
+      },
+      "subjectTimetable": [
+        {
+          "id": "sbj-img-2-m2",
+          "day": 2,
+          "note": "Tin học 4A1",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-4a1",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "4A1"
+        },
+        {
+          "id": "sbj-img-2-m3",
+          "day": 2,
+          "note": "Tin học 4A2",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-4a2",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "4A2"
+        },
+        {
+          "id": "sbj-img-2-m4",
+          "day": 2,
+          "note": "Tin học 4A3",
+          "room": "Phòng máy Tin học",
+          "period": 4,
+          "classId": "class-4a3",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "4A3"
+        },
+        {
+          "id": "sbj-img-2-a1",
+          "day": 2,
+          "note": "Tin học 4A4",
+          "room": "Phòng máy Tin học",
+          "period": 1,
+          "classId": "class-4a4",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "4A4"
+        },
+        {
+          "id": "sbj-img-2-a2",
+          "day": 2,
+          "note": "Tin học 4A5",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-4a5",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "4A5"
+        },
+        {
+          "id": "sbj-img-2-a3",
+          "day": 2,
+          "note": "Tin học 4A6",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-4a6",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "4A6"
+        },
+        {
+          "id": "sbj-img-3-m1",
+          "day": 3,
+          "note": "Tin học 3A1",
+          "room": "Phòng máy Tin học",
+          "period": 1,
+          "classId": "class-3a1",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A1"
+        },
+        {
+          "id": "sbj-img-3-m2",
+          "day": 3,
+          "note": "Tin học 3A2",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-3a2",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A2"
+        },
+        {
+          "id": "sbj-img-3-m3",
+          "day": 3,
+          "note": "Tin học 3A3",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-3a3",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A3"
+        },
+        {
+          "id": "sbj-img-3-m4",
+          "day": 3,
+          "note": "Tin học 3A4",
+          "room": "Phòng máy Tin học",
+          "period": 4,
+          "classId": "class-3a4",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A4"
+        },
+        {
+          "id": "sbj-img-3-a1",
+          "day": 3,
+          "note": "Tin học 3A5",
+          "room": "Phòng máy Tin học",
+          "period": 1,
+          "classId": "class-3a5",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "3A5"
+        },
+        {
+          "id": "sbj-img-3-a2",
+          "day": 3,
+          "note": "Tin học 3A6",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-3a6",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "3A6"
+        },
+        {
+          "id": "sbj-img-3-a3",
+          "day": 3,
+          "note": "Tin học 3A7",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-3a7",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "3A7"
+        },
+        {
+          "id": "sbj-img-4-m2",
+          "day": 4,
+          "note": "Tin học 5A1",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-5a1",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A1"
+        },
+        {
+          "id": "sbj-img-4-m3",
+          "day": 4,
+          "note": "Tin học 5A2",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-5a2",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A2"
+        },
+        {
+          "id": "sbj-img-4-m4",
+          "day": 4,
+          "note": "Tin học 5A3",
+          "room": "Phòng máy Tin học",
+          "period": 4,
+          "classId": "class-5a3",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A3"
+        },
+        {
+          "id": "sbj-img-4-a2",
+          "day": 4,
+          "note": "Tin học 5A4",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-5a4",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "5A4"
+        },
+        {
+          "id": "sbj-img-6-m2",
+          "day": 6,
+          "note": "Tin học 5A5",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-5a5",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A5"
+        }
+      ],
+      "quickLinks": [
+        {
+          "id": "link-1",
+          "url": "https://hanhtrangso.nxbgd.vn",
+          "title": "Sách giáo khoa điện tử",
+          "category": "Học liệu & SGK",
+          "isPinned": true,
+          "description": "Xem trực tuyến sách giáo khoa và bài tập"
+        },
+        {
+          "id": "link-2",
+          "url": "https://meet.google.com",
+          "title": "Google Meet dạy học trực tuyến",
+          "category": "Học liệu & SGK",
+          "isPinned": true,
+          "description": "Phòng học trực tuyến Google Meet dùng chung"
+        },
+        {
+          "id": "link-3",
+          "url": "https://olm.vn",
+          "title": "Học Trực Tuyến OLM.vn",
+          "category": "Luyện tập",
+          "description": "Ngân hàng đề thi và luyện tập tương tác"
+        },
+        {
+          "id": "link-4",
+          "url": "https://quizizz.com",
+          "title": "Quizizz Trò chơi trắc nghiệm",
+          "category": "Trò chơi",
+          "description": "Tổ chức mini-game kiểm tra kiến thức nhanh"
+        }
+      ],
+      "teacherProfile": {
+        "name": "Quản trị Tài khoản Cá Nhân",
+        "role": "GIÁO VIÊN CHỦ NHIỆM",
+        "zalo": "0888358363",
+        "phone": "0888358363",
+        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=QuanTriCaNhan&backgroundColor=fbcfe8",
+        "facebook": "https://www.facebook.com/tieuhocso1tanuyen/",
+        "birthDate": "15/08/1988",
+        "schoolName": "Khu vực Giáo viên Cá nhân / Vãng lai",
+        "socialLink": "https://zalo.me/0977058363",
+        "academicYear": "2026–2027",
+        "teachingSubject": "Giáo viên chủ nhiệm"
+      },
+      "quizBank": [
+        {
+          "id": "q-mc-shapes-1",
+          "type": "multiple_choice",
+          "options": [
+            "Hình 1 (Hình vuông)",
+            "Hình 2 (Hình chữ nhật)",
+            "Hình 3 (Hình tam giác)",
+            "Hình 4 (Hình tròn)"
+          ],
+          "subject": "Toán học",
+          "optionImages": [
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"120\" height=\"90\" viewBox=\"0 0 120 90\"><rect width=\"120\" height=\"90\" fill=\"%23f8fafc\"/><rect x=\"25\" y=\"10\" width=\"70\" height=\"70\" fill=\"%233b82f6\" rx=\"4\" stroke=\"%231d4ed8\" stroke-width=\"3\"/></svg>",
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"120\" height=\"90\" viewBox=\"0 0 120 90\"><rect width=\"120\" height=\"90\" fill=\"%23f8fafc\"/><rect x=\"10\" y=\"20\" width=\"100\" height=\"50\" fill=\"%2310b981\" rx=\"4\" stroke=\"%23047857\" stroke-width=\"3\"/></svg>",
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"120\" height=\"90\" viewBox=\"0 0 120 90\"><rect width=\"120\" height=\"90\" fill=\"%23f8fafc\"/><polygon points=\"60,10 15,80 105,80\" fill=\"%23f59e0b\" stroke=\"%23b45309\" stroke-width=\"3\"/></svg>",
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"120\" height=\"90\" viewBox=\"0 0 120 90\"><rect width=\"120\" height=\"90\" fill=\"%23f8fafc\"/><circle cx=\"60\" cy=\"45\" r=\"35\" fill=\"%23ec4899\" stroke=\"%23be185d\" stroke-width=\"3\"/></svg>"
+          ],
+          "pointsReward": 3,
+          "questionText": "Trong các hình dưới đây, hình nào là hình chữ nhật?",
+          "teacherAnswerKey": "Hình chữ nhật là hình có 4 góc vuông, 2 cạnh dài bằng nhau và 2 cạnh ngắn bằng nhau (Hình 2 - Màu xanh lá cây).",
+          "correctOptionIndex": 1
+        },
+        {
+          "id": "q-mc-traffic-1",
+          "type": "multiple_choice",
+          "options": [
+            "Biển 1: Cấm rẽ",
+            "Biển 2: Người đi bộ",
+            "Biển 3: Nguy hiểm",
+            "Biển 4: Cấm đi ngược chiều"
+          ],
+          "subject": "Đạo đức & Kỹ năng sống",
+          "optionImages": [
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"80\" viewBox=\"0 0 100 80\"><circle cx=\"50\" cy=\"40\" r=\"32\" fill=\"white\" stroke=\"%23ef4444\" stroke-width=\"6\"/><line x1=\"28\" y1=\"18\" x2=\"72\" y2=\"62\" stroke=\"%23ef4444\" stroke-width=\"5\"/></svg>",
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"80\" viewBox=\"0 0 100 80\"><rect x=\"18\" y=\"8\" width=\"64\" height=\"64\" rx=\"10\" fill=\"%232563eb\"/><path d=\"M45,22 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 M42,35 h16 v18 h-6 v15 h-4 v-15 h-6 z\" fill=\"white\"/></svg>",
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"80\" viewBox=\"0 0 100 80\"><polygon points=\"50,10 12,70 88,70\" fill=\"%23facc15\" stroke=\"%23b45309\" stroke-width=\"4\"/><line x1=\"50\" y1=\"30\" x2=\"50\" y2=\"52\" stroke=\"black\" stroke-width=\"5\"/><circle cx=\"50\" cy=\"62\" r=\"3\" fill=\"black\"/></svg>",
+            "data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"80\" viewBox=\"0 0 100 80\"><circle cx=\"50\" cy=\"40\" r=\"32\" fill=\"%23ef4444\"/><rect x=\"25\" y=\"35\" width=\"50\" height=\"10\" fill=\"white\"/></svg>"
+          ],
+          "pointsReward": 3,
+          "questionText": "Biển báo nào dưới đây là biển báo dành cho người đi bộ sang đường?",
+          "teacherAnswerKey": "Biển 2 có nền xanh vuông với hình người đi bộ màu trắng là biển chỉ dẫn nơi dành cho người đi bộ sang đường.",
+          "correctOptionIndex": 1
+        },
+        {
+          "id": "q-mc-1",
+          "type": "multiple_choice",
+          "options": [
+            "20 cm",
+            "40 cm",
+            "96 cm",
+            "48 cm"
+          ],
+          "subject": "Toán học",
+          "pointsReward": 2,
+          "questionText": "Nếu một hình chữ nhật có chiều dài 12cm và chiều rộng 8cm thì chu vi của hình chữ nhật đó là bao nhiêu?",
+          "teacherAnswerKey": "Chu vi = (12 + 8) x 2 = 40 (cm).",
+          "correctOptionIndex": 1
+        },
+        {
+          "id": "q-mc-2",
+          "type": "multiple_choice",
+          "options": [
+            "Cười ha hả",
+            "Cười tủm tỉm",
+            "Cười sặc sụa",
+            "Cười gượng gạo"
+          ],
+          "subject": "Tiếng Việt",
+          "pointsReward": 2,
+          "questionText": "Trong các từ sau, từ nào là từ láy tượng thanh gợi tả tiếng cười giòn giã?",
+          "teacherAnswerKey": "\"Ha hả\" là từ láy tượng thanh diễn tả tiếng cười to, sảng khoái và giòn giã.",
+          "correctOptionIndex": 0
+        },
+        {
+          "id": "q-mc-3",
+          "type": "multiple_choice",
+          "options": [
+            "Rễ cây",
+            "Thân cây",
+            "Lá cây",
+            "Hoa và quả"
+          ],
+          "subject": "Khoa học",
+          "pointsReward": 2,
+          "questionText": "Bộ phận nào của cây xanh đóng vai trò chính trong quá trình quang hợp tạo ra khí oxy?",
+          "teacherAnswerKey": "Lá cây chứa chất diệp lục hấp thụ ánh sáng mặt trời để quang hợp nhả khí oxy.",
+          "correctOptionIndex": 2
+        },
+        {
+          "id": "q-mc-4",
+          "type": "multiple_choice",
+          "options": [
+            "Con gà trống",
+            "Con chim bồ câu",
+            "Con vịt bầu",
+            "Con ngan"
+          ],
+          "subject": "Đố vui IQ",
+          "pointsReward": 2,
+          "questionText": "Con gì chân ngắn mà lại có màng, mỏ bẹt màu vàng, hay kêu cạp cạp?",
+          "teacherAnswerKey": "Con vịt có màng chân giúp bơi dưới nước và tiếng kêu cạp cạp đặc trưng.",
+          "correctOptionIndex": 2
+        },
+        {
+          "id": "q-mc-5",
+          "type": "multiple_choice",
+          "options": [
+            "Hospital",
+            "Library",
+            "School",
+            "Supermarket"
+          ],
+          "subject": "Tiếng Anh",
+          "pointsReward": 2,
+          "questionText": "Choose the correct English word for \"Trường học\":",
+          "teacherAnswerKey": "School = Trường học; Hospital = Bệnh viện; Library = Thư viện.",
+          "correctOptionIndex": 2
+        },
+        {
+          "id": "q-mc-6",
+          "type": "multiple_choice",
+          "options": [
+            "9876",
+            "9877",
+            "9999",
+            "10000"
+          ],
+          "subject": "Toán học",
+          "pointsReward": 2,
+          "questionText": "Số liền sau của số lớn nhất có 4 chữ số khác nhau là số nào?",
+          "teacherAnswerKey": "Số lớn nhất có 4 chữ số khác nhau là 9876. Số liền sau của 9876 là 9877.",
+          "correctOptionIndex": 1
+        },
+        {
+          "id": "q-oral-1",
+          "type": "oral",
+          "subject": "Đạo đức & Kỹ năng sống",
+          "pointsReward": 3,
+          "questionText": "Em hãy kể tên 3 việc làm tốt em đã làm trong tuần này để giúp đỡ ông bà, cha mẹ hoặc thầy cô?",
+          "teacherAnswerKey": "Gợi ý chấm điểm của giáo viên: Học sinh nêu được từ 2 - 3 việc làm cụ thể, lễ phép và trung thực (như quét nhà, rửa bát, gấp chăn màn, lau bảng, giúp bạn trong giờ học)."
+        },
+        {
+          "id": "q-oral-2",
+          "type": "oral",
+          "subject": "Tiếng Việt",
+          "pointsReward": 3,
+          "questionText": "Em hãy đọc thuộc lòng một khổ thơ hoặc một câu ca dao, tục ngữ ca ngợi công ơn to lớn của thầy cô giáo?",
+          "teacherAnswerKey": "Gợi ý chấm điểm: Học sinh đọc to, rõ ràng, diễn cảm (Ví dụ: \"Muốn sang thì bắc cầu Kiều / Muốn con hay chữ phải yêu lấy thầy\" hoặc \"Không thầy đố mày làm nên\")."
+        },
+        {
+          "id": "q-oral-3",
+          "type": "oral",
+          "subject": "Tự nhiên & Xã hội",
+          "pointsReward": 3,
+          "questionText": "Tại sao chúng ta phải thường xuyên rửa tay bằng xà phòng trước khi ăn và sau khi đi vệ sinh?",
+          "teacherAnswerKey": "Gợi ý chấm điểm: Học sinh giải thích được: Rửa tay giúp loại bỏ vi khuẩn, vi rút truyền bệnh, bảo vệ đường tiêu hóa và giữ gìn vệ sinh sạch sẽ cho bản thân và cả lớp."
+        },
+        {
+          "id": "q-oral-4",
+          "type": "oral",
+          "subject": "Lịch sử & Địa lý",
+          "pointsReward": 3,
+          "questionText": "Thủ đô của nước Việt Nam chúng ta tên là gì và có thắng cảnh nổi tiếng nào em biết?",
+          "teacherAnswerKey": "Gợi ý chấm điểm: Thủ đô Hà Nội. Nêu được ít nhất 1 địa danh nổi tiếng (Hồ Gươm, Lăng Bác, Văn Miếu Quốc Tử Giám, Chùa Một Cột, Cầu Long Biên)."
+        },
+        {
+          "id": "q-oral-5",
+          "type": "oral",
+          "subject": "Toán học vui",
+          "pointsReward": 2,
+          "questionText": "Nếu một cành cây có 5 con chim, người thợ săn bắn rơi 1 con, hỏi trên cành cây còn lại mấy con chim? Vì sao?",
+          "teacherAnswerKey": "Gợi ý chấm điểm: Không còn con nào cả, vì khi súng nổ tiếng súng vang lên làm 4 con chim còn lại giật mình sợ hãi bay đi hết."
+        }
+      ],
+      "infographicConfig": null,
+      "updatedAt": 1790848459498
+    }
+  }
+}

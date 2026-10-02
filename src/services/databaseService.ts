@@ -1,9 +1,11 @@
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
-import { UserAccount, UserClassroomData, Classroom, Student } from '../types';
+import { UserAccount, UserClassroomData, Classroom, Student, UserRole, SchoolEntity, LoginRoleScope, DailyAttendance, DailyBoardingMeal, PointTransaction } from '../types';
+import { generateStudentsForClass } from '../utils/studentGenerator';
 
 export const LOCAL_AUTH_KEY = 'lop_hoc_current_user_v2';
 export const LOCAL_SESSION_KEY = 'lop_hoc_session_time_v2';
 export const LOCAL_DB_PREFIX = 'lop_hoc_user_db_';
+export const LOCAL_SCHOOLS_KEY = 'lop_hoc_schools_list_v1';
 export const SESSION_TIMEOUT_MS = 300 * 60 * 1000; // 300 minutes = 5 hours
 
 // Unique Client ID per tab/browser instance to prevent echo loops
@@ -156,7 +158,7 @@ export interface AuditLogItem {
   timestamp: number;
   username: string;
   userFullName: string;
-  role: 'admin' | 'homeroom' | 'subject';
+  role: UserRole;
   actionType: string;
   description: string;
   details?: any;
@@ -166,7 +168,7 @@ export interface UserSummaryItem {
   id: string;
   username: string;
   fullName: string;
-  role: 'admin' | 'homeroom' | 'subject';
+  role: UserRole;
   assignedClassName?: string;
   subjectName?: string;
   schoolName?: string;
@@ -229,50 +231,351 @@ export interface DatabaseStats {
 
 // Fallback demo users in case network or offline
 export const FALLBACK_USERS: UserAccount[] = [
+  // A. Quản trị Tối cao
   {
-    id: 'user-admin',
-    username: 'admin',
-    fullName: 'Quản trị viên Hệ thống',
+    id: 'user-adminquantri',
+    username: 'adminquantri',
+    fullName: 'Quản trị viên Hệ thống Cấp cao',
     role: 'admin',
-    email: 'admin@lophoc.edu.vn',
-    phone: '0901234567',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9',
-    schoolName: 'Hệ thống Quản lý Lớp học Hạnh phúc',
+    tenantType: 'school',
+    email: 'adminquantri@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9',
+    schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
     createdAt: Date.now(),
     status: 'active'
   },
+
+  // B. Khối Giáo viên Cá nhân / Vãng lai
+  {
+    id: 'user-quantricanhan',
+    username: 'quantricanhan',
+    fullName: 'Quản trị Tài khoản Cá Nhân',
+    role: 'guest_admin',
+    isGuestAdmin: true,
+    tenantType: 'guest',
+    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
+    email: 'quantricanhan@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=QuanTriCaNhan&backgroundColor=fbcfe8',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-admin-canhan',
+    username: 'admin_canhan',
+    fullName: 'Quản trị Tài khoản Cá Nhân (Phụ)',
+    role: 'guest_admin',
+    isGuestAdmin: true,
+    tenantType: 'guest',
+    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
+    email: 'admin.canhan@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-nguyenthitrangtu1',
+    username: 'nguyenthitrangtu1',
+    fullName: 'Nguyễn Thị Trang',
+    role: 'homeroom',
+    tenantType: 'guest',
+    assignedClassName: '2A1',
+    schoolName: 'Giáo viên Tự do / Cá nhân',
+    email: 'nguyenthitrangtu1@lophoc.edu.vn',
+    phone: '0987654321',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiTrang1991&backgroundColor=fde047',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gv-canhan01',
+    username: 'gv_canhan01',
+    fullName: 'Lê Hoàng Yến',
+    role: 'homeroom',
+    tenantType: 'guest',
+    assignedClassName: 'Lớp Tự Do',
+    schoolName: 'Tự do / Vãng lai',
+    email: 'gv.canhan@lophoc.edu.vn',
+    phone: '0912345678',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoLeHoangYen&backgroundColor=fed7aa',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+
+  // C. Khối TIỂU HỌC SỐ 1 TÂN UYÊN
+  {
+    id: 'user-adminths1',
+    username: 'adminths1',
+    fullName: 'Quản trị TRƯỜNG TIỂU HỌC SỐ 1',
+    role: 'school_admin',
+    isSchoolAdmin: true,
+    tenantType: 'school',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'adminths1@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminTHS1TanUyen&backgroundColor=bbf7d0',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-bghdths1',
+    username: 'bghdths1',
+    fullName: 'Ban Giám Hiệu TH Số 1 Tân Uyên',
+    role: 'bgh',
+    isBgh: true,
+    tenantType: 'school',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'bghdths1@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=BGH_THS1_TanUyen&backgroundColor=fef08a',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvcn3a1',
+    username: 'gvcn3a1',
+    fullName: 'Nguyễn Thị Ninh',
+    role: 'homeroom',
+    tenantType: 'school',
+    assignedClassName: '3A1',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'gvcn3a1@lophoc.edu.vn',
+    phone: '0977112233',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiNinh_3A1&backgroundColor=ffd5dc',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-nguyenthanhliem',
+    username: 'nguyenthanhliem',
+    fullName: 'Nguyễn Thanh Liêm',
+    role: 'subject',
+    tenantType: 'school',
+    subjectName: 'Tin học, Công nghệ',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'nguyenthanhliem@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThanhLiemGVBM&backgroundColor=b6e3f4',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+
   {
     id: 'user-gvcn4a1',
     username: 'gvcn4a1',
-    fullName: 'TRỊNH THỊ CÚC',
+    fullName: 'Trịnh Thị Cúc',
     role: 'homeroom',
+    tenantType: 'school',
     assignedClassName: '4A1',
+    maxStudentsAllowed: 15,
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
     email: 'gvcn4a1@lophoc.edu.vn',
-    phone: '0977058363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoNguyenThiHoa&backgroundColor=ffd5dc',
-    schoolName: 'Trường Tiểu học số 1 Tân Uyên',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiCuc_4A1&backgroundColor=ffd5dc',
     createdAt: Date.now(),
     status: 'active'
   },
   {
-    id: 'user-gvbm01',
-    username: 'gvbm01',
-    fullName: 'Thầy Nguyễn Thanh Liêm',
+    id: 'user-nguyenviethien',
+    username: 'nguyenviethien',
+    fullName: 'Nguyễn Viết Hiền',
     role: 'subject',
-    subjectName: 'Tin học',
-    email: 'gvbm01@lophoc.edu.vn',
+    tenantType: 'school',
+    subjectName: 'Âm nhạc',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'nguyenviethien@lophoc.edu.vn',
     phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=ThayNguyenThanhLiem&backgroundColor=b6e3f4',
-    schoolName: 'Trường Tiểu học số 1 Tân Uyên',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenVietHienGVBM&backgroundColor=b6e3f4',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+
+  // D. Khối TRƯỜNG HỌC HẠNH PHÚC DEMO
+  {
+    id: 'user-admintruongdemo',
+    username: 'admintruongdemo',
+    fullName: 'Quản trị Nhà Trường DEMO',
+    role: 'school_admin',
+    isSchoolAdmin: true,
+    isDemo: true,
+    tenantType: 'school',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    email: 'admintruongdemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminTruongDemo&backgroundColor=a7f3d0',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-bghdemo',
+    username: 'bghdemo',
+    fullName: 'Ban Giám Hiệu DEMO',
+    role: 'bgh',
+    isBgh: true,
+    isDemo: true,
+    tenantType: 'school',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    email: 'bghdemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvcndemo',
+    username: 'gvcndemo',
+    fullName: 'Trịnh Thị Hương',
+    role: 'homeroom',
+    isDemo: true,
+    maxStudentsAllowed: 10,
+    tenantType: 'school',
+    assignedClassName: '4A1',
+    email: 'gvcndemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiHuong&backgroundColor=ffd5dc',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvcn1a1demo',
+    username: 'gvcn1a1demo',
+    fullName: 'Nguyễn Phương Anh',
+    role: 'homeroom',
+    isDemo: true,
+    maxStudentsAllowed: 11,
+    tenantType: 'school',
+    assignedClassName: '1A1',
+    email: 'gvcn1a1demo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenPhuongAnh_1A1&backgroundColor=ffd5dc',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvbmdemo',
+    username: 'gvbmdemo',
+    fullName: 'Nguyễn Gia Phúc',
+    role: 'subject',
+    isDemo: true,
+    maxStudentsAllowed: 40,
+    tenantType: 'school',
+    subjectName: 'Tin học, Đạo đức, Công nghệ',
+    email: 'gvbmdemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenGiaPhuc&backgroundColor=b6e3f4',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvbmdemo2',
+    username: 'gvbmdemo2',
+    fullName: 'Mai Trấn Hưng',
+    role: 'subject',
+    isDemo: true,
+    maxStudentsAllowed: 72,
+    tenantType: 'school',
+    subjectName: 'Mĩ thuật',
+    email: 'gvbmdemo2@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
     createdAt: Date.now(),
     status: 'active'
   }
 ];
 
+export const FALLBACK_SCHOOLS: SchoolEntity[] = [
+  {
+    id: 'school-tanuyen-main',
+    name: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    code: 'TH1_TU_MAIN',
+    address: 'Thị xã Tân Uyên, Tỉnh Bình Dương',
+    phone: '0888358363',
+    adminUsername: 'adminths1',
+    createdAt: Date.now()
+  },
+  {
+    id: 'school-demo-hp',
+    name: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    code: 'TH_HP_DEMO',
+    address: 'Hệ thống Trường học Hạnh phúc Demo Toàn quốc',
+    phone: '0888358363',
+    adminUsername: 'admintruongdemo',
+    createdAt: Date.now()
+  }
+];
+
 export const databaseService = {
   // Authentication
-  async login(username: string, password: string): Promise<{ success: boolean; user?: UserAccount; message?: string }> {
+  async login(
+    username: string, 
+    password: string, 
+    selectedRoleScope?: LoginRoleScope, 
+    selectedSchoolName?: string
+  ): Promise<{ success: boolean; user?: UserAccount; message?: string }> {
     const cleanU = username.trim().toLowerCase();
+
+    // 🛡️ Không chặn các tài khoản cũ nữa để cho phép tạo mới cùng tên
+
+    const validateRole = (user: UserAccount): { valid: boolean; message?: string } => {
+      if (!selectedRoleScope) return { valid: true };
+      let valid = true;
+      if (selectedRoleScope === 'admin') {
+        valid = user.role === 'admin';
+      } else if (selectedRoleScope === 'school_admin') {
+        valid = user.role === 'school_admin' || Boolean(user.isSchoolAdmin) || user.role === 'bgh' || Boolean(user.isBgh) || user.role === 'admin';
+      } else if (selectedRoleScope === 'guest_admin') {
+        valid = user.role === 'guest_admin' || Boolean(user.isGuestAdmin) || user.role === 'admin';
+      } else if (selectedRoleScope === 'personal_teacher') {
+        valid = user.tenantType === 'guest' || 
+                Boolean(user.schoolName && (user.schoolName.toLowerCase().includes('cá nhân') || user.schoolName.toLowerCase().includes('tự do') || user.schoolName.toLowerCase().includes('vãng lai')));
+      } else if (selectedRoleScope === 'school_teacher') {
+        valid = (user.tenantType === 'school' || user.role === 'homeroom' || user.role === 'subject' || user.role === 'bgh' || Boolean(user.isBgh)) &&
+                !(user.tenantType === 'guest');
+      }
+      if (!valid) {
+        return { valid: false, message: 'Bạn đã nhập không đúng vai trò với tài khoản được gán vui lòng kiểm tra lại' };
+      }
+      return { valid: true };
+    };
+
+    const validateSchool = (user: UserAccount): { valid: boolean; message?: string } => {
+      if (user.role === 'admin' || user.role === 'guest_admin' || user.tenantType === 'guest') {
+        return { valid: true };
+      }
+      if (selectedRoleScope === 'personal_teacher') {
+        return { valid: true };
+      }
+      if (!selectedSchoolName || !selectedSchoolName.trim()) {
+        return { valid: false, message: 'Bạn đã chọn sai trường.' };
+      }
+      const userSchool = (user.schoolName || '').trim();
+      if (!userSchool) return { valid: true };
+
+      const normalize = (name: string) => {
+        return name
+          .toLowerCase()
+          .replace(/\(.*?\)/g, '')
+          .replace(/trường\s+/gi, '')
+          .replace(/tiểu học\s+/gi, 'th ')
+          .replace(/[^a-z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ\s]/g, '')
+          .trim()
+          .replace(/\s+/g, ' ');
+      };
+
+      const normUser = normalize(userSchool);
+      const normSel = normalize(selectedSchoolName);
+      const matches = normUser === normSel || normUser.includes(normSel) || normSel.includes(normUser);
+      if (!matches) {
+        return { valid: false, message: 'Bạn đã chọn sai trường.' };
+      }
+      return { valid: true };
+    };
 
     // 1. Direct Supabase Cloud Authentication (works anywhere across devices)
     const supabase = getBrowserSupabase();
@@ -285,7 +588,8 @@ export const databaseService = {
           .maybeSingle();
 
         if (!uErr && userRow) {
-          if (userRow.password === password) {
+          const expectedPwd = ((userRow.username === 'adminquantri' || userRow.username === 'quantricanhan') && !userRow.password) ? 'Tanuyen@2026' : userRow.password;
+          if (expectedPwd === password) {
             // Check latest teacherProfile name in user_classroom_data
             let finalName = userRow.full_name || userRow.fullName || '';
             let finalAvatar = userRow.avatar;
@@ -308,6 +612,12 @@ export const databaseService = {
               username: userRow.username,
               fullName: finalName || (userRow.role === 'homeroom' ? 'TRỊNH THỊ CÚC' : 'Giáo viên'),
               role: userRow.role,
+              isDemo: userRow.is_demo ?? userRow.isDemo,
+              isBgh: userRow.is_bgh ?? userRow.isBgh,
+              isSchoolAdmin: userRow.is_school_admin ?? userRow.isSchoolAdmin,
+              isGuestAdmin: userRow.is_guest_admin ?? userRow.isGuestAdmin,
+              tenantType: userRow.tenant_type || userRow.tenantType || 'school',
+              maxStudentsAllowed: userRow.max_students_allowed || userRow.maxStudentsAllowed,
               email: userRow.email,
               phone: userRow.phone,
               avatar: finalAvatar || userRow.avatar,
@@ -317,6 +627,16 @@ export const databaseService = {
               createdAt: Number(userRow.created_at) || Date.now(),
               status: userRow.status || 'active'
             };
+
+            const roleCheck = validateRole(authedUser);
+            if (!roleCheck.valid) {
+              return { success: false, message: roleCheck.message };
+            }
+
+            const schoolCheck = validateSchool(authedUser);
+            if (!schoolCheck.valid) {
+              return { success: false, message: schoolCheck.message };
+            }
 
             localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(authedUser));
             localStorage.setItem(LOCAL_SESSION_KEY, Date.now().toString());
@@ -330,7 +650,7 @@ export const databaseService = {
               message: 'Đăng nhập thành công qua Supabase Cloud!'
             };
           } else {
-            return { success: false, message: 'Mật khẩu không chính xác.' };
+            return { success: false, message: 'Bạn đã nhập sai tài khoản mật khẩu.' };
           }
         }
       } catch (err) {
@@ -343,14 +663,28 @@ export const databaseService = {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password, selectedRoleScope, selectedSchoolName })
       });
       const data = await res.json();
       if (res.ok && data.success && data.user) {
-        localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(data.user));
+        const authedUser: UserAccount = {
+          ...data.user
+        };
+
+        const roleCheck = validateRole(authedUser);
+        if (!roleCheck.valid) {
+          return { success: false, message: roleCheck.message };
+        }
+
+        const schoolCheck = validateSchool(authedUser);
+        if (!schoolCheck.valid) {
+          return { success: false, message: schoolCheck.message };
+        }
+
+        localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(authedUser));
         localStorage.setItem(LOCAL_SESSION_KEY, Date.now().toString());
         initSupabaseRealtime();
-        return { success: true, user: data.user, message: data.message };
+        return { success: true, user: authedUser, message: data.message };
       }
       if (data && data.message) {
         return { success: false, message: data.message };
@@ -359,12 +693,31 @@ export const databaseService = {
 
     // 3. Offline fallback
     const match = FALLBACK_USERS.find(u => u.username.toLowerCase() === cleanU);
-    if (match && password === '123456') {
-      localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(match));
-      localStorage.setItem(LOCAL_SESSION_KEY, Date.now().toString());
-      return { success: true, user: match, message: 'Đăng nhập thành công (chế độ dự phòng offline).' };
+    if (match) {
+      const expectedPassword = (match.username === 'adminquantri' || match.username === 'quantricanhan') ? 'Tanuyen@2026' : '123456';
+      if (password === expectedPassword) {
+        const authedUser: UserAccount = {
+          ...match
+        };
+
+        const roleCheck = validateRole(authedUser);
+        if (!roleCheck.valid) {
+          return { success: false, message: roleCheck.message };
+        }
+
+        const schoolCheck = validateSchool(authedUser);
+        if (!schoolCheck.valid) {
+          return { success: false, message: schoolCheck.message };
+        }
+
+        localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(authedUser));
+        localStorage.setItem(LOCAL_SESSION_KEY, Date.now().toString());
+        return { success: true, user: authedUser, message: 'Đăng nhập thành công (chế độ dự phòng offline).' };
+      } else {
+        return { success: false, message: 'Bạn đã nhập sai tài khoản mật khẩu.' };
+      }
     }
-    return { success: false, message: 'Không thể kết nối máy chủ và thông tin đăng nhập không hợp lệ.' };
+    return { success: false, message: 'Bạn đã nhập sai tài khoản mật khẩu.' };
   },
 
   isSessionValid(): boolean {
@@ -397,7 +750,28 @@ export const databaseService = {
         localStorage.removeItem(LOCAL_SESSION_KEY);
         return null;
       }
-      return JSON.parse(raw);
+      const user = JSON.parse(raw) as UserAccount;
+      if (user && user.username) {
+        const canonical = FALLBACK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
+        if (canonical) {
+          // Bảo đảm danh tính và vai trò chuẩn xác 100%, tự động làm sạch cache cũ nếu bị ghi đè nhầm
+          user.fullName = canonical.fullName;
+          user.role = canonical.role;
+          user.schoolName = canonical.schoolName;
+          user.avatar = canonical.avatar;
+          user.isBgh = Boolean(canonical.isBgh);
+          user.isSchoolAdmin = Boolean(canonical.isSchoolAdmin);
+          user.isGuestAdmin = Boolean(canonical.isGuestAdmin);
+          user.isDemo = Boolean(canonical.isDemo);
+          user.tenantType = canonical.tenantType;
+          user.assignedClassName = canonical.assignedClassName;
+          user.subjectName = canonical.subjectName;
+          try {
+            localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(user));
+          } catch (_) {}
+        }
+      }
+      return user;
     } catch (_) {}
     return null;
   },
@@ -409,15 +783,39 @@ export const databaseService = {
 
   // User Management (Admin)
   async getUsers(): Promise<UserAccount[]> {
-    // 1. Direct Supabase Cloud
+    const filterLegacyUsers = (list: UserAccount[]): UserAccount[] => {
+      return (list || []).filter(u => {
+        if (!u) return false;
+        const uName = (u.username || '').toLowerCase();
+        const sName = (u.schoolName || '').toLowerCase();
+        if (sName.includes('(th_tn)')) return false; // Chỉ giữ lại loại bỏ TH_TN cũ nếu cần, hoặc bỏ luôn
+        return true;
+      });
+    };
+
+    // 1. Server API (Primary Source of Truth, contains all fallback & synced users)
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.users)) {
+          return filterLegacyUsers(data.users);
+        }
+      }
+    } catch (err) {
+      console.warn('Error fetching users from server:', err);
+    }
+
+    // 2. Direct Supabase Cloud (Fallback if local server is down)
     const supabase = getBrowserSupabase();
     if (supabase) {
       try {
         const { data: users, error } = await supabase.from('users').select('*');
         if (!error && Array.isArray(users) && users.length > 0) {
-          return users.map(u => ({
+          const mapped = users.map(u => ({
             id: u.id,
             username: u.username,
+            password: u.password,
             fullName: u.full_name || u.fullName,
             role: u.role,
             email: u.email,
@@ -429,24 +827,13 @@ export const databaseService = {
             createdAt: Number(u.created_at) || Date.now(),
             status: u.status || 'active'
           }));
+          return filterLegacyUsers(mapped);
         }
       } catch (err) {
         console.warn('Supabase getUsers error:', err);
       }
     }
 
-    // 2. Server API fallback
-    try {
-      const res = await fetch('/api/users');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.users)) {
-          return data.users;
-        }
-      }
-    } catch (err) {
-      console.warn('Error fetching users from server:', err);
-    }
     return FALLBACK_USERS;
   },
 
@@ -454,12 +841,13 @@ export const databaseService = {
     username: string;
     password?: string;
     fullName: string;
-    role: 'admin' | 'homeroom' | 'subject';
+    role: UserRole;
     email?: string;
     phone?: string;
     assignedClassName?: string;
     subjectName?: string;
     schoolName?: string;
+    tenantType?: 'school' | 'guest';
   }): Promise<{ success: boolean; user?: UserAccount; message?: string }> {
     const cleanU = payload.username.trim().toLowerCase();
     const newId = 'user-' + cleanU;
@@ -477,7 +865,8 @@ export const databaseService = {
       subjectName: payload.subjectName?.trim() || (payload.role === 'subject' ? 'Tin học' : undefined),
       schoolName: payload.schoolName?.trim() || 'Trường Tiểu học',
       createdAt: nowTs,
-      status: 'active'
+      status: 'active',
+      tenantType: payload.tenantType || 'school'
     };
 
     // 1. Supabase direct
@@ -523,12 +912,13 @@ export const databaseService = {
     username: string;
     password?: string;
     fullName: string;
-    role: 'admin' | 'homeroom' | 'subject';
+    role: UserRole;
     email?: string;
     phone?: string;
     assignedClassName?: string;
     subjectName?: string;
     schoolName?: string;
+    tenantType?: 'school' | 'guest';
   }>): Promise<{ success: boolean; count: number; created?: UserAccount[]; errors?: string[]; message?: string }> {
     const supabase = getBrowserSupabase();
     if (supabase && items.length > 0) {
@@ -663,6 +1053,43 @@ export const databaseService = {
       return data;
     } catch (err: any) {
       return { success: false, message: err?.message || 'Lỗi kết nối khi đặt lại mật khẩu.' };
+    }
+  },
+
+  async transferUserToSchool(id: string, targetSchoolName: string): Promise<{
+    success: boolean;
+    user?: UserAccount;
+    message?: string;
+    transferredData?: {
+      classesCount: number;
+      studentsCount: number;
+      oldSchool: string;
+      newSchool: string;
+    };
+  }> {
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        await supabase
+          .from('users')
+          .update({
+            tenant_type: 'school',
+            school_name: targetSchoolName,
+            is_guest_admin: false
+          })
+          .or(`id.eq.${id},username.eq.${id}`);
+      } catch (_) {}
+    }
+    try {
+      const res = await fetch(`/api/users/${id}/transfer-school`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetSchoolName })
+      });
+      const data = await res.json();
+      return data;
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Lỗi kết nối khi di chuyển tài khoản sang trường học.' };
     }
   },
 
@@ -897,7 +1324,7 @@ export const databaseService = {
 
         if (!uErr && !cErr && userRows && classroomRows) {
           const teachers: UserAccount[] = userRows
-            .filter((u: any) => u.role === 'homeroom' || u.role === 'subject')
+            .filter((u: any) => u.role === 'homeroom') // Chỉ lấy giáo viên chủ nhiệm
             .map((u: any) => ({
               id: u.id,
               username: u.username,
@@ -967,6 +1394,185 @@ export const databaseService = {
       console.warn('Lỗi lấy dữ liệu quản trị toàn hệ thống:', err);
     }
     return null;
+  },
+
+  // 🌟 Tổng hợp toàn bộ dữ liệu lớp học, học sinh, điểm danh, bán trú theo trường cho Ban Giám Hiệu & Quản Trị
+  async getExecutiveScopedData(currentUser: UserAccount): Promise<{
+    classes: Classroom[];
+    students: Student[];
+    attendanceRecords: DailyAttendance[];
+    boardingRecords: DailyBoardingMeal[];
+    transactions: PointTransaction[];
+    teachers: UserAccount[];
+  }> {
+    const isMasterAdmin = currentUser.role === 'admin';
+    const isGuestAdmin = currentUser.role === 'guest_admin' || currentUser.isGuestAdmin;
+    const targetSchool = (currentUser.schoolName || '').trim().toLowerCase();
+
+    // 1. Lấy danh sách toàn bộ người dùng
+    const allUsers = await this.getUsers();
+
+    // 2. Lọc danh sách giáo viên phụ trách thuộc trường / khối của currentUser
+    // 🌟 QUY TẮC CỐT LÕI: Chỉ tổng hợp số liệu từ các tài khoản GIÁO VIÊN CHỦ NHIỆM (role === 'homeroom')
+    // Tuyệt đối KHÔNG tổng hợp tài khoản Giáo viên bộ môn (role === 'subject') để đảm bảo số lớp và số học sinh toàn trường chuẩn xác 100%, không bị nhân đôi
+    const scopedTeachers = allUsers.filter(u => {
+      if (u.role !== 'homeroom') return false;
+
+      // Master Admin: tổng hợp toàn hệ thống từ các lớp chủ nhiệm
+      if (isMasterAdmin) return true;
+
+      // Guest Admin: tổng hợp khối giáo viên cá nhân / vãng lai
+      if (isGuestAdmin) {
+        return u.tenantType === 'guest' || 
+          (u.schoolName && u.schoolName.toLowerCase().includes('cá nhân')) || 
+          (u.schoolName && u.schoolName.toLowerCase().includes('tự do'));
+      }
+
+      // School Admin & BGH: tổng hợp toàn bộ giáo viên chủ nhiệm trong CÙNG NHÀ TRƯỜNG
+      const uSchool = (u.schoolName || '').trim().toLowerCase();
+      if (!targetSchool || !uSchool) return false;
+      return uSchool === targetSchool || uSchool.includes(targetSchool) || targetSchool.includes(uSchool);
+    });
+
+    const allClassesMap = new Map<string, Classroom>();
+    const allStudentsMap = new Map<string, Student>();
+    const allAttendanceMap = new Map<string, DailyAttendance>();
+    const allBoardingMap = new Map<string, DailyBoardingMeal>();
+    const allTransactions: PointTransaction[] = [];
+
+    // 3. Tải và tổng hợp dữ liệu từ từng giáo viên thuộc nhóm
+    await Promise.all(
+      scopedTeachers.map(async (teacher) => {
+        let uData = await this.loadUserData(teacher.username);
+        if (!uData) {
+          try {
+            const cached = localStorage.getItem(LOCAL_DB_PREFIX + teacher.username.toLowerCase());
+            if (cached) uData = JSON.parse(cached);
+          } catch (_) {}
+        }
+
+        // 🌟 Nếu chưa có dữ liệu hoặc danh sách lớp rỗng, tự động khởi tạo dữ liệu mẫu chuẩn của giáo viên chủ nhiệm
+        if (!uData || !Array.isArray(uData.classes) || uData.classes.length === 0) {
+          const className = teacher.assignedClassName || '4A1';
+          const classId = `class-${className.toLowerCase().replace(/\s+/g, '')}`;
+          const stdCount = teacher.username === 'gvcndemo' ? 10 : (teacher.username === 'gvcn3a1' ? 10 : (teacher.username === 'nguyenthitrangtu1' ? 35 : (teacher.maxStudentsAllowed || 30)));
+          const defaultClass: Classroom = {
+            id: classId,
+            name: className,
+            grade: className.startsWith('1') ? 'Khối 1' : className.startsWith('2') ? 'Khối 2' : className.startsWith('3') ? 'Khối 3' : className.startsWith('5') ? 'Khối 5' : 'Khối 4',
+            color: '#3B82F6',
+            academicYear: '2026–2027',
+            teacherName: teacher.fullName,
+            teacherUsername: teacher.username,
+            teacherRole: 'homeroom',
+            avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=Class${className}&backgroundColor=3b82f6`,
+            slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng'
+          };
+          const stds = generateStudentsForClass(classId, className, stdCount, defaultClass.grade, 'GHI CHUNG / NỀ NẾP');
+          uData = {
+            classes: [defaultClass],
+            activeClassId: classId,
+            students: stds,
+            subjects: [],
+            criteria: [],
+            transactions: [],
+            rewards: [],
+            redemptions: [],
+            seatingColumns: 4,
+            deskCountsPerColumn: [4, 4, 4, 4],
+            deskNumberingOrder: 'vertical',
+            teacherDeskPos: 'left',
+            doorPos: 'right',
+            blackboardPos: 'center',
+            seatingAssignments: {},
+            attendanceRecords: [],
+            boardingRecords: [],
+            timetable: [],
+            timetableConfig: { morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false },
+            teacherRole: 'homeroom',
+            subjectTeacherConfig: {} as any,
+            subjectTimetable: [],
+            quickLinks: [],
+            teacherProfile: {
+              name: teacher.fullName,
+              role: 'GIÁO VIÊN CHỦ NHIỆM',
+              schoolName: teacher.schoolName || '',
+              academicYear: '2026–2027',
+              avatar: teacher.avatar || '',
+              phone: teacher.phone || '',
+              zalo: teacher.phone || '',
+              teachingSubject: 'Giáo viên chủ nhiệm'
+            },
+            quizBank: [],
+            infographicConfig: null,
+            updatedAt: Date.now()
+          };
+          try {
+            localStorage.setItem(LOCAL_DB_PREFIX + teacher.username.toLowerCase(), JSON.stringify(uData));
+          } catch (_) {}
+        }
+
+        // Tổng hợp lớp học
+        if (Array.isArray(uData.classes)) {
+          uData.classes.forEach((c: Classroom) => {
+            if (c && c.id) {
+              const cleanTeacherName = (c.teacherName && !c.teacherName.toLowerCase().includes('ban giám hiệu') && !c.teacherName.toLowerCase().includes('quản trị'))
+                ? c.teacherName
+                : teacher.fullName;
+              allClassesMap.set(c.id, {
+                ...c,
+                teacherUsername: c.teacherUsername || teacher.username,
+                teacherName: cleanTeacherName,
+                teacherRole: 'homeroom'
+              });
+            }
+          });
+        }
+
+        // Tổng hợp học sinh
+        if (Array.isArray(uData.students)) {
+          uData.students.forEach((s: Student) => {
+            if (s && s.id) {
+              allStudentsMap.set(s.id, s);
+            }
+          });
+        }
+
+        // Tổng hợp chuyên cần / điểm danh
+        if (Array.isArray(uData.attendanceRecords)) {
+          uData.attendanceRecords.forEach((att: DailyAttendance) => {
+            if (att && att.date && att.classId) {
+              const attKey = `${att.date}_${att.classId}`;
+              allAttendanceMap.set(attKey, att);
+            }
+          });
+        }
+
+        // Tổng hợp bán trú
+        if (Array.isArray(uData.boardingRecords)) {
+          uData.boardingRecords.forEach((b: DailyBoardingMeal) => {
+            if (b && b.date && b.classId) {
+              const bKey = `${b.date}_${b.classId}`;
+              allBoardingMap.set(bKey, b);
+            }
+          });
+        }
+
+        // Tổng hợp giao dịch điểm thi đua
+        if (Array.isArray(uData.transactions)) {
+          allTransactions.push(...uData.transactions);
+        }
+      })
+    );
+
+    return {
+      classes: Array.from(allClassesMap.values()),
+      students: Array.from(allStudentsMap.values()),
+      attendanceRecords: Array.from(allAttendanceMap.values()),
+      boardingRecords: Array.from(allBoardingMap.values()),
+      transactions: allTransactions,
+      teachers: scopedTeachers
+    };
   },
 
   // Admin Unified Data Sync: Save and distribute classes and students to all teachers
@@ -1310,7 +1916,7 @@ export const databaseService = {
   async addAuditLog(entry: {
     username: string;
     userFullName: string;
-    role: 'admin' | 'homeroom' | 'subject';
+    role: UserRole;
     actionType: string;
     description: string;
     details?: any;
@@ -1351,5 +1957,270 @@ export const databaseService = {
       console.warn('Lỗi lấy tổng hợp dữ liệu thực:', err);
     }
     return [];
+  },
+
+  // 🏫 QUẢN LÝ DANH MỤC TRƯỜNG HỌC (ADMIN)
+  async getSchools(): Promise<SchoolEntity[]> {
+    const purgeRemovedSchools = (list: SchoolEntity[]): SchoolEntity[] => {
+      const REMOVED_IDS = new Set(['school-thucnghiem-02']);
+      const REMOVED_CODES = new Set(['TH_TN']);
+      return (list || []).filter(s => {
+        if (!s) return false;
+        if (REMOVED_IDS.has(s.id)) return false;
+        if (s.code && REMOVED_CODES.has(s.code)) return false;
+        const norm = (s.name || '').trim().toLowerCase();
+        if (norm.includes('(th_tn)')) return false;
+        if (norm.includes('thực nghiệm')) return false;
+        return true;
+      });
+    };
+
+    try {
+      const res = await fetch('/api/schools');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.schools)) {
+          const cleanSchools = purgeRemovedSchools(data.schools);
+          const finalSchools = cleanSchools.length > 0 ? cleanSchools : FALLBACK_SCHOOLS;
+          localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(finalSchools));
+          return finalSchools;
+        }
+      }
+    } catch (_) {}
+
+    try {
+      const cached = localStorage.getItem(LOCAL_SCHOOLS_KEY);
+      if (cached) {
+        const list = JSON.parse(cached);
+        if (Array.isArray(list) && list.length > 0) {
+          const cleanList = purgeRemovedSchools(list);
+          if (cleanList.length > 0) {
+            localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(cleanList));
+            return cleanList;
+          }
+        }
+      }
+    } catch (_) {}
+
+    return FALLBACK_SCHOOLS;
+  },
+
+  async createSchool(schoolData: Partial<SchoolEntity>): Promise<{ success: boolean; school?: SchoolEntity; message?: string }> {
+    try {
+      const res = await fetch('/api/schools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(schoolData)
+      });
+      const data = await res.json();
+      return data;
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Lỗi khi gửi yêu cầu tạo trường mới.' };
+    }
+  },
+
+  async updateSchool(id: string, schoolData: Partial<SchoolEntity>): Promise<{ success: boolean; school?: SchoolEntity; message?: string }> {
+    try {
+      const res = await fetch(`/api/schools/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(schoolData)
+      });
+      const data = await res.json();
+      return data;
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Lỗi khi cập nhật thông tin trường.' };
+    }
+  },
+
+  async deleteSchool(id: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const res = await fetch(`/api/schools/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      return data;
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Lỗi khi xóa trường.' };
+    }
+  },
+
+  // 🎓 Chuẩn bị năm học mới: Xóa dữ liệu trường / nhóm cá nhân có lựa chọn
+  async resetSchoolAcademicYear(
+    schoolName?: string, 
+    mode: 'full' | 'keep_teachers' = 'keep_teachers',
+    targetScope: 'school' | 'guest' = 'school'
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await fetch('/api/database/reset-academic-year', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schoolName, mode, targetScope })
+      });
+      const data = await res.json();
+      return data;
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Lỗi khi gửi yêu cầu xóa năm học mới.' };
+    }
+  },
+
+  // 📦 Tải file Data JSON theo phân quyền (Nhà trường / Cá nhân / Toàn hệ thống)
+  async exportScopedData(scope: 'all' | 'school' | 'guest' = 'all', schoolName?: string): Promise<any> {
+    try {
+      const query = new URLSearchParams({ scope, schoolName: schoolName || '' }).toString();
+      const res = await fetch(`/api/database/export-scoped?${query}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Lỗi export dữ liệu scoped:', err);
+    }
+    return null;
+  },
+
+  // 📥 Nạp file Data JSON theo phân quyền (Nhà trường / Cá nhân / Toàn hệ thống)
+  async importScopedData(data: any, scope: 'all' | 'school' | 'guest' = 'all', schoolName?: string): Promise<any> {
+    try {
+      const res = await fetch('/api/database/import-scoped', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, scope, schoolName })
+      });
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'Lỗi nạp file JSON.' };
+    }
+  },
+
+  // 📝 Đăng ký sử dụng phần mềm (Yêu cầu 4)
+  async submitRegistration(reqData: any): Promise<{ success: boolean; message?: string }> {
+    try {
+      const res = await fetch('/api/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqData)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Lưu tạm vào localStorage làm bằng chứng đăng ký phía client
+        try {
+          const localList = JSON.parse(localStorage.getItem('lop_hoc_my_registrations') || '[]');
+          localList.unshift(data.registration || reqData);
+          localStorage.setItem('lop_hoc_my_registrations', JSON.stringify(localList));
+        } catch (_) {}
+        return { success: true, message: 'Gửi đăng ký sử dụng thành công!' };
+      }
+    } catch (err) {
+      console.warn('Không kết nối được server, lưu offline:', err);
+    }
+    // Fallback lưu local
+    try {
+      const localList = JSON.parse(localStorage.getItem('lop_hoc_my_registrations') || '[]');
+      localList.unshift({
+        ...reqData,
+        id: `reg_${Date.now()}`,
+        createdAt: Date.now(),
+        status: 'pending'
+      });
+      localStorage.setItem('lop_hoc_my_registrations', JSON.stringify(localList));
+      return { success: true, message: 'Đã lưu thông tin đăng ký thành công!' };
+    } catch (_) {}
+    return { success: false, message: 'Không thể lưu đơn đăng ký.' };
+  },
+
+  async getRegistrations(): Promise<any[]> {
+    try {
+      const res = await fetch('/api/registrations');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.registrations)) {
+          return data.registrations;
+        }
+      }
+    } catch (_) {}
+    try {
+      return JSON.parse(localStorage.getItem('lop_hoc_my_registrations') || '[]');
+    } catch (_) {
+      return [];
+    }
+  },
+
+  async updateRegistrationStatus(id: string, status: 'approved' | 'rejected', reason?: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      await fetch(`/api/registrations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, reason })
+      });
+    } catch (_) {}
+
+    try {
+      const localList = JSON.parse(localStorage.getItem('lop_hoc_my_registrations') || '[]');
+      const index = localList.findIndex((r: any) => r.id === id);
+      if (index !== -1) {
+        localList[index].status = status;
+        if (reason !== undefined) {
+          localList[index].rejectReason = reason;
+        }
+        localStorage.setItem('lop_hoc_my_registrations', JSON.stringify(localList));
+        return { success: true };
+      }
+    } catch (_) {}
+    return { success: false, message: 'Không tìm thấy đơn đăng ký.' };
+  },
+
+  async deleteRegistration(id: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      await fetch(`/api/registrations/${id}`, { method: 'DELETE' });
+    } catch (_) {}
+
+    try {
+      let localList = JSON.parse(localStorage.getItem('lop_hoc_my_registrations') || '[]');
+      localList = localList.filter((r: any) => r.id !== id);
+      localStorage.setItem('lop_hoc_my_registrations', JSON.stringify(localList));
+      return { success: true, message: 'Xóa đơn đăng ký thành công.' };
+    } catch (_) {}
+    return { success: false, message: 'Lỗi khi xóa đơn đăng ký.' };
+  },
+
+  // 🚀 Tối ưu hóa nén ảnh Avatar / Data storage (Yêu cầu 1)
+  async compressImageBase64(base64Str: string, maxWidth = 320, quality = 0.82): Promise<string> {
+    if (!base64Str || !base64Str.startsWith('data:image')) {
+      return base64Str;
+    }
+    // Nếu kích thước base64 nhỏ hơn 40KB thì không cần nén thêm
+    if (base64Str.length < 50000) {
+      return base64Str;
+    }
+    return new Promise((resolve) => {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(base64Str);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+        };
+        img.onerror = () => resolve(base64Str);
+        img.src = base64Str;
+      } catch (_) {
+        resolve(base64Str);
+      }
+    });
   }
 };
+

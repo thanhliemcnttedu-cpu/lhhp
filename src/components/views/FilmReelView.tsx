@@ -344,33 +344,36 @@ export const FilmReelView: React.FC = () => {
         </div>
 
         {/* 3 Call Modes Switcher (User request: 1. Ngẫu nhiên, 2. Tặng xu, 3. Trả lời câu hỏi) */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setCallMode('random')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase ${
+            className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer uppercase text-center ${
               callMode === 'random' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            1. Gọi Ngẫu Nhiên
+            <span className="hidden sm:inline">1. Gọi Ngẫu Nhiên</span>
+            <span className="sm:hidden">1. NGẪU NHIÊN</span>
           </button>
           <button
             type="button"
             onClick={() => setCallMode('coins')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase ${
+            className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer uppercase text-center ${
               callMode === 'coins' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            2. Gọi + Tặng Xu
+            <span className="hidden sm:inline">2. Gọi + Tặng Xu</span>
+            <span className="sm:hidden">2. TẶNG XU</span>
           </button>
           <button
             type="button"
             onClick={() => setCallMode('quiz')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase ${
+            className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer uppercase text-center ${
               callMode === 'quiz' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            3. Gọi + Trả Lời Câu Hỏi
+            <span className="hidden sm:inline">3. Gọi + Trả Lời Câu Hỏi</span>
+            <span className="sm:hidden">3. CÂU HỎI</span>
           </button>
         </div>
 
@@ -1125,10 +1128,15 @@ export const FilmReelView: React.FC = () => {
           <button
             onClick={startFilmReel}
             disabled={isRolling || pool.length === 0}
-            className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white font-black text-sm md:text-base rounded-3xl shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2.5 transition-all hover-zoom-btn disabled:opacity-50 uppercase cursor-pointer"
+            className="w-full py-3.5 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white font-black text-xs sm:text-base rounded-2xl sm:rounded-3xl shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 transition-all hover-zoom-btn disabled:opacity-50 uppercase cursor-pointer"
           >
-            <Play className={`w-5 h-5 fill-white ${isRolling ? 'animate-spin' : ''}`} />
-            <span>{isRolling ? `🎬 CUỘN PHIM ĐANG TRƯỢT TỪ PHẢI SANG TRÁI (${spinDuration}S)...` : `🎬 BẤM QUAY CUỘN PHIM (${spinDuration} GIÂY • PHÍM CÁCH)`}</span>
+            <Play className={`w-4 h-4 sm:w-5 sm:h-5 fill-white shrink-0 ${isRolling ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">
+              {isRolling ? `🎬 CUỘN PHIM ĐANG TRƯỢT TỪ PHẢI SANG TRÁI (${spinDuration}S)...` : `🎬 BẤM QUAY CUỘN PHIM (${spinDuration} GIÂY • PHÍM CÁCH)`}
+            </span>
+            <span className="sm:hidden">
+              {isRolling ? `🎬 ĐANG QUAY (${spinDuration}S)...` : `🎬 BẤM QUAY CUỘN PHIM (${spinDuration}S)`}
+            </span>
           </button>
 
           {/* Controls & Exclude Checkbox */}

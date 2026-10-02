@@ -497,3 +497,77 @@ export async function saveSupabaseSystemSettings(settings: any): Promise<boolean
   }
 }
 
+// ==========================================
+// 6. PHÂN VÙNG LƯU TRỮ SUPABASE (PARTITION STORAGE)
+// ==========================================
+
+export type PartitionKey = 'ca_nhan' | 'nha_truong' | 'truong_demo' | 'quan_tri_admin';
+
+export async function saveSupabasePartitionData(partition: PartitionKey, partitionData: any): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client || !partitionData) return false;
+
+  try {
+    const key = `partition_${partition}`;
+    const payload = {
+      key,
+      settings: partitionData,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await client.from('system_settings').upsert(payload, { onConflict: 'key' });
+    if (error) {
+      console.warn(`[Supabase] Không thể lưu phân vùng ${partition}:`, error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn(`[Supabase] Ngoại lệ khi lưu phân vùng ${partition}:`, err);
+    return false;
+  }
+}
+
+export async function fetchSupabasePartitionData(partition: PartitionKey): Promise<any | null> {
+  const client = getSupabaseClient();
+  if (!client) return null;
+
+  try {
+    const key = `partition_${partition}`;
+    const { data, error } = await client
+      .from('system_settings')
+      .select('settings')
+      .eq('key', key)
+      .maybeSingle();
+
+    if (error) {
+      console.warn(`[Supabase] Không thể tải phân vùng ${partition}:`, error.message);
+      return null;
+    }
+
+    return data ? data.settings : null;
+  } catch (err) {
+    console.warn(`[Supabase] Ngoại lệ khi tải phân vùng ${partition}:`, err);
+    return null;
+  }
+}
+
+export async function syncAllPartitionsToSupabase(partitions: {
+  ca_nhan?: any;
+  nha_truong?: any;
+  truong_demo?: any;
+  quan_tri_admin?: any;
+}): Promise<{ success: boolean; details: Record<string, boolean> }> {
+  const details: Record<string, boolean> = {};
+  let allSuccess = true;
+
+  for (const [part, data] of Object.entries(partitions)) {
+    if (data) {
+      const ok = await saveSupabasePartitionData(part as PartitionKey, data);
+      details[part] = ok;
+      if (!ok) allSuccess = false;
+    }
+  }
+
+  return { success: allSuccess, details };
+}
+

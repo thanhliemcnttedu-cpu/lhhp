@@ -15,12 +15,25 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.resolve(__dirname, '../data');
 const DB_FILE = path.join(DATA_DIR, 'classroom_database.json');
 
+// 📂 4 THƯ MỤC PHÂN CẤP QUẢN LÝ DATABASE RIÊNG BIỆT (Yêu cầu A)
+export const DIR_CA_NHAN = path.resolve(DATA_DIR, 'database_ca_nhan');
+export const DIR_NHA_TRUONG = path.resolve(DATA_DIR, 'database_nha_truong');
+export const DIR_TRUONG_DEMO = path.resolve(DATA_DIR, 'database_truong_demo');
+export const DIR_ADMIN = path.resolve(DATA_DIR, 'database_quan_tri_admin');
+
 export interface UserAccountServer {
   id: string;
   username: string;
   password?: string;
   fullName: string;
-  role: 'admin' | 'homeroom' | 'subject';
+  role: 'admin' | 'homeroom' | 'subject' | 'bgh' | 'school_admin' | 'guest_admin';
+  isDemo?: boolean;
+  isBgh?: boolean;
+  isSchoolAdmin?: boolean;
+  isGuestAdmin?: boolean;
+  tenantType?: 'school' | 'guest'; // 'school': Tổ chức Nhà trường, 'guest': Giáo viên vãng lai
+  schoolId?: string;
+  maxStudentsAllowed?: number; // 10 cho tài khoản demo
   email?: string;
   phone?: string;
   avatar?: string;
@@ -32,12 +45,22 @@ export interface UserAccountServer {
   status?: 'active' | 'locked';
 }
 
+export interface SchoolEntity {
+  id: string;
+  name: string;
+  code: string;
+  address?: string;
+  phone?: string;
+  adminUsername?: string;
+  createdAt?: number;
+}
+
 export interface AuditLogItem {
   id: string;
   timestamp: number;
   username: string;
   userFullName: string;
-  role: 'admin' | 'homeroom' | 'subject';
+  role: 'admin' | 'homeroom' | 'subject' | 'bgh' | 'school_admin' | 'guest_admin';
   actionType: 'CREATE_CLASS' | 'UPDATE_CLASS' | 'DELETE_CLASS' | 'ADD_STUDENT' | 'UPDATE_STUDENT' | 'DELETE_STUDENT' | 'AWARD_POINTS' | 'ATTENDANCE' | 'RESTORE_DATA' | 'UPDATE_TIMETABLE' | 'BATCH_STUDENTS' | 'OTHER';
   description: string;
   details?: any;
@@ -48,8 +71,10 @@ export interface DatabaseSchema {
   appName: string;
   lastSync: string;
   users: UserAccountServer[];
+  schools?: SchoolEntity[];
   userData: Record<string, any>;
   auditLogs: AuditLogItem[];
+  registrations?: any[];
   systemSettings: {
     allowRegistration: boolean;
     autoSyncIntervalMs: number;
@@ -65,18 +90,185 @@ export interface DatabaseSchema {
   };
 }
 
+export const DEFAULT_SCHOOLS: SchoolEntity[] = [
+  {
+    id: 'school-tanuyen-main',
+    name: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    code: 'TH1_TU_MAIN',
+    address: 'Thị xã Tân Uyên, Tỉnh Bình Dương',
+    phone: '0888358363',
+    adminUsername: 'adminths1',
+    createdAt: Date.now()
+  },
+  {
+    id: 'school-demo-hp',
+    name: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    code: 'TH_HP_DEMO',
+    address: 'Hệ thống Trường học Hạnh phúc Demo Toàn quốc',
+    phone: '0888358363',
+    adminUsername: 'admintruongdemo',
+    createdAt: Date.now()
+  }
+];
+
 // Default Seed Accounts
-const DEFAULT_USERS: UserAccountServer[] = [
+export const DEFAULT_USERS: UserAccountServer[] = [
+  // ==========================================
+  // D.1 & QUẢN TRỊ ADMIN CAO NHẤT
+  // ==========================================
+  {
+    id: 'user-adminquantri',
+    username: 'adminquantri',
+    password: 'Tanuyen@2026',
+    fullName: 'Quản trị viên Hệ thống Cấp cao',
+    role: 'admin',
+    tenantType: 'school',
+    email: 'adminquantri@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9',
+    schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
+    createdAt: Date.now(),
+    status: 'active'
+  },
   {
     id: 'user-admin',
     username: 'admin',
-    password: '123456',
+    password: 'Tanuyen@2026',
     fullName: 'Quản trị viên Hệ thống',
     role: 'admin',
+    tenantType: 'school',
     email: 'admin@lophoc.edu.vn',
-    phone: '0901234567',
+    phone: '0888358363',
     avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9',
     schoolName: 'Hệ thống Quản lý Lớp học Hạnh phúc',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+
+  // ==========================================
+  // D.2 & D.3 VAI TRÒ TÀI KHOẢN CÁ NHÂN (database_ca_nhan)
+  // ==========================================
+  {
+    id: 'user-quantricanhan',
+    username: 'quantricanhan',
+    password: 'Tanuyen@2026',
+    fullName: 'Quản trị Tài khoản Cá Nhân',
+    role: 'guest_admin',
+    isGuestAdmin: true,
+    tenantType: 'guest',
+    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
+    email: 'quantricanhan@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=QuanTriCaNhan&backgroundColor=fbcfe8',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-admin-canhan',
+    username: 'admin_canhan',
+    password: '123456',
+    fullName: 'Quản trị Tài khoản Cá Nhân (Phụ)',
+    role: 'guest_admin',
+    isGuestAdmin: true,
+    tenantType: 'guest',
+    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
+    email: 'admin.canhan@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-nguyenthitrangtu1',
+    username: 'nguyenthitrangtu1',
+    password: '123456',
+    fullName: 'Nguyễn Thị Trang',
+    role: 'homeroom',
+    tenantType: 'guest',
+    assignedClassName: '2A1',
+    schoolName: 'Giáo viên Tự do / Cá nhân',
+    email: 'nguyenthitrangtu1@lophoc.edu.vn',
+    phone: '0987654321',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiTrang1991&backgroundColor=fde047',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gv-canhan01',
+    username: 'gv_canhan01',
+    password: '123456',
+    fullName: 'Cô Lê Hoàng Yến (GV Cá Nhân)',
+    role: 'homeroom',
+    tenantType: 'guest',
+    assignedClassName: 'Lớp Tự Do 4',
+    schoolName: 'Tự do / Vãng lai',
+    email: 'gv.canhan@lophoc.edu.vn',
+    phone: '0912345678',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoLeHoangYen&backgroundColor=fed7aa',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+
+  // ==========================================
+  // C. TIỂU HỌC SỐ 1 TÂN UYÊN (database_nha_truong)
+  // ==========================================
+  {
+    id: 'user-adminths1',
+    username: 'adminths1',
+    password: '123456',
+    fullName: 'Quản trị TRƯỜNG TIỂU HỌC SỐ 1',
+    role: 'school_admin',
+    isSchoolAdmin: true,
+    tenantType: 'school',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'adminths1@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminTHS1TanUyen&backgroundColor=bbf7d0',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-bghdths1',
+    username: 'bghdths1',
+    password: '123456',
+    fullName: 'Ban Giám Hiệu TH Số 1 Tân Uyên',
+    role: 'bgh',
+    isBgh: true,
+    tenantType: 'school',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'bghdths1@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=BGH_THS1_TanUyen&backgroundColor=fef08a',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvcn3a1',
+    username: 'gvcn3a1',
+    password: '123456',
+    fullName: 'Nguyễn Thị Ninh',
+    role: 'homeroom',
+    tenantType: 'school',
+    assignedClassName: '3A1',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'gvcn3a1@lophoc.edu.vn',
+    phone: '0977112233',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiNinh_3A1&backgroundColor=ffd5dc',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-nguyenthanhliem',
+    username: 'nguyenthanhliem',
+    password: '123456',
+    fullName: 'Nguyễn Thanh Liêm',
+    role: 'subject',
+    tenantType: 'school',
+    subjectName: 'Tin học, Công nghệ',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'nguyenthanhliem@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThanhLiemGVBM&backgroundColor=b6e3f4',
     createdAt: Date.now(),
     status: 'active'
   },
@@ -84,27 +276,135 @@ const DEFAULT_USERS: UserAccountServer[] = [
     id: 'user-gvcn4a1',
     username: 'gvcn4a1',
     password: '123456',
-    fullName: 'Cô Mai Hoa (GVCN 4A1)',
+    fullName: 'Trịnh Thị Cúc',
     role: 'homeroom',
+    tenantType: 'school',
     assignedClassName: '4A1',
+    maxStudentsAllowed: 15,
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
     email: 'gvcn4a1@lophoc.edu.vn',
-    phone: '0977058363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoNguyenThiHoa&backgroundColor=ffd5dc',
-    schoolName: 'Trường Tiểu học số 1 Tân Uyên',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiCuc_4A1&backgroundColor=ffd5dc',
     createdAt: Date.now(),
     status: 'active'
   },
   {
-    id: 'user-gvbm01',
-    username: 'gvbm01',
+    id: 'user-nguyenviethien',
+    username: 'nguyenviethien',
     password: '123456',
-    fullName: 'Thầy Nguyễn Thanh Liêm',
+    fullName: 'Nguyễn Viết Hiền',
     role: 'subject',
-    subjectName: 'Tin học',
-    email: 'gvbm01@lophoc.edu.vn',
+    tenantType: 'school',
+    subjectName: 'Âm nhạc',
+    maxStudentsAllowed: 50,
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    email: 'nguyenviethien@lophoc.edu.vn',
     phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=ThayNguyenThanhLiem&backgroundColor=b6e3f4',
-    schoolName: 'Trường Tiểu học số 1 Tân Uyên',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenVietHienGVBM&backgroundColor=b6e3f4',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+
+  // ==========================================
+  // B. TRƯỜNG HỌC HẠNH PHÚC DEMO (database_truong_demo)
+  // ==========================================
+  {
+    id: 'user-admintruongdemo',
+    username: 'admintruongdemo',
+    password: '123456',
+    fullName: 'Quản trị Nhà Trường DEMO',
+    role: 'school_admin',
+    isSchoolAdmin: true,
+    isDemo: true,
+    tenantType: 'school',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    email: 'admintruongdemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminTruongDemo&backgroundColor=a7f3d0',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-bghdemo',
+    username: 'bghdemo',
+    password: '123456',
+    fullName: 'Ban Giám Hiệu DEMO',
+    role: 'bgh',
+    isBgh: true,
+    isDemo: true,
+    tenantType: 'school',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    email: 'bghdemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvcndemo',
+    username: 'gvcndemo',
+    password: '123456',
+    fullName: 'Trịnh Thị Hương',
+    role: 'homeroom',
+    isDemo: true,
+    maxStudentsAllowed: 10,
+    tenantType: 'school',
+    assignedClassName: '4A1',
+    email: 'gvcndemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiHuong&backgroundColor=ffd5dc',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvcn1a1demo',
+    username: 'gvcn1a1demo',
+    password: '123456',
+    fullName: 'Nguyễn Phương Anh',
+    role: 'homeroom',
+    isDemo: true,
+    maxStudentsAllowed: 11,
+    tenantType: 'school',
+    assignedClassName: '1A1',
+    email: 'gvcn1a1demo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenPhuongAnh_1A1&backgroundColor=ffd5dc',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvbmdemo',
+    username: 'gvbmdemo',
+    password: '123456',
+    fullName: 'Nguyễn Gia Phúc',
+    role: 'subject',
+    isDemo: true,
+    maxStudentsAllowed: 10,
+    tenantType: 'school',
+    subjectName: 'Tin học, Đạo đức, Công nghệ',
+    email: 'gvbmdemo@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenGiaPhuc&backgroundColor=b6e3f4',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  {
+    id: 'user-gvbmdemo2',
+    username: 'gvbmdemo2',
+    password: '123456',
+    fullName: 'Mai Trấn Hưng',
+    role: 'subject',
+    isDemo: true,
+    maxStudentsAllowed: 72,
+    tenantType: 'school',
+    subjectName: 'Mĩ thuật',
+    email: 'gvbmdemo2@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
     createdAt: Date.now(),
     status: 'active'
   }
@@ -131,18 +431,156 @@ export function loadDatabase(): DatabaseSchema {
         if (!Array.isArray(parsed.auditLogs)) {
           parsed.auditLogs = [];
         }
-        // Ensure default accounts always exist and have expected defaults
+        if (!Array.isArray(parsed.registrations)) {
+          parsed.registrations = [];
+        }
         let userListChanged = false;
+
+        const REMOVED_SCHOOL_IDS = new Set(['school-tanuyen-01', 'school-thucnghiem-02']);
+        const REMOVED_SCHOOL_CODES = new Set(['TH_TN']); // removed TH1_TU
+        const REMOVED_USERNAMES = new Set(['admin_truong', 'bgh', 'gvbm01', 'demogvcn', 'demogvbm']);
+
+        // 1. Purge trường học cũ
+        if (Array.isArray(parsed.schools)) {
+          const initCount = parsed.schools.length;
+          parsed.schools = parsed.schools.filter(s => {
+            if (REMOVED_SCHOOL_IDS.has(s.id)) return false;
+            if (s.code && REMOVED_SCHOOL_CODES.has(s.code)) return false;
+            const norm = (s.name || '').trim().toLowerCase();
+            if (norm.includes('(th_tn)')) return false;
+            if (norm.includes('thực nghiệm')) return false;
+            return true;
+          });
+          if (parsed.schools.length !== initCount) {
+            userListChanged = true;
+          }
+        }
+
+        // 2. Purge tài khoản cũ
+        if (Array.isArray(parsed.users)) {
+          const initCount = parsed.users.length;
+          parsed.users = parsed.users.filter(u => !REMOVED_USERNAMES.has(u.username.toLowerCase()));
+          if (parsed.users.length !== initCount) {
+            userListChanged = true;
+          }
+        }
+
+        // 3. Purge userData cũ
+        if (parsed.userData) {
+          for (const uName of REMOVED_USERNAMES) {
+            if (parsed.userData[uName]) {
+              delete parsed.userData[uName];
+              userListChanged = true;
+            }
+          }
+        }
+
+        // 4. Purge auditLogs cũ của các tài khoản đã bị loại bỏ
+        if (Array.isArray(parsed.auditLogs)) {
+          const initCount = parsed.auditLogs.length;
+          parsed.auditLogs = parsed.auditLogs.filter(l => !REMOVED_USERNAMES.has((l.username || '').toLowerCase()));
+          if (parsed.auditLogs.length !== initCount) {
+            userListChanged = true;
+          }
+        }
+
+        // 5. Purge mọi dấu vết cũ trong students và classes của các user còn lại
+        if (parsed.userData) {
+          for (const uData of Object.values(parsed.userData)) {
+            if (uData && Array.isArray((uData as any).students)) {
+              for (const s of (uData as any).students) {
+                if (s.teacherUsername && REMOVED_USERNAMES.has(s.teacherUsername.toLowerCase())) {
+                  s.teacherUsername = 'gvcn3a1';
+                  userListChanged = true;
+                }
+              }
+            }
+            if (uData && Array.isArray((uData as any).classes)) {
+              for (const c of (uData as any).classes) {
+                if (c.teacherUsername && REMOVED_USERNAMES.has(c.teacherUsername.toLowerCase())) {
+                  c.teacherUsername = 'gvcn3a1';
+                  if (c.teacherName && c.teacherName.includes('4A1')) {
+                    c.teacherName = 'Nguyễn Thị Ninh';
+                  }
+                  userListChanged = true;
+                }
+              }
+            }
+          }
+        }
+
+        if (!Array.isArray(parsed.schools) || parsed.schools.length === 0) {
+          parsed.schools = [...DEFAULT_SCHOOLS];
+          userListChanged = true;
+        } else {
+          // Bảo toàn và bổ sung các trường học chuẩn nếu chưa có
+          for (const defSchool of DEFAULT_SCHOOLS) {
+            const hasSchool = parsed.schools.some(
+              s => s.id === defSchool.id || s.name.trim().toLowerCase() === defSchool.name.trim().toLowerCase()
+            );
+            if (!hasSchool) {
+              parsed.schools.push({ ...defSchool });
+              userListChanged = true;
+            }
+          }
+        }
+
+        // Ensure default accounts always exist and have expected defaults
         for (const defaultUser of DEFAULT_USERS) {
           const found = parsed.users.find(u => u.username.toLowerCase() === defaultUser.username.toLowerCase());
           if (!found) {
             parsed.users.push({ ...defaultUser });
             userListChanged = true;
+          } else {
+            // Cập nhật mật khẩu chuẩn theo yêu cầu nếu có thay đổi
+            if (defaultUser.password && found.password !== defaultUser.password) {
+              found.password = defaultUser.password;
+              userListChanged = true;
+            }
+            if (defaultUser.isDemo !== undefined && found.isDemo !== defaultUser.isDemo) {
+              found.isDemo = defaultUser.isDemo;
+              found.maxStudentsAllowed = defaultUser.maxStudentsAllowed;
+              userListChanged = true;
+            }
+            if (defaultUser.isBgh !== undefined && found.isBgh !== defaultUser.isBgh) {
+              found.isBgh = defaultUser.isBgh;
+              found.role = 'bgh';
+              userListChanged = true;
+            }
+            if (defaultUser.isSchoolAdmin !== undefined && found.isSchoolAdmin !== defaultUser.isSchoolAdmin) {
+              found.isSchoolAdmin = defaultUser.isSchoolAdmin;
+              found.role = defaultUser.role;
+              userListChanged = true;
+            }
+            if (defaultUser.isGuestAdmin !== undefined && found.isGuestAdmin !== defaultUser.isGuestAdmin) {
+              found.isGuestAdmin = defaultUser.isGuestAdmin;
+              found.role = defaultUser.role;
+              userListChanged = true;
+            }
+            if (!found.tenantType) {
+              found.tenantType = defaultUser.tenantType || 'school';
+              userListChanged = true;
+            }
+            if (defaultUser.schoolName && !found.schoolName) {
+              found.schoolName = defaultUser.schoolName;
+              userListChanged = true;
+            }
+            if (defaultUser.assignedClassName && !found.assignedClassName) {
+              found.assignedClassName = defaultUser.assignedClassName;
+              userListChanged = true;
+            }
+            if (defaultUser.subjectName && !found.subjectName) {
+              found.subjectName = defaultUser.subjectName;
+              userListChanged = true;
+            }
           }
         }
         const seeded = seedDefaultUserData(parsed);
         if (userListChanged || seeded) {
           saveDatabase(parsed);
+        } else {
+          // Luôn đồng bộ 4 thư mục phân cấp
+          syncPartitionDirectories(parsed);
         }
         dbMemoryCache = parsed;
         return parsed;
@@ -158,6 +596,7 @@ export function loadDatabase(): DatabaseSchema {
     appName: 'LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB',
     lastSync: new Date().toISOString(),
     users: [...DEFAULT_USERS],
+    schools: [...DEFAULT_SCHOOLS],
     userData: {},
     auditLogs: [],
     systemSettings: {
@@ -181,108 +620,235 @@ function seedDefaultUserData(db: DatabaseSchema): boolean {
     changed = true;
   }
 
-  // 1. Seed GVCN (4A1 with 30 students)
-  if (!db.userData['gvcn4a1'] || !Array.isArray(db.userData['gvcn4a1'].classes) || db.userData['gvcn4a1'].classes.length === 0) {
-    changed = true;
-    const studentNames4A1 = [
-      'Nguyễn Văn An', 'Trần Thị Ngọc Ánh', 'Lê Gia Bảo', 'Phạm Minh Châu', 'Hoàng Quốc Cường',
-      'Vũ Mai Dung', 'Đặng Tuấn Đạt', 'Bùi Thùy Dương', 'Đỗ Tiến Đức', 'Hồ Mỹ Hạnh',
-      'Ngô Đức Huy', 'Dương Thu Hương', 'Lâm Tuấn Kiệt', 'Phan Thảo Linh', 'Võ Minh Long',
-      'Mai Khánh Ly', 'Trịnh Hải Nam', 'Nguyễn Phương Nga', 'Đinh Trọng Nghĩa', 'Hoàng Yến Nhi',
-      'Lê Quang Phong', 'Phạm Quỳnh Như', 'Trần Bảo Phúc', 'Vũ Ngọc Quỳnh', 'Đỗ Thanh Sơn',
-      'Bùi Phương Thảo', 'Ngô Quốc Thịnh', 'Hoàng Minh Trí', 'Lê Cẩm Tú', 'Đặng Xuân Vinh'
-    ];
+  // ==========================================
+  // [SEEDED ACCOUNTS CHUẨN]
+  // ==========================================
 
-    const seededStudents4A1 = studentNames4A1.map((name, idx) => ({
-      id: `hs-4a1-${idx + 1}`,
-      classId: 'class-4a1',
+  // B.1: GVCN DEMO gvcndemo (Cô Trịnh Thị Hương - Lớp 4A1 - 10 HS)
+  if (!db.userData['gvcndemo'] || !Array.isArray(db.userData['gvcndemo'].classes) || db.userData['gvcndemo'].classes.length === 0) {
+    changed = true;
+    const demo4A1StudentNames = [
+      'Nguyễn Minh Khang', 'Trần Bảo Anh', 'Lê Tuấn Kiệt', 'Phạm Thùy Linh', 'Hoàng Quốc Anh',
+      'Vũ Ngọc Mai', 'Đặng Gia Bảo', 'Bùi Quỳnh Chi', 'Đỗ Đăng Khoa', 'Ngô Phương Thảo'
+    ];
+    const demo4A1CoinValues = [35, 38, 30, 32, 25, 40, 28, 36, 27, 34];
+
+    const seededStudentsGvcndemo = demo4A1StudentNames.map((name, idx) => ({
+      id: `hs-gvcndemo-4a1-${idx + 1}`,
+      classId: 'class-gvcndemo-4a1',
       stt: idx + 1,
       name,
-      birthDate: `${10 + (idx % 18)}/0${1 + (idx % 9)}/2016`,
+      birthDate: `${10 + idx}/0${(idx % 9) + 1}/2016`,
       gender: idx % 2 === 0 ? 'Nam' : 'Nữ',
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Seed4A1_${idx}&backgroundColor=${idx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Gvcndemo4A1_${idx}&backgroundColor=${idx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
       avatarScale: 1,
       avatarPosition: { x: 0, y: 0 },
-      points: 20 + ((idx * 7) % 50),
-      group: `Tổ ${Math.floor(idx / 8) + 1}`,
+      points: demo4A1CoinValues[idx],
+      group: `Tổ ${Math.floor(idx / 3) + 1}`,
       role: idx === 0 ? 'LỚP TRƯỞNG' : idx === 1 ? 'LỚP PHÓ HỌC TẬP' : undefined,
-      subjectPoints: { 'GHI CHUNG / NỀ NẾP': 20 + ((idx * 7) % 50) }
+      subjectPoints: { 'GHI CHUNG / NỀ NẾP': demo4A1CoinValues[idx] }
     }));
 
-    db.userData['gvcn4a1'] = {
-      ...(db.userData['gvcn4a1'] || {}),
+    db.userData['gvcndemo'] = {
       classes: [
         {
-          id: 'class-4a1',
+          id: 'class-gvcndemo-4a1',
           name: '4A1',
           grade: 'Khối 4',
           color: '#3B82F6',
           academicYear: '2026–2027',
-          teacherName: 'Cô Mai Hoa (GVCN 4A1)',
-          teacherUsername: 'gvcn4a1',
+          teacherName: 'Trịnh Thị Hương',
+          teacherUsername: 'gvcndemo',
           teacherRole: 'homeroom',
-          avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
-          slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng'
+          avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=DemoClassHuong4A1&backgroundColor=3b82f6',
+          slogan: 'Lớp 4A1 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Tự tin, Yêu thương, Sáng tạo'
         }
       ],
-      activeClassId: 'class-4a1',
-      students: seededStudents4A1,
+      activeClassId: 'class-gvcndemo-4a1',
+      students: seededStudentsGvcndemo,
       teacherRole: 'homeroom',
       updatedAt: Date.now()
     };
   }
 
-  // 2. Seed GVBM (3A1 with 20 students, Tin học & Công nghệ)
-  if (!db.userData['gvbm01'] || !Array.isArray(db.userData['gvbm01'].classes) || db.userData['gvbm01'].classes.length === 0) {
+  // B.2: GVBM DEMO gvbmdemo (Nguyễn Gia Phúc - Tin học, Đạo đức, Công nghệ - 4 lớp 4A1DEMO, 4A2DEMO, 4A3DEMO, 4A4DEMO, mỗi lớp 10 HS)
+  if (!db.userData['gvbmdemo'] || !Array.isArray(db.userData['gvbmdemo'].classes) || db.userData['gvbmdemo'].classes.length === 0) {
     changed = true;
-    const studentNames3A1 = [
-      'Trần Hoàng An', 'Lê Thị Mai', 'Phạm Văn Bình', 'Vũ Thị Cúc', 'Đặng Minh Đạt',
-      'Bùi Thùy Linh', 'Đỗ Gia Huy', 'Hồ Ngọc Hà', 'Ngô Quốc Hưng', 'Dương Bảo Khánh',
-      'Lâm Gia Hân', 'Phan Văn Khoa', 'Võ Thị Lan', 'Mai Tuấn Kiệt', 'Trịnh Thị Nga',
-      'Nguyễn Minh Phúc', 'Đinh Thị Quỳnh', 'Hoàng Đức Thiện', 'Lê Phương Thảo', 'Phạm Đình Trọng'
+    const demoBMClassNames = ['4A1DEMO', '4A2DEMO', '4A3DEMO', '4A4DEMO'];
+    const demoBMColors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
+    const demoBMClasses: any[] = [];
+    const demoBMStudents: any[] = [];
+
+    const baseNamesGvbmdemo = [
+      'Nguyễn Đức Anh', 'Trần Thảo Ly', 'Lê Hữu Đạt', 'Phạm Minh Tuệ', 'Hoàng Nhật Minh',
+      'Vũ Khánh Linh', 'Đặng Thành Nam', 'Bùi Ngọc Ánh', 'Đỗ Minh Trí', 'Ngô Thu Trang'
     ];
 
-    const seededStudents3A1 = studentNames3A1.map((name, idx) => ({
-      id: `hs-sub-3a1-${idx + 1}`,
-      classId: 'class-sub-3a1',
+    demoBMClassNames.forEach((cName, cIdx) => {
+      const cId = `class-gvbmdemo-${cName.toLowerCase()}`;
+      demoBMClasses.push({
+        id: cId,
+        name: cName,
+        grade: 'Khối 4',
+        color: demoBMColors[cIdx],
+        academicYear: '2026–2027',
+        teacherName: 'Nguyễn Gia Phúc',
+        teacherUsername: 'gvbmdemo',
+        teacherRole: 'subject',
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=Gvbmdemo_${cName}&backgroundColor=${demoBMColors[cIdx].replace('#', '')}`,
+        slogan: `Lớp ${cName} • Tin học, Đạo đức, Công nghệ • TRƯỜNG HỌC HẠNH PHÚC DEMO`
+      });
+
+      baseNamesGvbmdemo.forEach((name, sIdx) => {
+        const pt = 18 + ((sIdx * 6 + cIdx * 5) % 35);
+        demoBMStudents.push({
+          id: `hs-gvbmdemo-${cIdx + 1}-${sIdx + 1}`,
+          classId: cId,
+          stt: sIdx + 1,
+          name: `${name} (${cName})`,
+          birthDate: `${10 + sIdx}/0${(sIdx % 9) + 1}/2016`,
+          gender: sIdx % 2 === 0 ? 'Nam' : 'Nữ',
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_${cIdx}_${sIdx}&backgroundColor=${sIdx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+          avatarScale: 1,
+          avatarPosition: { x: 0, y: 0 },
+          points: pt,
+          group: `Tổ ${Math.floor(sIdx / 3) + 1}`,
+          role: sIdx === 0 ? 'LỚP TRƯỞNG' : undefined,
+          subjectPoints: { 'TIN HỌC': pt, 'ĐẠO ĐỨC': pt + 2, 'CÔNG NGHỆ': pt + 1 }
+        });
+      });
+    });
+
+    db.userData['gvbmdemo'] = {
+      classes: demoBMClasses,
+      activeClassId: demoBMClasses[0].id,
+      students: demoBMStudents,
+      teacherRole: 'subject',
+      subjectTeacherConfig: {
+        subjectName: 'TIN HỌC',
+        taughtSubjects: ['TIN HỌC', 'ĐẠO ĐỨC', 'CÔNG NGHỆ'],
+        roomDefault: 'Phòng máy Tin học DEMO',
+        scheduleScope: 'semester',
+        periodName: 'Học kì I (Năm học 2026–2027)',
+        morningPeriods: 4,
+        afternoonPeriods: 3,
+        hasSaturday: false,
+        teacherDisplayName: 'Nguyễn Gia Phúc'
+      },
+      updatedAt: Date.now()
+    };
+  }
+
+  // ==========================================
+  // 6. [YÊU CẦU C] SEED TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN
+  // ==========================================
+
+  // C.1: GVCN gvcn3a1 (Cô Nguyễn Thị Ninh - Lớp 3A1 - 10 HS)
+  if (!db.userData['gvcn3a1'] || !Array.isArray(db.userData['gvcn3a1'].classes) || db.userData['gvcn3a1'].classes.length === 0) {
+    changed = true;
+    const studentNames3A1Ninh = [
+      'Nguyễn Văn Bình', 'Trần Thị Ánh Tuyết', 'Lê Gia Huy', 'Phạm Mỹ Duyên', 'Hoàng Mạnh Hùng',
+      'Vũ Bảo Ngọc', 'Đặng Thái Dương', 'Bùi Cẩm Vân', 'Đỗ Trọng Hiếu', 'Ngô Diệu Anh'
+    ];
+    const points3A1 = [32, 36, 28, 30, 26, 35, 29, 33, 31, 34];
+
+    const seededStudents3A1 = studentNames3A1Ninh.map((name, idx) => ({
+      id: `hs-gvcn3a1-${idx + 1}`,
+      classId: 'class-gvcn3a1-ninh',
       stt: idx + 1,
       name,
-      birthDate: `${12 + (idx % 15)}/0${1 + (idx % 8)}/2017`,
+      birthDate: `${12 + (idx % 15)}/0${(idx % 9) + 1}/2017`,
       gender: idx % 2 === 0 ? 'Nam' : 'Nữ',
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=SeedSub3A1_${idx}&backgroundColor=${idx % 2 === 0 ? 'c0aede' : 'd1d4f9'}`,
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Ninh3A1_HS_${idx}&backgroundColor=${idx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
       avatarScale: 1,
       avatarPosition: { x: 0, y: 0 },
-      points: 15 + ((idx * 6) % 40),
-      group: `Tổ ${Math.floor(idx / 5) + 1}`,
-      role: idx === 0 ? 'LỚP TRƯỞNG' : undefined,
-      subjectPoints: { 'TIN HỌC': 15 + ((idx * 6) % 40) }
+      points: points3A1[idx],
+      group: `Tổ ${Math.floor(idx / 3) + 1}`,
+      role: idx === 0 ? 'LỚP TRƯỞNG' : idx === 1 ? 'LỚP PHÓ HỌC TẬP' : undefined,
+      subjectPoints: { 'GHI CHUNG / NỀ NẾP': points3A1[idx] }
     }));
 
-    db.userData['gvbm01'] = {
-      ...(db.userData['gvbm01'] || {}),
+    db.userData['gvcn3a1'] = {
       classes: [
         {
-          id: 'class-sub-3a1',
+          id: 'class-gvcn3a1-ninh',
           name: '3A1',
           grade: 'Khối 3',
           color: '#10B981',
           academicYear: '2026–2027',
-          teacherName: 'Thầy Nguyễn Thanh Liêm',
-          teacherUsername: 'gvbm01',
-          teacherRole: 'subject',
-          avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=SubClass_3A1&backgroundColor=10b981',
-          slogan: 'Lớp 3A1 • Học tập hăng say, rèn luyện chăm chỉ'
+          teacherName: 'Nguyễn Thị Ninh',
+          teacherUsername: 'gvcn3a1',
+          teacherRole: 'homeroom',
+          avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class3A1Ninh&backgroundColor=10b981',
+          slogan: 'Lớp 3A1 • TIỂU HỌC SỐ 1 TÂN UYÊN • Mỗi ngày đến trường là một ngày vui'
         }
       ],
-      activeClassId: 'class-sub-3a1',
+      activeClassId: 'class-gvcn3a1-ninh',
       students: seededStudents3A1,
+      teacherRole: 'homeroom',
+      updatedAt: Date.now()
+    };
+  }
+
+  // C.2: GVBM nguyenthanhliem (Thầy Nguyễn Thanh Liêm - Tin học, Công nghệ - 4 lớp 4A1, 4A2, 4A3, 4A4, mỗi lớp 10 HS)
+  if (!db.userData['nguyenthanhliem'] || !Array.isArray(db.userData['nguyenthanhliem'].classes) || db.userData['nguyenthanhliem'].classes.length === 0) {
+    changed = true;
+    const classesTHS1 = ['4A1', '4A2', '4A3', '4A4'];
+    const colorsTHS1 = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
+    const classesListLiem: any[] = [];
+    const studentsListLiem: any[] = [];
+
+    const studentPool = [
+      'Nguyễn Phúc Lâm', 'Trần Thục Uyên', 'Lê Thành Đạt', 'Phạm Quỳnh Anh', 'Hoàng Minh Khang',
+      'Vũ Yến Trang', 'Đặng Quốc Huy', 'Bùi Thị Hà', 'Đỗ Văn Nam', 'Ngô Bảo Trân'
+    ];
+
+    classesTHS1.forEach((cName, cIdx) => {
+      const cId = `class-liem-ths1-${cName.toLowerCase()}`;
+      classesListLiem.push({
+        id: cId,
+        name: cName,
+        grade: 'Khối 4',
+        color: colorsTHS1[cIdx],
+        academicYear: '2026–2027',
+        teacherName: 'Nguyễn Thanh Liêm',
+        teacherUsername: 'nguyenthanhliem',
+        teacherRole: 'subject',
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=THS1_BM_${cName}&backgroundColor=${colorsTHS1[cIdx].replace('#', '')}`,
+        slogan: `Lớp ${cName} • TIỂU HỌC SỐ 1 TÂN UYÊN • Tin học & Công nghệ`
+      });
+
+      studentPool.forEach((name, sIdx) => {
+        const pt = 22 + ((sIdx * 5 + cIdx * 7) % 30);
+        studentsListLiem.push({
+          id: `hs-liem-${cIdx + 1}-${sIdx + 1}`,
+          classId: cId,
+          stt: sIdx + 1,
+          name: `${name} (${cName})`,
+          birthDate: `${10 + sIdx}/0${(sIdx % 9) + 1}/2016`,
+          gender: sIdx % 2 === 0 ? 'Nam' : 'Nữ',
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=LiemHS_${cIdx}_${sIdx}&backgroundColor=${sIdx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+          avatarScale: 1,
+          avatarPosition: { x: 0, y: 0 },
+          points: pt,
+          group: `Tổ ${Math.floor(sIdx / 3) + 1}`,
+          role: sIdx === 0 ? 'LỚP TRƯỞNG' : undefined,
+          subjectPoints: { 'TIN HỌC': pt, 'CÔNG NGHỆ': pt + 2 }
+        });
+      });
+    });
+
+    db.userData['nguyenthanhliem'] = {
+      classes: classesListLiem,
+      activeClassId: classesListLiem[0].id,
+      students: studentsListLiem,
       teacherRole: 'subject',
       subjectTeacherConfig: {
         subjectName: 'TIN HỌC',
         taughtSubjects: ['TIN HỌC', 'CÔNG NGHỆ'],
-        roomDefault: 'Phòng máy Tin học',
+        roomDefault: 'Phòng thực hành Tin học - TIỂU HỌC SỐ 1 TÂN UYÊN',
         scheduleScope: 'semester',
-        periodName: 'Học kì I (Tuần 1 – Tuần 18)',
+        periodName: 'Năm học 2026–2027',
         morningPeriods: 4,
         afternoonPeriods: 3,
         hasSaturday: false,
@@ -292,7 +858,323 @@ function seedDefaultUserData(db: DatabaseSchema): boolean {
     };
   }
 
-  // 3. Ensure teacher tags on all classes across all users
+  // C.3: GVCN gvcn4a1 (Cô Trịnh Thị Cúc - Lớp 4A1 - 15 HS - TIỂU HỌC SỐ 1 TÂN UYÊN)
+  if (!db.userData['gvcn4a1'] || !Array.isArray(db.userData['gvcn4a1'].classes) || db.userData['gvcn4a1'].classes.length === 0) {
+    changed = true;
+    const names4A1Cuc = [
+      'Nguyễn Hoàng Anh', 'Trần Thảo Nhi', 'Lê Đức Minh', 'Phạm Quỳnh Nga', 'Hoàng Bảo Nam',
+      'Vũ Thu Uyên', 'Đặng Tuấn Tú', 'Bùi Kim Ngân', 'Đỗ Gia Huy', 'Ngô Mai Phương',
+      'Dương Quốc Bảo', 'Lý Hải Yến', 'Đinh Trọng Tấn', 'Đoàn Ánh Dương', 'Lâm Khôi Nguyên'
+    ];
+    const points4A1Cuc = [28, 35, 22, 40, 30, 25, 33, 38, 27, 36, 29, 31, 24, 37, 32];
+    const students4A1Cuc = names4A1Cuc.map((name, idx) => ({
+      id: `hs-gvcn4a1-${idx + 1}`,
+      classId: 'class-4a1',
+      stt: idx + 1,
+      name,
+      birthDate: `${10 + idx}/0${(idx % 9) + 1}/2016`,
+      gender: idx % 2 === 0 ? 'Nam' : 'Nữ',
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Cuc4A1_HS_${idx}&backgroundColor=${idx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+      avatarScale: 1,
+      avatarPosition: { x: 0, y: 0 },
+      points: points4A1Cuc[idx],
+      group: `Tổ ${Math.floor(idx / 4) + 1}`,
+      role: idx === 0 ? 'LỚP TRƯỞNG' : idx === 1 ? 'LỚP PHÓ HỌC TẬP' : undefined,
+      subjectPoints: { 'GHI CHUNG / NỀ NẾP': points4A1Cuc[idx] }
+    }));
+
+    db.userData['gvcn4a1'] = {
+      classes: [
+        {
+          id: 'class-4a1',
+          name: '4A1',
+          grade: 'Khối 4',
+          color: '#3B82F6',
+          academicYear: '2026–2027',
+          teacherName: 'Trịnh Thị Cúc',
+          teacherUsername: 'gvcn4a1',
+          teacherRole: 'homeroom',
+          avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1Cuc&backgroundColor=3b82f6',
+          slogan: 'Lớp 4A1 • TIỂU HỌC SỐ 1 TÂN UYÊN • Đoàn kết, chăm ngoan, tiến bước'
+        }
+      ],
+      activeClassId: 'class-4a1',
+      students: students4A1Cuc,
+      teacherRole: 'homeroom',
+      teacherProfile: {
+        name: 'Trịnh Thị Cúc',
+        role: 'GIÁO VIÊN CHỦ NHIỆM',
+        schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+        academicYear: '2026–2027',
+        avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiCuc_4A1&backgroundColor=ffd5dc',
+        phone: '0888358363',
+        zalo: '0888358363',
+        teachingSubject: 'Giáo viên chủ nhiệm'
+      },
+      updatedAt: Date.now()
+    };
+  }
+
+  // C.4: GVBM nguyenviethien (Thầy Nguyễn Viết Hiền - Âm nhạc - 5 lớp 5A1..5A5, mỗi lớp 10 HS - TIỂU HỌC SỐ 1 TÂN UYÊN)
+  if (!db.userData['nguyenviethien'] || !Array.isArray(db.userData['nguyenviethien'].classes) || db.userData['nguyenviethien'].classes.length === 0) {
+    changed = true;
+    const hienClassNames = ['5A1', '5A2', '5A3', '5A4', '5A5'];
+    const hienColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+    const hienClassesList: any[] = [];
+    const hienStudentsList: any[] = [];
+
+    const baseMusicNames = [
+      'Nguyễn Thanh Hải', 'Trần Thảo My', 'Lê Hữu Phúc', 'Phạm Ngọc Trâm', 'Hoàng Gia Huy',
+      'Vũ Phương Thảo', 'Đặng Quang Minh', 'Bùi Quỳnh Anh', 'Đỗ Tấn Phát', 'Ngô Thu Ngân'
+    ];
+
+    hienClassNames.forEach((cName, cIdx) => {
+      const cId = `class-sub-${cName.toLowerCase()}`;
+      hienClassesList.push({
+        id: cId,
+        name: cName,
+        grade: 'Khối 5',
+        color: hienColors[cIdx],
+        academicYear: '2026–2027',
+        teacherName: 'Nguyễn Viết Hiền',
+        teacherUsername: 'nguyenviethien',
+        teacherRole: 'subject',
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=Music_${cName}&backgroundColor=${hienColors[cIdx].replace('#', '')}`,
+        slogan: `Lớp ${cName} • TIỂU HỌC SỐ 1 TÂN UYÊN • Môn Âm nhạc`
+      });
+
+      baseMusicNames.forEach((name, sIdx) => {
+        const pt = 20 + ((sIdx * 4 + cIdx * 6) % 30);
+        hienStudentsList.push({
+          id: `hs-hien-${cIdx + 1}-${sIdx + 1}`,
+          classId: cId,
+          stt: sIdx + 1,
+          name: `${name} (${cName})`,
+          birthDate: `${10 + sIdx}/0${(sIdx % 9) + 1}/2015`,
+          gender: sIdx % 2 === 0 ? 'Nam' : 'Nữ',
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=HienHS_${cIdx}_${sIdx}&backgroundColor=${sIdx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+          avatarScale: 1,
+          avatarPosition: { x: 0, y: 0 },
+          points: pt,
+          group: `Tổ ${Math.floor(sIdx / 3) + 1}`,
+          role: sIdx === 0 ? 'LỚP TRƯỞNG' : undefined,
+          subjectPoints: { 'ÂM NHẠC': pt }
+        });
+      });
+    });
+
+    db.userData['nguyenviethien'] = {
+      classes: hienClassesList,
+      activeClassId: hienClassesList[0].id,
+      students: hienStudentsList,
+      teacherRole: 'subject',
+      subjectTeacherConfig: {
+        subjectName: 'ÂM NHẠC',
+        taughtSubjects: ['ÂM NHẠC'],
+        roomDefault: 'Phòng thực hành Âm nhạc - TIỂU HỌC SỐ 1 TÂN UYÊN',
+        teacherDisplayName: 'Nguyễn Viết Hiền'
+      },
+      teacherProfile: {
+        name: 'Nguyễn Viết Hiền',
+        role: 'GIÁO VIÊN BỘ MÔN',
+        schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+        academicYear: '2026–2027',
+        avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenVietHienGVBM&backgroundColor=b6e3f4',
+        phone: '0888358363',
+        zalo: '0888358363',
+        teachingSubject: 'Âm nhạc'
+      },
+      updatedAt: Date.now()
+    };
+  }
+
+  // B.3: GVCN DEMO gvcn1a1demo (Cô Nguyễn Phương Anh - Lớp 1A1 - 11 HS - TRƯỜNG HỌC HẠNH PHÚC DEMO)
+  if (!db.userData['gvcn1a1demo'] || !Array.isArray(db.userData['gvcn1a1demo'].classes) || db.userData['gvcn1a1demo'].classes.length === 0) {
+    changed = true;
+    const names1A1Demo = [
+      'Nguyễn An Nhiên', 'Trần Bảo Long', 'Lê Cát Tường', 'Phạm Đăng Khoa', 'Hoàng Hải Đăng',
+      'Vũ Khánh Ngân', 'Đặng Minh Khang', 'Bùi Như Ý', 'Đỗ Phúc An', 'Ngô Tuệ Mẫn', 'Dương Gia Hưng'
+    ];
+    const points1A1Demo = [30, 28, 35, 32, 26, 40, 34, 29, 36, 31, 33];
+    const students1A1Demo = names1A1Demo.map((name, idx) => ({
+      id: `hs-gvcn1a1demo-${idx + 1}`,
+      classId: 'class-1a1demo',
+      stt: idx + 1,
+      name,
+      birthDate: `${10 + idx}/0${(idx % 9) + 1}/2019`,
+      gender: idx % 2 === 0 ? 'Nam' : 'Nữ',
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Demo1A1_HS_${idx}&backgroundColor=${idx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+      avatarScale: 1,
+      avatarPosition: { x: 0, y: 0 },
+      points: points1A1Demo[idx],
+      group: `Tổ ${Math.floor(idx / 3) + 1}`,
+      role: idx === 0 ? 'LỚP TRƯỞNG' : idx === 1 ? 'LỚP PHÓ HỌC TẬP' : undefined,
+      subjectPoints: { 'GHI CHUNG / NỀ NẾP': points1A1Demo[idx] }
+    }));
+
+    db.userData['gvcn1a1demo'] = {
+      classes: [
+        {
+          id: 'class-1a1demo',
+          name: '1A1',
+          grade: 'Khối 1',
+          color: '#3B82F6',
+          academicYear: '2026–2027',
+          teacherName: 'Nguyễn Phương Anh',
+          teacherUsername: 'gvcn1a1demo',
+          teacherRole: 'homeroom',
+          avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class1A1DemoAnh&backgroundColor=3b82f6',
+          slogan: 'Lớp 1A1 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Nâng cánh ước mơ tuổi thơ'
+        }
+      ],
+      activeClassId: 'class-1a1demo',
+      students: students1A1Demo,
+      teacherRole: 'homeroom',
+      teacherProfile: {
+        name: 'Nguyễn Phương Anh',
+        role: 'GIÁO VIÊN CHỦ NHIỆM',
+        schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+        academicYear: '2026–2027',
+        avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenPhuongAnh_1A1&backgroundColor=ffd5dc',
+        phone: '0888358363',
+        zalo: '0888358363',
+        teachingSubject: 'Giáo viên chủ nhiệm'
+      },
+      updatedAt: Date.now()
+    };
+  }
+
+  // B.4: GVBM DEMO gvbmdemo2 (Thầy Mai Trấn Hưng - Mĩ thuật - 6 lớp 4A1..4A6, mỗi lớp 12 HS - TRƯỜNG HỌC HẠNH PHÚC DEMO)
+  if (!db.userData['gvbmdemo2'] || !Array.isArray(db.userData['gvbmdemo2'].classes) || db.userData['gvbmdemo2'].classes.length === 0) {
+    changed = true;
+    const demo2ClassNames = ['4A1', '4A2', '4A3', '4A4', '4A5', '4A6'];
+    const demo2Colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+    const demo2ClassesList: any[] = [];
+    const demo2StudentsList: any[] = [];
+
+    const baseArtNames = [
+      'Nguyễn Mỹ Linh', 'Trần Quang Dũng', 'Lê Thục Trinh', 'Phạm Trí Dũng', 'Hoàng Bảo Châu',
+      'Vũ Tường Vy', 'Đặng Xuân Phúc', 'Bùi Thúy Kiều', 'Đỗ Quang Sáng', 'Ngô Ngọc Diệp',
+      'Dương Tuấn Khang', 'Lý Diễm My'
+    ];
+
+    demo2ClassNames.forEach((cName, cIdx) => {
+      const cId = `class-demo2-${cName.toLowerCase()}`;
+      demo2ClassesList.push({
+        id: cId,
+        name: cName,
+        grade: 'Khối 4',
+        color: demo2Colors[cIdx],
+        academicYear: '2026–2027',
+        teacherName: 'Mai Trấn Hưng',
+        teacherUsername: 'gvbmdemo2',
+        teacherRole: 'subject',
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=ArtDemo2_${cName}&backgroundColor=${demo2Colors[cIdx].replace('#', '')}`,
+        slogan: `Lớp ${cName} • TRƯỜNG HỌC HẠNH PHÚC DEMO • Môn Mĩ thuật`
+      });
+
+      baseArtNames.forEach((name, sIdx) => {
+        const pt = 22 + ((sIdx * 3 + cIdx * 4) % 30);
+        demo2StudentsList.push({
+          id: `hs-gvbmdemo2-${cIdx + 1}-${sIdx + 1}`,
+          classId: cId,
+          stt: sIdx + 1,
+          name: `${name} (${cName})`,
+          birthDate: `${10 + sIdx}/0${(sIdx % 9) + 1}/2016`,
+          gender: sIdx % 2 === 0 ? 'Nam' : 'Nữ',
+          avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_${cIdx}_${sIdx}&backgroundColor=${sIdx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+          avatarScale: 1,
+          avatarPosition: { x: 0, y: 0 },
+          points: pt,
+          group: `Tổ ${Math.floor(sIdx / 3) + 1}`,
+          role: sIdx === 0 ? 'LỚP TRƯỞNG' : undefined,
+          subjectPoints: { 'MĨ THUẬT': pt }
+        });
+      });
+    });
+
+    db.userData['gvbmdemo2'] = {
+      classes: demo2ClassesList,
+      activeClassId: demo2ClassesList[0].id,
+      students: demo2StudentsList,
+      teacherRole: 'subject',
+      subjectTeacherConfig: {
+        subjectName: 'MĨ THUẬT',
+        taughtSubjects: ['MĨ THUẬT'],
+        roomDefault: 'Phòng thực hành Mĩ thuật - TRƯỜNG HỌC HẠNH PHÚC DEMO',
+        teacherDisplayName: 'Mai Trấn Hưng'
+      },
+      teacherProfile: {
+        name: 'Mai Trấn Hưng',
+        role: 'GIÁO VIÊN BỘ MÔN',
+        schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
+        academicYear: '2026–2027',
+        avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4',
+        phone: '0888358363',
+        zalo: '0888358363',
+        teachingSubject: 'Mĩ thuật'
+      },
+      updatedAt: Date.now()
+    };
+  }
+
+  // ==========================================
+  // 7. [YÊU CẦU D.3] SEED TÀI KHOẢN CÁ NHÂN nguyenthitrangtu1 (35 HỌC SINH)
+  // ==========================================
+  if (!db.userData['nguyenthitrangtu1'] || !Array.isArray(db.userData['nguyenthitrangtu1'].classes) || db.userData['nguyenthitrangtu1'].classes.length === 0) {
+    changed = true;
+    const students35List = [
+      'Nguyễn Gia An', 'Trần Bảo Anh', 'Lê Quốc Bảo', 'Phạm Minh Châu', 'Hoàng Diệp Chi',
+      'Vũ Tiến Đạt', 'Đặng Ngọc Diệp', 'Bùi Hải Đăng', 'Đỗ Thùy Dung', 'Hồ Đức Duy',
+      'Ngô Hương Giang', 'Dương Gia Hân', 'Lâm Nhật Huy', 'Phan Khánh Huyền', 'Võ Đăng Khoa',
+      'Mai Tuấn Kiệt', 'Trịnh Bảo Lam', 'Nguyễn Hoàng Long', 'Đinh Phương Linh', 'Hoàng Khánh Ly',
+      'Lê Tuấn Minh', 'Phạm Thảo My', 'Trần Hải Nam', 'Vũ Phương Nga', 'Đỗ Trọng Nghĩa',
+      'Bùi Yến Nhi', 'Ngô Quang Phong', 'Hoàng Thục Quyên', 'Lê Bảo Quân', 'Đặng Ngọc Quỳnh',
+      'Nguyễn Thanh Sơn', 'Trần Phương Thảo', 'Lê Minh Trí', 'Phạm Cẩm Tú', 'Vũ Xuân Vinh'
+    ];
+
+    const seededStudents2A1 = students35List.map((name, idx) => {
+      const pt = 20 + ((idx * 7) % 40);
+      return {
+        id: `hs-trang-2a1-${idx + 1}`,
+        classId: 'class-trang-2a1',
+        stt: idx + 1,
+        name,
+        birthDate: `${10 + (idx % 18)}/0${(idx % 9) + 1}/2018`,
+        gender: idx % 2 === 0 ? 'Nam' : 'Nữ',
+        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Trang2A1_HS_${idx}&backgroundColor=${idx % 2 === 0 ? 'b6e3f4' : 'ffd5dc'}`,
+        avatarScale: 1,
+        avatarPosition: { x: 0, y: 0 },
+        points: pt,
+        group: `Tổ ${Math.floor(idx / 9) + 1}`,
+        role: idx === 0 ? 'LỚP TRƯỞNG' : idx === 1 ? 'LỚP PHÓ HỌC TẬP' : idx === 2 ? 'LỚP PHÓ VĂN THỂ' : undefined,
+        subjectPoints: { 'GHI CHUNG / NỀ NẾP': pt }
+      };
+    });
+
+    db.userData['nguyenthitrangtu1'] = {
+      classes: [
+        {
+          id: 'class-trang-2a1',
+          name: '2A1',
+          grade: 'Khối 2',
+          color: '#F59E0B',
+          academicYear: '2026–2027',
+          teacherName: 'Nguyễn Thị Trang',
+          teacherUsername: 'nguyenthitrangtu1',
+          teacherRole: 'homeroom',
+          avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class2A1Trang&backgroundColor=f59e0b',
+          slogan: 'Lớp 2A1 • Chăm chỉ rèn đức - Vui vẻ luyện tài'
+        }
+      ],
+      activeClassId: 'class-trang-2a1',
+      students: seededStudents2A1,
+      teacherRole: 'homeroom',
+      updatedAt: Date.now()
+    };
+  }
+
+  // 8. Ensure teacher tags on all classes across all users
   for (const user of db.users) {
     const uData = db.userData[user.username.toLowerCase()];
     if (uData && Array.isArray(uData.classes)) {
@@ -308,6 +1190,149 @@ function seedDefaultUserData(db: DatabaseSchema): boolean {
   return changed;
 }
 
+/**
+ * 📂 [YÊU CẦU A] ĐỒNG BỘ PHÂN CẤP 4 THƯ MỤC DATABASE RIÊNG BIỆT:
+ * 1. DIR_CA_NHAN: Vai trò Tài khoản cá nhân (personal_teacher, guest_admin)
+ * 2. DIR_NHA_TRUONG: Vai trò Nhà Trường (school_teacher, school_admin, bgh)
+ * 3. DIR_TRUONG_DEMO: Vai trò Nhà Trường DEMO (school_teacherdemo, school_admindemo, bghdemo)
+ * 4. DIR_ADMIN: Vai trò Quản trị Cao Nhất (admin, adminquantri)
+ */
+export function syncPartitionDirectories(data: DatabaseSchema): void {
+  try {
+    const partitions = [DIR_CA_NHAN, DIR_NHA_TRUONG, DIR_TRUONG_DEMO, DIR_ADMIN];
+    for (const dir of partitions) {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    }
+
+    const allUsers = data.users || [];
+    const allUserData = data.userData || {};
+    const allSchools = data.schools || [];
+
+    // Helper kiểm tra Demo
+    const isDemoUser = (u: UserAccountServer) => {
+      if (u.isDemo) return true;
+      if (u.role === 'admin' || u.role === 'guest_admin') return false;
+      const sName = (u.schoolName || '').toUpperCase();
+      return sName.includes('DEMO') || sName.includes('THỰC NGHIỆM') || u.username.toLowerCase().includes('demo');
+    };
+
+    // 1. Phân vùng Cá Nhân (database_ca_nhan)
+    const usersCaNhan = allUsers.filter(u => u.tenantType === 'guest' || u.role === 'guest_admin');
+    const userDataCaNhan: Record<string, any> = {};
+    for (const u of usersCaNhan) {
+      const key = u.username.toLowerCase();
+      if (allUserData[key]) userDataCaNhan[key] = allUserData[key];
+    }
+    const dbCaNhan = {
+      partition: 'ca_nhan',
+      title: 'Cơ Sở Dữ Liệu Giáo Viên Cá Nhân & Quản Trị Cá Nhân',
+      lastSync: data.lastSync,
+      users: usersCaNhan,
+      userData: userDataCaNhan
+    };
+    fs.writeFileSync(path.join(DIR_CA_NHAN, 'database.json'), JSON.stringify(dbCaNhan, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_CA_NHAN, 'users.json'), JSON.stringify(usersCaNhan, null, 2), 'utf-8');
+    if (!fs.existsSync(path.join(DIR_CA_NHAN, 'README.md'))) {
+      fs.writeFileSync(path.join(DIR_CA_NHAN, 'README.md'), `# Thư mục Database: Vai Trò Tài Khoản Cá Nhân (database_ca_nhan)
+- Quản trị: Vai trò Quản trị Tài khoản Cá Nhân (guest_admin)
+- Người dùng: Giáo viên tự do, tỉnh lẻ (personal_teacher, tenantType: 'guest')
+- Dữ liệu lưu trữ: Danh sách tài khoản đăng nhập, mật khẩu và dữ liệu lớp học của giáo viên vãng lai/cá nhân.
+`, 'utf-8');
+    }
+
+    // 2. Phân vùng Nhà Trường DEMO (database_truong_demo)
+    const usersDemo = allUsers.filter(u => isDemoUser(u));
+    const userDataDemo: Record<string, any> = {};
+    for (const u of usersDemo) {
+      const key = u.username.toLowerCase();
+      if (allUserData[key]) userDataDemo[key] = allUserData[key];
+    }
+    const schoolsDemo = allSchools.filter(s => s.name.toUpperCase().includes('DEMO'));
+    const dbDemo = {
+      partition: 'truong_demo',
+      title: 'Cơ Sở Dữ Liệu Trường Học DEMO (TRƯỜNG HỌC HẠNH PHÚC DEMO)',
+      lastSync: data.lastSync,
+      schools: schoolsDemo,
+      users: usersDemo,
+      userData: userDataDemo
+    };
+    fs.writeFileSync(path.join(DIR_TRUONG_DEMO, 'database.json'), JSON.stringify(dbDemo, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_TRUONG_DEMO, 'users.json'), JSON.stringify(usersDemo, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_TRUONG_DEMO, 'schools.json'), JSON.stringify(schoolsDemo, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_TRUONG_DEMO, 'README.md'), `# Thư mục Database: Nhà Trường DEMO (database_truong_demo)
+- Trường học: TRƯỜNG HỌC HẠNH PHÚC DEMO
+- Quản trị: admintruongdemo (school_admindemo)
+- Ban Giám Hiệu: bghdemo (bgh)
+- Giáo viên chủ nhiệm: gvcndemo (Cô Trịnh Thị Hương - Lớp 4A1)
+- Giáo viên bộ môn: gvbmdemo (Nguyễn Gia Phúc - Tin học, Đạo đức, Công nghệ)
+- Dữ liệu lưu trữ: Tài khoản, mật khẩu và dữ liệu lớp học trải nghiệm DEMO.
+`, 'utf-8');
+
+    // 3. Phân vùng Nhà Trường Chính Thức (database_nha_truong)
+    const usersNhaTruong = allUsers.filter(u => 
+      u.tenantType === 'school' && 
+      !isDemoUser(u) && 
+      u.role !== 'admin'
+    );
+    const userDataNhaTruong: Record<string, any> = {};
+    for (const u of usersNhaTruong) {
+      const key = u.username.toLowerCase();
+      if (allUserData[key]) userDataNhaTruong[key] = allUserData[key];
+    }
+    const schoolsNhaTruong = allSchools.filter(s => !s.name.toUpperCase().includes('DEMO'));
+    const dbNhaTruong = {
+      partition: 'nha_truong',
+      title: 'Cơ Sở Dữ Liệu Tổ Chức Nhà Trường (TIỂU HỌC SỐ 1 TÂN UYÊN & Các Trường)',
+      lastSync: data.lastSync,
+      schools: schoolsNhaTruong,
+      users: usersNhaTruong,
+      userData: userDataNhaTruong
+    };
+    fs.writeFileSync(path.join(DIR_NHA_TRUONG, 'database.json'), JSON.stringify(dbNhaTruong, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_NHA_TRUONG, 'users.json'), JSON.stringify(usersNhaTruong, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_NHA_TRUONG, 'schools.json'), JSON.stringify(schoolsNhaTruong, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_NHA_TRUONG, 'README.md'), `# Thư mục Database: Vai Trò Nhà Trường (database_nha_truong)
+- Trường trọng điểm: TIỂU HỌC SỐ 1 TÂN UYÊN
+- Quản trị Nhà Trường: adminths1 (school_admin)
+- Ban Giám Hiệu: bghdths1 (bgh)
+- Giáo viên trường: gvcn3a1 (Cô Nguyễn Thị Ninh), nguyenthanhliem (Thầy Nguyễn Thanh Liêm)
+- Dữ liệu lưu trữ: Tài khoản, mật khẩu, danh mục trường và dữ liệu lớp học chính thức.
+`, 'utf-8');
+
+    // 4. Phân vùng Quản Trị Cao Nhất (database_quan_tri_admin)
+    const usersAdmin = allUsers.filter(u => u.role === 'admin');
+    const dbAdmin = {
+      partition: 'quan_tri_admin',
+      title: 'Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống',
+      lastSync: data.lastSync,
+      users: usersAdmin,
+      systemSettings: data.systemSettings,
+      auditLogs: (data.auditLogs || []).slice(-300),
+      masterSummary: {
+        totalUsers: allUsers.length,
+        totalSchools: allSchools.length,
+        totalClassesConfigured: Object.keys(allUserData).length
+      }
+    };
+    fs.writeFileSync(path.join(DIR_ADMIN, 'database.json'), JSON.stringify(dbAdmin, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_ADMIN, 'users.json'), JSON.stringify(usersAdmin, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_ADMIN, 'system_settings.json'), JSON.stringify(data.systemSettings || {}, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(DIR_ADMIN, 'audit_logs.json'), JSON.stringify(data.auditLogs || [], null, 2), 'utf-8');
+    if (!fs.existsSync(path.join(DIR_ADMIN, 'README.md'))) {
+      fs.writeFileSync(path.join(DIR_ADMIN, 'README.md'), `# Thư mục Database: Quản Trị Tối Cao (database_quan_tri_admin)
+- Quản trị tối cao: adminquantri / admin (role: admin)
+- Quyền hạn: Quyền quản trị tối cao toàn bộ hệ thống, phân quyền, cấu hình đồng bộ, nhật ký hoạt động.
+- Dữ liệu lưu trữ: Tài khoản quản trị, thiết lập hệ thống, nhật ký kiểm toán và tổng quan Master Data.
+`, 'utf-8');
+    }
+
+  } catch (syncErr) {
+    console.warn('[PartitionSync] Lỗi khi đồng bộ 4 thư mục phân cấp:', syncErr);
+  }
+}
+
 export function saveDatabase(data: DatabaseSchema): boolean {
   ensureDataDir();
   data.lastSync = new Date().toISOString();
@@ -318,6 +1343,9 @@ export function saveDatabase(data: DatabaseSchema): boolean {
     const jsonStr = JSON.stringify(data, null, 2);
     fs.writeFileSync(tempFile, jsonStr, 'utf-8');
     fs.renameSync(tempFile, DB_FILE);
+
+    // Tự động phân cấp lưu trữ vào 4 thư mục riêng biệt (Yêu cầu A)
+    syncPartitionDirectories(data);
 
     // Tự động sao lưu an toàn một bản dự phòng tại data/backups
     try {
@@ -469,16 +1497,54 @@ export function smartMergeDatabase(localDb: DatabaseSchema, remoteDb: DatabaseSc
     logMap.set(log.id, log);
   }
   merged.auditLogs = Array.from(logMap.values())
+    .filter(l => !REMOVED_USERNAMES.has(((l as any).username || '').toLowerCase()))
     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
     .slice(0, 500);
+
+  // 4. Hợp nhất Danh mục Trường học (Schools) & Lọc sạch trường / tài khoản cũ
+  const REMOVED_SCHOOL_IDS = new Set(['school-tanuyen-01', 'school-thucnghiem-02']);
+  const REMOVED_SCHOOL_CODES = new Set(['TH_TN']); // removed TH1_TU
+  const REMOVED_USERNAMES = new Set(['admin_truong', 'bgh', 'gvbm01', 'demogvcn', 'demogvbm']);
+
+  const schoolMap = new Map<string, any>();
+  for (const s of (remoteDb.schools || [])) {
+    if (s && s.id && !REMOVED_SCHOOL_IDS.has(s.id) && (!s.code || !REMOVED_SCHOOL_CODES.has(s.code))) {
+      const norm = (s.name || '').trim().toLowerCase();
+      if (!norm.includes('(th_tn)') && !norm.includes('thực nghiệm')) {
+        schoolMap.set(s.id, s);
+      }
+    }
+  }
+  for (const s of (localDb.schools || [])) {
+    if (s && s.id && !REMOVED_SCHOOL_IDS.has(s.id) && (!s.code || !REMOVED_SCHOOL_CODES.has(s.code))) {
+      const norm = (s.name || '').trim().toLowerCase();
+      if (!norm.includes('(th_tn)') && !norm.includes('thực nghiệm')) {
+        if (!schoolMap.has(s.id)) {
+          schoolMap.set(s.id, s);
+        }
+      }
+    }
+  }
+  merged.schools = Array.from(schoolMap.values());
+  if (merged.schools.length === 0) {
+    merged.schools = [...DEFAULT_SCHOOLS];
+  }
+
+  // Lọc sạch users và userData khỏi danh sách cũ
+  merged.users = merged.users.filter(u => !REMOVED_USERNAMES.has(u.username.toLowerCase()));
+  for (const u of REMOVED_USERNAMES) {
+    if (merged.userData[u]) {
+      delete merged.userData[u];
+    }
+  }
 
   return merged;
 }
 
 // User Operations
-export function getAllUsers(): Omit<UserAccountServer, 'password'>[] {
+export function getAllUsers(): UserAccountServer[] {
   const db = loadDatabase();
-  return db.users.map(({ password, ...u }) => u);
+  return db.users;
 }
 
 export function findUserByUsername(username: string): UserAccountServer | null {
@@ -645,6 +1711,20 @@ export function updateUser(id: string, updates: Partial<UserAccountServer>): { s
   };
 
   db.users[index] = updatedUser;
+
+  // Đồng bộ thông tin schoolName vào userData của giáo viên nếu có thay đổi
+  const cleanUsername = updatedUser.username.trim().toLowerCase();
+  if (updates.schoolName && db.userData[cleanUsername]) {
+    if (!db.userData[cleanUsername].teacherProfile) {
+      db.userData[cleanUsername].teacherProfile = {};
+    }
+    db.userData[cleanUsername].teacherProfile.schoolName = updates.schoolName;
+    if (db.userData[cleanUsername].settings) {
+      db.userData[cleanUsername].settings.schoolName = updates.schoolName;
+    }
+    db.userData[cleanUsername].updatedAt = Date.now();
+  }
+
   saveDatabase(db);
 
   if (isSupabaseConfigured()) {
@@ -654,6 +1734,121 @@ export function updateUser(id: string, updates: Partial<UserAccountServer>): { s
   }
 
   return { success: true, user: updatedUser };
+}
+
+/**
+ * 🏢 DI CHUYỂN TOÀN BỘ DATABASE GIÁO VIÊN VÃNG LAI VÀO NHÀ TRƯỜNG ĐƯỢC CHỈ ĐỊNH
+ * - Bảo toàn 100% tài khoản, mật khẩu, thông tin cá nhân.
+ * - Bảo toàn 100% lớp học, danh sách học sinh, điểm số thi đua và chuyên cần.
+ * - Cập nhật tenantType = 'school', schoolName = targetSchoolName.
+ * - Tự động di chuyển dữ liệu phân vùng từ database_ca_nhan sang database_nha_truong.
+ * - Nhà trường được gán có toàn quyền xem lớp, xem học sinh, cấp lại mật khẩu cho cô giáo.
+ */
+export function transferUserToSchool(usernameOrId: string, targetSchoolName: string): {
+  success: boolean;
+  user?: UserAccountServer;
+  message?: string;
+  transferredData?: {
+    classesCount: number;
+    studentsCount: number;
+    oldSchool: string;
+    newSchool: string;
+  };
+} {
+  const db = loadDatabase();
+  const searchKey = usernameOrId.trim().toLowerCase();
+  const index = db.users.findIndex(u => u.id === usernameOrId || u.username.toLowerCase() === searchKey);
+
+  if (index === -1) {
+    return { success: false, message: `Không tìm thấy tài khoản người dùng "${usernameOrId}".` };
+  }
+
+  const current = db.users[index];
+
+  if (current.username.toLowerCase() === 'admin' || current.role === 'admin') {
+    return { success: false, message: 'Không thể di chuyển tài khoản Quản trị viên tối cao (admin) vào nhà trường.' };
+  }
+
+  const oldSchool = current.schoolName || 'Giáo viên cá nhân vãng lai';
+  const cleanUsername = current.username.trim().toLowerCase();
+  
+  // 1. Cập nhật thông tin tài khoản user
+  const updatedUser: UserAccountServer = {
+    ...current,
+    tenantType: 'school',
+    schoolName: targetSchoolName,
+    isGuestAdmin: false
+  };
+  db.users[index] = updatedUser;
+
+  // 2. Bảo toàn và cập nhật dữ liệu lớp học, học sinh, điểm số của giáo viên
+  let classesCount = 0;
+  let studentsCount = 0;
+
+  if (db.userData[cleanUsername]) {
+    const uData = db.userData[cleanUsername];
+    if (!uData.teacherProfile) {
+      uData.teacherProfile = {};
+    }
+    uData.teacherProfile.schoolName = targetSchoolName;
+    if (uData.settings) {
+      uData.settings.schoolName = targetSchoolName;
+    }
+    // Đếm số lượng lớp và học sinh để phản hồi xác nhận
+    if (Array.isArray(uData.classes)) {
+      classesCount = uData.classes.length;
+      uData.classes = uData.classes.map((cls: any) => ({
+        ...cls,
+        schoolName: targetSchoolName
+      }));
+    }
+    if (Array.isArray(uData.students)) {
+      studentsCount = uData.students.length;
+    }
+    uData.updatedAt = Date.now();
+  }
+
+  // 3. Ghi log kiểm toán (Audit Log)
+  addAuditLog({
+    username: 'admin',
+    userFullName: 'Quản trị viên Hệ thống Cấp cao',
+    role: 'admin',
+    actionType: 'UPDATE_CLASS',
+    description: `Di chuyển CSDL giáo viên "${current.fullName}" (@${current.username}) từ [${oldSchool}] sang [${targetSchoolName}] (Bảo toàn ${classesCount} lớp, ${studentsCount} học sinh).`,
+    details: {
+      targetUsername: current.username,
+      targetSchoolName,
+      classesCount,
+      studentsCount
+    }
+  });
+
+  // 4. Lưu CSDL toàn cục và tự động kích hoạt syncPartitionDirectories()
+  saveDatabase(db);
+
+  // 5. Dual-write lên Supabase nếu có cấu hình
+  if (isSupabaseConfigured()) {
+    upsertSupabaseUser(updatedUser).catch(err => {
+      console.warn('[Supabase Dual-Write] Lỗi cập nhật user khi chuyển trường:', err);
+    });
+    if (db.userData[cleanUsername]) {
+      saveSupabaseUserData(cleanUsername, db.userData[cleanUsername]).catch(err => {
+        console.warn(`[Supabase Dual-Write] Lỗi đồng bộ ngầm userData ${cleanUsername}:`, err);
+      });
+    }
+  }
+
+  return {
+    success: true,
+    user: updatedUser,
+    message: `Đã di chuyển thành công giáo viên "${current.fullName}" vào trường "${targetSchoolName}". Toàn bộ tài khoản, mật khẩu, ${classesCount} lớp học và ${studentsCount} học sinh được bảo toàn nguyên vẹn 100%.`,
+    transferredData: {
+      classesCount,
+      studentsCount,
+      oldSchool,
+      newSchool: targetSchoolName
+    }
+  };
 }
 
 export function deleteUser(id: string): { success: boolean; message?: string } {
@@ -741,7 +1936,7 @@ export function getAdminAllData(): {
 } {
   const db = loadDatabase();
   const teachers = db.users
-    .filter(u => u.role === 'homeroom' || u.role === 'subject')
+    .filter(u => u.role === 'homeroom') // Chỉ lấy giáo viên chủ nhiệm
     .map(({ password, ...u }) => u);
 
   const allClassesMap = new Map<string, any>();
@@ -1026,7 +2221,7 @@ export function updateAdminStudent(studentData: any, targetUsername?: string, is
 export function addAuditLog(entry: {
   username: string;
   userFullName: string;
-  role: 'admin' | 'homeroom' | 'subject';
+  role: AuditLogItem['role'];
   actionType: AuditLogItem['actionType'];
   description: string;
   details?: any;
@@ -1235,3 +2430,395 @@ export function compactDatabase() {
   saveDatabase(db);
   return getDatabaseStats();
 }
+
+/**
+ * 🎓 CÔNG CỤ CHUẨN BỊ NĂM HỌC MỚI DÀNH CHO NHÀ TRƯỜNG (Yêu cầu 3)
+ * @param schoolName Tên trường cần xóa dữ liệu (nếu rỗng hoặc 'ALL' thì áp dụng cho toàn bộ tài khoản thuộc nhà trường)
+ * @param mode 'full': Xóa toàn bộ thông tin lớp học, học sinh, giáo viên của trường
+ *             'keep_teachers': Xóa lớp học & học sinh, GIỮ NGUYÊN tài khoản user giáo viên
+ */
+/**
+ * 🏫 QUẢN LÝ DANH MỤC CƠ SỞ DỮ LIỆU TRƯỜNG HỌC (Dành cho Admin Tối Cao)
+ */
+export function getSchools(): SchoolEntity[] {
+  const db = loadDatabase();
+  if (!Array.isArray(db.schools) || db.schools.length === 0) {
+    db.schools = [...DEFAULT_SCHOOLS];
+    saveDatabase(db);
+  }
+  return db.schools;
+}
+
+export function createSchool(data: Partial<SchoolEntity>) {
+  const db = loadDatabase();
+  if (!Array.isArray(db.schools)) {
+    db.schools = [...DEFAULT_SCHOOLS];
+  }
+  if (!data.name || !data.name.trim()) {
+    return { success: false, message: 'Tên trường học không được để trống.' };
+  }
+
+  const cleanName = data.name.trim();
+  const existing = db.schools.find(s => s.name.toLowerCase() === cleanName.toLowerCase());
+  if (existing) {
+    return { success: false, message: 'Trường học này đã tồn tại trong hệ thống.' };
+  }
+
+  const newSchool: SchoolEntity = {
+    id: data.id || `school_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    name: cleanName,
+    code: data.code?.trim().toUpperCase() || `TH_${Date.now().toString().slice(-4)}`,
+    address: data.address?.trim() || '',
+    phone: data.phone?.trim() || '',
+    adminUsername: data.adminUsername?.trim() || 'admin_truong',
+    createdAt: Date.now()
+  };
+
+  db.schools.push(newSchool);
+  saveDatabase(db);
+
+  addAuditLog({
+    username: 'admin',
+    userFullName: 'Quản trị viên Hệ thống',
+    role: 'admin',
+    actionType: 'OTHER',
+    description: `Khởi tạo cơ sở dữ liệu trường học mới: ${newSchool.name} (${newSchool.code})`,
+    details: newSchool
+  });
+
+  return { success: true, school: newSchool, message: 'Khởi tạo trường học mới thành công.' };
+}
+
+export function updateSchool(id: string, data: Partial<SchoolEntity>) {
+  const db = loadDatabase();
+  if (!Array.isArray(db.schools)) {
+    db.schools = [...DEFAULT_SCHOOLS];
+  }
+  const idx = db.schools.findIndex(s => s.id === id);
+  if (idx === -1) {
+    return { success: false, message: 'Không tìm thấy trường học cần cập nhật.' };
+  }
+
+  const oldSchool = db.schools[idx];
+  const oldName = oldSchool.name;
+  const newName = data.name?.trim() || oldSchool.name;
+
+  db.schools[idx] = {
+    ...oldSchool,
+    name: newName,
+    code: data.code?.trim().toUpperCase() || oldSchool.code,
+    address: data.address !== undefined ? data.address.trim() : oldSchool.address,
+    phone: data.phone !== undefined ? data.phone.trim() : oldSchool.phone,
+    adminUsername: data.adminUsername !== undefined ? data.adminUsername.trim() : oldSchool.adminUsername
+  };
+
+  // Nếu đổi tên trường, cập nhật luôn trường schoolName của các user trực thuộc
+  if (oldName !== newName) {
+    for (const u of db.users) {
+      if (u.schoolName === oldName) {
+        u.schoolName = newName;
+      }
+    }
+  }
+
+  saveDatabase(db);
+  return { success: true, school: db.schools[idx], message: 'Cập nhật thông tin trường thành công.' };
+}
+
+export function deleteSchool(id: string) {
+  const db = loadDatabase();
+  if (!Array.isArray(db.schools)) {
+    return { success: false, message: 'Danh sách trường rỗng.' };
+  }
+  const target = db.schools.find(s => s.id === id);
+  if (!target) {
+    return { success: false, message: 'Không tìm thấy trường học cần xóa.' };
+  }
+
+  db.schools = db.schools.filter(s => s.id !== id);
+  saveDatabase(db);
+
+  addAuditLog({
+    username: 'admin',
+    userFullName: 'Quản trị viên Hệ thống',
+    role: 'admin',
+    actionType: 'OTHER',
+    description: `Xóa cơ sở dữ liệu trường học: ${target.name} (${target.code})`,
+    details: target
+  });
+
+  return { success: true, message: `Đã xóa cơ sở dữ liệu trường ${target.name} thành công.` };
+}
+
+/**
+ * 🎓 CÔNG CỤ CHUẨN BỊ NĂM HỌC MỚI (Dành cho Quản trị Nhà trường & Quản trị Cá nhân)
+ * @param schoolName Tên trường cần xóa dữ liệu (nếu rỗng hoặc 'ALL' thì áp dụng cho toàn bộ tài khoản thuộc nhà trường)
+ * @param mode 'full': Xóa toàn bộ thông tin lớp học, học sinh, giáo viên
+ *             'keep_teachers': Xóa lớp học & học sinh, GIỮ NGUYÊN tài khoản user giáo viên
+ * @param targetScope 'school': Phân vùng trường học | 'guest': Phân vùng giáo viên cá nhân
+ */
+export function resetSchoolAcademicYear(
+  schoolName?: string, 
+  mode: 'full' | 'keep_teachers' = 'keep_teachers',
+  targetScope: 'school' | 'guest' = 'school'
+) {
+  const db = loadDatabase();
+  const targetSchool = (schoolName || '').trim().toLowerCase();
+
+  const isMatching = (u: UserAccountServer) => {
+    // Không bao giờ xóa tài khoản quản trị cốt lõi hệ thống
+    if (u.username === 'admin' || u.username === 'demogvcn' || u.username === 'demogvbm' || u.username === 'bgh') {
+      return false;
+    }
+
+    if (targetScope === 'guest') {
+      // Phân vùng cá nhân: không xóa tài khoản admin_canhan
+      if (u.username === 'admin_canhan' || u.role === 'guest_admin') {
+        return false;
+      }
+      return (u.tenantType || 'guest') === 'guest';
+    } else {
+      // Phân vùng nhà trường: không xóa tài khoản admin_truong
+      if (u.username === 'admin_truong' || u.role === 'school_admin') {
+        return false;
+      }
+      if ((u.tenantType || 'school') === 'guest') {
+        return false;
+      }
+      if (!targetSchool || targetSchool === 'all') {
+        return true;
+      }
+      return (u.schoolName || '').trim().toLowerCase() === targetSchool;
+    }
+  };
+
+  const affectedUsers = db.users.filter(isMatching);
+  let deletedClassCount = 0;
+  let deletedStudentCount = 0;
+
+  if (mode === 'full') {
+    // LỰA CHỌN 1: Xóa toàn bộ thông tin lớp học, học sinh, và tài khoản giáo viên
+    const usernamesToDelete = new Set(affectedUsers.map(u => u.username.toLowerCase()));
+
+    for (const uname of usernamesToDelete) {
+      if (db.userData[uname]) {
+        deletedClassCount += (db.userData[uname].classes || []).length;
+        deletedStudentCount += (db.userData[uname].students || []).length;
+        delete db.userData[uname];
+      }
+    }
+
+    db.users = db.users.filter(u => !usernamesToDelete.has(u.username.toLowerCase()));
+
+    addAuditLog({
+      username: targetScope === 'guest' ? 'admin_canhan' : 'admin_truong',
+      userFullName: targetScope === 'guest' ? 'Quản trị Tài khoản Cá nhân' : 'Quản trị Nhà trường',
+      role: targetScope === 'guest' ? 'guest_admin' : 'school_admin',
+      actionType: 'DELETE_CLASS',
+      description: `[NĂM HỌC MỚI - TOÀN DIỆN ${targetScope.toUpperCase()}] Đã xóa ${usernamesToDelete.size} giáo viên, ${deletedClassCount} lớp và ${deletedStudentCount} học sinh.`,
+      details: { mode: 'full', targetScope, usernames: Array.from(usernamesToDelete) }
+    });
+
+  } else {
+    // LỰA CHỌN 2: Xóa dữ liệu lớp học & học sinh mà KHÔNG xóa tài khoản user của giáo viên
+    for (const u of affectedUsers) {
+      const uname = u.username.toLowerCase();
+      if (db.userData[uname]) {
+        deletedClassCount += (db.userData[uname].classes || []).length;
+        deletedStudentCount += (db.userData[uname].students || []).length;
+        db.userData[uname] = {
+          ...db.userData[uname],
+          classes: [],
+          activeClassId: '',
+          students: [],
+          transactions: [],
+          redemptions: [],
+          attendanceRecords: [],
+          boardingRecords: [],
+          seatingAssignments: {},
+          timetable: [],
+          subjectTimetable: [],
+          updatedAt: Date.now()
+        };
+      }
+    }
+
+    addAuditLog({
+      username: targetScope === 'guest' ? 'admin_canhan' : 'admin_truong',
+      userFullName: targetScope === 'guest' ? 'Quản trị Tài khoản Cá nhân' : 'Quản trị Nhà trường',
+      role: targetScope === 'guest' ? 'guest_admin' : 'school_admin',
+      actionType: 'DELETE_CLASS',
+      description: `[NĂM HỌC MỚI - GIỮ GIÁO VIÊN ${targetScope.toUpperCase()}] Đã dọn sạch ${deletedClassCount} lớp và ${deletedStudentCount} học sinh của ${affectedUsers.length} giáo viên.`,
+      details: { mode: 'keep_teachers', targetScope, affectedUserCount: affectedUsers.length }
+    });
+  }
+
+  saveDatabase(db);
+  const scopeTitle = targetScope === 'guest' ? 'nhóm Giáo viên cá nhân' : (schoolName ? `trường ${schoolName}` : 'nhà trường');
+  return {
+    success: true,
+    mode,
+    targetScope,
+    affectedUsersCount: affectedUsers.length,
+    deletedClassCount,
+    deletedStudentCount,
+    message: mode === 'full' 
+      ? `Đã xóa toàn bộ dữ liệu lớp học, học sinh và ${affectedUsers.length} tài khoản giáo viên thuộc ${scopeTitle} cho năm học mới thành công!`
+      : `Đã dọn sạch dữ liệu lớp học & học sinh cho năm học mới, bảo toàn nguyên vẹn ${affectedUsers.length} tài khoản giáo viên thuộc ${scopeTitle}!`
+  };
+}
+
+/**
+ * 📦 TRÍCH XUẤT DATA JSON THEO PHÂN QUYỀN (Dành cho Quản trị Trường & Quản trị Cá Nhân)
+ */
+export function exportDatabaseScoped(scope: 'all' | 'school' | 'guest' = 'all', schoolName?: string) {
+  const db = loadDatabase();
+  if (scope === 'all') return db;
+
+  const targetSchool = (schoolName || '').trim().toLowerCase();
+  const filterUser = (u: UserAccountServer) => {
+    if (scope === 'guest') {
+      return (u.tenantType || 'guest') === 'guest';
+    } else {
+      if ((u.tenantType || 'school') === 'guest') return false;
+      if (!targetSchool || targetSchool === 'all') return true;
+      return (u.schoolName || '').trim().toLowerCase() === targetSchool;
+    }
+  };
+
+  const scopedUsers = db.users.filter(filterUser);
+  const scopedUsernames = new Set(scopedUsers.map(u => u.username.toLowerCase()));
+  const scopedUserData: Record<string, any> = {};
+
+  for (const [uname, data] of Object.entries(db.userData || {})) {
+    if (scopedUsernames.has(uname.toLowerCase())) {
+      scopedUserData[uname] = data;
+    }
+  }
+
+  return {
+    version: db.version,
+    appName: db.appName,
+    exportedScope: scope,
+    schoolName: schoolName || 'Tất cả trường',
+    exportedAt: new Date().toISOString(),
+    users: scopedUsers,
+    schools: scope === 'school' ? (db.schools || []).filter(s => !targetSchool || targetSchool === 'all' || s.name.toLowerCase() === targetSchool) : [],
+    userData: scopedUserData
+  };
+}
+
+/**
+ * 📥 NẠP VÀ GỘP DATA JSON THEO PHÂN QUYỀN (An toàn, Non-Destructive)
+ */
+export function importDatabaseScoped(importedData: any, scope: 'all' | 'school' | 'guest' = 'all', schoolName?: string) {
+  const db = loadDatabase();
+  if (!importedData || (!Array.isArray(importedData.users) && typeof importedData.userData !== 'object')) {
+    return { success: false, message: 'File dữ liệu không đúng định dạng JSON hợp lệ.' };
+  }
+
+  if (scope === 'all') {
+    // Admin Full Restore
+    if (Array.isArray(importedData.users)) {
+      db.users = importedData.users;
+    }
+    if (Array.isArray(importedData.schools)) {
+      db.schools = importedData.schools;
+    }
+    if (importedData.userData && typeof importedData.userData === 'object') {
+      db.userData = importedData.userData;
+    }
+  } else {
+    // Non-destructive Scoped Import
+    const incomingUsers = Array.isArray(importedData.users) ? importedData.users : [];
+    const incomingUserData = importedData.userData || {};
+
+    for (const inUser of incomingUsers) {
+      const idx = db.users.findIndex(u => u.username.toLowerCase() === inUser.username.toLowerCase());
+      if (idx >= 0) {
+        db.users[idx] = { ...db.users[idx], ...inUser };
+      } else {
+        db.users.push(inUser);
+      }
+    }
+
+    for (const [uname, data] of Object.entries(incomingUserData)) {
+      db.userData[uname] = data;
+    }
+  }
+
+  saveDatabase(db);
+  return { success: true, message: 'Nhập và đồng bộ dữ liệu JSON thành công!' };
+}
+
+/**
+ * 📝 LƯU ĐƠN ĐĂNG KÝ SỬ DỤNG PHẦN MỀM (Yêu cầu 4)
+ */
+export function addRegistrationRequest(req: any) {
+  const db = loadDatabase();
+  if (!Array.isArray(db.registrations)) {
+    db.registrations = [];
+  }
+  const newReq = {
+    id: `reg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    fullName: req.fullName || '',
+    roleOrTitle: req.roleOrTitle || '',
+    organization: req.organization || '',
+    zaloPhone: req.zaloPhone || '',
+    requestType: req.requestType || (req.registrationType === 'school' ? 'Cấp cho tổ chức nhà trường' : 'Cấp tài khoản cá nhân'),
+    accountRole: req.accountRole || (req.registrationType === 'school' ? 'Quản trị nhà trường' : ''),
+    registrationType: req.registrationType || 'personal', // 'school' | 'personal'
+    amount: req.registrationType === 'school' ? 1000000 : 50000,
+    transferContent: req.registrationType === 'school' ? 'MO TAI KHOAN QLHS TRUONG' : 'MO TAI KHOAN CA NHAN',
+    createdAt: Date.now(),
+    status: 'pending'
+  };
+
+  db.registrations.unshift(newReq);
+  saveDatabase(db);
+  return { success: true, registration: newReq };
+}
+
+export function getRegistrationRequests() {
+  const db = loadDatabase();
+  return db.registrations || [];
+}
+
+export function updateRegistrationRequestStatus(id: string, status: 'approved' | 'rejected', reason?: string) {
+  const db = loadDatabase();
+  if (!db.registrations) db.registrations = [];
+  const index = db.registrations.findIndex((r: any) => r.id === id);
+  if (index !== -1) {
+    db.registrations[index].status = status;
+    if (reason !== undefined) {
+      db.registrations[index].rejectReason = reason;
+    }
+    saveDatabase(db);
+    return true;
+  }
+  return false;
+}
+
+export function deleteRegistrationRequest(id: string) {
+  const db = loadDatabase();
+  if (!db.registrations) db.registrations = [];
+  const initialLength = db.registrations.length;
+  db.registrations = db.registrations.filter((r: any) => r.id !== id);
+  if (db.registrations.length !== initialLength) {
+    saveDatabase(db);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * 👥 LẤY DANH SÁCH TÀI KHOẢN THEO PHÂN LOẠI (NHÀ TRƯỜNG HOẶC VÃNG LAI)
+ */
+export function getUsersByTenant(tenantType?: 'school' | 'guest') {
+  const db = loadDatabase();
+  if (!tenantType) return db.users.map(({ password, ...u }) => u);
+  return db.users
+    .filter(u => (u.tenantType || 'school') === tenantType)
+    .map(({ password, ...u }) => u);
+}
+

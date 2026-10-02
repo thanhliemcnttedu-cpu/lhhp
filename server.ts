@@ -26,7 +26,20 @@ import {
   getAdminAllData,
   syncAdminClassroomData,
   updateAdminClass,
-  updateAdminStudent
+  updateAdminStudent,
+  resetSchoolAcademicYear,
+  addRegistrationRequest,
+  getRegistrationRequests,
+  updateRegistrationRequestStatus,
+  deleteRegistrationRequest,
+  getUsersByTenant,
+  getSchools,
+  createSchool,
+  updateSchool,
+  deleteSchool,
+  exportDatabaseScoped,
+  importDatabaseScoped,
+  transferUserToSchool
 } from './server/database';
 import {
   initGitSync,
@@ -254,20 +267,90 @@ app.get('/api/ai/status', (_req, res) => {
 // ==========================================
 // 1. AUTHENTICATION & LOGIN API
 // ==========================================
+function checkUserRoleMatch(user: any, selectedRoleScope?: string): boolean {
+  if (!selectedRoleScope) return true;
+  switch (selectedRoleScope) {
+    case 'admin':
+      return user.role === 'admin';
+    case 'school_admin':
+      return user.role === 'school_admin' || Boolean(user.isSchoolAdmin) || user.role === 'bgh' || Boolean(user.isBgh) || user.role === 'admin';
+    case 'guest_admin':
+      return user.role === 'guest_admin' || Boolean(user.isGuestAdmin) || user.role === 'admin';
+    case 'personal_teacher':
+      return user.tenantType === 'guest' || 
+             (user.schoolName && (user.schoolName.toLowerCase().includes('cá nhân') || user.schoolName.toLowerCase().includes('tự do') || user.schoolName.toLowerCase().includes('vãng lai')));
+    case 'school_teacher':
+      return (user.tenantType === 'school' || user.role === 'homeroom' || user.role === 'subject' || user.role === 'bgh' || Boolean(user.isBgh)) &&
+             !(user.tenantType === 'guest');
+    default:
+      return true;
+  }
+}
+
+function checkUserSchoolMatch(user: any, selectedRoleScope?: string, selectedSchoolName?: string): boolean {
+  if (user.role === 'admin' || user.role === 'guest_admin' || user.tenantType === 'guest') {
+    return true;
+  }
+  if (selectedRoleScope === 'personal_teacher') {
+    return true;
+  }
+  if (!selectedSchoolName || !selectedSchoolName.trim()) {
+    return false;
+  }
+
+  const userSchool = (user.schoolName || '').trim();
+  if (!userSchool) return true;
+
+  const normalize = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/\(.*?\)/g, '')
+      .replace(/trường\s+/gi, '')
+      .replace(/tiểu học\s+/gi, 'th ')
+      .replace(/[^a-z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ\s]/g, '')
+      .trim()
+      .replace(/\s+/g, ' ');
+  };
+
+  const normUserSchool = normalize(userSchool);
+  const normSelectedSchool = normalize(selectedSchoolName);
+
+  return normUserSchool === normSelectedSchool || 
+         normUserSchool.includes(normSelectedSchool) || 
+         normSelectedSchool.includes(normUserSchool);
+}
+
 app.post('/api/auth/login', (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, selectedRoleScope, selectedSchoolName } = req.body;
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Vui lòng nhập tên đăng nhập và mật khẩu.' });
     }
 
     const user = findUserByUsername(username);
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Tài khoản không tồn tại trên hệ thống.' });
+
+    // 1. Kiểm tra tài khoản và mật khẩu
+    if (!user || user.password !== password) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Bạn đã nhập sai tài khoản mật khẩu.' 
+      });
     }
 
-    if (user.password !== password) {
-      return res.status(401).json({ success: false, message: 'Mật khẩu không chính xác.' });
+    // 2. Đúng tài khoản & mật khẩu rồi -> Kiểm tra vai trò
+    if (!checkUserRoleMatch(user, selectedRoleScope)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Bạn đã nhập không đúng vai trò với tài khoản được gán vui lòng kiểm tra lại' 
+      });
+    }
+
+    // 3. Đúng tài khoản, mật khẩu & vai trò -> Kiểm tra tên trường
+    if (!checkUserSchoolMatch(user, selectedRoleScope, selectedSchoolName)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Bạn đã chọn sai trường.' 
+      });
     }
 
     // Update last login timestamp
@@ -360,6 +443,29 @@ app.post('/api/users/:id/reset-password', (req, res) => {
     return res.json({ success: true, message: result.message });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// Chuyển và gán giáo viên vãng lai vào tổ chức Nhà trường (Super Admin)
+app.post('/api/users/:id/transfer-school', (req, res) => {
+  try {
+    const { targetSchoolName } = req.body;
+    if (!targetSchoolName || !targetSchoolName.trim()) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tên trường học cần gán.' });
+    }
+    const result = transferUserToSchool(req.params.id, targetSchoolName.trim());
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    broadcastRealtimeEvent({
+      type: 'USER_CHANGED',
+      username: result.user?.username,
+      timestamp: Date.now(),
+      message: `Giáo viên ${result.user?.fullName} đã được di chuyển vào trường ${targetSchoolName}`
+    });
+    return res.json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message || 'Lỗi khi di chuyển tài khoản vào trường.' });
   }
 });
 
@@ -600,12 +706,101 @@ app.post('/api/database/compact', (_req, res) => {
   }
 });
 
+// Chuẩn bị năm học mới: Xóa dữ liệu trường/cá nhân có 2 lựa chọn (Hỗ trợ phân quyền)
+app.post('/api/database/reset-academic-year', (req, res) => {
+  try {
+    const { schoolName, mode, targetScope } = req.body;
+    const result = resetSchoolAcademicYear(schoolName, mode, targetScope || 'school');
+    broadcastRealtimeEvent({
+      type: 'SYSTEM_SYNC',
+      timestamp: Date.now(),
+      message: result.message
+    });
+    return res.json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// ==========================================
+// 4.1. SCHOOL DATABASE CRUD API (ADMIN)
+// ==========================================
+app.get('/api/schools', (_req, res) => {
+  try {
+    const schools = getSchools();
+    return res.json({ success: true, schools });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.post('/api/schools', (req, res) => {
+  try {
+    const result = createSchool(req.body);
+    return res.status(result.success ? 201 : 400).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.put('/api/schools/:id', (req, res) => {
+  try {
+    const result = updateSchool(req.params.id, req.body);
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.delete('/api/schools/:id', (req, res) => {
+  try {
+    const result = deleteSchool(req.params.id);
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// Tiếp nhận đơn đăng ký sử dụng phần mềm (Yêu cầu 4)
+app.get('/api/registrations', (_req, res) => {
+  try {
+    const registrations = getRegistrationRequests();
+    return res.json({ success: true, registrations });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.post('/api/registrations', (req, res) => {
+  try {
+    const result = addRegistrationRequest(req.body);
+    return res.json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
 app.get('/api/database/export', (_req, res) => {
   try {
     const db = loadDatabase();
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename=lop_hoc_hanh_phuc_database_${Date.now()}.json`);
     return res.send(JSON.stringify(db, null, 2));
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// Trích xuất JSON theo phân quyền (School/Guest/All)
+app.get('/api/database/export-scoped', (req, res) => {
+  try {
+    const scope = (req.query.scope as any) || 'all';
+    const schoolName = (req.query.schoolName as string) || '';
+    const scopedData = exportDatabaseScoped(scope, schoolName);
+    const filenameScope = scope === 'guest' ? 'giao_vien_ca_nhan' : (schoolName ? schoolName.replace(/[^a-zA-Z0-9]/g, '_') : 'toan_truong');
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=data_${filenameScope}_${Date.now()}.json`);
+    return res.send(JSON.stringify(scopedData, null, 2));
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message });
   }
@@ -622,6 +817,17 @@ app.post('/api/database/import', (req, res) => {
       success: ok,
       message: ok ? 'Đã nhập và khôi phục cơ sở dữ liệu thành công.' : 'Lỗi khi lưu database.'
     });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// Nạp JSON theo phân quyền (School/Guest)
+app.post('/api/database/import-scoped', (req, res) => {
+  try {
+    const { data, scope, schoolName } = req.body;
+    const result = importDatabaseScoped(data, scope || 'all', schoolName);
+    return res.status(result.success ? 200 : 400).json(result);
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message });
   }
@@ -716,6 +922,87 @@ app.get('/api/user-data-summaries', (_req, res) => {
   try {
     const summaries = getUserDataSummary();
     return res.json({ success: true, summaries });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// ==========================================
+// 6. ACADEMIC YEAR RESET & TENANT PARTITION API (Yêu cầu 3)
+// ==========================================
+app.post('/api/database/reset-academic-year', (req, res) => {
+  try {
+    const { schoolName, mode } = req.body;
+    const result = resetSchoolAcademicYear(schoolName, mode);
+    return res.json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.get('/api/users/tenant/:tenantType', (req, res) => {
+  try {
+    const users = getUsersByTenant(req.params.tenantType as any);
+    return res.json({ success: true, users });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// ==========================================
+// 7. REGISTRATION REQUESTS API (Yêu cầu 4)
+// ==========================================
+app.get('/api/registrations', (_req, res) => {
+  try {
+    const registrations = getRegistrationRequests();
+    return res.json({ success: true, registrations });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.post('/api/registrations', (req, res) => {
+  try {
+    const { fullName, phone, roleTitle, schoolName, type, note } = req.body;
+    if (!fullName || !phone) {
+      return res.status(400).json({ success: false, message: 'Vui lòng điền họ tên và số điện thoại.' });
+    }
+    const reg = addRegistrationRequest({
+      fullName,
+      phone,
+      roleTitle,
+      schoolName,
+      type: type || 'school',
+      note
+    });
+    return res.status(201).json({ success: true, registration: reg, message: 'Đăng ký sử dụng thành công!' });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.patch('/api/registrations/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, reason } = req.body;
+    const success = updateRegistrationRequestStatus(id, status, reason);
+    if (success) {
+      return res.json({ success: true });
+    }
+    return res.status(404).json({ success: false, message: 'Not found' });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.delete('/api/registrations/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const success = deleteRegistrationRequest(id);
+    if (success) {
+      return res.json({ success: true });
+    }
+    return res.status(404).json({ success: false, message: 'Not found' });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message });
   }

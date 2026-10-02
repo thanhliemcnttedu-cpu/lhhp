@@ -180,33 +180,36 @@ export const MysteryGiftBoxGame: React.FC = () => {
         </div>
 
         {/* 3 Call Modes Switcher */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setCallMode('random')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase ${
+            className={`px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer uppercase text-center ${
               callMode === 'random' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            1. Gọi Ngẫu Nhiên
+            <span className="hidden sm:inline">1. Gọi Ngẫu Nhiên</span>
+            <span className="sm:hidden">1. NGẪU NHIÊN</span>
           </button>
           <button
             type="button"
             onClick={() => setCallMode('coins')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase ${
+            className={`px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer uppercase text-center ${
               callMode === 'coins' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            2. Gọi + Tặng Xu
+            <span className="hidden sm:inline">2. Gọi + Tặng Xu</span>
+            <span className="sm:hidden">2. TẶNG XU</span>
           </button>
           <button
             type="button"
             onClick={() => setCallMode('quiz')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer uppercase ${
+            className={`px-2 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer uppercase text-center ${
               callMode === 'quiz' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            3. Gọi + Trả Lời Câu Hỏi
+            <span className="hidden sm:inline">3. Gọi + Trả Lời Câu Hỏi</span>
+            <span className="sm:hidden">3. CÂU HỎI</span>
           </button>
         </div>
 

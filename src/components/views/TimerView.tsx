@@ -347,15 +347,15 @@ export const TimerView: React.FC = () => {
       {/* ANALOG CLOCK STAGE (ĐỒNG HỒ KIM THỜI GIAN THỰC & NGÀY THÁNG NĂM)      */}
       {/* ===================================================================== */}
       {(viewMode === 'analog' || viewMode === 'split') && (
-        <div className={`bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-indigo-500/20 relative overflow-hidden hover-zoom-card ${viewMode === 'analog' ? 'max-w-3xl mx-auto' : ''}`}>
+        <div className={`bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 rounded-3xl p-4 sm:p-6 md:p-8 text-white shadow-xl border border-indigo-500/20 relative overflow-hidden hover-zoom-card ${viewMode === 'analog' ? 'max-w-3xl mx-auto' : ''}`}>
           {/* Subtle Ambient Lights */}
           <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 relative z-10">
             {/* Left: The Realistic Analog Clock Face */}
             <div className="flex flex-col items-center shrink-0">
-              <div className="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center">
+              <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 flex items-center justify-center">
                 <svg className="w-full h-full drop-shadow-2xl" viewBox="0 0 300 300">
                   {/* Outer Bezel */}
                   <circle cx="150" cy="150" r="146" fill="#1e293b" stroke="#6366f1" strokeWidth="4" />
@@ -441,28 +441,28 @@ export const TimerView: React.FC = () => {
             </div>
 
             {/* Right: Date, Day of Week & Digital Time Banner */}
-            <div className="flex-1 text-center md:text-left space-y-3">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-xs font-black uppercase tracking-wider">
+            <div className="flex-1 text-center md:text-left space-y-2.5 sm:space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-[11px] sm:text-xs font-black uppercase tracking-wider">
                 <CalendarIcon className="w-3.5 h-3.5 text-amber-300" />
                 <span>Thời Gian Hiện Tại • Năm Học 2026 - 2027</span>
               </div>
 
               {/* Day of Week & Full Date */}
               <div>
-                <h2 className="text-2xl sm:text-4xl font-black text-amber-300 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-amber-300 tracking-tight">
                   {dayOfWeekVi}
                 </h2>
-                <p className="text-base sm:text-xl font-bold text-slate-100 mt-1">
+                <p className="text-sm sm:text-lg md:text-xl font-bold text-slate-100 mt-0.5 sm:mt-1">
                   {dateFormattedVi}
                 </p>
               </div>
 
               {/* Big Digital Clock */}
-              <div className="inline-block bg-slate-950/70 border border-indigo-500/30 px-6 py-2.5 rounded-2xl shadow-inner font-mono text-3xl sm:text-4xl font-black tracking-widest text-cyan-300">
+              <div className="inline-block bg-slate-950/70 border border-indigo-500/30 px-4 sm:px-6 py-1.5 sm:py-2.5 rounded-2xl shadow-inner font-mono text-2xl sm:text-3xl md:text-4xl font-black tracking-widest text-cyan-300">
                 {digitalTimeVi}
               </div>
 
-              <p className="text-xs text-indigo-200/80 font-medium">
+              <p className="text-[11px] sm:text-xs text-indigo-200/80 font-medium">
                 Đồng hồ kim và lịch ngày tháng tự động đồng bộ chính xác theo giờ hệ thống của máy tính và lớp học.
               </p>
             </div>
@@ -522,7 +522,7 @@ export const TimerView: React.FC = () => {
               isAlarmActive ? 'border-red-400 shadow-red-200' : 'border-slate-200/90'
             }`}>
               {/* Circular Countdown SVG */}
-              <div className="relative w-56 h-56 flex items-center justify-center">
+              <div className="relative w-44 h-44 sm:w-56 sm:h-56 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 300 300">
                   {/* Background Track */}
                   <circle
@@ -549,32 +549,32 @@ export const TimerView: React.FC = () => {
                 </svg>
 
                 {/* Center Content */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-3 sm:p-4">
                   {remainingSeconds === 0 ? (
                     <div className={`flex flex-col items-center justify-center ${isAlarmActive ? 'animate-bounce' : ''}`}>
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 animate-flash-red text-white text-[11px] font-black uppercase mb-1.5 shadow-md">
-                        <Bell className="w-3.5 h-3.5 animate-spin" />
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-600 animate-flash-red text-white text-[10px] sm:text-[11px] font-black uppercase mb-1 shadow-md">
+                        <Bell className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
                         <span>CẢNH BÁO</span>
                       </div>
-                      <span className="text-4xl md:text-5xl font-black tracking-widest text-red-600 animate-pulse drop-shadow-sm">
+                      <span className="text-3xl sm:text-4xl md:text-5xl font-black tracking-widest text-red-600 animate-pulse drop-shadow-sm">
                         HẾT GIỜ
                       </span>
                       {isAlarmActive ? (
-                        <span className="text-xs font-black text-red-600 mt-1.5 flex items-center gap-1">
+                        <span className="text-[11px] sm:text-xs font-black text-red-600 mt-1 flex items-center gap-1">
                           <Bell className="w-3 h-3 text-red-500 animate-pulse" /> Chuông reo: còn {alarmSecondsLeft}s
                         </span>
                       ) : (
-                        <span className="text-xs font-bold text-slate-400 mt-1">
+                        <span className="text-[11px] sm:text-xs font-bold text-slate-400 mt-0.5">
                           ĐÃ HOÀN THÀNH
                         </span>
                       )}
                     </div>
                   ) : (
                     <>
-                      <span className="text-3xl md:text-4xl font-black font-mono tracking-tight text-slate-900">
+                      <span className="text-2xl sm:text-3xl md:text-4xl font-black font-mono tracking-tight text-slate-900">
                         {formatTime(remainingSeconds)}
                       </span>
-                      <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mt-1">
+                      <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-slate-400 mt-0.5 sm:mt-1">
                         {isRunning ? 'ĐANG CHẠY' : 'SẴN SÀNG'}
                       </span>
                     </>
@@ -582,12 +582,12 @@ export const TimerView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quick Controls: -30s, Reset, Start/Pause, 30s Quick, +30s */}
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
+              {/* Quick Controls: -30s, Reset, Start/Pause, +30s in a perfect responsive row */}
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 w-full max-w-sm px-1 sm:px-2">
                 <button
                   type="button"
                   onClick={() => handleAdjustSeconds(-30)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn"
+                  className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn shrink-0"
                 >
                   - 30s
                 </button>
@@ -595,7 +595,7 @@ export const TimerView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="p-2.5 rounded-xl text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 hover-zoom-btn"
+                  className="p-2 sm:p-2.5 rounded-xl text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 hover-zoom-btn shrink-0"
                   title="Đặt lại từ đầu"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -607,7 +607,7 @@ export const TimerView: React.FC = () => {
                     stopAlarm();
                     setIsRunning(!isRunning);
                   }}
-                  className={`px-8 py-3 rounded-2xl font-black text-sm text-white shadow-md flex items-center gap-2 hover-zoom-btn ${
+                  className={`flex-1 min-w-[110px] sm:min-w-[130px] px-3 sm:px-8 py-2.5 sm:py-3 rounded-2xl font-black text-xs sm:text-sm text-white shadow-md flex items-center justify-center gap-1.5 sm:gap-2 hover-zoom-btn ${
                     isRunning
                       ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25'
                       : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25'
@@ -617,21 +617,10 @@ export const TimerView: React.FC = () => {
                   <span>{isRunning ? 'Tạm dừng' : 'Bắt đầu'}</span>
                 </button>
 
-                {/* Quick 30s preset button */}
-                <button
-                  type="button"
-                  onClick={handleStartQuick30s}
-                  className="px-4 py-2.5 rounded-2xl text-xs font-black bg-amber-500 hover:bg-amber-600 text-white shadow-md flex items-center gap-1.5 hover-zoom-btn transition-transform"
-                  title="Kích hoạt ngay mẫu nhanh 30 giây"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>30 GIÂY</span>
-                </button>
-
                 <button
                   type="button"
                   onClick={() => handleAdjustSeconds(30)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn"
+                  className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 hover-zoom-btn shrink-0"
                 >
                   + 30s
                 </button>
@@ -652,14 +641,14 @@ export const TimerView: React.FC = () => {
             {/* Right Stage: Time Configuration */}
             <div className="lg:col-span-5 space-y-3">
               {/* Thiết lập thời gian (Hours, Mins, Secs) */}
-              <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-3 hover-zoom-card">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <div className="bg-white rounded-3xl p-3.5 sm:p-4 border border-slate-200/90 shadow-xs space-y-2.5 sm:space-y-3 hover-zoom-card">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
                   <Timer className="w-4 h-4 text-indigo-600" />
-                  Thiết lập thời gian đếm ngược
+                  <span>Thiết lập thời gian đếm ngược</span>
                 </h3>
 
                 {/* 3 Column Spinners */}
-                <div className="flex items-center justify-center gap-4 py-2">
+                <div className="flex items-center justify-center gap-2.5 sm:gap-4 py-1.5 sm:py-2">
                   {/* Hours */}
                   <div className="flex flex-col items-center">
                     <button
@@ -667,22 +656,22 @@ export const TimerView: React.FC = () => {
                       onClick={() => setSetHours(prev => Math.min(23, prev + 1))}
                       className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
                     >
-                      <ChevronUp className="w-4 h-4" />
+                      <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
-                    <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
+                    <span className="text-xl sm:text-2xl font-black font-mono my-0.5 sm:my-1 text-slate-800 w-10 sm:w-12 text-center">
                       {setHours}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Giờ</span>
+                    <span className="text-[9.5px] sm:text-[10px] text-slate-400 font-bold uppercase">Giờ</span>
                     <button
                       type="button"
                       onClick={() => setSetHours(prev => Math.max(0, prev - 1))}
                       className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
                     >
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
 
-                  <span className="text-xl font-bold text-slate-300 -mt-4">:</span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-300 -mt-3 sm:-mt-4">:</span>
 
                   {/* Mins */}
                   <div className="flex flex-col items-center">
@@ -691,22 +680,22 @@ export const TimerView: React.FC = () => {
                       onClick={() => setSetMins(prev => Math.min(59, prev + 1))}
                       className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
                     >
-                      <ChevronUp className="w-4 h-4" />
+                      <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
-                    <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
+                    <span className="text-xl sm:text-2xl font-black font-mono my-0.5 sm:my-1 text-slate-800 w-10 sm:w-12 text-center">
                       {setMins}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Phút</span>
+                    <span className="text-[9.5px] sm:text-[10px] text-slate-400 font-bold uppercase">Phút</span>
                     <button
                       type="button"
                       onClick={() => setSetMins(prev => Math.max(0, prev - 1))}
                       className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
                     >
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
 
-                  <span className="text-xl font-bold text-slate-300 -mt-4">:</span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-300 -mt-3 sm:-mt-4">:</span>
 
                   {/* Secs */}
                   <div className="flex flex-col items-center">
@@ -715,18 +704,18 @@ export const TimerView: React.FC = () => {
                       onClick={() => setSetSecs(prev => Math.min(59, prev + 1))}
                       className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
                     >
-                      <ChevronUp className="w-4 h-4" />
+                      <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
-                    <span className="text-2xl font-black font-mono my-1 text-slate-800 w-12 text-center">
+                    <span className="text-xl sm:text-2xl font-black font-mono my-0.5 sm:my-1 text-slate-800 w-10 sm:w-12 text-center">
                       {setSecs}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Giây</span>
+                    <span className="text-[9.5px] sm:text-[10px] text-slate-400 font-bold uppercase">Giây</span>
                     <button
                       type="button"
                       onClick={() => setSetSecs(prev => Math.max(0, prev - 1))}
                       className="p-1 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 hover-zoom-btn"
                     >
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>
@@ -734,7 +723,7 @@ export const TimerView: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleApplyCustomTime}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all hover-zoom-btn flex items-center justify-center gap-1.5"
+                  className="w-full py-2 sm:py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all hover-zoom-btn flex items-center justify-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
                   <span>Áp dụng thời gian</span>

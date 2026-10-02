@@ -13,6 +13,7 @@ import { DashboardView } from './components/views/DashboardView';
 import { ClassesStudentsView } from './components/views/ClassesStudentsView';
 import { PointsAwardView } from './components/views/PointsAwardView';
 import { RewardsShopView } from './components/views/RewardsShopView';
+import { CertificateView } from './components/views/CertificateView';
 import { RandomStudentPickerView } from './components/views/RandomStudentPickerView';
 import { LuckyWheelView } from './components/views/LuckyWheelView';
 import { FilmReelView } from './components/views/FilmReelView';
@@ -27,13 +28,15 @@ import { AiAssistantView } from './components/views/AiAssistantView';
 import { AuthModal } from './components/modals/AuthModal';
 import { AccountManagementModal } from './components/modals/AccountManagementModal';
 import { GithubSyncModal } from './components/modals/GithubSyncModal';
+import { RegistrationModal } from './components/modals/RegistrationModal';
 
 function ClassroomApp() {
   const { 
     teacherRole, currentUser, allUsers, loginUser, logoutUser, 
     switchUserAccount, refreshUsersList, isAuthModalOpen, 
     setIsAuthModalOpen, isAccountManagerOpen, setIsAccountManagerOpen,
-    isGithubModalOpen, setIsGithubModalOpen
+    isGithubModalOpen, setIsGithubModalOpen,
+    isRegistrationModalOpen, setIsRegistrationModalOpen
   } = useClassroom();
   const [currentView, setCurrentView] = useState<NavigationMenuId>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -76,6 +79,8 @@ function ClassroomApp() {
         return <InfographicView />;
       case 'rewards':
         return <RewardsShopView />;
+      case 'certificate':
+        return <CertificateView />;
       case 'picker':
         return <RandomStudentPickerView initialGame="wheel" />;
       case 'wheel':
@@ -130,7 +135,7 @@ function ClassroomApp() {
         />
 
         {/* Viewport Content with bottom padding on mobile for MobileBottomNav */}
-        <main className="flex-1 overflow-y-auto bg-slate-50/70 pb-20 lg:pb-0">
+        <main className="flex-1 overflow-y-auto bg-slate-50/70 pb-32 sm:pb-24 lg:pb-6">
           {renderCurrentView()}
         </main>
       </div>
@@ -166,6 +171,12 @@ function ClassroomApp() {
         isOpen={isGithubModalOpen}
         onClose={() => setIsGithubModalOpen(false)}
         currentUserRole={currentUser?.role}
+      />
+
+      {/* Đăng Ký Sử Dụng Phần Mềm Modal */}
+      <RegistrationModal
+        isOpen={isRegistrationModalOpen}
+        onClose={() => setIsRegistrationModalOpen(false)}
       />
     </div>
   );

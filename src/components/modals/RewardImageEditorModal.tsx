@@ -359,9 +359,9 @@ export const RewardImageEditorModal: React.FC<RewardImageEditorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-150">
       <div 
-        className="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden"
+        className="bg-white rounded-3xl max-w-2xl w-full p-3.5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[88dvh] overflow-hidden"
         onMouseUp={handleMouseUp}
         onTouchEnd={handleMouseUp}
       >
@@ -798,16 +798,16 @@ export const RewardImageEditorModal: React.FC<RewardImageEditorModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0">
-          <div className="text-[11px] text-slate-500">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-3 border-t border-slate-100 shrink-0 bg-white">
+          <div className="text-[10.5px] sm:text-[11px] text-slate-500">
             Ảnh sau khi lưu sẽ được cắt chuẩn xác và tối ưu nhẹ, không làm ứng dụng chậm.
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >
               Hủy bỏ
             </button>
@@ -815,7 +815,7 @@ export const RewardImageEditorModal: React.FC<RewardImageEditorModalProps> = ({
               type="button"
               onClick={handleSaveCrop}
               disabled={isProcessing || !sourceImage}
-              className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer uppercase"
+              className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer uppercase flex-1 sm:flex-initial"
             >
               {isProcessing ? (
                 <>
@@ -825,7 +825,7 @@ export const RewardImageEditorModal: React.FC<RewardImageEditorModalProps> = ({
               ) : (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>LƯU ẢNH ĐÃ CHỈNH SỬA</span>
+                  <span>LƯU ẢNH</span>
                 </>
               )}
             </button>

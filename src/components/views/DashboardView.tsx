@@ -23,7 +23,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const { 
     classes, activeClassId, setActiveClassId, students, currentClassStudents, 
     currentDateAttendance, timetable, awardPoints,
-    teacherProfile, resetToDefaultData, teacherRole
+    teacherProfile, resetToDefaultData, teacherRole,
+    currentUser, isBgh, isSchoolAdmin, isAdmin
   } = useClassroom();
 
   if (teacherRole === 'subject') {
@@ -136,7 +137,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
             <div>
               <h4 className="text-xs font-black text-amber-950">Chưa có lớp học nào trong hệ thống</h4>
-              <p className="text-[11px] text-amber-800 mt-0.5">Khôi phục ngay dữ liệu mẫu chuẩn: 1 Lớp 4A1, Cô giáo Nguyễn Thị Hoa và 30 học sinh.</p>
+              <p className="text-[11px] text-amber-800 mt-0.5">Khôi phục ngay dữ liệu mẫu chuẩn: 1 Lớp 4A1, Cô Trịnh Thị Hương và 10 học sinh.</p>
             </div>
           </div>
           <button
@@ -154,51 +155,74 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       )}
 
       {/* 1. Main Welcome Banner matching Requirement 5: TÊN GIÁO VIÊN, ĐƠN VỊ CÔNG TÁC, NĂM HỌC */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-violet-100 via-indigo-50 to-blue-100 p-2.5 sm:p-3 px-3 sm:px-4 border border-indigo-200/80 shadow-2xs hover-zoom-card">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-10">
-          {/* Left Greeting & Avatar */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="relative shrink-0">
-              <img
-                src={teacherProfile.avatar}
-                alt={teacherProfile.name}
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover ring-2 ring-white shadow-xs bg-white hover-zoom-interactive"
-              />
-              <span className="absolute -bottom-1 -right-1 px-1 py-0.1 bg-indigo-600 text-white font-black text-[8px] rounded-full shadow-xs uppercase">
-                {teacherProfile.role || 'GVCN'}
-              </span>
-            </div>
+      {(() => {
+        const isManagementAccount = Boolean(isBgh || isSchoolAdmin || currentUser?.role === 'admin' || currentUser?.role === 'guest_admin');
+        const greetingUserName = isManagementAccount
+          ? (currentUser?.fullName || 'Ban Giám Hiệu')
+          : (activeClass?.teacherName || teacherProfile.name);
+        const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+        const displayAvatar = currentUser?.avatar || teacherProfile.avatar;
+        const roleBadge = isBgh 
+          ? { text: 'BGH', bg: 'bg-amber-600' }
+          : isSchoolAdmin 
+          ? { text: 'QUẢN TRỊ TRƯỜNG', bg: 'bg-rose-600' }
+          : currentUser?.role === 'admin'
+          ? { text: 'SUPER ADMIN', bg: 'bg-rose-700' }
+          : currentUser?.role === 'guest_admin'
+          ? { text: 'QUẢN TRỊ CÁ NHÂN', bg: 'bg-purple-600' }
+          : { text: 'GVCN', bg: 'bg-indigo-600' };
 
-            <div className="space-y-0.5">
-              <div className="flex flex-wrap items-center gap-1">
-                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md bg-white/95 text-[9.5px] font-black text-indigo-700 shadow-2xs border border-indigo-100 uppercase">
-                  GV: <strong className="text-indigo-950 font-black">{teacherProfile.name}</strong>
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md bg-emerald-50 text-[9.5px] font-black text-emerald-800 border border-emerald-200 shadow-2xs uppercase">
-                  {teacherProfile.schoolName || 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN'}
-                </span>
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-amber-50 text-[9.5px] font-black text-amber-800 border border-amber-200 shadow-2xs uppercase">
-                  NH: {teacherProfile.academicYear || activeClass?.academicYear || '2026–2027'}
-                </span>
-              </div>
+        return (
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-violet-100 via-indigo-50 to-blue-100 p-2.5 sm:p-3 px-3 sm:px-4 border border-indigo-200/80 shadow-2xs hover-zoom-card">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 relative z-10">
+              {/* Left Greeting & Avatar */}
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div className="relative shrink-0">
+                  <img
+                    src={displayAvatar}
+                    alt={greetingUserName}
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg object-cover ring-2 ring-white shadow-xs bg-white hover-zoom-interactive"
+                  />
+                  <span className={`absolute -bottom-1 -right-1 px-1.5 py-0.2 ${roleBadge.bg} text-white font-black text-[8px] rounded-full shadow-xs uppercase tracking-tight whitespace-nowrap`}>
+                    {roleBadge.text}
+                  </span>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-sm sm:text-base font-black text-indigo-950 tracking-tight uppercase leading-snug">
-                  {getGreeting()}, <span className="text-indigo-600">{teacherProfile.name}</span>! 👋
-                </h1>
-                <span className="text-[10px] text-slate-500 font-bold uppercase hidden sm:inline">
-                  • LỚP: <strong className="text-indigo-700 font-black">{activeClass ? `LỚP ${activeClass.name}` : 'CHƯA CÓ'}</strong>
-                  {teacherProfile.phone && ` • ZALO: ${teacherProfile.phone}`}
-                </span>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md bg-white/95 text-[9.5px] font-black text-indigo-700 shadow-2xs border border-indigo-100 uppercase">
+                      {isManagementAccount ? 'TÀI KHOẢN: ' : 'GV: '}
+                      <strong className="text-indigo-950 font-black">{greetingUserName}</strong>
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-md bg-emerald-50 text-[9.5px] font-black text-emerald-800 border border-emerald-200 shadow-2xs uppercase">
+                      {displaySchoolName}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-amber-50 text-[9.5px] font-black text-amber-800 border border-amber-200 shadow-2xs uppercase">
+                      NH: {teacherProfile.academicYear || activeClass?.academicYear || '2026–2027'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <h1 className="text-xs sm:text-base font-black text-indigo-950 tracking-tight uppercase leading-snug truncate">
+                      {getGreeting()}, <span className="text-indigo-600">{greetingUserName}</span>! 👋
+                    </h1>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase hidden sm:inline">
+                      {isManagementAccount ? (
+                        <>• TỔNG QUAN: <strong className="text-indigo-700 font-black">{classes.length} LỚP • {students.length} HỌC SINH</strong></>
+                      ) : (
+                        <>• LỚP: <strong className="text-indigo-700 font-black">{activeClass ? `LỚP ${activeClass.name}` : 'CHƯA CÓ'}</strong></>
+                      )}
+                      {currentUser?.phone && ` • SĐT/ZALO: ${currentUser.phone}`}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
           {/* Right 5 Quick Action Buttons in Uppercase */}
-          <div className="flex flex-wrap items-center gap-1 shrink-0 pt-1 lg:pt-0">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1 sm:gap-1.5 shrink-0 pt-2 lg:pt-0 w-full lg:w-auto">
             <button
               onClick={() => onNavigate('attendance')}
-              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
+              className="px-2.5 py-1.5 sm:py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
             >
               <CheckSquare className="w-3 h-3" />
               <span>ĐIỂM DANH</span>
@@ -206,7 +230,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button
               onClick={() => onOpenAddStudent ? onOpenAddStudent() : onNavigate('students')}
-              className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
+              className="px-2.5 py-1.5 sm:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>THÊM HỌC SINH</span>
@@ -214,7 +238,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button
               onClick={() => onNavigate('wheel')}
-              className="px-2.5 py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
+              className="px-2.5 py-1.5 sm:py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
             >
               <Sparkles className="w-3 h-3" />
               <span>VÒNG QUAY</span>
@@ -222,7 +246,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button
               onClick={() => onNavigate('rewards')}
-              className="px-2.5 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
+              className="px-2.5 py-1.5 sm:py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
             >
               <Gift className="w-3 h-3" />
               <span>ĐỔI XU</span>
@@ -230,7 +254,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <button
               onClick={() => onNavigate('infographic')}
-              className="px-2.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase"
+              className="col-span-2 sm:col-span-1 px-2.5 py-1.5 sm:py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
             >
               <Sparkles className="w-3 h-3 text-amber-300" />
               <span>INFOGRAPHIC</span>
@@ -259,6 +283,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+        );
+      })()}
 
       {/* 2. CLASS SELECTOR SWITCHER (When multiple classes exist - Yêu cầu 1) */}
       {classes.length > 1 && (
@@ -699,28 +725,39 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 6. BANNER THÔNG TIN GIÁO VIÊN & TÁC GIẢ BẢN QUYỀN CỐ ĐỊNH (Yêu cầu 5 & 6) */}
-      <div className="bg-white rounded-3xl p-5 border border-indigo-100 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 hover-zoom-card">
-        {/* Info Giáo viên: TÊN GIÁO VIÊN, ĐƠN VỊ CÔNG TÁC, NĂM HỌC */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <img
-            src={teacherProfile.avatar}
-            alt={teacherProfile.name}
-            className="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-200 shrink-0 bg-indigo-50"
-          />
-          <div className="space-y-0.5">
-            <div className="text-xs font-black text-indigo-950 uppercase flex flex-wrap items-center gap-2">
-              <span>TÊN GIÁO VIÊN: <strong className="text-indigo-600">{teacherProfile.name}</strong></span>
-              <span className="text-slate-300 hidden sm:inline">•</span>
-              <span>ĐƠN VỊ CÔNG TÁC: <strong className="text-emerald-700">{teacherProfile.schoolName || 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN'}</strong></span>
+      {(() => {
+        const isManagementAccount = Boolean(isBgh || isSchoolAdmin || currentUser?.role === 'admin' || currentUser?.role === 'guest_admin');
+        const greetingUserName = isManagementAccount
+          ? (currentUser?.fullName || 'Ban Giám Hiệu')
+          : (activeClass?.teacherName || teacherProfile.name);
+        const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+        const displayAvatar = currentUser?.avatar || teacherProfile.avatar;
+
+        return (
+          <div className="bg-white rounded-3xl p-5 border border-indigo-100 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 hover-zoom-card">
+            {/* Info Giáo viên: TÊN GIÁO VIÊN, ĐƠN VỊ CÔNG TÁC, NĂM HỌC */}
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <img
+                src={displayAvatar}
+                alt={greetingUserName}
+                className="w-12 h-12 rounded-2xl object-cover ring-2 ring-indigo-200 shrink-0 bg-indigo-50"
+              />
+              <div className="space-y-0.5">
+                <div className="text-xs font-black text-indigo-950 uppercase flex flex-wrap items-center gap-2">
+                  <span>{isManagementAccount ? 'TÀI KHOẢN:' : 'TÊN GIÁO VIÊN:'} <strong className="text-indigo-600">{greetingUserName}</strong></span>
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                  <span>ĐƠN VỊ CÔNG TÁC: <strong className="text-emerald-700">{displaySchoolName}</strong></span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-bold uppercase">
+                  NĂM HỌC: <strong className="text-amber-700">{teacherProfile.academicYear || '2026–2027'}</strong>
+                  {isManagementAccount ? (
+                    <span className="ml-2 text-indigo-600 font-semibold">• QUẢN LÝ: {classes.length} LỚP • {students.length} HỌC SINH</span>
+                  ) : activeClass ? (
+                    <span className="ml-2 text-indigo-600 font-semibold">• LỚP: {activeClass.name} ({activeClass.grade})</span>
+                  ) : null}
+                </div>
+              </div>
             </div>
-            <div className="text-[11px] text-slate-500 font-bold uppercase">
-              NĂM HỌC: <strong className="text-amber-700">{teacherProfile.academicYear || '2026–2027'}</strong>
-              {activeClass && (
-                <span className="ml-2 text-indigo-600 font-semibold">• LỚP: {activeClass.name} ({activeClass.grade})</span>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Tác giả ứng dụng cố định (Yêu cầu 6) */}
         <div className="w-full md:w-auto flex flex-wrap items-center gap-2.5 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 text-xs justify-start md:justify-end">
@@ -752,6 +789,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+        );
+      })()}
     </div>
   );
 };

@@ -15,7 +15,7 @@ import {
   Star, Award, CheckCircle2, ChevronRight, X,
   FileSpreadsheet, Download, Upload, Calendar, AlertTriangle, CheckSquare,
   Settings, BookOpen, Calculator, Globe, Atom, Map, Monitor, Palette, Music, Activity, Heart,
-  Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins
+  Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins, Wand2
 } from 'lucide-react';
 import { playCoinSound, playDeductSound, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -70,12 +70,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     classes, activeClassId, setActiveClassId, addClass, updateClass, deleteClass,
     bulkDeleteClasses, bulkUpdateClasses, deleteAllClasses,
     students, currentClassStudents, addStudent, updateStudent, deleteStudent, 
-    bulkAddStudents, clearClassStudents, resetStudentsCoins,
+    bulkAddStudents, autoAssignRealAvatarsToClass, clearClassStudents, resetStudentsCoins,
     awardPoints, deductPoints, subjects, addSubject, updateSubject, deleteSubject,
     toggleSubjectApplied, setAppliedSubjects, resetDefaultSubjects,
     criteria, teacherProfile, updateTeacherProfile, resetToDefaultData,
     teacherRole, subjectTeacherConfig, seedSample20SubjectClasses,
-    isAdmin, allTeachers, currentUser, syncDatabaseNow
+    isAdmin, allTeachers, allUsers, currentUser, syncDatabaseNow
   } = useClassroom();
 
   const [activeTabMode, setActiveTabMode] = useState<'classes' | 'students'>(mode);
@@ -88,7 +88,30 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
   const [adminTeacherFilter, setAdminTeacherFilter] = useState<string>('all');
-  const [newClassAssignedUsername, setNewClassAssignedUsername] = useState<string>('gvcn4a1');
+  const [newClassAssignedUsername, setNewClassAssignedUsername] = useState<string>('');
+
+  // 🌟 Lọc danh sách giáo viên phụ trách theo phạm vi trường của BGH / Quản trị
+  // QUY TẮC CỐT LÕI: Chỉ quản lý và tổng hợp từ GIÁO VIÊN CHỦ NHIỆM (role === 'homeroom')
+  const relevantTeachers = React.useMemo(() => {
+    if (!currentUser) return allTeachers;
+    const isMasterAdmin = currentUser.role === 'admin';
+    const isGuestAdmin = currentUser.role === 'guest_admin' || currentUser.isGuestAdmin;
+    const mySchool = (currentUser.schoolName || '').trim().toLowerCase();
+
+    return allTeachers.filter(t => {
+      if (t.role !== 'homeroom') return false;
+
+      if (isMasterAdmin) return true;
+      if (isGuestAdmin) {
+        return t.tenantType === 'guest' || 
+          (t.schoolName && t.schoolName.toLowerCase().includes('cá nhân')) || 
+          (t.schoolName && t.schoolName.toLowerCase().includes('tự do'));
+      }
+      const tSchool = (t.schoolName || '').trim().toLowerCase();
+      if (!mySchool || !tSchool) return false;
+      return tSchool === mySchool || tSchool.includes(mySchool) || mySchool.includes(tSchool);
+    });
+  }, [allTeachers, currentUser]);
 
   // Lọc danh sách lớp học theo tài khoản giáo viên khi Admin đăng nhập
   const displayedClasses = React.useMemo(() => {
@@ -100,7 +123,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         return c.teacherUsername.toLowerCase() === adminTeacherFilter.toLowerCase();
       }
       const t = allTeachers.find(u => u.username.toLowerCase() === adminTeacherFilter.toLowerCase());
-      return t ? c.teacherRole === t.role : true;
+      return t ? (
+        (c.teacherName && t.fullName && c.teacherName.toLowerCase() === t.fullName.toLowerCase()) ||
+        c.teacherRole === t.role
+      ) : true;
     });
   }, [classes, isAdmin, adminTeacherFilter, allTeachers]);
   
@@ -158,7 +184,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
   const [newClassName, setNewClassName] = useState('');
   const [newClassGrade, setNewClassGrade] = useState('Khối 4');
-  const [newClassTeacher, setNewClassTeacher] = useState(teacherProfile.name || 'Cô Nguyễn Thị Hoa');
+  const [newClassTeacher, setNewClassTeacher] = useState(teacherProfile.name || 'Cô Trịnh Thị Hương');
   const [newClassYear, setNewClassYear] = useState(teacherProfile.academicYear || '2026–2027');
   const [newClassColor, setNewClassColor] = useState(CLASS_COLORS[0]);
   const [newClassAvatar, setNewClassAvatar] = useState(CLASS_AVATARS[0].url);
@@ -344,9 +370,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     addClass({
       name: newClassName.trim(),
       grade: newClassGrade,
-      teacherUsername: isAdmin ? newClassAssignedUsername : (currentUser?.username || 'gvcn4a1'),
+      teacherUsername: isAdmin ? newClassAssignedUsername : (currentUser?.username || ''),
       teacherRole: isAdmin ? (assignedTeacher?.role === 'subject' ? 'subject' : 'homeroom') : (currentUser?.role === 'subject' ? 'subject' : 'homeroom'),
-      teacherName: isAdmin ? (assignedTeacher?.fullName || newClassTeacher.trim()) : (newClassTeacher.trim() || teacherProfile.name || 'Cô Nguyễn Thị Hoa'),
+      teacherName: isAdmin ? (assignedTeacher?.fullName || newClassTeacher.trim()) : (newClassTeacher.trim() || teacherProfile.name || 'Cô Trịnh Thị Hương'),
       academicYear: newClassYear.trim() || teacherProfile.academicYear || '2026–2027',
       color: newClassColor,
       avatar: newClassAvatar,
@@ -372,7 +398,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     e.preventDefault();
     if (!editingClass || !editingClass.name.trim()) return;
 
-    const trimmedTeacherName = editingClass.teacherName?.trim() || teacherProfile.name || 'Cô Nguyễn Thị Hoa';
+    const trimmedTeacherName = editingClass.teacherName?.trim() || teacherProfile.name || 'Cô Trịnh Thị Hương';
     const trimmedAcademicYear = editingClass.academicYear?.trim() || teacherProfile.academicYear || '2026–2027';
 
     updateClass(editingClass.id, {
@@ -932,8 +958,11 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   <span>TẤT CẢ LỚP HỌC ({classes.length})</span>
                 </button>
 
-                {allTeachers.map(t => {
-                  const tClasses = classes.filter(c => c.teacherUsername === t.username || (!c.teacherUsername && c.teacherRole === t.role));
+                {relevantTeachers.map(t => {
+                  const tClasses = classes.filter(c => 
+                    (c.teacherUsername && c.teacherUsername.toLowerCase() === t.username.toLowerCase()) ||
+                    (c.teacherName && c.teacherName.toLowerCase() === t.fullName.toLowerCase())
+                  );
                   const isHomeroom = t.role === 'homeroom';
                   return (
                     <button
@@ -1144,8 +1173,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   {/* Dải màu nhận diện trên đầu thẻ */}
                   <div className="h-1.5 w-full rounded-full" style={{ backgroundColor: cls.color || '#3B82F6' }} />
 
-                  {/* KHUNG ẢNH ĐẠI DIỆN LỚP CÂN ĐỐI CHUẨN TỈ LỆ BANNER 16:8 (2:1) KHỚP 100% GÓC NHÌN CROP */}
-                  <div className="relative w-full aspect-[16/8] min-h-[160px] max-h-[220px] rounded-xl md:rounded-2xl overflow-hidden bg-slate-900 shadow-xs group/photo border border-indigo-200">
+                  {/* KHUNG ẢNH ĐẠI DIỆN LỚP CÂN ĐỐI CHUẨN TỈ LỆ BANNER 16:7 KHỚP 100% GÓC NHÌN CROP, VỪA VẶN MÀN HÌNH 1366x768 */}
+                  <div className="relative w-full aspect-[16/7] min-h-[110px] sm:min-h-[120px] max-h-[150px] rounded-xl md:rounded-2xl overflow-hidden bg-slate-900 shadow-xs group/photo border border-indigo-200">
                     {cls.avatar ? (
                       <img
                         src={cls.avatar}
@@ -1162,11 +1191,11 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       />
                     ) : (
                       <div 
-                        className="w-full h-full flex flex-col items-center justify-center font-black text-white text-3xl shadow-xs"
+                        className="w-full h-full flex flex-col items-center justify-center font-black text-white text-2xl shadow-xs"
                         style={{ backgroundColor: cls.color || '#6366F1' }}
                       >
                         <span>{cls.name}</span>
-                        <span className="text-[11px] font-semibold text-white/80 mt-1 uppercase">CHƯA CÀI ĐẶT ẢNH LỚP</span>
+                        <span className="text-[10px] font-semibold text-white/80 mt-0.5 uppercase">CHƯA CÀI ĐẶT ẢNH LỚP</span>
                       </div>
                     )}
 
@@ -1174,9 +1203,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/70 via-transparent to-indigo-950/40 pointer-events-none" />
 
                     {/* Top Badges */}
-                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5">
+                    <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1.5">
                       <span 
-                        className="px-2.5 py-1 rounded-full text-white text-[11px] font-black shadow-sm flex items-center gap-1.5 backdrop-blur-md uppercase"
+                        className="px-2 py-0.5 rounded-full text-white text-[10px] sm:text-[11px] font-black shadow-sm flex items-center gap-1.5 backdrop-blur-md uppercase"
                         style={{ backgroundColor: cls.color ? `${cls.color}ee` : '#6366F1ee' }}
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-white ring-2 ring-white/40" />
@@ -1184,14 +1213,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       </span>
 
                       {isSelected ? (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-black text-[11px] tracking-wide shadow-sm flex items-center gap-1 backdrop-blur-md uppercase">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white font-black text-[10px] sm:text-[11px] tracking-wide shadow-sm flex items-center gap-1 backdrop-blur-md uppercase">
                           <Check className="w-3 h-3" />
                           <span>✓ ĐANG CHỌN</span>
                         </span>
                       ) : (
                         <button
                           onClick={() => setActiveClassId(cls.id)}
-                          className="px-2.5 py-1 rounded-full bg-white hover:bg-indigo-50 text-indigo-700 font-black text-[11px] transition-all shadow-sm hover-zoom-btn backdrop-blur-md uppercase"
+                          className="px-2 py-0.5 rounded-full bg-white hover:bg-indigo-50 text-indigo-700 font-black text-[10px] sm:text-[11px] transition-all shadow-sm hover-zoom-btn backdrop-blur-md uppercase"
                         >
                           CHỌN LỚP NÀY
                         </button>
@@ -1199,7 +1228,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     </div>
 
                     {/* Bottom Floating Actions: Multi-Select Checkbox & Zoom */}
-                    <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5">
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -1208,46 +1237,46 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             prev.includes(cls.id) ? prev.filter(id => id !== cls.id) : [...prev, cls.id]
                           );
                         }}
-                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 shadow-md backdrop-blur-md border transition-all hover-zoom-btn uppercase ${
+                        className={`px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-black flex items-center gap-1.5 shadow-md backdrop-blur-md border transition-all hover-zoom-btn uppercase ${
                           isClassChecked
                             ? 'bg-amber-400 text-amber-950 border-amber-300 ring-2 ring-amber-300/60 font-black'
                             : 'bg-indigo-950/85 hover:bg-indigo-900 text-white border-white/25'
                         }`}
                         title="Tích chọn lớp này để thao tác đồng loạt (xóa, sửa)"
                       >
-                        <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                        <div className={`w-3 h-3 rounded border flex items-center justify-center ${
                           isClassChecked ? 'bg-amber-500 border-amber-600 text-white' : 'border-white/60 bg-white/20'
                         }`}>
-                          {isClassChecked && <Check className="w-3 h-3 stroke-[3]" />}
+                          {isClassChecked && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                         </div>
                         <span>{isClassChecked ? 'ĐÃ CHỌN' : 'TÍCH CHỌN'}</span>
                       </button>
                     </div>
 
-                    <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
                       <button
                         onClick={() => setAvatarEditingClass(cls)}
-                        className="px-2.5 py-1.5 bg-indigo-950/85 hover:bg-indigo-950 text-white rounded-lg text-[11px] font-black flex items-center gap-1.5 shadow-md backdrop-blur-md border border-white/25 transition-all hover-zoom-btn uppercase"
+                        className="px-2 py-1 bg-indigo-950/85 hover:bg-indigo-950 text-white rounded-lg text-[10px] sm:text-[11px] font-black flex items-center gap-1.5 shadow-md backdrop-blur-md border border-white/25 transition-all hover-zoom-btn uppercase"
                         title="Phóng to, thu nhỏ và căn chỉnh vị trí ảnh lớp học"
                       >
-                        <ZoomIn className="w-3.5 h-3.5 text-amber-300" />
+                        <ZoomIn className="w-3 h-3 text-amber-300" />
                         <span>CĂN CHỈNH ẢNH</span>
                       </button>
                     </div>
                   </div>
 
                   {/* THÔNG TIN CHI TIẾT LỚP HỌC (TƯƠI SÁNG, HẠN CHẾ CHỮ MÀU ĐEN) */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="text-xl sm:text-2xl font-black text-indigo-950 leading-tight uppercase">
+                        <h3 className="text-lg sm:text-xl font-black text-indigo-950 leading-tight uppercase">
                           {displayName}
                         </h3>
-                        <p className="text-xs text-blue-700 font-black mt-0.5 flex items-center gap-1 uppercase">
+                        <p className="text-[11px] sm:text-xs text-blue-700 font-black mt-0.5 flex items-center gap-1 uppercase">
                           <span>🏫</span>
-                          <span>GVCN: <strong className="text-indigo-800 font-black">{cls.teacherName || teacherProfile.name}</strong></span>
+                          <span>GVCN: <strong className="text-indigo-800 font-black">{cls.teacherName || allUsers.find(u => u.username?.toLowerCase() === cls.teacherUsername?.toLowerCase())?.fullName || teacherProfile.name}</strong></span>
                         </p>
-                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-[11px] font-black text-amber-800 border border-amber-200 shadow-2xs mt-1 uppercase">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-[10px] sm:text-[10.5px] font-black text-amber-800 border border-amber-200 shadow-2xs mt-0.5 uppercase">
                           <span>📅</span>
                           <span>NĂM HỌC: <strong className="text-amber-950 font-black">{cls.academicYear || '2026–2027'}</strong></span>
                         </div>
@@ -1257,40 +1286,40 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => setEditingClass(cls)}
-                          className="p-2 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors hover-zoom-btn"
+                          className="p-1.5 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors hover-zoom-btn"
                           title="Sửa thông tin lớp học"
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-3 h-3" />
                         </button>
 
                         <button
                           onClick={() => setDeleteConfirmClass(cls)}
-                          className="p-2 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors hover-zoom-btn"
+                          className="p-1.5 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors hover-zoom-btn"
                           title="Xóa lớp học này"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
 
                     {/* Sĩ số & Phân loại học sinh */}
-                    <div className="grid grid-cols-2 gap-2 p-2.5 bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-200">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-200">
                       <div>
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-wider block">SĨ SỐ HỌC SINH</span>
-                        <span className="text-sm sm:text-base font-black text-indigo-900 font-mono">
+                        <span className="text-[9.5px] font-black text-indigo-600 uppercase tracking-wider block">SĨ SỐ HỌC SINH</span>
+                        <span className="text-xs sm:text-sm font-black text-indigo-900 font-mono">
                           👥 {count} EM HỌC SINH
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-wider block">CƠ CẤU GIỚI TÍNH</span>
-                        <span className="text-[11px] sm:text-xs font-black text-blue-800 uppercase">
+                        <span className="text-[9.5px] font-black text-indigo-600 uppercase tracking-wider block">CƠ CẤU GIỚI TÍNH</span>
+                        <span className="text-[10px] sm:text-[11px] font-black text-blue-800 uppercase">
                           ♂ {maleCount} NAM • ♀ {femaleCount} NỮ
                         </span>
                       </div>
                     </div>
 
                     {cls.slogan && (
-                      <div className="text-[11px] text-amber-800 font-bold italic bg-amber-50/80 p-2 rounded-lg border border-amber-200/80">
+                      <div className="text-[10px] sm:text-[10.5px] text-amber-800 font-bold italic bg-amber-50/80 p-1.5 rounded-lg border border-amber-200/80">
                         ⭐ « {cls.slogan} »
                       </div>
                     )}
@@ -1303,7 +1332,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         setActiveClassId(cls.id);
                         if (onNavigate) onNavigate('schedule');
                       }}
-                      className="py-2 px-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all hover-zoom-btn shadow-sm bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-sky-500/20 uppercase"
+                      className="py-1.5 sm:py-2 px-2 rounded-xl font-black text-[11px] sm:text-xs flex items-center justify-center gap-1.5 transition-all hover-zoom-btn shadow-sm bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-sky-500/20 uppercase"
                       title={`Thiết lập thời khóa biểu riêng cho lớp ${cls.name}`}
                     >
                       <Calendar className="w-3.5 h-3.5 text-white" />
@@ -1515,6 +1544,20 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   <Settings className="w-3.5 h-3.5 text-amber-700" />
                   <span>⚙️ CẤU HÌNH NHẬN XU</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Thầy/Cô có muốn tự động cập nhật ảnh đại diện học sinh thật từ kho ảnh máy tính (51 ảnh) cho toàn bộ học sinh trong lớp này không?')) {
+                      autoAssignRealAvatarsToClass(activeClassId);
+                    }
+                  }}
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-purple-600/20 transition-all hover-zoom-btn uppercase shrink-0"
+                  title="Tự động cập nhật ảnh thẻ thật từ kho ảnh máy tính cho toàn bộ học sinh trong lớp"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                  <span>📸 TỰ ĐỘNG CHÈN ẢNH THẬT</span>
+                </button>
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
@@ -1602,6 +1645,17 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 >
                   <Coins className="w-3.5 h-3.5" />
                   <span>GÁN XU HÀNG LOẠT</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onNavigate) onNavigate('certificate');
+                  }}
+                  className="px-3.5 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition-all hover-zoom-btn uppercase"
+                  title="Tạo Thư Khen điện tử cho các học sinh đã chọn"
+                >
+                  <Wand2 className="w-3.5 h-3.5" />
+                  <span>TẠO THƯ KHEN</span>
                 </button>
 
                 <button
@@ -2369,7 +2423,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 max-h-48 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
                 {appliedSubjects.map((sub) => {
                   const isChosen = selectedSubjectForAward === sub.name;
                   const isCore = sub.isDefault || ['ghi chung / nề nếp', 'toán', 'tiếng việt'].includes(sub.name.trim().toLowerCase());
@@ -2378,7 +2432,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       key={sub.id}
                       type="button"
                       onClick={() => setSelectedSubjectForAward(sub.name)}
-                      className={`p-2 rounded-xl text-xs font-bold text-left transition-all truncate hover-zoom-btn flex items-center gap-2 cursor-pointer ${
+                      className={`px-2 py-2 rounded-xl text-[11px] sm:text-xs font-bold text-left transition-all hover-zoom-btn flex items-center gap-1.5 cursor-pointer min-h-[38px] ${
                         isChosen
                           ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-600/40 font-black'
                           : 'bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-300'
@@ -2386,7 +2440,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       title={sub.name}
                     >
                       <span className="w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/60" style={{ backgroundColor: sub.color || '#3B82F6' }} />
-                      <span className="truncate">{sub.name}</span>
+                      <span className="truncate flex-1 leading-tight">{sub.name}</span>
                       {isCore && <span className="text-[10px] text-amber-400 shrink-0">★</span>}
                     </button>
                   );
@@ -2623,7 +2677,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 <label className="block text-xs font-bold text-slate-700 mb-1">Tên giáo viên chủ nhiệm</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Cô Nguyễn Thị Hoa"
+                  placeholder="Ví dụ: Cô Trịnh Thị Hương"
                   value={newClassTeacher}
                   onChange={(e) => setNewClassTeacher(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
@@ -2963,7 +3017,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       type="text"
                       value={editingClass.teacherName || ''}
                       onChange={(e) => setEditingClass({ ...editingClass, teacherName: e.target.value })}
-                      placeholder="Ví dụ: Cô Nguyễn Thị Hoa"
+                      placeholder="Ví dụ: Cô Trịnh Thị Hương"
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>

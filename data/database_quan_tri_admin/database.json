@@ -1,0 +1,1239 @@
+{
+  "partition": "quan_tri_admin",
+  "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
+  "lastSync": "2026-10-01T18:52:33.227Z",
+  "users": [
+    {
+      "id": "user-admin",
+      "username": "admin",
+      "password": "Tanuyen@2026",
+      "fullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "email": "admin@lophoc.edu.vn",
+      "phone": "0901234567",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9",
+      "schoolName": "Hệ thống Quản lý Lớp học Hạnh phúc",
+      "createdAt": 1790689856611,
+      "status": "active",
+      "lastLoginAt": 1790830498403,
+      "tenantType": "school"
+    },
+    {
+      "id": "user-adminquantri",
+      "username": "adminquantri",
+      "password": "Tanuyen@2026",
+      "fullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "tenantType": "school",
+      "email": "adminquantri@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9",
+      "schoolName": "Hệ thống Quản trị Lớp học Hạnh phúc",
+      "createdAt": 1790834208376,
+      "status": "active",
+      "lastLoginAt": 1790868370158
+    }
+  ],
+  "systemSettings": {
+    "allowRegistration": true,
+    "autoSyncIntervalMs": 15000,
+    "githubRepoName": "lop-hoc-hanh-phuc-database",
+    "githubRepoUrl": "https://github.com/thanhliemcnttedu-cpu/lhhp.git",
+    "githubBranch": "main",
+    "autoPushGithub": true,
+    "autoPullGithub": true,
+    "lastGithubPushAt": 1790880753226
+  },
+  "auditLogs": [
+    {
+      "id": "log-1790880748060-n7uvxr",
+      "timestamp": 1790880748060,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Trừ 1 xu của 1 học sinh (Lý do: Trừ -1 xu nề nếp môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1790880733076-1vhmei",
+      "timestamp": 1790880733076,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn An Nhiên"
+    },
+    {
+      "id": "log-1790880409782-3wxsml",
+      "timestamp": 1790880409782,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Trừ 3 xu của 1 học sinh (Lý do: Trừ -3 xu nề nếp môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1790880398161-txuke0",
+      "timestamp": 1790880398161,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Trừ 1 xu của 1 học sinh (Lý do: Trừ -1 xu nề nếp môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1790879456957-v9r8l1",
+      "timestamp": 1790879456957,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn An Nhiên"
+    },
+    {
+      "id": "log-1790879431936-dgb1xk",
+      "timestamp": 1790879431936,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn An Nhiên"
+    },
+    {
+      "id": "log-1790879418294-nynvyk",
+      "timestamp": 1790879418294,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn An Nhiên"
+    },
+    {
+      "id": "log-1790879384832-zjncf7",
+      "timestamp": 1790879384832,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn An Nhiên"
+    },
+    {
+      "id": "log-1790879376477-orwefv",
+      "timestamp": 1790879376477,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn An Nhiên"
+    },
+    {
+      "id": "log-1790879306373-tkbww3",
+      "timestamp": 1790879306373,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A1"
+    },
+    {
+      "id": "log-1790879282509-rexxuj",
+      "timestamp": 1790879282509,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Phương Anh)"
+    },
+    {
+      "id": "log-1790879227988-pl8yq5",
+      "timestamp": 1790879227988,
+      "username": "gvcn4a1",
+      "userFullName": "Trịnh Thị Cúc",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Trịnh Thị Cúc)"
+    },
+    {
+      "id": "log-1790879203536-hvo0y8",
+      "timestamp": 1790879203536,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790878503180-9ob4no",
+      "timestamp": 1790878503180,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790878406720-cd736c",
+      "timestamp": 1790878406720,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790875060784-jpfxlo",
+      "timestamp": 1790875060784,
+      "username": "bghdths1",
+      "userFullName": "Ban Giám Hiệu TH Số 1 Tân Uyên",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu TH Số 1 Tân Uyên)"
+    },
+    {
+      "id": "log-1790874981891-rf13i7",
+      "timestamp": 1790874981891,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790874918673-qnrmk1",
+      "timestamp": 1790874918673,
+      "username": "gvcn4a1",
+      "userFullName": "Trịnh Thị Cúc",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lý Kim Ngân"
+    },
+    {
+      "id": "log-1790874880712-tl0j6y",
+      "timestamp": 1790874880712,
+      "username": "gvcn4a1",
+      "userFullName": "Trịnh Thị Cúc",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790874879201-91ee8t",
+      "timestamp": 1790874879201,
+      "username": "gvcn4a1",
+      "userFullName": "Trịnh Thị Cúc",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790874849724-pke9dl",
+      "timestamp": 1790874849724,
+      "username": "gvcn4a1",
+      "userFullName": "Trịnh Thị Cúc",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790874833530-1l7zt2",
+      "timestamp": 1790874833530,
+      "username": "gvcn4a1",
+      "userFullName": "NGUYỄN THỊ HOA",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790874799420-pdq5nk",
+      "timestamp": 1790874799420,
+      "username": "gvcn4a1",
+      "userFullName": "NGUYỄN THỊ HOA",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (NGUYỄN THỊ HOA)"
+    },
+    {
+      "id": "log-1790874786720-feyp5c",
+      "timestamp": 1790874786720,
+      "username": "nguyenviethien",
+      "userFullName": "Nguyễn Viết Hiền",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Viết Hiền)"
+    },
+    {
+      "id": "log-1790874475028-v0p5qz",
+      "timestamp": 1790874475028,
+      "username": "nguyenviethien",
+      "userFullName": "Nguyễn Viết Hiền",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Viết Hiền)"
+    },
+    {
+      "id": "log-1790874088128-2lksl8",
+      "timestamp": 1790874088128,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790873784102-nc5dxp",
+      "timestamp": 1790873784102,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Minh Khang"
+    },
+    {
+      "id": "log-1790873622394-ozj63o",
+      "timestamp": 1790873622394,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790873346812-9263f6",
+      "timestamp": 1790873346812,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790872806801-ubck93",
+      "timestamp": 1790872806801,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790871559572-u7m68m",
+      "timestamp": 1790871559572,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790871555198-z8d4ti",
+      "timestamp": 1790871555198,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790871551403-4d33my",
+      "timestamp": 1790871551403,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790871545566-ysgcwt",
+      "timestamp": 1790871545566,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790871540503-y2v8j3",
+      "timestamp": 1790871540503,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790870244138-tup06l",
+      "timestamp": 1790870244138,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790869404303-unfqxu",
+      "timestamp": 1790869404303,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790868544247-jnpztf",
+      "timestamp": 1790868544247,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790868537346-92s7fw",
+      "timestamp": 1790868537346,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790868466430-bn33en",
+      "timestamp": 1790868466430,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790868444864-t4redi",
+      "timestamp": 1790868444864,
+      "username": "adminquantri",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790868370225-jo07gq",
+      "timestamp": 1790868370225,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1790868337110-me89ch",
+      "timestamp": 1790868337110,
+      "username": "bghdemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790866558072-u8k6cc",
+      "timestamp": 1790866558072,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790866489809-0dwe2f",
+      "timestamp": 1790866489809,
+      "username": "bghdemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn An"
+    },
+    {
+      "id": "log-1790866175491-0p8l2b",
+      "timestamp": 1790866175491,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790866164133-q59plz",
+      "timestamp": 1790866164133,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790866159982-dqrh1q",
+      "timestamp": 1790866159982,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790866156510-hugujd",
+      "timestamp": 1790866156510,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790865862526-6e68uc",
+      "timestamp": 1790865862526,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790865855570-apbh5o",
+      "timestamp": 1790865855570,
+      "username": "bghdemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790865752288-kyavyl",
+      "timestamp": 1790865752288,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790865728661-olrx46",
+      "timestamp": 1790865728661,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790865719790-7b0jst",
+      "timestamp": 1790865719790,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790865715357-dcb9um",
+      "timestamp": 1790865715357,
+      "username": "gvcndemo",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790865630198-urd2f7",
+      "timestamp": 1790865630198,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790865611321-bvz9jr",
+      "timestamp": 1790865611321,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790865588405-9mzj4b",
+      "timestamp": 1790865588405,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790865554828-utvtqs",
+      "timestamp": 1790865554828,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790865504240-0zshtw",
+      "timestamp": 1790865504240,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1790865158700-5ejsej",
+      "timestamp": 1790865158700,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phạm Minh Thi"
+    },
+    {
+      "id": "log-1790865148721-ozugxj",
+      "timestamp": 1790865148721,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Tuấn Thắng"
+    },
+    {
+      "id": "log-1790865130255-j706cy",
+      "timestamp": 1790865130255,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Châu Mai Quỳnh"
+    },
+    {
+      "id": "log-1790865116955-7zpskm",
+      "timestamp": 1790865116955,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lưu Minh Tài"
+    },
+    {
+      "id": "log-1790865109056-suvwgh",
+      "timestamp": 1790865109057,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lưu Minh Tài"
+    },
+    {
+      "id": "log-1790864835828-z5e2is",
+      "timestamp": 1790864835828,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đào Thị Oanh"
+    },
+    {
+      "id": "log-1790864809282-9u04r3",
+      "timestamp": 1790864809282,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lâm Quang Quang"
+    },
+    {
+      "id": "log-1790864789052-xigugs",
+      "timestamp": 1790864789052,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lý Ánh Như"
+    },
+    {
+      "id": "log-1790864768174-tf6a6s",
+      "timestamp": 1790864768174,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lý Ánh Như"
+    },
+    {
+      "id": "log-1790864753188-k40dmd",
+      "timestamp": 1790864753188,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Hồ Đình Phúc"
+    },
+    {
+      "id": "log-1790864735859-k2pkiq",
+      "timestamp": 1790864735859,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Gia Nhân"
+    },
+    {
+      "id": "log-1790864718023-km5wza",
+      "timestamp": 1790864718023,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phạm Hải Nga"
+    },
+    {
+      "id": "log-1790864503042-jzu8mu",
+      "timestamp": 1790864503042,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lý Ánh Như"
+    },
+    {
+      "id": "log-1790864473563-o6xr8k",
+      "timestamp": 1790864473563,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Hồ Đình Phúc"
+    },
+    {
+      "id": "log-1790864459279-8jfu3s",
+      "timestamp": 1790864459279,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Gia Nhân"
+    },
+    {
+      "id": "log-1790864444580-988l3m",
+      "timestamp": 1790864444580,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phạm Hải Nga"
+    },
+    {
+      "id": "log-1790864429239-y1e1lh",
+      "timestamp": 1790864429239,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phan Hữu Phi"
+    },
+    {
+      "id": "log-1790864409639-z3jgau",
+      "timestamp": 1790864409639,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đặng Thu Ngọc"
+    },
+    {
+      "id": "log-1790864395209-02fgxw",
+      "timestamp": 1790864395209,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phan Hữu Phi"
+    },
+    {
+      "id": "log-1790864384673-9l72uo",
+      "timestamp": 1790864384673,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phạm Hải Nga"
+    },
+    {
+      "id": "log-1790864374058-pqjwif",
+      "timestamp": 1790864374058,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Gia Nhân"
+    },
+    {
+      "id": "log-1790864358856-o2npid",
+      "timestamp": 1790864358856,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Châu Thảo Mai"
+    },
+    {
+      "id": "log-1790864332816-o3ticd",
+      "timestamp": 1790864332816,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lưu Văn Nghĩa"
+    },
+    {
+      "id": "log-1790864317464-gcqw3u",
+      "timestamp": 1790864317464,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đào Như Loan"
+    },
+    {
+      "id": "log-1790864308829-zmx68d",
+      "timestamp": 1790864308829,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lâm Khánh Minh"
+    },
+    {
+      "id": "log-1790864286289-2en8rq",
+      "timestamp": 1790864286289,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lý Diệu Lan"
+    },
+    {
+      "id": "log-1790864269158-68nfvc",
+      "timestamp": 1790864269158,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Hồ Thành Lâm"
+    },
+    {
+      "id": "log-1790864247710-o1k76s",
+      "timestamp": 1790864247710,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đặng Minh Huyền"
+    },
+    {
+      "id": "log-1790864232241-y9kuzo",
+      "timestamp": 1790864232241,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phan Tuấn Khoa"
+    },
+    {
+      "id": "log-1790864215355-j0vi7u",
+      "timestamp": 1790864215355,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phạm Mai Hoa"
+    },
+    {
+      "id": "log-1790864200812-d40tvj",
+      "timestamp": 1790864200812,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Minh Hùng"
+    },
+    {
+      "id": "log-1790864184330-b5qqqs",
+      "timestamp": 1790864184330,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Châu Thị Hạnh"
+    },
+    {
+      "id": "log-1790864171304-lpfk0q",
+      "timestamp": 1790864171304,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lưu Quang Hiếu"
+    },
+    {
+      "id": "log-1790863807554-br5fbu",
+      "timestamp": 1790863807554,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đào Ánh Dương"
+    },
+    {
+      "id": "log-1790863792477-6b7fnk",
+      "timestamp": 1790863792477,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lâm Đình Đức"
+    },
+    {
+      "id": "log-1790863783302-ichr45",
+      "timestamp": 1790863783302,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lý Thu Diệp"
+    },
+    {
+      "id": "log-1790863771871-4446hc",
+      "timestamp": 1790863771871,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lý Thu Diệp"
+    },
+    {
+      "id": "log-1790863763094-uu882e",
+      "timestamp": 1790863763094,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Hồ Hữu Dũng"
+    },
+    {
+      "id": "log-1790863746577-5jh07d",
+      "timestamp": 1790863746577,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đặng Hải Châu"
+    },
+    {
+      "id": "log-1790863726446-xjiy1n",
+      "timestamp": 1790863726446,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phan Gia Bình"
+    },
+    {
+      "id": "log-1790863713767-xknzmi",
+      "timestamp": 1790863713767,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Phạm Thảo Ánh"
+    },
+    {
+      "id": "log-1790863696233-ur8ied",
+      "timestamp": 1790863696233,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn An"
+    },
+    {
+      "id": "log-1790863655634-dd41dr",
+      "timestamp": 1790863655634,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790863595750-4fig6z",
+      "timestamp": 1790863595750,
+      "username": "bghdemo",
+      "userFullName": "Ban Giám Hiệu DEMO",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu DEMO)"
+    },
+    {
+      "id": "log-1790857956337-a30ga5",
+      "timestamp": 1790857956337,
+      "username": "adminquantri",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790848459809-pym4wi",
+      "timestamp": 1790848459809,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1790844277969-pympbd",
+      "timestamp": 1790844277969,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1790843857068-pcvd7d",
+      "timestamp": 1790843857068,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790843850120-jfsi5l",
+      "timestamp": 1790843850120,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790839852451-2mf7de",
+      "timestamp": 1790839852451,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Nguyễn Thị Trang",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Trang)"
+    },
+    {
+      "id": "log-1790839834404-uhtsqi",
+      "timestamp": 1790839834405,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Nguyễn Thị Trang",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thị Trang)"
+    },
+    {
+      "id": "log-1790839675628-181lgf",
+      "timestamp": 1790839675628,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790837781081-v4xs9y",
+      "timestamp": 1790837781081,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790837466372-pgflo9",
+      "timestamp": 1790837466372,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Di chuyển CSDL giáo viên \"Nguyễn Thị Trang\" (@nguyenthitrangtu1) từ [Giáo viên Tự do / Cá nhân] sang [TIỂU HỌC SỐ 1 TÂN UYÊN] (Bảo toàn 1 lớp, 35 học sinh).",
+      "details": {
+        "targetUsername": "nguyenthitrangtu1",
+        "targetSchoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN",
+        "classesCount": 1,
+        "studentsCount": 35
+      }
+    },
+    {
+      "id": "log-1790836726647-snya55",
+      "timestamp": 1790836726647,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790835972119-4fwnob",
+      "timestamp": 1790835972119,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn Bình"
+    },
+    {
+      "id": "log-1790835938588-dhtwbj",
+      "timestamp": 1790835938588,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790835558325-2epjwp",
+      "timestamp": 1790835558325,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Hoa",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thị Hoa)"
+    },
+    {
+      "id": "log-1790835543151-a6oxyc",
+      "timestamp": 1790835543151,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Ninh",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A1"
+    },
+    {
+      "id": "log-1790835506113-l6g8su",
+      "timestamp": 1790835506113,
+      "username": "gvcn3a1",
+      "userFullName": "Nguyễn Thị Ninh",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thị Ninh)"
+    },
+    {
+      "id": "log-1790764782206-j2rj79",
+      "timestamp": 1790764782206,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị viên Hệ thống)"
+    },
+    {
+      "id": "log-1790749056342-h7p8wb",
+      "timestamp": 1790749056342,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1790749045604-y6v65p",
+      "timestamp": 1790749045604,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1790749028857-unfsvs",
+      "timestamp": 1790749028857,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1"
+    },
+    {
+      "id": "log-1790748819155-zv5q18",
+      "timestamp": 1790748819155,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa toàn bộ danh sách lớp học"
+    },
+    {
+      "id": "log-1790748360916-vj7r2u",
+      "timestamp": 1790748360916,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A1"
+    },
+    {
+      "id": "log-1790748336231-klwp3p",
+      "timestamp": 1790748336231,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống)"
+    },
+    {
+      "id": "log-1790747170154-0oikur",
+      "timestamp": 1790747170154,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị viên Hệ thống)"
+    },
+    {
+      "id": "log-1790746758682-xyclrn",
+      "timestamp": 1790746758682,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống)"
+    },
+    {
+      "id": "log-1790743012711-k68key",
+      "timestamp": 1790743012711,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị viên Hệ thống)"
+    },
+    {
+      "id": "log-1790742964216-13vgoh",
+      "timestamp": 1790742964216,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống)"
+    }
+  ],
+  "masterSummary": {
+    "totalUsers": 18,
+    "totalSchools": 2,
+    "totalClassesConfigured": 13
+  }
+}

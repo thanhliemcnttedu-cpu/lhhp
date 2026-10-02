@@ -151,7 +151,7 @@ export interface Classroom {
   color: string; // Hex or tailwind badge
   academicYear: string; // e.g. "2026 - 2027"
   teacherName?: string; // Tên giáo viên chủ nhiệm / bộ môn
-  teacherUsername?: string; // Tài khoản giáo viên phụ trách (gvcn4a1, gvbm01...)
+  teacherUsername?: string; // Tài khoản giáo viên phụ trách (VD: nguyenthitrangtu1, nguyenthanhliem...)
   teacherRole?: TeacherRole; // 'homeroom' | 'subject'
   avatar?: string; // Ảnh đại diện của lớp học
   originalAvatar?: string; // Ảnh gốc độ nét cao ban đầu để căn chỉnh lại
@@ -349,7 +349,25 @@ export interface InitSubjectClassItem {
   slogan?: string;
 }
 
-export type UserRole = 'admin' | 'homeroom' | 'subject';
+export type UserRole = 'admin' | 'homeroom' | 'subject' | 'bgh' | 'school_admin' | 'guest_admin';
+
+// 5 Vai trò đăng nhập theo yêu cầu người dùng
+export type LoginRoleScope = 
+  | 'personal_teacher'  // a. Vai trò Cá Nhân
+  | 'school_teacher'    // b. Vai trò Giáo viên thuộc Nhà trường
+  | 'school_admin'      // c. Vai trò Quản trị Nhà Trường
+  | 'guest_admin'       // d. Vai Trò Quản trị Tài khoản Cá Nhân
+  | 'admin';            // e. Vai Trò Admin
+
+export interface SchoolEntity {
+  id: string;
+  name: string;
+  code: string;
+  address?: string;
+  phone?: string;
+  adminUsername?: string;
+  createdAt?: number;
+}
 
 export interface UserAccount {
   id: string;
@@ -357,6 +375,13 @@ export interface UserAccount {
   password?: string;
   fullName: string;
   role: UserRole;
+  isDemo?: boolean;
+  isBgh?: boolean;
+  isSchoolAdmin?: boolean;
+  isGuestAdmin?: boolean;
+  tenantType?: 'school' | 'guest'; // 'school': Tổ chức Nhà trường, 'guest': Giáo viên vãng lai
+  schoolId?: string;
+  maxStudentsAllowed?: number; // Giới hạn số học sinh (10 cho tài khoản demo)
   email?: string;
   phone?: string;
   avatar?: string;
@@ -366,6 +391,20 @@ export interface UserAccount {
   createdAt: number;
   lastLoginAt?: number;
   status?: 'active' | 'locked';
+}
+
+export interface RegistrationRequest {
+  id: string;
+  fullName: string;
+  roleOrTitle: string; // Chức vụ
+  organization: string; // Đơn vị công tác
+  zaloPhone: string; // Số điện thoại dùng ZALO
+  registrationType: 'school' | 'personal'; // 'school' (1 triệu đồng) hoặc 'personal' (50 nghìn đồng)
+  amount: number;
+  transferContent: string;
+  notes?: string;
+  createdAt: number;
+  status?: 'pending' | 'completed';
 }
 
 export interface UserClassroomData {

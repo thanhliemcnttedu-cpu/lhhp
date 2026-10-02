@@ -4,7 +4,7 @@ import {
   Grid3X3, Calendar, Gift, Sparkles, Film, 
   Volume2, Timer, Link, BarChart3, Database, 
   Settings, Brain, ChevronLeft, ChevronRight, BookOpen,
-  ShieldCheck, LogIn, UserCheck, X
+  ShieldCheck, LogIn, UserCheck, X, Award
 } from 'lucide-react';
 import { useClassroom } from '../../context/ClassroomContext';
 import { APP_AUTHOR_INFO } from '../../data/initialData';
@@ -18,6 +18,7 @@ export type NavigationMenuId =
   | 'schedule'
   | 'infographic'
   | 'rewards'
+  | 'certificate'
   | 'picker'
   | 'wheel'
   | 'reel'
@@ -56,7 +57,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { 
     currentClassStudents, teacherProfile, teacherRole, setTeacherRole, 
-    subjectTeacherConfig, currentUser, isAdmin, setIsAuthModalOpen, setIsAccountManagerOpen 
+    subjectTeacherConfig, currentUser, isAdmin, canManageAccounts,
+    setIsAuthModalOpen, setIsAccountManagerOpen, setIsRegistrationModalOpen 
   } = useClassroom();
 
   const ALL_MENU_ITEMS: MenuItem[] = [
@@ -107,6 +109,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Gift,
       badge: 'HOT',
       badgeType: 'hot'
+    },
+    {
+      id: 'certificate',
+      label: 'Tạo thư khen',
+      icon: Award,
+      badge: 'NEW',
+      badgeType: 'new'
     },
     {
       id: 'picker',
@@ -342,8 +351,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        {/* Admin Quick Action Button */}
-        {!isEffectivelyCollapsed && isAdmin && (
+        {/* Admin Quick Action Button: Chỉ hiển thị cho Quản trị viên nhà trường hoặc Quản trị tối cao (BGH không có chức năng này) */}
+        {!isEffectivelyCollapsed && canManageAccounts && (
           <div className="px-2 mb-1.5 shrink-0">
             <button
               onClick={() => {
@@ -372,16 +381,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
               <div className="flex items-center gap-1.5 min-w-0">
                 <img 
-                  src={teacherProfile.avatar || currentUser?.avatar} 
-                  alt={teacherProfile.name || currentUser?.fullName}
+                  src={currentUser?.avatar || teacherProfile.avatar} 
+                  alt={currentUser?.fullName || teacherProfile.name}
                   className="w-6 h-6 rounded-full border border-slate-200 object-cover bg-white shrink-0"
                 />
                 <div className="min-w-0">
                   <div className="text-[10.5px] font-black text-slate-800 truncate leading-tight">
-                    {teacherProfile.name || currentUser?.fullName}
+                    {currentUser?.fullName || teacherProfile.name}
                   </div>
                   <div className="text-[8.5px] font-bold text-slate-400 truncate leading-tight">
-                    {currentUser?.role === 'admin' ? 'Quản trị viên' : currentUser?.role === 'homeroom' ? 'GVCN Lớp ' + (currentUser?.assignedClassName || '4A1') : 'GVBM ' + (currentUser?.subjectName || 'Tin học')}
+                    {currentUser?.role === 'admin' 
+                      ? 'Quản trị Tối cao' 
+                      : (currentUser?.role === 'bgh' || currentUser?.isBgh)
+                      ? 'Ban Giám Hiệu'
+                      : (currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin)
+                      ? 'Quản trị Nhà trường'
+                      : (currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin)
+                      ? 'Quản trị GV Cá nhân'
+                      : currentUser?.role === 'homeroom' 
+                      ? 'GVCN Lớp ' + (currentUser?.assignedClassName || '4A1') 
+                      : 'GVBM ' + (currentUser?.subjectName || 'Tin học')}
                   </div>
                 </div>
               </div>
@@ -399,44 +418,71 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
+        {/* Nút Đăng Ký Sử Dụng Bản Quyền */}
+        <div className="px-2 mb-1.5 shrink-0">
+          {!isEffectivelyCollapsed ? (
+            <button
+              onClick={() => {
+                setIsRegistrationModalOpen(true);
+                if (isMobileDrawer && onCloseMobile) onCloseMobile();
+              }}
+              className="w-full py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white font-black text-[10.5px] uppercase tracking-wide shadow-xs hover:shadow-md hover:brightness-105 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 border border-white/20 cursor-pointer"
+              title="Đăng ký sử dụng bản quyền phần mềm Lớp Học Hạnh Phúc"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-yellow-200 animate-pulse" />
+              <span>ĐĂNG KÝ SỬ DỤNG</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsRegistrationModalOpen(true)}
+              className="w-full py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-white flex items-center justify-center shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              title="Đăng ký sử dụng bản quyền"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-yellow-200 animate-pulse" />
+            </button>
+          )}
+        </div>
+
         {/* Author Footer: CỐ ĐỊNH THEO YÊU CẦU 6 - KHÔNG LẤY TỪ CÀI ĐẶT */}
         {!isEffectivelyCollapsed && (
-          <div className="p-2 mx-2 mb-2 rounded-xl bg-gradient-to-br from-indigo-50/90 via-sky-50/80 to-blue-50/80 border border-indigo-200/80 text-left hover-zoom-interactive shadow-xs shrink-0">
+          <div className={`p-1.5 mx-2 rounded-xl bg-gradient-to-br from-indigo-50/90 via-sky-50/80 to-blue-50/80 border border-indigo-200/80 text-left hover-zoom-interactive shadow-xs shrink-0 ${
+            isMobileDrawer ? 'mb-10' : 'mb-1.5'
+          }`}>
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black text-indigo-700 uppercase tracking-wider">
+              <span className="text-[8.5px] font-black text-indigo-700 uppercase tracking-wider">
                 TÁC GIẢ ỨNG DỤNG
               </span>
-              <span className="px-1 py-0.2 rounded bg-indigo-100 text-indigo-800 text-[8.5px] font-black uppercase">
+              <span className="px-1 py-0.2 rounded bg-indigo-100 text-indigo-800 text-[8px] font-black uppercase">
                 CỐ ĐỊNH
               </span>
             </div>
-            <div className="text-[11px] font-black text-indigo-950 mt-0.5 uppercase">
+            <div className="text-[10px] font-black text-indigo-950 mt-0.5 uppercase leading-tight truncate">
               {APP_AUTHOR_INFO.name}
             </div>
-            <div className="text-[10px] text-slate-700 font-bold mt-0.5 uppercase">
+            <div className="text-[9px] text-slate-700 font-bold uppercase leading-tight truncate">
               {APP_AUTHOR_INFO.schoolName}
             </div>
-            <div className="text-[10px] text-blue-700 font-bold mt-1.5 flex items-center justify-between pt-1 border-t border-indigo-100/90">
-              <span className="text-slate-600 font-bold uppercase text-[9px]">ZALO HỖ TRỢ:</span>
+            <div className="text-[9px] text-blue-700 font-bold mt-1 flex items-center justify-between pt-0.5 border-t border-indigo-100/90">
+              <span className="text-slate-600 font-bold uppercase text-[8.5px]">ZALO HỖ TRỢ:</span>
               <a 
                 href={APP_AUTHOR_INFO.zaloUrl} 
                 target="_blank" 
                 rel="noreferrer"
-                className="font-mono bg-white hover:bg-blue-50 px-1.5 py-0.2 rounded text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors text-[9.5px]"
+                className="font-mono bg-white hover:bg-blue-50 px-1.5 py-0.2 rounded text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors text-[9px]"
               >
                 {APP_AUTHOR_INFO.zalo}
               </a>
             </div>
-            <div className="text-[10px] text-blue-700 font-bold mt-1 flex items-center justify-between">
-              <span className="text-slate-600 font-bold uppercase text-[9px] flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full bg-blue-600 text-white flex items-center justify-center text-[8px] font-black">f</span>
+            <div className="text-[9px] text-blue-700 font-bold mt-0.5 flex items-center justify-between">
+              <span className="text-slate-600 font-bold uppercase text-[8.5px] flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[7px] font-black">f</span>
                 <span>FACEBOOK:</span>
               </span>
               <a 
                 href={APP_AUTHOR_INFO.facebook} 
                 target="_blank" 
                 rel="noreferrer" 
-                className="bg-white hover:bg-blue-50 px-1.5 py-0.2 rounded text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors text-[9px] uppercase font-bold"
+                className="bg-white hover:bg-blue-50 px-1.5 py-0.2 rounded text-blue-700 font-black shadow-2xs border border-blue-200 transition-colors text-[8.5px] uppercase font-bold"
               >
                 XEM TRANG
               </a>
@@ -451,7 +497,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Desktop Persistent Sidebar */}
       <aside 
-        className={`hidden lg:flex bg-[#f8fafc]/90 border-r border-slate-200/90 flex-col transition-all duration-300 z-40 relative select-none shrink-0 ${
+        className={`hidden lg:flex h-full max-h-screen overflow-hidden bg-[#f8fafc]/90 border-r border-slate-200/90 flex-col transition-all duration-300 z-40 relative select-none shrink-0 ${
           collapsed ? 'w-20' : 'w-60'
         }`}
       >
