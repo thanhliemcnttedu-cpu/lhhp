@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-01T18:52:33.227Z",
+  "lastSync": "2026-10-02T05:49:47.349Z",
   "users": [
     {
       "id": "user-admin",
@@ -14082,7 +14082,9 @@
               "phone": "0903 890 123",
               "roleTitle": "Ủy viên ban phụ huynh 2"
             }
-          }
+          },
+          "teacherUsername": "gvcn4a1",
+          "teacherRole": "homeroom"
         }
       ],
       "activeClassId": "class-4a1",
@@ -17551,12 +17553,12 @@
           "group": "Tổ 3",
           "avatar": "/avatars/demo/student-avatar-50.jpg",
           "gender": "Nam",
-          "points": 34,
+          "points": 36,
           "classId": "class-1a1demo",
           "birthDate": "16/07/2019",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 34
+            "GHI CHUNG / NỀ NẾP": 36
           },
           "avatarPosition": {
             "x": 0,
@@ -17808,7 +17810,28 @@
           "category": "Học tập"
         }
       ],
-      "transactions": [],
+      "transactions": [
+        {
+          "id": "tx-1790920185505-hs-gvcn1a1demo-7",
+          "studentId": "hs-gvcn1a1demo-7",
+          "studentName": "Đặng Minh Khang",
+          "classId": "class-1a1demo",
+          "amount": 2,
+          "reason": "Vô địch giải đua vịt hồ bơi (8s)",
+          "subjectName": "GHI CHUNG / NỀ NẾP",
+          "timestamp": 1790920185505
+        },
+        {
+          "id": "tx-1790920185505-hs-gvcn1a1demo-7",
+          "studentId": "hs-gvcn1a1demo-7",
+          "studentName": "Đặng Minh Khang",
+          "classId": "class-1a1demo",
+          "amount": 2,
+          "reason": "Vô địch giải đua vịt hồ bơi (8s)",
+          "subjectName": "GHI CHUNG / NỀ NẾP",
+          "timestamp": 1790920185505
+        }
+      ],
       "rewards": [
         {
           "id": "rew-1",
@@ -18520,7 +18543,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790880741403
+      "updatedAt": 1790920187349
     },
     "gvbmdemo2": {
       "classes": [
@@ -20007,6 +20030,24 @@
     "lastGithubPushAt": 1790880753226
   },
   "auditLogs": [
+    {
+      "id": "log-1790920185529-74k3my",
+      "timestamp": 1790920185529,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 2 xu cho 1 học sinh (Lý do: Vô địch giải đua vịt hồ bơi (8s), Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1790915166173-5n8dej",
+      "timestamp": 1790915166173,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Phương Anh)"
+    },
     {
       "id": "log-1790880748060-n7uvxr",
       "timestamp": 1790880748060,
