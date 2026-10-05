@@ -5,7 +5,98 @@ export const QUESTION_STORAGE_KEY = 'lop_hoc_hanh_phuc_quiz_bank_v2';
 
 // 1. Kho câu hỏi mẫu phong phú sẵn có (Trắc nghiệm có đáp án + Tự luận/bằng lời có đáp án giáo viên)
 export const DEFAULT_QUESTIONS: QuestionItem[] = [
-  // Trắc nghiệm có hình ảnh cho từng đáp án A, B, C, D (User requirement)
+  // ==========================================
+  // --- MÔN TIẾNG VIỆT (ĐẦY ĐỦ 7 DẠNG CÂU HỎI) ---
+  // ==========================================
+  {
+    id: 'q-tv-mc-1',
+    type: 'multiple_choice',
+    subject: 'Tiếng Việt',
+    questionText: 'Trong các từ sau, từ nào là từ láy tượng thanh gợi tả tiếng cười giòn giã?',
+    options: ['Cười ha hả', 'Cười tủm tỉm', 'Cười sặc sụa'],
+    correctOptionIndex: 0,
+    teacherAnswerKey: '"Ha hả" là từ láy tượng thanh diễn tả tiếng cười to, sảng khoái và giòn giã.',
+    pointsReward: 2
+  },
+  {
+    id: 'q-tv-multi-1',
+    type: 'multi_select',
+    subject: 'Tiếng Việt',
+    questionText: 'Những từ nào dưới đây là từ chỉ hoạt động của học sinh trong giờ ra chơi? (Chọn tất cả các đáp án đúng)',
+    options: ['Nhảy dây', 'Chăm chỉ', 'Đá cầu', 'Đọc sách', 'Thân thiện'],
+    correctOptionIndices: [0, 2, 3],
+    teacherAnswerKey: '"Nhảy dây", "Đá cầu", "Đọc sách" là từ chỉ hoạt động; "Chăm chỉ" và "Thân thiện" là từ chỉ phẩm chất, tính cách.',
+    pointsReward: 3
+  },
+  {
+    id: 'q-tv-tf-1',
+    type: 'true_false',
+    subject: 'Tiếng Việt',
+    questionText: 'Từ "chăm chỉ" là từ chỉ hoạt động của con người.',
+    isTrue: false,
+    teacherAnswerKey: 'Khẳng định SAI. "Chăm chỉ" là từ chỉ phẩm chất, tính nết (tính từ), không phải từ chỉ hoạt động (động từ).',
+    pointsReward: 2
+  },
+  {
+    id: 'q-tv-fill-1',
+    type: 'fill_blank',
+    subject: 'Tiếng Việt',
+    questionText: 'Nhiễu điều phủ lấy giá [gương], Người trong một nước phải [thương] nhau cùng.',
+    blankAnswers: ['gương', 'thương'],
+    distractorWords: ['đồng', 'giúp', 'kính', 'yêu'],
+    teacherAnswerKey: 'Vị trí 1: "gương" | Vị trí 2: "thương" (Câu ca dao khuyên tình đoàn kết, tương thân tương ái).',
+    pointsReward: 3
+  },
+  {
+    id: 'q-tv-seq-1',
+    type: 'sequence_order',
+    subject: 'Tiếng Việt',
+    questionText: 'Em hãy sắp xếp các câu văn sau theo đúng thứ tự logic để tạo thành một đoạn văn hoàn chỉnh:',
+    sequenceItems: [
+      '1. Mùa xuân đã về trên khắp nẻo đường quê hương.',
+      '2. Cây cối đua nhau đâm chồi nảy lộc xanh tươi.',
+      '3. Từng đàn chim én ríu rít bay lượn trên bầu trời.',
+      '4. Chúng em hân hoan cắp sách đến trường với niềm vui mới.'
+    ],
+    teacherAnswerKey: 'Trình tự chuẩn: 1. Mùa xuân về -> 2. Cây cối đâm chồi -> 3. Chim én bay lượn -> 4. Em cắp sách đến trường.',
+    pointsReward: 4
+  },
+  {
+    id: 'q-tv-match-1',
+    type: 'matching',
+    subject: 'Tiếng Việt',
+    questionText: 'Em hãy nối mỗi từ ngữ ở Cột A với từ trái nghĩa tương ứng ở Cột B:',
+    matchingPairs: [
+      { left: 'Chăm chỉ', right: 'Lười biếng' },
+      { left: 'Dũng cảm', right: 'Hèn nhát' },
+      { left: 'Thật thà', right: 'Gian dối' },
+      { left: 'Cao thượng', right: 'Hẹp hòi' }
+    ],
+    teacherAnswerKey: 'Chăm chỉ - Lười biếng | Dũng cảm - Hèn nhát | Thật thà - Gian dối | Cao thượng - Hẹp hòi.',
+    pointsReward: 4
+  },
+  {
+    id: 'q-oral-2',
+    type: 'oral',
+    subject: 'Tiếng Việt',
+    questionText: 'Em hãy đọc thuộc lòng một khổ thơ hoặc một câu ca dao, tục ngữ ca ngợi công ơn to lớn của thầy cô giáo?',
+    teacherAnswerKey: 'Gợi ý chấm điểm: Học sinh đọc to, rõ ràng, diễn cảm (Ví dụ: "Muốn sang thì bắc cầu Kiều / Muốn con hay chữ phải yêu lấy thầy" hoặc "Không thầy đố mày làm nên").',
+    pointsReward: 3
+  },
+
+  // ==========================================
+  // --- MÔN TOÁN HỌC (ĐẦY ĐỦ 7 DẠNG CÂU HỎI) ---
+  // ==========================================
+  {
+    id: 'q-mc-1',
+    type: 'multiple_choice',
+    subject: 'Toán học',
+    questionText: 'Nếu một hình chữ nhật có chiều dài 12cm và chiều rộng 8cm thì chu vi của hình chữ nhật đó là bao nhiêu?',
+    options: ['20 cm', '40 cm', '96 cm', '48 cm'],
+    correctOptionIndex: 1,
+    teacherAnswerKey: 'Chu vi = (12 + 8) x 2 = 40 (cm).',
+    pointsReward: 2
+  },
   {
     id: 'q-mc-shapes-1',
     type: 'multiple_choice',
@@ -18,10 +109,71 @@ export const DEFAULT_QUESTIONS: QuestionItem[] = [
       'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="90" viewBox="0 0 120 90"><rect width="120" height="90" fill="%23f8fafc"/><polygon points="60,10 15,80 105,80" fill="%23f59e0b" stroke="%23b45309" stroke-width="3"/></svg>',
       'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="90" viewBox="0 0 120 90"><rect width="120" height="90" fill="%23f8fafc"/><circle cx="60" cy="45" r="35" fill="%23ec4899" stroke="%23be185d" stroke-width="3"/></svg>'
     ],
-    correctOptionIndex: 1, // Hình 2
+    correctOptionIndex: 1,
     teacherAnswerKey: 'Hình chữ nhật là hình có 4 góc vuông, 2 cạnh dài bằng nhau và 2 cạnh ngắn bằng nhau (Hình 2 - Màu xanh lá cây).',
     pointsReward: 3
   },
+  {
+    id: 'q-multi-1',
+    type: 'multi_select',
+    subject: 'Toán học',
+    questionText: 'Trong các số sau, những số nào là số chẵn chia hết cho 2? (Chọn tất cả các đáp án đúng)',
+    options: ['12', '15', '24', '37', '48'],
+    correctOptionIndices: [0, 2, 4],
+    teacherAnswerKey: 'Các số chẵn tận cùng là 0, 2, 4, 6, 8 nên 12, 24, 48 đều chia hết cho 2.',
+    pointsReward: 3
+  },
+  {
+    id: 'q-tf-1',
+    type: 'true_false',
+    subject: 'Toán học',
+    questionText: 'Số 0 là số tự nhiên nhỏ nhất trong tập hợp các số tự nhiên.',
+    isTrue: true,
+    teacherAnswerKey: 'Khẳng định ĐÚNG. Tập hợp số tự nhiên là N = {0, 1, 2, 3, ...} và số 0 là số nhỏ nhất.',
+    pointsReward: 2
+  },
+  {
+    id: 'q-math-fill-1',
+    type: 'fill_blank',
+    subject: 'Toán học',
+    questionText: 'Một hình vuông có cạnh 5cm thì chu vi là [20] cm và diện tích là [25] cm2.',
+    blankAnswers: ['20', '25'],
+    distractorWords: ['10', '15', '30', '50'],
+    teacherAnswerKey: 'Chu vi = 5 x 4 = 20 (cm) | Diện tích = 5 x 5 = 25 (cm2).',
+    pointsReward: 3
+  },
+  {
+    id: 'q-math-seq-1',
+    type: 'sequence_order',
+    subject: 'Toán học',
+    questionText: 'Hãy sắp xếp các phân số sau theo thứ tự từ bé đến lớn:',
+    sequenceItems: [
+      '1. Phân số 1/8',
+      '2. Phân số 1/4',
+      '3. Phân số 1/2',
+      '4. Phân số 3/4'
+    ],
+    teacherAnswerKey: 'Thứ tự từ bé đến lớn: 1/8 < 1/4 < 1/2 < 3/4.',
+    pointsReward: 4
+  },
+  {
+    id: 'q-match-1',
+    type: 'matching',
+    subject: 'Toán học',
+    questionText: 'Em hãy nối mỗi phép nhân ở Cột A với kết quả tương ứng ở Cột B:',
+    matchingPairs: [
+      { left: '6 x 7', right: '42' },
+      { left: '8 x 9', right: '72' },
+      { left: '5 x 8', right: '40' },
+      { left: '7 x 7', right: '49' }
+    ],
+    teacherAnswerKey: '6x7 = 42 | 8x9 = 72 | 5x8 = 40 | 7x7 = 49.',
+    pointsReward: 4
+  },
+
+  // ==========================================
+  // --- MÔN KHOA HỌC & KỸ NĂNG SỐNG ---
+  // ==========================================
   {
     id: 'q-mc-traffic-1',
     type: 'multiple_choice',
@@ -34,73 +186,47 @@ export const DEFAULT_QUESTIONS: QuestionItem[] = [
       'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80" viewBox="0 0 100 80"><polygon points="50,10 12,70 88,70" fill="%23facc15" stroke="%23b45309" stroke-width="4"/><line x1="50" y1="30" x2="50" y2="52" stroke="black" stroke-width="5"/><circle cx="50" cy="62" r="3" fill="black"/></svg>',
       'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80" viewBox="0 0 100 80"><circle cx="50" cy="40" r="32" fill="%23ef4444"/><rect x="25" y="35" width="50" height="10" fill="white"/></svg>'
     ],
-    correctOptionIndex: 1, // Biển 2
+    correctOptionIndex: 1,
     teacherAnswerKey: 'Biển 2 có nền xanh vuông với hình người đi bộ màu trắng là biển chỉ dẫn nơi dành cho người đi bộ sang đường.',
     pointsReward: 3
   },
-  // Trắc nghiệm chuẩn chữ
   {
-    id: 'q-mc-1',
-    type: 'multiple_choice',
-    subject: 'Toán học',
-    questionText: 'Nếu một hình chữ nhật có chiều dài 12cm và chiều rộng 8cm thì chu vi của hình chữ nhật đó là bao nhiêu?',
-    options: ['20 cm', '40 cm', '96 cm', '48 cm'],
-    correctOptionIndex: 1, // 40 cm
-    teacherAnswerKey: 'Chu vi = (12 + 8) x 2 = 40 (cm).',
-    pointsReward: 2
-  },
-  {
-    id: 'q-mc-2',
-    type: 'multiple_choice',
-    subject: 'Tiếng Việt',
-    questionText: 'Trong các từ sau, từ nào là từ láy tượng thanh gợi tả tiếng cười giòn giã?',
-    options: ['Cười ha hả', 'Cười tủm tỉm', 'Cười sặc sụa', 'Cười gượng gạo'],
-    correctOptionIndex: 0, // Cười ha hả
-    teacherAnswerKey: '"Ha hả" là từ láy tượng thanh diễn tả tiếng cười to, sảng khoái và giòn giã.',
-    pointsReward: 2
-  },
-  {
-    id: 'q-mc-3',
-    type: 'multiple_choice',
+    id: 'q-tf-2',
+    type: 'true_false',
     subject: 'Khoa học',
-    questionText: 'Bộ phận nào của cây xanh đóng vai trò chính trong quá trình quang hợp tạo ra khí oxy?',
-    options: ['Rễ cây', 'Thân cây', 'Lá cây', 'Hoa và quả'],
-    correctOptionIndex: 2, // Lá cây
-    teacherAnswerKey: 'Lá cây chứa chất diệp lục hấp thụ ánh sáng mặt trời để quang hợp nhả khí oxy.',
+    questionText: 'Mặt trời mọc ở hướng Tây và lặn ở hướng Đông.',
+    isTrue: false,
+    teacherAnswerKey: 'Khẳng định SAI. Trái đất tự quay từ Tây sang Đông nên ta thấy Mặt trời mọc ở hướng Đông và lặn ở hướng Tây.',
     pointsReward: 2
   },
   {
-    id: 'q-mc-4',
-    type: 'multiple_choice',
-    subject: 'Đố vui IQ',
-    questionText: 'Con gì chân ngắn mà lại có màng, mỏ bẹt màu vàng, hay kêu cạp cạp?',
-    options: ['Con gà trống', 'Con chim bồ câu', 'Con vịt bầu', 'Con ngan'],
-    correctOptionIndex: 2, // Con vịt bầu
-    teacherAnswerKey: 'Con vịt có màng chân giúp bơi dưới nước và tiếng kêu cạp cạp đặc trưng.',
-    pointsReward: 2
+    id: 'q-seq-1',
+    type: 'sequence_order',
+    subject: 'Khoa học',
+    questionText: 'Em hãy sắp xếp các giai đoạn phát triển trong vòng đời của loài Bướm theo đúng trình tự tự nhiên:',
+    sequenceItems: [
+      '1. Trứng bướm',
+      '2. Sâu bướm (Ấu trùng)',
+      '3. Nhộng (Kén)',
+      '4. Bướm trưởng thành'
+    ],
+    teacherAnswerKey: 'Trình tự chuẩn: 1. Trứng bướm -> 2. Sâu bướm -> 3. Nhộng (Kén) -> 4. Bướm trưởng thành.',
+    pointsReward: 4
   },
   {
-    id: 'q-mc-5',
-    type: 'multiple_choice',
-    subject: 'Tiếng Anh',
-    questionText: 'Choose the correct English word for "Trường học":',
-    options: ['Hospital', 'Library', 'School', 'Supermarket'],
-    correctOptionIndex: 2, // School
-    teacherAnswerKey: 'School = Trường học; Hospital = Bệnh viện; Library = Thư viện.',
-    pointsReward: 2
+    id: 'q-seq-2',
+    type: 'sequence_order',
+    subject: 'Đạo đức & Kỹ năng sống',
+    questionText: 'Hãy sắp xếp các bước sơ cứu ban đầu khi bị chảy máu nhẹ ở ngón tay:',
+    sequenceItems: [
+      'Bước 1: Rửa sạch vết thương dưới vòi nước sạch',
+      'Bước 2: Sát khuẩn vết thương bằng cồn đỏ/nước muối',
+      'Bước 3: Dùng gạc sạch băng ép nhẹ để cầm máu',
+      'Bước 4: Dán băng cá nhân bảo vệ'
+    ],
+    teacherAnswerKey: 'Thứ tự đúng: Rửa sạch -> Sát khuẩn -> Băng ép cầm máu -> Dán băng cá nhân.',
+    pointsReward: 4
   },
-  {
-    id: 'q-mc-6',
-    type: 'multiple_choice',
-    subject: 'Toán học',
-    questionText: 'Số liền sau của số lớn nhất có 4 chữ số khác nhau là số nào?',
-    options: ['9876', '9877', '9999', '10000'],
-    correctOptionIndex: 1, // 9877
-    teacherAnswerKey: 'Số lớn nhất có 4 chữ số khác nhau là 9876. Số liền sau của 9876 là 9877.',
-    pointsReward: 2
-  },
-
-  // Câu hỏi trả lời bằng lời (Có đáp án đối chiếu của giáo viên)
   {
     id: 'q-oral-1',
     type: 'oral',
@@ -109,48 +235,84 @@ export const DEFAULT_QUESTIONS: QuestionItem[] = [
     teacherAnswerKey: 'Gợi ý chấm điểm của giáo viên: Học sinh nêu được từ 2 - 3 việc làm cụ thể, lễ phép và trung thực (như quét nhà, rửa bát, gấp chăn màn, lau bảng, giúp bạn trong giờ học).',
     pointsReward: 3
   },
+
+  // ==========================================
+  // --- MÔN TIẾNG ANH & ĐỊA LÝ ---
+  // ==========================================
   {
-    id: 'q-oral-2',
-    type: 'oral',
-    subject: 'Tiếng Việt',
-    questionText: 'Em hãy đọc thuộc lòng một khổ thơ hoặc một câu ca dao, tục ngữ ca ngợi công ơn to lớn của thầy cô giáo?',
-    teacherAnswerKey: 'Gợi ý chấm điểm: Học sinh đọc to, rõ ràng, diễn cảm (Ví dụ: "Muốn sang thì bắc cầu Kiều / Muốn con hay chữ phải yêu lấy thầy" hoặc "Không thầy đố mày làm nên").',
-    pointsReward: 3
-  },
-  {
-    id: 'q-oral-3',
-    type: 'oral',
-    subject: 'Tự nhiên & Xã hội',
-    questionText: 'Tại sao chúng ta phải thường xuyên rửa tay bằng xà phòng trước khi ăn và sau khi đi vệ sinh?',
-    teacherAnswerKey: 'Gợi ý chấm điểm: Học sinh giải thích được: Rửa tay giúp loại bỏ vi khuẩn, vi rút truyền bệnh, bảo vệ đường tiêu hóa và giữ gìn vệ sinh sạch sẽ cho bản thân và cả lớp.',
-    pointsReward: 3
-  },
-  {
-    id: 'q-oral-4',
-    type: 'oral',
+    id: 'q-fill-1',
+    type: 'fill_blank',
     subject: 'Lịch sử & Địa lý',
-    questionText: 'Thủ đô của nước Việt Nam chúng ta tên là gì và có thắng cảnh nổi tiếng nào em biết?',
-    teacherAnswerKey: 'Gợi ý chấm điểm: Thủ đô Hà Nội. Nêu được ít nhất 1 địa danh nổi tiếng (Hồ Gươm, Lăng Bác, Văn Miếu Quốc Tử Giám, Chùa Một Cột, Cầu Long Biên).',
+    questionText: 'Thủ đô của nước Việt Nam là [Hà Nội]. Thành phố có con sông [Hồng] uốn lượn chảy qua.',
+    blankAnswers: ['Hà Nội', 'Hồng'],
+    distractorWords: ['Đà Nẵng', 'Hồ Chí Minh', 'Mê Kông', 'Đồng Nai'],
+    teacherAnswerKey: 'Vị trí 1: "Hà Nội" | Vị trí 2: "Hồng" (Sông Hồng).',
     pointsReward: 3
   },
   {
-    id: 'q-oral-5',
-    type: 'oral',
-    subject: 'Toán học vui',
-    questionText: 'Nếu một cành cây có 5 con chim, người thợ săn bắn rơi 1 con, hỏi trên cành cây còn lại mấy con chim? Vì sao?',
-    teacherAnswerKey: 'Gợi ý chấm điểm: Không còn con nào cả, vì khi súng nổ tiếng súng vang lên làm 4 con chim còn lại giật mình sợ hãi bay đi hết.',
-    pointsReward: 2
+    id: 'q-fill-2',
+    type: 'fill_blank',
+    subject: 'Tiếng Anh',
+    questionText: 'There are seven days in a [week]. Monday is the [first] day of the school week.',
+    blankAnswers: ['week', 'first'],
+    distractorWords: ['month', 'year', 'last', 'second'],
+    teacherAnswerKey: 'There are seven days in a week. Monday is the first day of the school week.',
+    pointsReward: 3
+  },
+  {
+    id: 'q-match-2',
+    type: 'matching',
+    subject: 'Tiếng Anh',
+    questionText: 'Hãy nối các từ tiếng Anh ở Cột A với nghĩa tiếng Việt tương ứng ở Cột B:',
+    matchingPairs: [
+      { left: 'Teacher', right: 'Thầy/Cô giáo' },
+      { left: 'Student', right: 'Học sinh' },
+      { left: 'Book', right: 'Quyển sách' },
+      { left: 'Classroom', right: 'Phòng học' }
+    ],
+    teacherAnswerKey: 'Teacher: Thầy cô giáo | Student: Học sinh | Book: Quyển sách | Classroom: Phòng học.',
+    pointsReward: 4
   }
 ];
 
-// Helper: Tải câu hỏi từ localStorage hoặc mặc định
+// Helper: Gộp thông minh tự động (Smart Merge Upgrade) bảo toàn câu hỏi của user và bổ sung các câu hỏi mẫu 7 dạng còn thiếu
+export function smartMergeQuizBank(currentQuestions: QuestionItem[]): QuestionItem[] {
+  if (!Array.isArray(currentQuestions) || currentQuestions.length === 0) {
+    return DEFAULT_QUESTIONS;
+  }
+
+  const existingIds = new Set(currentQuestions.map(q => q.id));
+  const missingDefaults = DEFAULT_QUESTIONS.filter(dq => !existingIds.has(dq.id));
+
+  // Kiểm tra xem danh sách đã có đủ các dạng câu hỏi cơ bản hay chưa
+  const typesInCurrent = new Set(currentQuestions.map(q => q.type));
+  const hasAllNewTypes = 
+    typesInCurrent.has('multi_select') &&
+    typesInCurrent.has('true_false') &&
+    typesInCurrent.has('fill_blank') &&
+    typesInCurrent.has('sequence_order') &&
+    typesInCurrent.has('matching');
+
+  // Nếu còn thiếu câu hỏi mẫu hoặc thiếu các dạng mới, tự động merge
+  if (!hasAllNewTypes || missingDefaults.length > 0) {
+    return [...currentQuestions, ...missingDefaults];
+  }
+
+  return currentQuestions;
+}
+
+// Helper: Tải câu hỏi và TỰ ĐỘNG GỘP CÁC DẠNG MỚI (Smart Merge Upgrade)
 export function loadQuizBank(): QuestionItem[] {
   try {
     const saved = localStorage.getItem(QUESTION_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        const merged = smartMergeQuizBank(parsed);
+        if (merged.length !== parsed.length) {
+          saveQuizBank(merged);
+        }
+        return merged;
       }
     }
   } catch (err) {

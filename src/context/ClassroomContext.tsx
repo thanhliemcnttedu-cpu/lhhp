@@ -19,7 +19,7 @@ import {
   SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE, SAMPLE_SUBJECT_CLASSES_BY_IMAGE
 } from '../data/initialData';
 import { playCoinSound, playDeductSound } from '../utils/audio';
-import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank } from '../utils/quizParser';
+import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank, smartMergeQuizBank } from '../utils/quizParser';
 import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX } from '../services/databaseService';
 
 interface ClassroomContextType {
@@ -364,10 +364,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const [subjectTimetable, setSubjectTimetable] = useState<SubjectTimetableSlot[]>(INITIAL_SUBJECT_TIMETABLE);
-  const [quizBank, setQuizBank] = useState<QuestionItem[]>(DEFAULT_QUESTIONS);
+  const [quizBank, setQuizBank] = useState<QuestionItem[]>(() => loadQuizBank());
   const updateQuizBank = (questions: QuestionItem[]) => {
-    setQuizBank(questions);
-    saveQuizBank(questions);
+    const merged = smartMergeQuizBank(questions);
+    setQuizBank(merged);
+    saveQuizBank(merged);
     if (currentUserRef.current) {
       const user = currentUserRef.current;
       const isExec = Boolean(
@@ -382,7 +383,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (!isExec) {
         const payload: UserClassroomData = {
           ...getCurrentUserData(),
-          quizBank: questions,
+          quizBank: merged,
           updatedAt: Date.now()
         };
         databaseService.saveUserData(user.username, payload).catch(() => {});
@@ -546,7 +547,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     }
     if (data.quizBank && Array.isArray(data.quizBank)) {
-      setQuizBank(data.quizBank);
+      setQuizBank(smartMergeQuizBank(data.quizBank));
     }
     if (data.infographicConfig) {
       setInfographicConfig(data.infographicConfig);

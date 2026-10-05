@@ -105,7 +105,21 @@ export interface Student {
 }
 
 // Question types for Random Picker & Classroom Quiz Challenges
-export type QuestionType = 'multiple_choice' | 'oral'; // Trắc nghiệm hoặc Tự luận/Trả lời bằng lời
+export type QuestionType = 
+  | 'multiple_choice'   // Trắc nghiệm 1 đáp án đúng (tùy biến số lượng đáp án 2 - 8)
+  | 'multi_select'      // Trắc nghiệm nhiều đáp án đúng
+  | 'true_false'        // Đúng / Sai
+  | 'fill_blank'        // Kéo thả / Điền vào chỗ trống
+  | 'sequence_order'    // Sắp xếp thứ tự các bước
+  | 'matching'          // Nối cột A với cột B
+  | 'oral';             // Tự luận / Trả lời bằng lời
+
+export interface QuestionMatchingPair {
+  left: string;   // Cột A (1, 2, 3...)
+  right: string;  // Cột B tương ứng (A, B, C...)
+  leftImage?: string;
+  rightImage?: string;
+}
 
 export interface QuestionItem {
   id: string;
@@ -113,10 +127,27 @@ export interface QuestionItem {
   questionText: string;
   image?: string; // Tùy chọn ảnh minh họa câu hỏi
   answerImage?: string; // Tùy chọn ảnh minh họa câu trả lời / đáp án giáo viên
-  options?: string[]; // Cho dạng trắc nghiệm (A, B, C, D)
-  optionImages?: string[]; // Tùy chọn ảnh minh họa cho từng đáp án A, B, C, D (User request)
-  correctOptionIndex?: number; // 0, 1, 2, 3
-  teacherAnswerKey?: string; // Đáp án/hướng dẫn của giáo viên (cho dạng câu hỏi bằng lời hoặc giải thích)
+  
+  // Trắc nghiệm 1 đáp án & Nhiều đáp án
+  options?: string[]; // Mảng lựa chọn linh hoạt (2, 3, 4, 5, 6...)
+  optionImages?: string[]; // Ảnh minh họa cho từng đáp án
+  correctOptionIndex?: number; // Dành cho trắc nghiệm đơn hoặc True/False (0 = A/Đúng, 1 = B/Sai)
+  correctOptionIndices?: number[]; // Dành cho trắc nghiệm nhiều đáp án đúng [0, 2]
+  
+  // Dạng Đúng / Sai
+  isTrue?: boolean; // true = Đúng, false = Sai
+  
+  // Dạng Điền chỗ trống / Kéo thả
+  blankAnswers?: string[]; // Các từ cần điền vào các vị trí trống
+  distractorWords?: string[]; // Từ nhiễu để kéo thả
+  
+  // Dạng Sắp xếp thứ tự các bước
+  sequenceItems?: string[]; // Các bước theo đúng thứ tự chuẩn
+  
+  // Dạng Nối cột A với cột B
+  matchingPairs?: QuestionMatchingPair[]; // Các cặp nối A - B
+  
+  teacherAnswerKey?: string; // Đáp án/hướng dẫn của giáo viên hoặc giải thích
   pointsReward?: number; // Số xu thưởng khi trả lời đúng (mặc định 2 xu)
   subject?: string; // Môn học (Toán, Tiếng Việt, Tiếng Anh, Đố vui, v.v.)
 }

@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-05T02:45:04.652Z",
+  "lastSync": "2026-10-05T23:02:48.370Z",
   "users": [
     {
       "id": "user-admin",
@@ -42,9 +42,63 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791168304652
+    "lastGithubPushAt": 1791241368370
   },
   "auditLogs": [
+    {
+      "id": "log-1791241296111-6795vr",
+      "timestamp": 1791241296111,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Trả lời đúng trắc nghiệm môn Tin học, Môn: Tin học)"
+    },
+    {
+      "id": "log-1791241226758-9sf9k5",
+      "timestamp": 1791241226758,
+      "username": "nguyenthanhliem",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "RESTORE_DATA",
+      "description": "Khôi phục độc lập dữ liệu từ file JSON Sao_Luu_Lop_Hoc_Hanh_Phuc_nguyenthanhliem_homeroom_2026-10-04.json"
+    },
+    {
+      "id": "log-1791241210685-t9hx76",
+      "timestamp": 1791241210685,
+      "username": "nguyenthanhliem",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1791217001409-26he24",
+      "timestamp": 1791217001409,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thanh Liêm)"
+    },
+    {
+      "id": "log-1791216978359-835aqu",
+      "timestamp": 1791216978359,
+      "username": "nguyenviethien",
+      "userFullName": "Nguyễn Viết Hiền",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Viết Hiền)"
+    },
+    {
+      "id": "log-1791215314425-ix21iy",
+      "timestamp": 1791215314425,
+      "username": "nguyenviethien",
+      "userFullName": "Nguyễn Viết Hiền",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Viết Hiền)"
+    },
     {
       "id": "log-1791168294648-uxrwl9",
       "timestamp": 1791168294648,
