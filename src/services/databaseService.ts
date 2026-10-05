@@ -1093,21 +1093,79 @@ export const databaseService = {
     }
   },
 
-  // Clean up and purge any legacy classroom data from browser localStorage (Strict Requirement: No data in user browser)
+  // Clean up only temporary non-essential caches (Strict: NEVER purge user databases or quiz banks)
   purgeLocalStorageUserData(): void {
     try {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith(LOCAL_DB_PREFIX) || key.startsWith('lop_hoc_hanh_phuc_'))) {
-          // Keep only authentication and session credentials
-          if (key !== LOCAL_AUTH_KEY && key !== LOCAL_SESSION_KEY) {
-            keysToRemove.push(key);
-          }
+        if (key && (key.startsWith('lop_hoc_temp_') || key.startsWith('lop_hoc_cache_'))) {
+          keysToRemove.push(key);
         }
       }
       keysToRemove.forEach(k => localStorage.removeItem(k));
     } catch (_) {}
+  },
+
+  // Tự động làm sạch và nén nhẹ dữ liệu trước khi gửi lên đám mây Supabase để đảm bảo payload < 500KB
+  async sanitizeAndCompressPayload(data: UserClassroomData): Promise<UserClassroomData> {
+    if (!data) return data;
+    try {
+      const cloned: UserClassroomData = JSON.parse(JSON.stringify(data));
+
+      // 1. Tối ưu ảnh đại diện học sinh
+      if (Array.isArray(cloned.students)) {
+        cloned.students = await Promise.all(
+          cloned.students.map(async (st) => {
+            const cleanSt = { ...st };
+            // Nén ảnh avatar nếu là base64 lớn > 40KB
+            if (typeof cleanSt.avatar === 'string' && cleanSt.avatar.startsWith('data:image') && cleanSt.avatar.length > 45000) {
+              cleanSt.avatar = await this.compressImageBase64(cleanSt.avatar, 256, 0.82);
+            }
+            // Loại bỏ trường originalAvatar khổng lồ nếu kích thước > 40KB để tránh lãng phí dung lượng
+            if (cleanSt.originalAvatar && typeof cleanSt.originalAvatar === 'string' && cleanSt.originalAvatar.length > 40000) {
+              cleanSt.originalAvatar = cleanSt.avatar;
+            }
+            return cleanSt;
+          })
+        );
+      }
+
+      // 2. Tối ưu ảnh trong kho câu hỏi quiz
+      if (Array.isArray(cloned.quizBank)) {
+        cloned.quizBank = await Promise.all(
+          cloned.quizBank.map(async (q) => {
+            const cleanQ = { ...q };
+            if (cleanQ.image && cleanQ.image.startsWith('data:image') && cleanQ.image.length > 70000) {
+              cleanQ.image = await this.compressImageBase64(cleanQ.image, 600, 0.80);
+            }
+            if (cleanQ.answerImage && cleanQ.answerImage.startsWith('data:image') && cleanQ.answerImage.length > 70000) {
+              cleanQ.answerImage = await this.compressImageBase64(cleanQ.answerImage, 600, 0.80);
+            }
+            if (Array.isArray(cleanQ.optionImages)) {
+              cleanQ.optionImages = await Promise.all(
+                cleanQ.optionImages.map(async (optImg) => {
+                  if (optImg && optImg.startsWith('data:image') && optImg.length > 50000) {
+                    return await this.compressImageBase64(optImg, 380, 0.80);
+                  }
+                  return optImg;
+                })
+              );
+            }
+            return cleanQ;
+          })
+        );
+      }
+
+      // 3. Giới hạn lịch sử giao dịch điểm 350 mục gần nhất
+      if (Array.isArray(cloned.transactions) && cloned.transactions.length > 350) {
+        cloned.transactions = cloned.transactions.slice(0, 350);
+      }
+
+      return cloned;
+    } catch (_) {
+      return data;
+    }
   },
 
   async loadUserData(username: string): Promise<UserClassroomData | null> {
@@ -1135,26 +1193,33 @@ export const databaseService = {
       }
     }
 
-    // 2. Server API fallback (if running local Express server)
-    try {
-      const res = await fetch(`/api/user-data/${encodeURIComponent(cleanUser)}?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
+    // 2. Server API fallback (chỉ khi có server Express nội bộ, không chạy trên static Vercel)
+    const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    if (!isVercelHost) {
+      try {
+        const res = await fetch(`/api/user-data/${encodeURIComponent(cleanUser)}?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const result = await res.json();
+          if (result.success && result.found && result.data) {
+            try {
+              localStorage.setItem(LOCAL_DB_PREFIX + cleanUser, JSON.stringify(result.data));
+            } catch (_) {}
+            return result.data as UserClassroomData;
+          }
         }
-      });
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success && result.found && result.data) {
-          return result.data as UserClassroomData;
-        }
+      } catch (err) {
+        console.warn(`Lỗi tải dữ liệu người dùng ${cleanUser} từ máy chủ:`, err);
       }
-    } catch (err) {
-      console.warn(`Lỗi tải dữ liệu người dùng ${cleanUser} từ máy chủ:`, err);
     }
 
-    // 3. LocalStorage fallback
+    // 3. LocalStorage fallback (An toàn tuyệt đối nếu offline hoặc mạng tạm thời gián đoạn)
     try {
       const cached = localStorage.getItem(LOCAL_DB_PREFIX + cleanUser);
       if (cached) {
@@ -1169,15 +1234,40 @@ export const databaseService = {
     const cleanUser = username.trim().toLowerCase();
     let isSuccess = false;
 
-    // 1. Direct Supabase Cloud Database (Multi-device online synchronization)
+    // 1. Tầng 1 (LocalStorage First & Immediate): Lưu đồng bộ ngay lập tức vào trình duyệt để chống mất dữ liệu khi tắt tab
+    try {
+      localStorage.setItem(LOCAL_DB_PREFIX + cleanUser, JSON.stringify(data));
+      isSuccess = true;
+    } catch (_) {}
+
+    // Cập nhật thông báo đa tab nội bộ tức thì
+    try {
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage({
+          type: 'DATA_CHANGED',
+          username: cleanUser,
+          originClientId: CLIENT_ID,
+          timestamp: data.updatedAt || Date.now()
+        });
+      }
+      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        username: cleanUser,
+        originClientId: CLIENT_ID,
+        timestamp: data.updatedAt || Date.now(),
+        r: Math.random()
+      }));
+    } catch (_) {}
+
+    // 2. Tầng 2: Nén và Tối ưu hóa dữ liệu rồi gửi lên Supabase Cloud Database
     const supabase = getBrowserSupabase();
     if (supabase) {
       try {
+        const payloadToUpload = await this.sanitizeAndCompressPayload(data);
         const { error } = await supabase
           .from('user_classroom_data')
           .upsert({
             username: cleanUser,
-            data: data,
+            data: payloadToUpload,
             updated_at: new Date().toISOString()
           }, { onConflict: 'username' });
 
@@ -1205,47 +1295,27 @@ export const databaseService = {
       }
     }
 
-    // 2. Server API Sync (Express / local server)
-    try {
-      const res = await fetch(`/api/user-data/${encodeURIComponent(cleanUser)}`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Client-Id': CLIENT_ID
-        },
-        body: JSON.stringify(data)
-      });
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success) isSuccess = true;
-      }
-    } catch (err) {
-      console.warn(`Lỗi đồng bộ dữ liệu người dùng ${cleanUser} lên máy chủ:`, err);
-    }
-
-    // 3. LocalStorage caching (for offline resilience)
-    try {
-      localStorage.setItem(LOCAL_DB_PREFIX + cleanUser, JSON.stringify(data));
-      isSuccess = true;
-    } catch (_) {}
-
-    // 4. Instant multi-tab & cross-window notification
-    try {
-      if (localBroadcastChannel) {
-        localBroadcastChannel.postMessage({
-          type: 'DATA_CHANGED',
-          username: cleanUser,
-          originClientId: CLIENT_ID,
-          timestamp: data.updatedAt || Date.now()
+    // 3. Tầng 3: Server API Sync (nếu đang chạy localhost / Express server)
+    const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    if (!isVercelHost) {
+      try {
+        const res = await fetch(`/api/user-data/${encodeURIComponent(cleanUser)}`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Client-Id': CLIENT_ID
+          },
+          body: JSON.stringify(data)
         });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const result = await res.json();
+          if (result.success) isSuccess = true;
+        }
+      } catch (err) {
+        console.warn(`Lỗi đồng bộ dữ liệu người dùng ${cleanUser} lên máy chủ:`, err);
       }
-      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
-        username: cleanUser,
-        originClientId: CLIENT_ID,
-        timestamp: data.updatedAt || Date.now(),
-        r: Math.random()
-      }));
-    } catch (_) {}
+    }
 
     return isSuccess;
   },

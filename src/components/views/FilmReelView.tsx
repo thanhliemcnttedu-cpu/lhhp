@@ -4,7 +4,8 @@ import { Student, QuestionItem } from '../../types';
 import { 
   Film, Play, Award, RotateCcw, Sparkles, Trash2, 
   Volume2, ArrowDown, ArrowUp, Check, HelpCircle, 
-  BookOpen, ChevronRight, Clock, ShieldCheck, Eye, EyeOff, Edit3
+  BookOpen, ChevronRight, Clock, ShieldCheck, Eye, EyeOff, Edit3,
+  RefreshCw, Maximize2, X
 } from 'lucide-react';
 import { playTickSound, playFanfareSound, playCoinSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -49,6 +50,7 @@ export const FilmReelView: React.FC = () => {
   const [isQuestionBankOpen, setIsQuestionBankOpen] = useState(false);
   const [editTargetQuestion, setEditTargetQuestion] = useState<QuestionItem | null>(null);
   const [zoomedImage, setZoomedImage] = useState<{ url: string; title: string } | null>(null);
+  const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
 
   // Available subjects in quizBank
   const quizSubjects = Array.from(new Set(quizBank.map(q => q.subject || 'Tổng hợp'))).filter(Boolean);
@@ -190,34 +192,32 @@ export const FilmReelView: React.FC = () => {
           setExcludedStudentIds(prev => [...prev, selectedWinner.id]);
         }
 
-        // If in Mode 3 (Quiz), randomly pick a question from the question bank or chosen subject
-        if (callMode === 'quiz' && quizBank.length > 0) {
-          const candidates = getCandidateQuestions(selectedQuizSubject);
-          if (candidates.length > 0) {
-            const q = candidates[Math.floor(Math.random() * candidates.length)];
-            setCurrentQuestion(q);
-            setCustomOralPoints(q.pointsReward || 2);
-            setOralStatus('pending');
-          }
-        }
+        // Ở Chế độ 3 (Trả lời câu hỏi): Không tự động mở câu hỏi ngay, chờ giáo viên bấm "Bốc câu hỏi ngẫu nhiên"
+        setIsQuestionModalOpen(false);
+        setCurrentQuestion(null);
       }
     };
 
     animationFrameRef.current = requestAnimationFrame(animateRoll);
   };
 
-  // Tự động tải câu hỏi nếu chuyển sang Chế độ 3 (Trả lời câu hỏi) khi đã có học sinh được chọn
-  useEffect(() => {
-    if (callMode === 'quiz' && winner && !currentQuestion && quizBank.length > 0) {
-      const candidates = getCandidateQuestions(selectedQuizSubject);
-      if (candidates.length > 0) {
-        const q = candidates[Math.floor(Math.random() * candidates.length)];
-        setCurrentQuestion(q);
-        setCustomOralPoints(q.pointsReward || 2);
-        setOralStatus('pending');
-      }
+  // Mở câu hỏi ngẫu nhiên ở chế độ MÀN HÌNH RỘNG theo yêu cầu người dùng
+  const handleOpenRandomQuestion = (subject = selectedQuizSubject) => {
+    const candidates = getCandidateQuestions(subject);
+    if (candidates.length === 0) {
+      setIsQuestionBankOpen(true);
+      return;
     }
-  }, [callMode, winner, currentQuestion, quizBank, selectedQuizSubject]);
+    const q = candidates[Math.floor(Math.random() * candidates.length)];
+    setCurrentQuestion(q);
+    setSelectedOption(null);
+    setShowTeacherKey(false);
+    setIsAnswerCorrect(null);
+    setOralStatus('pending');
+    setCustomOralPoints(q.pointsReward || 2);
+    setHasAwarded(false);
+    setIsQuestionModalOpen(true);
+  };
 
   const handleChangeSubject = (newSubject: string) => {
     setSelectedQuizSubject(newSubject);
@@ -648,476 +648,80 @@ export const FilmReelView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Mode 3: Gọi Tên + Trả Lời Câu Hỏi (Question Challenge Box) */}
-              {callMode === 'quiz' && currentQuestion && (
-                <div className="bg-white rounded-2xl p-4 md:p-5 border border-amber-200 shadow-sm space-y-3 mt-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-black uppercase">
-                        {currentQuestion.type === 'multiple_choice' ? '📝 Trắc nghiệm' : '🗣️ Tự luận / Bằng lời'}
-                      </span>
-
-                      {/* Quick subject switcher right in card */}
-                      <select
-                        value={selectedQuizSubject}
-                        onChange={(e) => handleChangeSubject(e.target.value)}
-                        className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md text-xs font-black text-slate-800 cursor-pointer"
-                        title="Đổi bộ đề / môn học khác"
-                      >
-                        <option value="all">🎲 Toàn bộ môn</option>
-                        {quizSubjects.map(sub => (
-                          <option key={sub} value={sub}>📖 {sub}</option>
-                        ))}
-                      </select>
-
-                      {/* Points Reward Selector for this question */}
-                      <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg">
-                        <Award className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span className="text-[10px] font-black text-amber-900 uppercase">Xu thưởng:</span>
-                        {[1, 2, 3, 5, 10].map((pts) => (
-                          <button
-                            key={pts}
-                            type="button"
-                            disabled={selectedOption !== null || (currentQuestion.type === 'oral' && oralStatus !== 'pending')}
-                            onClick={() => setCustomOralPoints(pts)}
-                            className={`px-1.5 py-0.2 rounded text-[11px] font-black transition-colors cursor-pointer ${
-                              customOralPoints === pts 
-                                ? 'bg-amber-500 text-white shadow-xs' 
-                                : 'text-amber-800 hover:bg-amber-100'
-                            }`}
-                            title={`Đặt mức thưởng ${pts} xu`}
-                          >
-                            +{pts}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 ml-auto">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditTargetQuestion(currentQuestion);
-                          setIsQuestionBankOpen(true);
-                        }}
-                        className="text-[11px] font-bold text-amber-800 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
-                        title="Chỉnh sửa nội dung câu hỏi, chèn thêm ảnh cho câu hỏi và từng đáp án"
-                      >
-                        <Edit3 className="w-3 h-3 text-amber-600" />
-                        <span>Sửa câu hỏi & đáp án</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handlePickAnotherQuestion}
-                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 cursor-pointer transition-colors"
-                      >
-                        Đổi câu khác 🔄
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditTargetQuestion(null);
-                          setIsQuestionBankOpen(true);
-                        }}
-                        className="text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer"
-                      >
-                        Kho đề
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Explicit Rule Banner (User requirement) */}
-                  <div className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-2 ${
-                    currentQuestion.type === 'multiple_choice'
-                      ? 'bg-blue-50/70 border-blue-200 text-blue-900'
-                      : 'bg-purple-50/70 border-purple-200 text-purple-900'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">
-                        {currentQuestion.type === 'multiple_choice' ? '🎯' : '🗣️'}
-                      </span>
-                      <span>
-                        {currentQuestion.type === 'multiple_choice' ? (
-                          <>
-                            <strong>Luật trắc nghiệm:</strong> Học sinh chọn đáp án <strong>ĐÚNG</strong> được tự động cộng <strong>+{customOralPoints} xu</strong> • Trả lời <strong>SAI</strong> không được cộng xu (0 xu).
-                          </>
-                        ) : (
-                          <>
-                            <strong>Luật tự luận:</strong> Học sinh trả lời trực tiếp trước lớp • Thầy/cô nghe và bấm <strong>xác nhận cộng +{customOralPoints} xu</strong> nếu học sinh trả lời đúng.
-                          </>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Question Text */}
-                  <div className="text-sm md:text-base font-black text-slate-900 leading-snug">
-                    {currentQuestion.questionText}
-                  </div>
-
-                  {/* Question Image if exists */}
-                  {currentQuestion.image && (
-                    <div className="pt-1">
-                      <div className="relative inline-block group">
-                        <img 
-                          src={currentQuestion.image} 
-                          alt="Ảnh minh họa câu hỏi" 
-                          onClick={() => setZoomedImage({ url: currentQuestion.image!, title: 'Ảnh minh họa câu hỏi' })}
-                          className="max-h-56 rounded-xl border border-slate-200 object-contain bg-slate-50 shadow-2xs cursor-zoom-in hover:opacity-95 transition-opacity"
-                        />
-                        <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                          🔍 Phóng to
+              {/* Mode 3: Gọi Tên + Trả Lời Câu Hỏi -> Hiển thị nút bốc câu hỏi ngẫu nhiên màn hình rộng */}
+              {callMode === 'quiz' && (
+                <div className="bg-white/95 rounded-2xl p-4 md:p-5 border-2 border-purple-300 shadow-md space-y-3 mt-3 animate-in fade-in">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-lg bg-purple-600 text-white text-[11px] font-black uppercase tracking-wide flex items-center gap-1">
+                          <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
+                          <span>CHẾ ĐỘ: GỌI TÊN + TRẢ LỜI CÂU HỎI</span>
                         </span>
                       </div>
+                      <p className="text-xs text-slate-700 font-medium mt-1">
+                        Học sinh <strong>{currentWinner.name}</strong> đã được chọn. Thầy/cô bấm nút bên dưới để bốc ngẫu nhiên câu hỏi ở chế độ màn hình rộng.
+                      </p>
                     </div>
-                  )}
 
-                  {/* Multiple Choice Options with Individual Option Images (User requirement: chèn hình ảnh cho từng đáp án) */}
-                  {currentQuestion.type === 'multiple_choice' && currentQuestion.options && (
-                    <div className="space-y-3 pt-1">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {currentQuestion.options.map((opt, idx) => {
-                          const isSelected = selectedOption === idx;
-                          const isCorrect = currentQuestion.correctOptionIndex === idx;
-                          const optImage = currentQuestion.optionImages?.[idx];
-                          let btnStyle = 'bg-slate-50 border-slate-200 text-slate-800 hover:border-indigo-400 hover:bg-indigo-50/20';
-
-                          if (selectedOption !== null) {
-                            if (isCorrect) {
-                              btnStyle = 'bg-emerald-50 border-emerald-500 text-emerald-950 font-bold ring-2 ring-emerald-400/40';
-                            } else if (isSelected) {
-                              btnStyle = 'bg-rose-50 border-rose-400 text-rose-950';
-                            }
-                          }
-
-                          return (
-                            <div
-                              key={idx}
-                              role="button"
-                              tabIndex={selectedOption !== null ? -1 : 0}
-                              onClick={() => {
-                                if (selectedOption === null) handleSelectOption(idx);
-                              }}
-                              onKeyDown={(e) => {
-                                if (selectedOption === null && (e.key === 'Enter' || e.key === ' ')) {
-                                  e.preventDefault();
-                                  handleSelectOption(idx);
-                                }
-                              }}
-                              className={`p-3 rounded-2xl text-xs flex flex-col justify-between border text-left transition-all cursor-pointer shadow-2xs select-none ${btnStyle}`}
-                            >
-                              <div className="w-full flex items-start gap-2.5">
-                                <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                                  selectedOption !== null && isCorrect 
-                                    ? 'bg-emerald-600 text-white shadow-xs' 
-                                    : selectedOption !== null && isSelected
-                                    ? 'bg-rose-600 text-white'
-                                    : 'bg-indigo-100 text-indigo-800'
-                                }`}>
-                                  {String.fromCharCode(65 + idx)}
-                                </span>
-                                <span className="flex-1 font-semibold text-xs md:text-sm mt-0.5 leading-snug">{opt}</span>
-                                {selectedOption !== null && isCorrect && (
-                                  <Check className="w-5 h-5 text-emerald-600 shrink-0" />
-                                )}
-                              </div>
-
-                              {/* Option Image if available (User requirement: chèn hình ảnh cho từng đáp án) */}
-                              {optImage && (
-                                <div className="mt-2.5 w-full bg-white rounded-xl p-2 border border-slate-200/90 flex flex-col items-center justify-center overflow-hidden relative group/img">
-                                  <img 
-                                    src={optImage} 
-                                    alt={`Ảnh đáp án ${String.fromCharCode(65 + idx)}`} 
-                                    className="max-h-40 max-w-full rounded-lg object-contain cursor-zoom-in"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setZoomedImage({ 
-                                        url: optImage, 
-                                        title: `Ảnh đáp án ${String.fromCharCode(65 + idx)}: ${opt}` 
-                                      });
-                                    }}
-                                  />
-                                  <span
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setZoomedImage({ 
-                                        url: optImage, 
-                                        title: `Ảnh đáp án ${String.fromCharCode(65 + idx)}: ${opt}` 
-                                      });
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
-                                        e.stopPropagation();
-                                        setZoomedImage({ 
-                                          url: optImage, 
-                                          title: `Ảnh đáp án ${String.fromCharCode(65 + idx)}: ${opt}` 
-                                        });
-                                      }
-                                    }}
-                                    className="mt-1 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer bg-slate-50 hover:bg-indigo-50 px-2 py-0.5 rounded border border-slate-200"
-                                    title="Xem phóng to ảnh đáp án này"
-                                  >
-                                    <span>🔍 Xem ảnh lớn</span>
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* TRẮC NGHIỆM: ĐÚNG ĐƯỢC CỘNG XU, SAI KHÔNG ĐƯỢC CỘNG XU (User Requirement) */}
-                      {selectedOption !== null && (
-                        <div className="space-y-2 pt-1 animate-in fade-in duration-150">
-                          {isAnswerCorrect ? (
-                            <div className="p-3.5 bg-emerald-50 border-2 border-emerald-400 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shrink-0 shadow-sm">
-                                  <Check className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <div className="text-xs font-black text-emerald-950 uppercase">
-                                    🎉 CHÍNH XÁC! {currentWinner.name} ĐÃ ĐƯỢC CỘNG +{customOralPoints || currentQuestion.pointsReward || 2} XU!
-                                  </div>
-                                  <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
-                                    Đáp án đúng: <strong>{String.fromCharCode(65 + (currentQuestion.correctOptionIndex || 0))}</strong>. Tổng điểm xu hiện tại: <strong className="text-emerald-950 font-black">{currentWinner.points} xu</strong>
-                                  </p>
-                                </div>
-                              </div>
-                              <span className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-black shrink-0 shadow-xs uppercase">
-                                +{customOralPoints || currentQuestion.pointsReward || 2} Xu 🪙
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="p-3.5 bg-rose-50 border-2 border-rose-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black shrink-0 shadow-sm text-sm">
-                                  ✕
-                                </div>
-                                <div>
-                                  <div className="text-xs font-black text-rose-950 uppercase">
-                                    ❌ RẤT TIẾC, CHƯA CHÍNH XÁC! KHÔNG ĐƯỢC CỘNG XU (0 XU)
-                                  </div>
-                                  <p className="text-[11px] text-rose-800 font-medium mt-0.5">
-                                    Học sinh đã chọn: {String.fromCharCode(65 + selectedOption)}. Đáp án đúng là <strong>{String.fromCharCode(65 + (currentQuestion.correctOptionIndex || 0))}</strong>. Lượt này không cộng xu.
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={handleRetryMultipleChoice}
-                                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-rose-800 border border-rose-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                                >
-                                  Cho làm lại 🔄
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={handlePickAnotherQuestion}
-                                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black transition-colors cursor-pointer"
-                                >
-                                  Đổi câu khác
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={hasAwarded}
-                                  onClick={() => handleAward(1, `Thưởng động viên câu trắc nghiệm môn ${currentQuestion.subject || 'Tổng hợp'}`)}
-                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                                    hasAwarded 
-                                      ? 'bg-slate-200 text-slate-500' 
-                                      : 'bg-amber-500 hover:bg-amber-600 text-white'
-                                  }`}
-                                  title="Thầy cô có thể tặng 1 xu động viên nếu học sinh đã cố gắng"
-                                >
-                                  {hasAwarded ? 'Đã tặng +1 xu động viên' : 'Động viên (+1 xu) 🪙'}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Explanation and Answer Image for Multiple Choice */}
-                      {selectedOption !== null && (currentQuestion.teacherAnswerKey || currentQuestion.answerImage) && (
-                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 space-y-1.5 animate-in fade-in duration-150">
-                          {currentQuestion.teacherAnswerKey && (
-                            <div>
-                              <strong className="text-slate-900">Giải thích chi tiết:</strong> {currentQuestion.teacherAnswerKey}
-                            </div>
-                          )}
-                          {currentQuestion.answerImage && (
-                            <div className="pt-1">
-                              <span className="text-[10px] font-black uppercase text-slate-600 block mb-1">Ảnh minh họa lời giải:</span>
-                              <img
-                                src={currentQuestion.answerImage}
-                                alt="Ảnh minh họa đáp án"
-                                onClick={() => setZoomedImage({ url: currentQuestion.answerImage!, title: 'Ảnh minh họa lời giải chi tiết' })}
-                                className="max-h-48 rounded-xl border border-slate-300 object-contain bg-white shadow-2xs cursor-zoom-in"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* CÂU HỎI TỰ LUẬN / BẰNG LỜI: GIÁO VIÊN XÁC NHẬN CỘNG XU NẾU TRẢ LỜI ĐÚNG (User Requirement) */}
-                  {currentQuestion.type === 'oral' && (
-                    <div className="space-y-3 pt-1">
-                      {/* Teacher answer key toggle & point adjuster */}
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowTeacherKey(!showTeacherKey)}
-                          className="text-xs font-bold text-indigo-700 hover:underline flex items-center gap-1 cursor-pointer"
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200">
+                        <BookOpen className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+                        <span className="text-[10px] font-black uppercase text-purple-900">BỘ ĐỀ:</span>
+                        <select
+                          value={selectedQuizSubject}
+                          onChange={(e) => setSelectedQuizSubject(e.target.value)}
+                          className="bg-transparent text-xs font-black text-purple-900 focus:outline-none cursor-pointer"
                         >
-                          <span>{showTeacherKey ? 'Ẩn gợi ý đáp án' : '👁️ Xem đáp án & gợi ý chấm của giáo viên'}</span>
-                        </button>
-
-                        <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-xl">
-                          <span className="text-[10px] font-bold text-slate-600 uppercase">Xu chấm đúng:</span>
-                          {[1, 2, 3, 5].map((pts) => (
-                            <button
-                              key={pts}
-                              type="button"
-                              disabled={oralStatus !== 'pending'}
-                              onClick={() => setCustomOralPoints(pts)}
-                              className={`px-2 py-0.5 rounded-lg text-xs font-black transition-colors ${
-                                customOralPoints === pts ? 'bg-amber-400 text-amber-950 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              +{pts}
-                            </button>
-                          ))}
-                        </div>
+                          <option value="all">🎲 Ngẫu nhiên toàn kho ({quizBank.length} câu)</option>
+                          {quizSubjects.map(sub => {
+                            const count = quizBank.filter(q => (q.subject || 'Tổng hợp') === sub).length;
+                            return (
+                              <option key={sub} value={sub}>
+                                📖 Môn {sub} ({count} câu)
+                              </option>
+                            );
+                          })}
+                        </select>
                       </div>
-
-                      {/* Teacher Answer Key Box */}
-                      {showTeacherKey && (
-                        <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs text-amber-950 font-medium space-y-2 animate-in fade-in duration-150">
-                          {currentQuestion.teacherAnswerKey && (
-                            <div>
-                              <strong>Đáp án / Gợi ý chấm giáo viên:</strong> {currentQuestion.teacherAnswerKey}
-                            </div>
-                          )}
-                          {currentQuestion.answerImage && (
-                            <div className="pt-1">
-                              <span className="text-[10px] font-black uppercase text-amber-900 block mb-1">Ảnh minh họa đáp án của giáo viên:</span>
-                              <img
-                                src={currentQuestion.answerImage}
-                                alt="Ảnh đáp án giáo viên"
-                                onClick={() => setZoomedImage({ url: currentQuestion.answerImage!, title: 'Ảnh đáp án giáo viên' })}
-                                className="max-h-44 rounded-xl border border-amber-300 object-contain bg-white shadow-2xs cursor-zoom-in"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Giáo viên xác nhận kết quả tự luận */}
-                      {oralStatus === 'pending' && (
-                        <div className="p-3.5 bg-purple-50/70 border border-purple-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="text-xs text-purple-950">
-                            <strong className="block font-black uppercase">Học sinh đang trả lời trước lớp:</strong>
-                            <span className="text-slate-600">Thầy/cô lắng nghe và chọn xác nhận kết quả để cộng xu:</span>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2">
-                            {/* Nút xác nhận trả lời ĐÚNG */}
-                            <button
-                              type="button"
-                              onClick={() => handleConfirmOralCorrect(customOralPoints)}
-                              className="px-4 py-2 rounded-xl text-xs font-black shadow-md flex items-center gap-1.5 transition-all bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer hover-zoom-btn uppercase"
-                            >
-                              <Check className="w-4 h-4" />
-                              <span>XÁC NHẬN TRẢ LỜI ĐÚNG (+{customOralPoints} XU)</span>
-                            </button>
-
-                            {/* Nút xác nhận trả lời CHƯA ĐÚNG */}
-                            <button
-                              type="button"
-                              onClick={handleConfirmOralIncorrect}
-                              className="px-3.5 py-2 rounded-xl text-xs font-bold border border-rose-300 bg-white hover:bg-rose-50 text-rose-700 flex items-center gap-1.5 transition-colors cursor-pointer"
-                            >
-                              <span>✕ Chưa đúng (0 xu)</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Kết quả Tự luận: ĐÚNG */}
-                      {oralStatus === 'correct' && (
-                        <div className="p-3.5 bg-emerald-50 border-2 border-emerald-400 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shrink-0 shadow-sm">
-                              <Check className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <div className="text-xs font-black text-emerald-950 uppercase">
-                                🎉 GIÁO VIÊN ĐÃ XÁC NHẬN: TRẢ LỜI ĐÚNG VÀ CỘNG +{customOralPoints} XU!
-                              </div>
-                              <p className="text-[11px] text-emerald-800 font-medium mt-0.5">
-                                Đã cộng vào tài khoản của <strong>{currentWinner.name}</strong>. Tổng điểm xu hiện có: <strong className="text-emerald-950 font-black">{currentWinner.points} xu</strong>
-                              </p>
-                            </div>
-                          </div>
-                          <span className="px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-black shrink-0 shadow-xs uppercase">
-                            +{customOralPoints} Xu 🪙
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Kết quả Tự luận: CHƯA ĐÚNG */}
-                      {oralStatus === 'incorrect' && (
-                        <div className="p-3.5 bg-rose-50 border-2 border-rose-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black shrink-0 shadow-sm text-sm">
-                              ✕
-                            </div>
-                            <div>
-                              <div className="text-xs font-black text-rose-950 uppercase">
-                                ❌ GIÁO VIÊN XÁC NHẬN: CHƯA ĐẠT YÊU CẦU – KHÔNG CỘNG XU
-                              </div>
-                              <p className="text-[11px] text-rose-800 font-medium mt-0.5">
-                                Học sinh chưa hoàn thành đúng câu trả lời. Lượt này không cộng xu.
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={handleResetOralEvaluation}
-                              className="px-3 py-1.5 bg-white hover:bg-slate-100 text-rose-800 border border-rose-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                            >
-                              Chấm lại 🔄
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handlePickAnotherQuestion}
-                              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black transition-colors cursor-pointer"
-                            >
-                              Đổi câu khác
-                            </button>
-                            <button
-                              type="button"
-                              disabled={hasAwarded}
-                              onClick={() => handleAward(1, `Thưởng động viên trả lời câu tự luận môn ${currentQuestion.subject || 'Tổng hợp'}`)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-                                hasAwarded 
-                                  ? 'bg-slate-200 text-slate-500' 
-                                  : 'bg-amber-500 hover:bg-amber-600 text-white'
-                              }`}
-                              title="Thầy cô có thể tặng 1 xu động viên nếu học sinh đã nỗ lực trả lời"
-                            >
-                              {hasAwarded ? 'Đã tặng +1 xu động viên' : 'Động viên (+1 xu) 🪙'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  )}
+                  </div>
+
+                  <div className="pt-1 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenRandomQuestion()}
+                      className="flex-1 py-3.5 px-5 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-800 text-white font-black text-xs sm:text-sm md:text-base rounded-2xl shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2.5 transition-all hover-zoom-btn uppercase cursor-pointer"
+                    >
+                      <Sparkles className="w-5 h-5 text-amber-300 animate-spin" />
+                      <span>🎲 BỐC CÂU HỎI NGẪU NHIÊN (MÀN HÌNH RỘNG)</span>
+                      <Maximize2 className="w-4 h-4 text-purple-200 ml-1" />
+                    </button>
+
+                    {currentQuestion && (
+                      <button
+                        type="button"
+                        onClick={() => setIsQuestionModalOpen(true)}
+                        className="px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-xs rounded-2xl border border-purple-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Mở lại câu hỏi đang trả lời của học sinh này"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>Xem lại câu đang mở</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditTargetQuestion(null);
+                        setIsQuestionBankOpen(true);
+                      }}
+                      className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl border border-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <BookOpen className="w-4 h-4 text-purple-600" />
+                      <span>Kho đề ({quizBank.length})</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1282,6 +886,471 @@ export const FilmReelView: React.FC = () => {
           }
         }}
       />
+
+      {/* 4. CHẾ ĐỘ MÀN HÌNH RỘNG: TRẢ LỜI CÂU HỎI CHO HỌC SINH ĐƯỢC GỌI (User Requirement) */}
+      {isQuestionModalOpen && currentQuestion && winner && (() => {
+        const currentWinner = currentClassStudents.find(s => s.id === winner.id) || winner;
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 select-none">
+            <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-2 border-amber-400/90 rounded-3xl w-full max-w-5xl max-h-[95vh] overflow-y-auto shadow-[0_0_60px_rgba(251,191,36,0.3)] p-4 sm:p-7 text-white space-y-4 flex flex-col justify-between">
+              
+              {/* Header Màn Hình Rộng: Học sinh + Đổi môn + Nút ĐỔI CÂU HỎI KHÁC + Nút Đóng */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3.5 border-b border-amber-500/30">
+                {/* Thông tin học sinh đang được gọi */}
+                <div className="flex items-center gap-3">
+                  <div className="relative shrink-0">
+                    <img
+                      src={currentWinner.avatar}
+                      alt={currentWinner.name}
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-amber-400 bg-slate-800 shadow-md"
+                    />
+                    <span className="absolute -bottom-1 -right-1 px-1.5 py-0.2 bg-amber-500 text-slate-950 font-black text-[10px] rounded-full shadow-xs">
+                      #{currentWinner.stt}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 font-mono text-[10px] font-black uppercase tracking-wider border border-amber-400/40">
+                        🎬 ĐANG TRẢ LỜI CÂU HỎI
+                      </span>
+                      <span className="text-xs text-slate-300">
+                        {currentWinner.group || 'Tổ 1'} • 🪙 <strong className="text-amber-300 font-black">{currentWinner.points} xu</strong>
+                      </span>
+                    </div>
+                    <h3 className="text-lg sm:text-2xl font-black text-white uppercase tracking-wide mt-0.5">
+                      {currentWinner.name}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Các nút điều khiển hàng đầu: Đổi môn + NÚT ĐỔI CÂU HỎI KHÁC + Đóng */}
+                <div className="flex flex-wrap items-center gap-2.5 justify-end">
+                  {/* Dropdown môn học */}
+                  <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl">
+                    <BookOpen className="w-4 h-4 text-purple-400 shrink-0" />
+                    <select
+                      value={selectedQuizSubject}
+                      onChange={(e) => handleChangeSubject(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-purple-200 focus:outline-none cursor-pointer"
+                    >
+                      <option value="all" className="bg-slate-900 text-white">🎲 Toàn bộ môn ({quizBank.length})</option>
+                      {quizSubjects.map(sub => {
+                        const count = quizBank.filter(q => (q.subject || 'Tổng hợp') === sub).length;
+                        return (
+                          <option key={sub} value={sub} className="bg-slate-900 text-white">
+                            📖 Môn {sub} ({count})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* NÚT ĐỔI CÂU HỎI KHÁC DÀNH CHO HỌC SINH NÀY (User requirement: đổi câu hỏi nếu câu này đã được sử dụng trước đó) */}
+                  <button
+                    type="button"
+                    onClick={handlePickAnotherQuestion}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-black text-xs sm:text-sm rounded-xl flex items-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer transition-all hover-zoom-btn uppercase"
+                    title="Bấm để đổi ngay câu hỏi khác cho học sinh này nếu câu này đã dùng trước đó"
+                  >
+                    <RefreshCw className="w-4 h-4 animate-spin-hover" />
+                    <span>ĐỔI CÂU HỎI KHÁC 🔄</span>
+                  </button>
+
+                  {/* Nút sửa câu hỏi */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditTargetQuestion(currentQuestion);
+                      setIsQuestionBankOpen(true);
+                    }}
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 cursor-pointer"
+                    title="Chỉnh sửa câu hỏi này"
+                  >
+                    <Edit3 className="w-4 h-4 text-amber-400" />
+                  </button>
+
+                  {/* Nút đóng màn hình rộng */}
+                  <button
+                    type="button"
+                    onClick={() => setIsQuestionModalOpen(false)}
+                    className="p-2 bg-slate-800 hover:bg-rose-900/60 text-slate-400 hover:text-white rounded-xl text-xs font-bold border border-slate-700 cursor-pointer"
+                    title="Thu nhỏ / Quay lại Cuộn Phim"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Thông tin loại câu hỏi & Xu thưởng */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-lg bg-purple-600 text-white font-black text-[11px] uppercase tracking-wide">
+                    {currentQuestion.type === 'multiple_choice' ? '📝 Câu hỏi Trắc Nghiệm' : '🗣️ Câu hỏi Tự Luận / Bằng Lời'}
+                  </span>
+                  <span className="text-slate-300 font-medium">
+                    Môn: <strong className="text-purple-300">{currentQuestion.subject || 'Tổng hợp'}</strong>
+                  </span>
+                </div>
+
+                {/* Chọn mức xu thưởng */}
+                <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-xl border border-slate-700">
+                  <Award className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-[11px] font-black text-amber-300 uppercase">Xu thưởng:</span>
+                  {[1, 2, 3, 5, 10].map((pts) => (
+                    <button
+                      key={pts}
+                      type="button"
+                      disabled={selectedOption !== null || (currentQuestion.type === 'oral' && oralStatus !== 'pending')}
+                      onClick={() => setCustomOralPoints(pts)}
+                      className={`px-2 py-0.5 rounded-lg text-xs font-black transition-colors cursor-pointer ${
+                        customOralPoints === pts 
+                          ? 'bg-amber-400 text-slate-950 shadow-xs' 
+                          : 'text-amber-300 hover:bg-slate-800'
+                      }`}
+                      title={`Đặt mức thưởng ${pts} xu`}
+                    >
+                      +{pts}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* NỘI DUNG CÂU HỎI (Màn hình rộng, chữ to rõ ràng chuẩn trình chiếu) */}
+              <div className="p-4 sm:p-6 bg-slate-950/80 rounded-2xl border border-slate-800 shadow-inner space-y-4">
+                <div className="text-lg sm:text-2xl md:text-3xl font-black text-amber-200 leading-snug">
+                  {currentQuestion.questionText}
+                </div>
+
+                {/* Ảnh minh họa câu hỏi nếu có */}
+                {currentQuestion.image && (
+                  <div className="pt-1">
+                    <div className="relative inline-block group">
+                      <img 
+                        src={currentQuestion.image} 
+                        alt="Ảnh minh họa câu hỏi" 
+                        onClick={() => setZoomedImage({ url: currentQuestion.image!, title: 'Ảnh minh họa câu hỏi' })}
+                        className="max-h-72 rounded-2xl border-2 border-slate-700 object-contain bg-slate-900 shadow-lg cursor-zoom-in hover:opacity-95 transition-opacity"
+                      />
+                      <span className="absolute bottom-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                        🔍 Phóng to ảnh
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* PHẦN ĐÁP ÁN TRẮC NGHIỆM */}
+              {currentQuestion.type === 'multiple_choice' && currentQuestion.options && (
+                <div className="space-y-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    {currentQuestion.options.map((opt, idx) => {
+                      const isSelected = selectedOption === idx;
+                      const isCorrect = currentQuestion.correctOptionIndex === idx;
+                      const optImage = currentQuestion.optionImages?.[idx];
+                      let btnStyle = 'bg-slate-800/90 border-slate-700 text-white hover:border-amber-400 hover:bg-slate-800';
+
+                      if (selectedOption !== null) {
+                        if (isCorrect) {
+                          btnStyle = 'bg-emerald-950/90 border-emerald-400 text-emerald-100 font-bold ring-2 ring-emerald-400/50';
+                        } else if (isSelected) {
+                          btnStyle = 'bg-rose-950/90 border-rose-500 text-rose-100';
+                        }
+                      }
+
+                      return (
+                        <div
+                          key={idx}
+                          role="button"
+                          tabIndex={selectedOption !== null ? -1 : 0}
+                          onClick={() => {
+                            if (selectedOption === null) handleSelectOption(idx);
+                          }}
+                          onKeyDown={(e) => {
+                            if (selectedOption === null && (e.key === 'Enter' || e.key === ' ')) {
+                              e.preventDefault();
+                              handleSelectOption(idx);
+                            }
+                          }}
+                          className={`p-4 rounded-2xl text-sm flex flex-col justify-between border-2 text-left transition-all cursor-pointer shadow-md select-none ${btnStyle}`}
+                        >
+                          <div className="w-full flex items-start gap-3">
+                            <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                              selectedOption !== null && isCorrect 
+                                ? 'bg-emerald-500 text-white shadow-xs' 
+                                : selectedOption !== null && isSelected
+                                ? 'bg-rose-500 text-white'
+                                : 'bg-slate-700 text-amber-300'
+                            }`}>
+                              {String.fromCharCode(65 + idx)}
+                            </span>
+                            <span className="flex-1 font-bold text-sm sm:text-base mt-0.5 leading-snug">{opt}</span>
+                            {selectedOption !== null && isCorrect && (
+                              <Check className="w-6 h-6 text-emerald-400 shrink-0" />
+                            )}
+                          </div>
+
+                          {/* Ảnh đáp án nếu có */}
+                          {optImage && (
+                            <div className="mt-3 w-full bg-slate-900 rounded-xl p-2 border border-slate-700 flex flex-col items-center justify-center overflow-hidden">
+                              <img 
+                                src={optImage} 
+                                alt={`Ảnh đáp án ${String.fromCharCode(65 + idx)}`} 
+                                className="max-h-48 max-w-full rounded-lg object-contain cursor-zoom-in"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setZoomedImage({ 
+                                    url: optImage, 
+                                    title: `Ảnh đáp án ${String.fromCharCode(65 + idx)}: ${opt}` 
+                                  });
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* KẾT QUẢ TRẮC NGHIỆM */}
+                  {selectedOption !== null && (
+                    <div className="space-y-3 pt-2 animate-in fade-in duration-150">
+                      {isAnswerCorrect ? (
+                        <div className="p-4 bg-emerald-950/90 border-2 border-emerald-400 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black shrink-0 shadow-md">
+                              <Check className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <div className="text-sm sm:text-base font-black text-emerald-200 uppercase">
+                                🎉 CHÍNH XÁC! {currentWinner.name} ĐÃ ĐƯỢC CỘNG +{customOralPoints || currentQuestion.pointsReward || 2} XU!
+                              </div>
+                              <p className="text-xs text-emerald-400 font-medium mt-0.5">
+                                Đáp án đúng: <strong>{String.fromCharCode(65 + (currentQuestion.correctOptionIndex || 0))}</strong>. Điểm xu hiện tại: <strong className="text-emerald-200 font-black">{currentWinner.points} xu</strong>
+                              </p>
+                            </div>
+                          </div>
+                          <span className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-xl text-xs sm:text-sm font-black shrink-0 shadow-md uppercase">
+                            +{customOralPoints || currentQuestion.pointsReward || 2} Xu 🪙
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-rose-950/90 border-2 border-rose-400 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-black shrink-0 shadow-md text-base">
+                              ✕
+                            </div>
+                            <div>
+                              <div className="text-sm sm:text-base font-black text-rose-200 uppercase">
+                                ❌ RẤT TIẾC, CHƯA CHÍNH XÁC! KHÔNG ĐƯỢC CỘNG XU (0 XU)
+                              </div>
+                              <p className="text-xs text-rose-400 font-medium mt-0.5">
+                                Học sinh chọn: {String.fromCharCode(65 + selectedOption)}. Đáp án đúng là <strong>{String.fromCharCode(65 + (currentQuestion.correctOptionIndex || 0))}</strong>. Lượt này không cộng xu.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={handleRetryMultipleChoice}
+                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-rose-200 border border-rose-500/50 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                            >
+                              Cho làm lại 🔄
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handlePickAnotherQuestion}
+                              className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-colors cursor-pointer"
+                            >
+                              Đổi câu khác 🔄
+                            </button>
+                            <button
+                              type="button"
+                              disabled={hasAwarded}
+                              onClick={() => handleAward(1, `Thưởng động viên câu trắc nghiệm môn ${currentQuestion.subject || 'Tổng hợp'}`)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                                hasAwarded 
+                                  ? 'bg-slate-800 text-slate-500' 
+                                  : 'bg-amber-600 hover:bg-amber-700 text-white'
+                              }`}
+                              title="Tặng 1 xu động viên học sinh đã nỗ lực"
+                            >
+                              {hasAwarded ? 'Đã tặng +1 xu động viên' : 'Động viên (+1 xu) 🪙'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lời giải chi tiết */}
+                      {(currentQuestion.teacherAnswerKey || currentQuestion.answerImage) && (
+                        <div className="p-3.5 bg-slate-800/80 border border-slate-700 rounded-xl text-xs text-slate-200 space-y-1.5">
+                          {currentQuestion.teacherAnswerKey && (
+                            <div>
+                              <strong className="text-amber-300">Giải thích chi tiết:</strong> {currentQuestion.teacherAnswerKey}
+                            </div>
+                          )}
+                          {currentQuestion.answerImage && (
+                            <div className="pt-1">
+                              <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Ảnh minh họa lời giải:</span>
+                              <img
+                                src={currentQuestion.answerImage}
+                                alt="Ảnh minh họa đáp án"
+                                onClick={() => setZoomedImage({ url: currentQuestion.answerImage!, title: 'Ảnh minh họa lời giải chi tiết' })}
+                                className="max-h-48 rounded-xl border border-slate-600 object-contain bg-slate-900 shadow-sm cursor-zoom-in"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PHẦN CÂU HỎI TỰ LUẬN */}
+              {currentQuestion.type === 'oral' && (
+                <div className="space-y-3 pt-1">
+                  {/* Xem đáp án & gợi ý chấm */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowTeacherKey(!showTeacherKey)}
+                      className="text-xs font-bold text-amber-300 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>{showTeacherKey ? 'Ẩn gợi ý đáp án' : '👁️ Xem đáp án & gợi ý chấm của giáo viên'}</span>
+                    </button>
+                  </div>
+
+                  {showTeacherKey && (
+                    <div className="p-3.5 bg-slate-800/90 border border-amber-500/40 rounded-xl text-xs text-amber-200 space-y-2 animate-in fade-in">
+                      {currentQuestion.teacherAnswerKey && (
+                        <div>
+                          <strong>Gợi ý chấm của giáo viên:</strong> {currentQuestion.teacherAnswerKey}
+                        </div>
+                      )}
+                      {currentQuestion.answerImage && (
+                        <div className="pt-1">
+                          <img
+                            src={currentQuestion.answerImage}
+                            alt="Ảnh đáp án giáo viên"
+                            onClick={() => setZoomedImage({ url: currentQuestion.answerImage!, title: 'Ảnh đáp án giáo viên' })}
+                            className="max-h-48 rounded-xl border border-amber-400/40 object-contain bg-slate-900 shadow-md cursor-zoom-in"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Giáo viên xác nhận tự luận */}
+                  {oralStatus === 'pending' && (
+                    <div className="p-4 bg-slate-800/90 border border-slate-700 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="text-xs text-slate-200">
+                        <strong className="block text-sm font-black text-amber-300 uppercase">Học sinh đang trả lời trước lớp:</strong>
+                        <span className="text-slate-400">Thầy/cô lắng nghe và bấm xác nhận để cộng điểm:</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmOralCorrect(customOralPoints)}
+                          className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black shadow-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 cursor-pointer uppercase hover-zoom-btn"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>XÁC NHẬN ĐÚNG (+{customOralPoints} XU)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleConfirmOralIncorrect}
+                          className="px-4 py-2.5 rounded-xl text-xs font-bold border border-rose-500/50 bg-slate-900 hover:bg-rose-950 text-rose-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>✕ Chưa đúng (0 xu)</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Kết quả tự luận đúng */}
+                  {oralStatus === 'correct' && (
+                    <div className="p-4 bg-emerald-950/90 border-2 border-emerald-400 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black shrink-0 shadow-md">
+                          <Check className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-black text-emerald-200 uppercase">
+                            🎉 GIÁO VIÊN ĐÃ XÁC NHẬN: TRẢ LỜI ĐÚNG VÀ CỘNG +{customOralPoints} XU!
+                          </div>
+                          <p className="text-xs text-emerald-400 font-medium mt-0.5">
+                            Đã cộng vào tài khoản của <strong>{currentWinner.name}</strong>. Tổng điểm xu hiện có: <strong className="text-emerald-200 font-black">{currentWinner.points} xu</strong>
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-4 py-2 bg-emerald-500 text-slate-950 rounded-xl text-xs font-black shrink-0 uppercase">
+                        +{customOralPoints} Xu 🪙
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Kết quả tự luận chưa đúng */}
+                  {oralStatus === 'incorrect' && (
+                    <div className="p-4 bg-rose-950/90 border-2 border-rose-400 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-black shrink-0 shadow-md text-base">
+                          ✕
+                        </div>
+                        <div>
+                          <div className="text-sm font-black text-rose-200 uppercase">
+                            ❌ CHƯA ĐẠT YÊU CẦU – KHÔNG CỘNG XU
+                          </div>
+                          <p className="text-xs text-rose-400 font-medium mt-0.5">
+                            Học sinh chưa hoàn thành câu trả lời. Lượt này không cộng xu.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={handleResetOralEvaluation}
+                          className="px-3 py-1.5 bg-slate-800 text-rose-200 border border-rose-500/50 rounded-xl text-xs font-bold cursor-pointer"
+                        >
+                          Chấm lại 🔄
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handlePickAnotherQuestion}
+                          className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black cursor-pointer"
+                        >
+                          Đổi câu khác 🔄
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Chân Modal: Nút Hoàn thành & Quay lại Cuộn Phim */}
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handlePickAnotherQuestion}
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Đổi câu hỏi khác cho em này</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsQuestionModalOpen(false)}
+                  className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md cursor-pointer transition-all hover-zoom-btn uppercase"
+                >
+                  <span>🎬 HOÀN THÀNH & QUAY LẠI CUỘN PHIM</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* FULL-SCREEN ZOOMED IMAGE LIGHTBOX MODAL */}
       {zoomedImage && (

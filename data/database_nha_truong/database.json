@@ -1,7 +1,7 @@
 {
   "partition": "nha_truong",
   "title": "Cơ Sở Dữ Liệu Tổ Chức Nhà Trường (TIỂU HỌC SỐ 1 TÂN UYÊN & Các Trường)",
-  "lastSync": "2026-10-02T05:49:56.210Z",
+  "lastSync": "2026-10-05T02:45:04.652Z",
   "schools": [
     {
       "id": "school-tanuyen-main",
@@ -128,7 +128,7 @@
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenVietHienGVBM&backgroundColor=b6e3f4",
       "createdAt": 1790873878201,
       "status": "active",
-      "lastLoginAt": 1790874474973
+      "lastLoginAt": 1791168244694
     }
   ],
   "userData": {
@@ -6039,12 +6039,13 @@
           "group": "Tổ 2",
           "avatar": "/avatars/demo/student-avatar-15.jpg",
           "gender": "Nam",
-          "points": 42,
+          "points": 44,
           "classId": "class-sub-5a2",
           "birthDate": "14/05/2015",
           "avatarScale": 1,
           "subjectPoints": {
-            "ÂM NHẠC": 42
+            "ÂM NHẠC": 42,
+            "Toán học": 2
           },
           "avatarPosition": {
             "x": 0,
@@ -6892,7 +6893,18 @@
           "category": "Học tập"
         }
       ],
-      "transactions": [],
+      "transactions": [
+        {
+          "id": "tx-1791168294642-hs-hien-2-5",
+          "studentId": "hs-hien-2-5",
+          "studentName": "Hoàng Gia Huy (5A2)",
+          "classId": "class-sub-5a2",
+          "amount": 2,
+          "reason": "Trả lời đúng trắc nghiệm môn Toán học",
+          "subjectName": "Toán học",
+          "timestamp": 1791168294642
+        }
+      ],
       "rewards": [
         {
           "id": "rew-1",
@@ -7516,7 +7528,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1790874786967
+      "updatedAt": 1791168295144
     }
   }
 }

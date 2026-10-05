@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-02T05:49:56.210Z",
+  "lastSync": "2026-10-05T02:45:04.652Z",
   "users": [
     {
       "id": "user-admin",
@@ -42,9 +42,27 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1790920196209
+    "lastGithubPushAt": 1791168304652
   },
   "auditLogs": [
+    {
+      "id": "log-1791168294648-uxrwl9",
+      "timestamp": 1791168294648,
+      "username": "nguyenviethien",
+      "userFullName": "Nguyễn Viết Hiền",
+      "role": "subject",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 2 xu cho 1 học sinh (Lý do: Trả lời đúng trắc nghiệm môn Toán học, Môn: Toán học)"
+    },
+    {
+      "id": "log-1791168244922-r7cz9k",
+      "timestamp": 1791168244922,
+      "username": "nguyenviethien",
+      "userFullName": "Nguyễn Viết Hiền",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Viết Hiền)"
+    },
     {
       "id": "log-1790920185529-74k3my",
       "timestamp": 1790920185529,

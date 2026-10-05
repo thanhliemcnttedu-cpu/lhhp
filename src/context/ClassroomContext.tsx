@@ -19,7 +19,7 @@ import {
   SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE, SAMPLE_SUBJECT_CLASSES_BY_IMAGE
 } from '../data/initialData';
 import { playCoinSound, playDeductSound } from '../utils/audio';
-import { DEFAULT_QUESTIONS, loadQuizBank } from '../utils/quizParser';
+import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank } from '../utils/quizParser';
 import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX } from '../services/databaseService';
 
 interface ClassroomContextType {
@@ -215,9 +215,33 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Flag to prevent echo loops when remote updates are applied
   const isApplyingRemoteUpdateRef = useRef(false);
 
-  // Purge any legacy browser localStorage to ensure zero data stored in user browser
+  // Tự động đồng bộ và lưu dữ liệu ngay lập tức khi người dùng tắt tab hoặc đóng trình duyệt
   useEffect(() => {
-    databaseService.purgeLocalStorageUserData();
+    const handleBeforeUnload = () => {
+      const user = currentUserRef.current;
+      if (!user) return;
+      const isExecutive = Boolean(
+        user.role === 'admin' || 
+        user.role === 'school_admin' || 
+        user.role === 'bgh' || 
+        user.isBgh || 
+        user.isSchoolAdmin || 
+        user.role === 'guest_admin' || 
+        user.isGuestAdmin
+      );
+      if (!isExecutive) {
+        const currentData = getCurrentUserData();
+        databaseService.saveUserData(user.username, currentData);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+    };
   }, []);
 
   // 1. Initial In-Memory State (Authoritative data is fetched directly from Server)
@@ -343,6 +367,27 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [quizBank, setQuizBank] = useState<QuestionItem[]>(DEFAULT_QUESTIONS);
   const updateQuizBank = (questions: QuestionItem[]) => {
     setQuizBank(questions);
+    saveQuizBank(questions);
+    if (currentUserRef.current) {
+      const user = currentUserRef.current;
+      const isExec = Boolean(
+        user.role === 'admin' || 
+        user.role === 'school_admin' || 
+        user.role === 'bgh' || 
+        user.isBgh || 
+        user.isSchoolAdmin || 
+        user.role === 'guest_admin' || 
+        user.isGuestAdmin
+      );
+      if (!isExec) {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          quizBank: questions,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(user.username, payload).catch(() => {});
+      }
+    }
   };
 
   const [infographicConfig, setInfographicConfig] = useState<any>(null);
@@ -813,12 +858,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             lastRemoteTimestampRef.current = savedData.updatedAt || Date.now();
             applyUserClassroomData(savedData);
           } else {
-            // If no data saved for this user yet, seed initial default and save to DB
-            const initialData = buildDefaultDataForUser(currentUser);
-            markRemoteUpdateActive(1200);
-            applyUserClassroomData(initialData);
-            await databaseService.saveUserData(currentUser.username, initialData);
-            lastRemoteTimestampRef.current = Date.now();
+            // Kiểm tra cache local an toàn trước khi khởi tạo dữ liệu mặc định
+            let localCache: UserClassroomData | null = null;
+            try {
+              const raw = localStorage.getItem(LOCAL_DB_PREFIX + currentUser.username.toLowerCase());
+              if (raw) localCache = JSON.parse(raw);
+            } catch (_) {}
+
+            if (localCache) {
+              markRemoteUpdateActive(1200);
+              lastRemoteTimestampRef.current = localCache.updatedAt || Date.now();
+              applyUserClassroomData(localCache);
+            } else {
+              // Chỉ khởi tạo mặc định nếu tài khoản hoàn toàn mới chưa từng có dữ liệu
+              const initialData = buildDefaultDataForUser(currentUser);
+              markRemoteUpdateActive(1200);
+              applyUserClassroomData(initialData);
+              await databaseService.saveUserData(currentUser.username, initialData);
+              lastRemoteTimestampRef.current = Date.now();
+            }
           }
         }
         isRemoteDataLoadedRef.current = true;
@@ -1119,9 +1177,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (targetData) {
           applyUserClassroomData(targetData);
         } else {
-          const defaultData = buildDefaultDataForUser(newUser);
-          applyUserClassroomData(defaultData);
-          await databaseService.saveUserData(newUser.username, defaultData);
+          let localCache: UserClassroomData | null = null;
+          try {
+            const raw = localStorage.getItem(LOCAL_DB_PREFIX + newUser.username.toLowerCase());
+            if (raw) localCache = JSON.parse(raw);
+          } catch (_) {}
+
+          if (localCache) {
+            applyUserClassroomData(localCache);
+          } else {
+            const defaultData = buildDefaultDataForUser(newUser);
+            applyUserClassroomData(defaultData);
+            await databaseService.saveUserData(newUser.username, defaultData);
+          }
         }
       }
 
@@ -1131,9 +1199,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return { success: false, message: res.message };
   };
 
-  const logoutUser = () => {
+  const logoutUser = async () => {
     setDemoWarningMessage(null);
-    // Save current data & record logout
+    // Bắt buộc lưu dữ liệu đầy đủ lên hệ thống máy chủ trước khi đăng xuất
     if (currentUser) {
       databaseService.addAuditLog({
         username: currentUser.username,
@@ -1153,7 +1221,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
       if (!isExecutive) {
         const currentData = getCurrentUserData();
-        databaseService.saveUserData(currentUser.username, currentData);
+        try {
+          await databaseService.saveUserData(currentUser.username, currentData);
+        } catch (_) {}
       }
     }
     databaseService.logout();
@@ -1743,7 +1813,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const newTxns: PointTransaction[] = [];
     const targetSubject = (subjectName && subjectName.trim()) ? subjectName.trim() : 'GHI CHUNG / NỀ NẾP';
 
-    setStudents(prev => prev.map(s => {
+    const currentList = studentsRef.current.length > 0 ? studentsRef.current : students;
+    const nextStudents = currentList.map(s => {
       if (studentIds.includes(s.id)) {
         newTxns.push({
           id: `tx-${timestamp}-${s.id}`,
@@ -1767,10 +1838,37 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
       }
       return s;
-    }));
+    });
 
-    setTransactions(prev => [...newTxns, ...prev]);
+    setStudents(nextStudents);
+    studentsRef.current = nextStudents;
+
+    const nextTxns = [...newTxns, ...transactions];
+    setTransactions(nextTxns);
     logUserActivity('AWARD_POINTS', `Cộng ${amount} xu cho ${studentIds.length} học sinh (Lý do: ${reason}, Môn: ${targetSubject})`);
+
+    // Lưu tức thì không để bị mất nếu đóng tab hoặc tắt trình duyệt
+    if (currentUserRef.current) {
+      const user = currentUserRef.current;
+      const isExec = Boolean(
+        user.role === 'admin' || 
+        user.role === 'school_admin' || 
+        user.role === 'bgh' || 
+        user.isBgh || 
+        user.isSchoolAdmin || 
+        user.role === 'guest_admin' || 
+        user.isGuestAdmin
+      );
+      if (!isExec) {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          transactions: nextTxns,
+          updatedAt: timestamp
+        };
+        databaseService.saveUserData(user.username, payload).catch(() => {});
+      }
+    }
   };
 
   const deductPoints = (studentIds: string[], amount: number, reason: string, subjectName?: string) => {
@@ -1781,7 +1879,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const newTxns: PointTransaction[] = [];
     const targetSubject = (subjectName && subjectName.trim()) ? subjectName.trim() : 'GHI CHUNG / NỀ NẾP';
 
-    setStudents(prev => prev.map(s => {
+    const currentList = studentsRef.current.length > 0 ? studentsRef.current : students;
+    const nextStudents = currentList.map(s => {
       if (studentIds.includes(s.id)) {
         newTxns.push({
           id: `tx-${timestamp}-${s.id}`,
@@ -1805,10 +1904,37 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
       }
       return s;
-    }));
+    });
 
-    setTransactions(prev => [...newTxns, ...prev]);
+    setStudents(nextStudents);
+    studentsRef.current = nextStudents;
+
+    const nextTxns = [...newTxns, ...transactions];
+    setTransactions(nextTxns);
     logUserActivity('AWARD_POINTS', `Trừ ${amount} xu của ${studentIds.length} học sinh (Lý do: ${reason}, Môn: ${targetSubject})`);
+
+    // Lưu tức thì không để bị mất nếu đóng tab hoặc tắt trình duyệt
+    if (currentUserRef.current) {
+      const user = currentUserRef.current;
+      const isExec = Boolean(
+        user.role === 'admin' || 
+        user.role === 'school_admin' || 
+        user.role === 'bgh' || 
+        user.isBgh || 
+        user.isSchoolAdmin || 
+        user.role === 'guest_admin' || 
+        user.isGuestAdmin
+      );
+      if (!isExec) {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          transactions: nextTxns,
+          updatedAt: timestamp
+        };
+        databaseService.saveUserData(user.username, payload).catch(() => {});
+      }
+    }
   };
 
   // Rewards
