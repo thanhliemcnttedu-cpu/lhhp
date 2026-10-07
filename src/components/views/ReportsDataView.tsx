@@ -17,6 +17,7 @@ import { compressImage } from '../../utils/imageCompressor';
 import { ZoomIn, Heart } from 'lucide-react';
 import { ComprehensiveStatisticsView } from './reports/ComprehensiveStatisticsView';
 import { SubjectTeacherReportsView } from './reports/SubjectTeacherReportsView';
+import { AdminRealtimeDashboardView } from './reports/AdminRealtimeDashboardView';
 
 interface ReportsDataViewProps {
   defaultTab?: 'stats' | 'data' | 'profile';
@@ -47,8 +48,10 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
   const isSubjectTeacher = teacherRole === 'subject' || currentUser?.role === 'subject';
 
   const [activeTab, setActiveTab] = useState<'stats' | 'data' | 'profile'>(defaultTab);
-  const [statsSubMode, setStatsSubMode] = useState<'subject_reports' | 'comprehensive' | 'coins'>(
-    teacherRole === 'subject' ? 'subject_reports' : 'comprehensive'
+  const [statsSubMode, setStatsSubMode] = useState<'realtime_admin' | 'subject_reports' | 'comprehensive' | 'coins'>(
+    Boolean(currentUser?.role === 'admin' || currentUser?.role === 'school_admin' || currentUser?.role === 'bgh' || currentUser?.isBgh || currentUser?.isSchoolAdmin)
+      ? 'realtime_admin'
+      : (teacherRole === 'subject' ? 'subject_reports' : 'comprehensive')
   );
 
   React.useEffect(() => {
@@ -537,7 +540,21 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
         <div className="space-y-6">
           {/* Sub-navigation switcher */}
           <div className="bg-white rounded-3xl border border-slate-200/90 p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+            <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+              {/* BGH & Admin Realtime Multi-level Dashboard Tab */}
+              <button
+                type="button"
+                onClick={() => setStatsSubMode('realtime_admin')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer uppercase ${
+                  statsSubMode === 'realtime_admin'
+                    ? 'bg-gradient-to-r from-indigo-900 to-indigo-700 text-white shadow-xs'
+                    : 'text-indigo-900 hover:text-indigo-950 font-black'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-300" />
+                <span>BÁO CÁO REALTIME ĐA TẦNG (BGH)</span>
+              </button>
+
               {teacherRole === 'subject' && (
                 <button
                   type="button"
@@ -581,7 +598,9 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
             </div>
 
             <span className="text-[11px] font-bold text-slate-500 uppercase px-2 hidden sm:inline">
-              {statsSubMode === 'subject_reports'
+              {statsSubMode === 'realtime_admin'
+                ? 'Đồng bộ 2 chiều thời gian thực theo Phân hiệu & Điểm trường'
+                : statsSubMode === 'subject_reports'
                 ? `Tổng hợp chi tiết ${classes.length} lớp môn ${subjectTeacherConfig.subjectName}`
                 : statsSubMode === 'comprehensive' 
                 ? 'Tổng hợp chuyên cần, bán trú, biểu đồ & tiến bộ học sinh' 
@@ -589,7 +608,9 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
             </span>
           </div>
 
-          {statsSubMode === 'subject_reports' ? (
+          {statsSubMode === 'realtime_admin' ? (
+            <AdminRealtimeDashboardView />
+          ) : statsSubMode === 'subject_reports' ? (
             <SubjectTeacherReportsView />
           ) : statsSubMode === 'comprehensive' ? (
             <ComprehensiveStatisticsView />

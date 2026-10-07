@@ -3,7 +3,7 @@ import { useClassroom } from '../../context/ClassroomContext';
 import { 
   Users, User, CheckSquare, Gift, Sparkles, Plus, 
   ArrowUpRight, Award, Calendar, BookOpen, ChevronRight,
-  TrendingUp, Brain, School, Trophy, Flame, RotateCcw
+  TrendingUp, Brain, School, Trophy, Flame, RotateCcw, ShieldCheck
 } from 'lucide-react';
 import { playPointClink, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -70,8 +70,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const totalCoins = currentClassStudents.reduce((acc, s) => acc + (s.points || 0), 0);
   const avgCoins = totalStudents > 0 ? (totalCoins / totalStudents).toFixed(1) : '0';
 
-  // Ranking of all classes if multiple classes exist (Yêu cầu 1)
-  const classesRanking = classes.map(cls => {
+  // Lọc chỉ lớp chủ nhiệm (GVCN) cho tổng quan toàn trường (loại trừ GVBM để chống trùng học sinh)
+  const isManagementAccount = Boolean(isBgh || isSchoolAdmin || currentUser?.role === 'admin' || currentUser?.role === 'guest_admin');
+  const homeroomClasses = React.useMemo(() => {
+    return classes.filter(c => {
+      if (!c) return false;
+      if (c.isHomeroom === true) return true;
+      if (c.isHomeroom === false) return false;
+      const r = String(c.teacherRole || '').toLowerCase();
+      if (r === 'homeroom' || r === 'gvcn') return true;
+      if (r === 'subject' || r === 'gvbm') return false;
+      const lowerName = (c.name || '').toLowerCase();
+      if (lowerName.includes('tin học') || lowerName.includes('bộ môn') || lowerName.includes('tiếng anh')) return false;
+      return true;
+    });
+  }, [classes]);
+
+  const homeroomClassIds = React.useMemo(() => new Set(homeroomClasses.map(c => c.id)), [homeroomClasses]);
+  const homeroomStudents = React.useMemo(() => students.filter(s => homeroomClassIds.has(s.classId)), [students, homeroomClassIds]);
+
+  // Ranking of classes (management account ranks homeroom classes only)
+  const rankingClassesPool = isManagementAccount ? homeroomClasses : classes;
+  const classesRanking = rankingClassesPool.map(cls => {
     const clsStudents = students.filter(s => s.classId === cls.id);
     const sumCoins = clsStudents.reduce((acc, s) => acc + (s.points || 0), 0);
     const avg = clsStudents.length > 0 ? (sumCoins / clsStudents.length).toFixed(1) : '0';
@@ -208,7 +228,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </h1>
                     <span className="text-[10px] text-slate-500 font-bold uppercase hidden sm:inline">
                       {isManagementAccount ? (
-                        <>• TỔNG QUAN: <strong className="text-indigo-700 font-black">{classes.length} LỚP • {students.length} HỌC SINH</strong></>
+                        <>• TOÀN TRƯỜNG: <strong className="text-indigo-700 font-black">{homeroomClasses.length} LỚP GVCN • {homeroomStudents.length} HỌC SINH</strong></>
                       ) : (
                         <>• LỚP: <strong className="text-indigo-700 font-black">{activeClass ? `LỚP ${activeClass.name}` : 'CHƯA CÓ'}</strong></>
                       )}
@@ -220,6 +240,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* Right 5 Quick Action Buttons in Uppercase */}
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1 sm:gap-1.5 shrink-0 pt-2 lg:pt-0 w-full lg:w-auto">
+            {isManagementAccount && (
+              <button
+                onClick={() => onNavigate('reports')}
+                className="px-2.5 py-1.5 sm:py-1 bg-gradient-to-r from-indigo-900 to-indigo-700 hover:from-indigo-950 hover:to-indigo-800 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                <span>BÁO CÁO REALTIME</span>
+              </button>
+            )}
+
             <button
               onClick={() => onNavigate('attendance')}
               className="px-2.5 py-1.5 sm:py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"

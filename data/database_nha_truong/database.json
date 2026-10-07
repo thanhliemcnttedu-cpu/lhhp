@@ -1,7 +1,7 @@
 {
   "partition": "nha_truong",
   "title": "Cơ Sở Dữ Liệu Tổ Chức Nhà Trường (TIỂU HỌC SỐ 1 TÂN UYÊN & Các Trường)",
-  "lastSync": "2026-10-07T17:12:22.470Z",
+  "lastSync": "2026-10-07T17:18:45.425Z",
   "schools": [
     {
       "id": "school-tanuyen-main",
@@ -5006,7 +5006,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791393134038
+      "updatedAt": 1791393525425
     },
     "gvcn4a1": {
       "classes": [

@@ -98,6 +98,7 @@ export interface Student {
   avatarScale: number; // 0.8 - 2.5
   avatarPosition: { x: number; y: number };
   flipX?: boolean; // Lật ngược chiều ngang (Horizontal Flip)
+  filter?: string; // Bộ lọc hiệu ứng màu/làm đẹp ảnh đại diện
   points: number; // Tổng số xu tích lũy (không làm mất tổng xu hiện tại)
   subjectPoints?: Record<string, number>; // Điểm xu lưu theo từng môn học (User requirement)
   group?: string; // Tổ 1, Tổ 2, Tổ 3, Tổ 4
@@ -184,12 +185,15 @@ export interface Classroom {
   academicYear: string; // e.g. "2026 - 2027"
   teacherName?: string; // Tên giáo viên chủ nhiệm / bộ môn
   teacherUsername?: string; // Tài khoản giáo viên phụ trách (VD: nguyenthitrangtu1, nguyenthanhliem...)
-  teacherRole?: TeacherRole; // 'homeroom' | 'subject'
+  teacherRole?: TeacherRole | 'GVCN' | 'GVBM'; // 'homeroom' | 'subject' | 'GVCN' | 'GVBM'
+  isHomeroom?: boolean; // Cờ nhận diện phân quyền: true = Lớp chủ nhiệm (GVCN), false = Lớp bộ môn (GVBM)
   avatar?: string; // Ảnh đại diện của lớp học
   originalAvatar?: string; // Ảnh gốc độ nét cao ban đầu để căn chỉnh lại
   avatarScale?: number; // Tỉ lệ zoom ảnh đại diện (0.5 - 3)
   avatarPosition?: { x: number; y: number }; // Vị trí căn chỉnh ảnh (x, y)
   slogan?: string; // Slogan lớp học
+  branch?: string; // Phân hiệu (ví dụ: 'Phân hiệu 1', 'Cơ sở A'...)
+  campus?: string; // Điểm trường (ví dụ: 'Điểm trường Trung tâm', 'Điểm Suối Cát'...)
   parentCommittee?: ParentCommittee; // Ban đại diện phụ huynh học sinh
 }
 

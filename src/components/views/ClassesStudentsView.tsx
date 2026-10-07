@@ -189,6 +189,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [newClassTeacher, setNewClassTeacher] = useState(teacherProfile.name || 'Cô Trịnh Thị Hương');
   const [newClassYear, setNewClassYear] = useState(teacherProfile.academicYear || '2026–2027');
   const [newClassColor, setNewClassColor] = useState(CLASS_COLORS[0]);
+  const [newClassBranch, setNewClassBranch] = useState('');
+  const [newClassCampus, setNewClassCampus] = useState('');
   const [newClassAvatar, setNewClassAvatar] = useState(CLASS_AVATARS[0].url);
   const [newClassOriginalAvatar, setNewClassOriginalAvatar] = useState(CLASS_AVATARS[0].url);
   const [newClassAvatarScale, setNewClassAvatarScale] = useState(1);
@@ -372,12 +374,18 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     const assignedTeacher = isAdmin 
       ? allTeachers.find(t => t.username.toLowerCase() === newClassAssignedUsername.toLowerCase())
       : null;
+    const effectiveRole = isAdmin 
+      ? (assignedTeacher?.role === 'subject' ? 'subject' : 'homeroom') 
+      : (currentUser?.role === 'subject' ? 'subject' : 'homeroom');
 
     addClass({
       name: newClassName.trim(),
       grade: newClassGrade,
+      branch: newClassBranch.trim() || undefined,
+      campus: newClassCampus.trim() || undefined,
       teacherUsername: isAdmin ? newClassAssignedUsername : (currentUser?.username || ''),
-      teacherRole: isAdmin ? (assignedTeacher?.role === 'subject' ? 'subject' : 'homeroom') : (currentUser?.role === 'subject' ? 'subject' : 'homeroom'),
+      teacherRole: effectiveRole,
+      isHomeroom: effectiveRole === 'homeroom',
       teacherName: isAdmin ? (assignedTeacher?.fullName || newClassTeacher.trim()) : (newClassTeacher.trim() || teacherProfile.name || 'Cô Trịnh Thị Hương'),
       academicYear: newClassYear.trim() || teacherProfile.academicYear || '2026–2027',
       color: newClassColor,
@@ -394,6 +402,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       }
     });
     setNewClassName('');
+    setNewClassBranch('');
+    setNewClassCampus('');
     setNewClassAvatarScale(1);
     setNewClassAvatarPosition({ x: 0, y: 0 });
     setIsCreateClassOpen(false);
@@ -406,12 +416,18 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
     const trimmedTeacherName = editingClass.teacherName?.trim() || teacherProfile.name || 'Cô Trịnh Thị Hương';
     const trimmedAcademicYear = editingClass.academicYear?.trim() || teacherProfile.academicYear || '2026–2027';
+    const isHome = editingClass.isHomeroom !== undefined 
+      ? editingClass.isHomeroom 
+      : (editingClass.teacherRole !== 'subject' && editingClass.teacherRole !== 'GVBM');
 
     updateClass(editingClass.id, {
       name: editingClass.name.trim(),
       grade: editingClass.grade,
+      branch: editingClass.branch?.trim() || undefined,
+      campus: editingClass.campus?.trim() || undefined,
       teacherUsername: editingClass.teacherUsername,
       teacherRole: editingClass.teacherRole,
+      isHomeroom: isHome,
       teacherName: trimmedTeacherName,
       academicYear: trimmedAcademicYear,
       color: editingClass.color,
@@ -1286,6 +1302,20 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                           <span>📅</span>
                           <span>NĂM HỌC: <strong className="text-amber-950 font-black">{cls.academicYear || '2026–2027'}</strong></span>
                         </div>
+                        {(cls.branch || cls.campus) && (
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
+                            {cls.branch && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-[9.5px] font-black text-purple-800 border border-purple-200 shadow-2xs uppercase">
+                                🏛️ {cls.branch}
+                              </span>
+                            )}
+                            {cls.campus && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-[9.5px] font-black text-sky-800 border border-sky-200 shadow-2xs uppercase">
+                                📍 {cls.campus}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Quick Edit/Delete buttons */}
@@ -2729,6 +2759,34 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
               </div>
 
+              {/* Phân hiệu & Điểm trường (Tương thích ngược / Quản lý đa tầng) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    🏛️ Phân hiệu
+                  </label>
+                  <input
+                    type="text"
+                    value={newClassBranch}
+                    onChange={(e) => setNewClassBranch(e.target.value)}
+                    placeholder="Ví dụ: Phân hiệu 1, Cơ sở A..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    📍 Điểm trường
+                  </label>
+                  <input
+                    type="text"
+                    value={newClassCampus}
+                    onChange={(e) => setNewClassCampus(e.target.value)}
+                    placeholder="Ví dụ: Điểm Trung tâm, Điểm Suối Cát..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
               {/* Slogan của lớp học (User request) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -3018,6 +3076,30 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         onChange={(e) => setEditingClass({ ...editingClass, academicYear: e.target.value })}
                         placeholder="2026–2027"
                         className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Khối 2.1: Phân hiệu & Điểm trường */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">🏛️ Phân hiệu</label>
+                      <input
+                        type="text"
+                        value={editingClass.branch || ''}
+                        onChange={(e) => setEditingClass({ ...editingClass, branch: e.target.value })}
+                        placeholder="VD: Phân hiệu 1, Cơ sở A"
+                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">📍 Điểm trường</label>
+                      <input
+                        type="text"
+                        value={editingClass.campus || ''}
+                        onChange={(e) => setEditingClass({ ...editingClass, campus: e.target.value })}
+                        placeholder="VD: Điểm Trung tâm, Suối Cát"
+                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                   </div>
