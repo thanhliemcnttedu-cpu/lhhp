@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-07T09:37:31.715Z",
+  "lastSync": "2026-10-07T09:37:46.282Z",
   "users": [
     {
       "id": "user-admin",
@@ -5197,7 +5197,7 @@
             "LỚP TRƯỞNG",
             "TỔ TRƯỞNG TỔ 1"
           ],
-          "avatar": "/avatars/default/boys/boy1.jpg",
+          "avatar": "/avatars/real_demo/boys/student-avatar-01.webp",
           "gender": "Nam",
           "points": 35,
           "classId": "class-4a1",
@@ -5210,7 +5210,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy1.jpg"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-01.webp"
         },
         {
           "id": "hs-2",
@@ -5222,7 +5222,7 @@
             "LỚP PHÓ HỌC TẬP",
             "TỔ PHÓ TỔ 1"
           ],
-          "avatar": "/avatars/default/girls/girl2.jfif",
+          "avatar": "/avatars/real_demo/girls/student-avatar-03.webp",
           "gender": "Nữ",
           "points": 48,
           "classId": "class-4a1",
@@ -5235,14 +5235,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl2.jfif"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-03.webp"
         },
         {
           "id": "hs-3",
           "stt": 3,
           "name": "Lê Gia Bảo",
           "group": "Tổ 1",
-          "avatar": "/avatars/default/boys/boy12.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-13.webp",
           "gender": "Nam",
           "points": 26,
           "classId": "class-4a1",
@@ -5255,7 +5255,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy12.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-13.webp"
         },
         {
           "id": "hs-4",
@@ -5266,7 +5266,7 @@
           "roles": [
             "LỚP PHONG TRÀO"
           ],
-          "avatar": "/avatars/default/girls/girl5.png",
+          "avatar": "/avatars/real_demo/girls/student-avatar-07.webp",
           "gender": "Nữ",
           "points": 52,
           "classId": "class-4a1",
@@ -5279,7 +5279,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl5.png"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-07.webp"
         },
         {
           "id": "hs-5",
@@ -5290,7 +5290,7 @@
           "roles": [
             "TỔ TRƯỞNG TỔ 1"
           ],
-          "avatar": "/avatars/default/boys/boy4.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
           "points": 31,
           "classId": "class-4a1",
@@ -5303,7 +5303,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy4.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-19.jpg"
         },
         {
           "id": "hs-6",
@@ -5314,7 +5314,7 @@
           "roles": [
             "TỔ PHÓ TỔ 1"
           ],
-          "avatar": "/avatars/default/girls/girl1.jfif",
+          "avatar": "/avatars/real_demo/girls/student-avatar-10.webp",
           "gender": "Nữ",
           "points": 40,
           "classId": "class-4a1",
@@ -5327,14 +5327,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl1.jfif"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-10.webp"
         },
         {
           "id": "hs-7",
           "stt": 7,
           "name": "Đặng Tuấn Đạt",
           "group": "Tổ 1",
-          "avatar": "/avatars/default/boys/boy7.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-22.jpg",
           "gender": "Nam",
           "points": 29,
           "classId": "class-4a1",
@@ -5347,14 +5347,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy7.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-22.jpg"
         },
         {
           "id": "hs-8",
           "stt": 8,
           "name": "Bùi Thùy Dương",
           "group": "Tổ 1",
-          "avatar": "/avatars/default/girls/girl3.png",
+          "avatar": "/avatars/real_demo/girls/student-avatar-24.jpg",
           "gender": "Nữ",
           "points": 64,
           "classId": "class-4a1",
@@ -5367,7 +5367,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl3.png"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-24.jpg"
         },
         {
           "id": "hs-9",
@@ -5378,7 +5378,7 @@
           "roles": [
             "TỔ TRƯỞNG TỔ 2"
           ],
-          "avatar": "/avatars/default/boys/boy10.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-34.jpg",
           "gender": "Nam",
           "points": 38,
           "classId": "class-4a1",
@@ -5391,7 +5391,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy10.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-34.jpg"
         },
         {
           "id": "hs-10",
@@ -5402,7 +5402,7 @@
           "roles": [
             "TỔ PHÓ TỔ 2"
           ],
-          "avatar": "/avatars/default/girls/girl5.png",
+          "avatar": "/avatars/real_demo/girls/student-avatar-27.jpg",
           "gender": "Nữ",
           "points": 45,
           "classId": "class-4a1",
@@ -5415,14 +5415,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl5.png"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-27.jpg"
         },
         {
           "id": "hs-11",
           "stt": 11,
           "name": "Ngô Đức Huy",
           "group": "Tổ 2",
-          "avatar": "/avatars/default/boys/boy5.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-37.jpg",
           "gender": "Nam",
           "points": 58,
           "classId": "class-4a1",
@@ -5435,14 +5435,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy5.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-37.jpg"
         },
         {
           "id": "hs-12",
           "stt": 12,
           "name": "Dương Thu Hương",
           "group": "Tổ 2",
-          "avatar": "/avatars/default/girls/girl2.jfif",
+          "avatar": "/avatars/real_demo/girls/student-avatar-41.webp",
           "gender": "Nữ",
           "points": 33,
           "classId": "class-4a1",
@@ -5455,14 +5455,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl2.jfif"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-41.webp"
         },
         {
           "id": "hs-13",
           "stt": 13,
           "name": "Lâm Tuấn Kiệt",
           "group": "Tổ 2",
-          "avatar": "/avatars/default/boys/boy11.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-40.jpg",
           "gender": "Nam",
           "points": 42,
           "classId": "class-4a1",
@@ -5475,14 +5475,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy11.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-40.jpg"
         },
         {
           "id": "hs-14",
           "stt": 14,
           "name": "Phan Thảo Linh",
           "group": "Tổ 2",
-          "avatar": "/avatars/default/girls/girl4.jpg",
+          "avatar": "/avatars/real_demo/girls/student-avatar-05.webp",
           "gender": "Nữ",
           "points": 61,
           "classId": "class-4a1",
@@ -5495,14 +5495,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl4.jpg"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-05.webp"
         },
         {
           "id": "hs-15",
           "stt": 15,
           "name": "Võ Minh Long",
           "group": "Tổ 2",
-          "avatar": "/avatars/default/boys/boy5.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
           "gender": "Nam",
           "points": 28,
           "classId": "class-4a1",
@@ -5515,14 +5515,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy5.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-47.jpg"
         },
         {
           "id": "hs-16",
           "stt": 16,
           "name": "Mai Khánh Ly",
           "group": "Tổ 3",
-          "avatar": "/avatars/default/girls/girl1.jfif",
+          "avatar": "/avatars/real_demo/girls/student-avatar-16.jpg",
           "gender": "Nữ",
           "points": 47,
           "classId": "class-4a1",
@@ -5535,7 +5535,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl1.jfif"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-16.jpg"
         },
         {
           "id": "hs-17",
@@ -5546,7 +5546,7 @@
           "roles": [
             "TỔ TRƯỞNG TỔ 3"
           ],
-          "avatar": "/avatars/default/boys/boy7.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
           "gender": "Nam",
           "points": 36,
           "classId": "class-4a1",
@@ -5559,7 +5559,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy7.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-50.jpg"
         },
         {
           "id": "hs-18",
@@ -5570,7 +5570,7 @@
           "roles": [
             "TỔ PHÓ TỔ 3"
           ],
-          "avatar": "/avatars/default/girls/girl3.png",
+          "avatar": "/avatars/real_demo/girls/student-avatar-28.jpg",
           "gender": "Nữ",
           "points": 55,
           "classId": "class-4a1",
@@ -5583,14 +5583,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl3.png"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-28.jpg"
         },
         {
           "id": "hs-19",
           "stt": 19,
           "name": "Đoàn Hải Phong",
           "group": "Tổ 3",
-          "avatar": "/avatars/default/boys/boy9.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-12.webp",
           "gender": "Nam",
           "points": 50,
           "classId": "class-4a1",
@@ -5603,14 +5603,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy9.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-12.webp"
         },
         {
           "id": "hs-20",
           "stt": 20,
           "name": "Đinh Hồng Phúc",
           "group": "Tổ 3",
-          "avatar": "/avatars/default/girls/girl5.png",
+          "avatar": "/avatars/real_demo/girls/student-avatar-02.webp",
           "gender": "Nữ",
           "points": 39,
           "classId": "class-4a1",
@@ -5623,14 +5623,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl5.png"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-02.webp"
         },
         {
           "id": "hs-21",
           "stt": 21,
           "name": "Thái Minh Quân",
           "group": "Tổ 3",
-          "avatar": "/avatars/default/boys/boy10.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-21.jpg",
           "gender": "Nam",
           "points": 68,
           "classId": "class-4a1",
@@ -5643,14 +5643,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy10.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-21.jpg"
         },
         {
           "id": "hs-22",
           "stt": 22,
           "name": "Cao Như Quỳnh",
           "group": "Tổ 3",
-          "avatar": "/avatars/default/girls/girl2.jfif",
+          "avatar": "/avatars/real_demo/girls/student-avatar-05.webp",
           "gender": "Nữ",
           "points": 43,
           "classId": "class-4a1",
@@ -5663,7 +5663,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl2.jfif"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-05.webp"
         },
         {
           "id": "hs-23",
@@ -5674,7 +5674,7 @@
           "roles": [
             "TỔ TRƯỞNG TỔ 4"
           ],
-          "avatar": "/avatars/default/boys/boy12.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-36.jpg",
           "gender": "Nam",
           "points": 34,
           "classId": "class-4a1",
@@ -5687,7 +5687,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy12.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-36.jpg"
         },
         {
           "id": "hs-24",
@@ -5698,7 +5698,7 @@
           "roles": [
             "TỔ PHÓ TỔ 4"
           ],
-          "avatar": "/avatars/default/girls/girl4.jpg",
+          "avatar": "/avatars/real_demo/girls/student-avatar-07.webp",
           "gender": "Nữ",
           "points": 72,
           "classId": "class-4a1",
@@ -5711,14 +5711,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl4.jpg"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-07.webp"
         },
         {
           "id": "hs-25",
           "stt": 25,
           "name": "Lưu Quang Thịnh",
           "group": "Tổ 4",
-          "avatar": "/avatars/default/boys/boy3.webp",
+          "avatar": "/avatars/real_demo/boys/student-avatar-46.webp",
           "gender": "Nam",
           "points": 44,
           "classId": "class-4a1",
@@ -5731,14 +5731,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy3.webp"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-46.webp"
         },
         {
           "id": "hs-26",
           "stt": 26,
           "name": "Vương Bảo Trâm",
           "group": "Tổ 4",
-          "avatar": "/avatars/default/girls/girl1.jfif",
+          "avatar": "/avatars/real_demo/girls/student-avatar-09.webp",
           "gender": "Nữ",
           "points": 53,
           "classId": "class-4a1",
@@ -5751,14 +5751,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl1.jfif"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-09.webp"
         },
         {
           "id": "hs-27",
           "stt": 27,
           "name": "Hà Thanh Tùng",
           "group": "Tổ 4",
-          "avatar": "/avatars/default/boys/boy5.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-04.jpg",
           "gender": "Nam",
           "points": 37,
           "classId": "class-4a1",
@@ -5771,14 +5771,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy5.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-04.jpg"
         },
         {
           "id": "hs-28",
           "stt": 28,
           "name": "Tạ Minh Vy",
           "group": "Tổ 4",
-          "avatar": "/avatars/default/girls/girl3.png",
+          "avatar": "/avatars/real_demo/girls/student-avatar-16.jpg",
           "gender": "Nữ",
           "points": 65,
           "classId": "class-4a1",
@@ -5791,14 +5791,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl3.png"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-16.jpg"
         },
         {
           "id": "hs-29",
           "stt": 29,
           "name": "Kiều Anh Vũ",
           "group": "Tổ 4",
-          "avatar": "/avatars/default/boys/boy7.jfif",
+          "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nam",
           "points": 41,
           "classId": "class-4a1",
@@ -5811,14 +5811,14 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/boys/boy7.jfif"
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-33.jpg"
         },
         {
           "id": "hs-30",
           "stt": 30,
           "name": "Nghiêm Yến Xuân",
           "group": "Tổ 4",
-          "avatar": "/avatars/default/girls/girl5.png",
+          "avatar": "/avatars/real_demo/girls/student-avatar-24.jpg",
           "gender": "Nữ",
           "points": 59,
           "classId": "class-4a1",
@@ -5831,7 +5831,7 @@
             "x": 0,
             "y": 0
           },
-          "originalAvatar": "/avatars/default/girls/girl5.png"
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-24.jpg"
         }
       ],
       "subjects": [
@@ -6903,7 +6903,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791365851715
+      "updatedAt": 1791365866281
     },
     "nguyenthitrangtu1": {
       "classes": [
@@ -20917,9 +20917,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791365851362
+    "lastGithubPushAt": 1791365859199
   },
   "auditLogs": [
+    {
+      "id": "log-1791365864803-o2e6r1",
+      "timestamp": 1791365864803,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
     {
       "id": "log-1791365849938-9me5ww",
       "timestamp": 1791365849938,
