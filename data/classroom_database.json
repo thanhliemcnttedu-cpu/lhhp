@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-07T11:09:59.990Z",
+  "lastSync": "2026-10-07T11:34:02.820Z",
   "users": [
     {
       "id": "user-admin",
@@ -6902,7 +6902,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791371399989
+      "updatedAt": 1791372842820
     },
     "nguyenthitrangtu1": {
       "classes": [
@@ -20916,9 +20916,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791371387142
+    "lastGithubPushAt": 1791371408439
   },
   "auditLogs": [
+    {
+      "id": "log-1791372840112-ggb1ux",
+      "timestamp": 1791372840112,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
     {
       "id": "log-1791371398137-zgqqvv",
       "timestamp": 1791371398137,
