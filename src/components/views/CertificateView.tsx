@@ -12,6 +12,7 @@ import { toPng } from 'html-to-image';
 import confetti from 'canvas-confetti';
 import { useClassroom } from '../../context/ClassroomContext';
 import { APP_AUTHOR_INFO } from '../../data/initialData';
+import { removeWhiteBackground } from '../../utils/imageProcessor';
 
 // Canvas Native Resolution 1920 x 1080 Full HD
 const CANVAS_WIDTH = 1920;
@@ -57,6 +58,15 @@ const DEFAULT_CERTIFICATE_TEMPLATES: CertificateTemplate[] = [
   { id: 'cert-2.png', name: 'Mẫu Khen Thưởng 2', url: '/certificates/2.png', filename: '2.png' },
   { id: 'cert-3.png', name: 'Mẫu Khen Thưởng 3', url: '/certificates/3.png', filename: '3.png' },
   { id: 'cert-4.png', name: 'Mẫu Khen Thưởng 4', url: '/certificates/4.png', filename: '4.png' },
+  { id: 'cert-5.png', name: 'Mẫu Khen Thưởng 5', url: '/certificates/5.png', filename: '5.png' },
+  { id: 'cert-7.png', name: 'Mẫu Khen Thưởng 7', url: '/certificates/7.png', filename: '7.png' },
+  { id: 'cert-8.png', name: 'Mẫu Khen Thưởng 8', url: '/certificates/8.png', filename: '8.png' },
+  { id: 'cert-9.png', name: 'Mẫu Khen Thưởng 9', url: '/certificates/9.png', filename: '9.png' },
+  { id: 'cert-10.png', name: 'Mẫu Khen Thưởng 10', url: '/certificates/10.png', filename: '10.png' },
+  { id: 'cert-11.png', name: 'Mẫu Khen Thưởng 11', url: '/certificates/11.png', filename: '11.png' },
+  { id: 'cert-12.png', name: 'Mẫu Khen Thưởng 12', url: '/certificates/12.png', filename: '12.png' },
+  { id: 'cert-13.png', name: 'Mẫu Khen Thưởng 13', url: '/certificates/13.png', filename: '13.png' },
+  { id: 'cert-14.png', name: 'Mẫu Khen Thưởng 14', url: '/certificates/14.png', filename: '14.png' },
 ];
 
 // Helper to format friendly template display names from filenames
@@ -239,13 +249,18 @@ export const CertificateView: React.FC = () => {
   const certificatePrintRef = useRef<HTMLDivElement>(null);
 
   // =========================================================================
-  // DIGITAL SIGNATURE & CANVAS SMART BACKGROUND REMOVAL
+  // DIGITAL SIGNATURE & SCHOOL LOGO SMART BACKGROUND REMOVAL (CANVAS 2D)
   // =========================================================================
   const SIGNATURE_STORAGE_KEY = 'lhhp_cert_teacher_signature';
   const AUTO_SIGNATURE_KEY = 'lhhp_cert_auto_signature';
+  const LOGO_STORAGE_KEY = 'lhhp_cert_school_logo';
 
   const [teacherSignatureImage, setTeacherSignatureImage] = useState<string | null>(() => {
     return localStorage.getItem(SIGNATURE_STORAGE_KEY) || null;
+  });
+
+  const [schoolLogoImage, setSchoolLogoImage] = useState<string | null>(() => {
+    return localStorage.getItem(LOGO_STORAGE_KEY) || null;
   });
 
   const [autoInsertSignature, setAutoInsertSignature] = useState<boolean>(() => {
@@ -254,67 +269,84 @@ export const CertificateView: React.FC = () => {
   });
 
   const [isProcessingSignature, setIsProcessingSignature] = useState(false);
+  const [isProcessingLogo, setIsProcessingLogo] = useState(false);
   const signatureFileInputRef = useRef<HTMLInputElement>(null);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Thuật toán tách nền trắng bằng Canvas API 2D (Pixel-level Alpha manipulation)
-  const processSignatureBackground = (img: HTMLImageElement): Promise<string> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const maxDim = 1000;
-      let width = img.naturalWidth || img.width || 800;
-      let height = img.naturalHeight || img.height || 400;
+  // Thuật toán tách nền trắng bằng Canvas API 2D từ imageProcessor utility
+  // Áp dụng chung cho cả Chữ Ký Tay và Logo Nhà Trường
+  const processImageBackground = (img: HTMLImageElement): Promise<string> => {
+    return removeWhiteBackground(img);
+  };
 
-      if (width > maxDim || height > maxDim) {
-        if (width > height) {
-          height = Math.round((height * maxDim) / width);
-          width = maxDim;
-        } else {
-          width = Math.round((width * maxDim) / height);
-          height = maxDim;
-        }
-      }
+  // =========================================================================
+  // 1A. NON-DESTRUCTIVE SIGNATURE INJECTION
+  // Chèn chữ ký độc lập vào Canvas (như đóng con dấu vào trang viết dở)
+  // Tuyệt đối KHÔNG gọi lại layout generator, giữ nguyên vẹn 100% tọa độ các element khác.
+  // =========================================================================
+  const appendSignatureToCanvas = (signatureBase64: string = (teacherSignatureImage || ''), initialAspect: number = 0.5) => {
+    if (!signatureBase64) {
+      signatureFileInputRef.current?.click();
+      return;
+    }
 
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(img.src);
-        return;
-      }
+    const defaultWidth = 280;
+    const defaultHeight = Math.round(defaultWidth * initialAspect);
 
-      // 1. Vẽ ảnh gốc lên canvas
-      ctx.drawImage(img, 0, 0, width, height);
+    const newSignatureElement: CertificateElement = {
+      id: 'signature',
+      type: 'image',
+      content: signatureBase64,
+      x: 1300,
+      y: 800,
+      width: defaultWidth,
+      height: defaultHeight,
+      isCircleImage: false,
+      borderWidth: 0,
+      boxShadow: 'none',
+    };
 
-      // 2. Lấy dữ liệu điểm ảnh thô (RGBA)
-      const imgData = ctx.getImageData(0, 0, width, height);
-      const data = imgData.data;
-
-      // 3. Quét từng pixel (mỗi pixel chiếm 4 bytes: R, G, B, A)
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        // Độ sáng nhận thức mắt người (Luminance)
-        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-
-        // Điểm sáng / Nền giấy trắng: Biến thành trong suốt
-        if (luminance > 195 || (r > 190 && g > 190 && b > 190)) {
-          data[i + 3] = 0; // Alpha = 0 (Hoàn toàn trong suốt)
-        } else if (luminance > 160) {
-          // Vùng rìa nét chữ: Khử răng cưa mịn màng (Anti-aliasing)
-          const alphaRatio = (195 - luminance) / (195 - 160);
-          data[i + 3] = Math.round(data[i + 3] * Math.max(0, Math.min(1, alphaRatio)));
-        } else {
-          // Nét mực bút: Giữ nguyên màu thực tế và làm đậm nét rõ ràng
-          data[i + 3] = 255;
-        }
-      }
-
-      // 4. Ghi ngược dữ liệu đã tách nền trở lại canvas và xuất file PNG trong suốt
-      ctx.putImageData(imgData, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
+    setElements(prev => {
+      // Đặt ở cuối mảng để luôn render ở lớp trên cùng
+      const filtered = prev.filter(el => el.id !== 'signature' && el.id !== 'teacher_signature_img');
+      return [...filtered, newSignatureElement];
     });
+    setActiveElementId('signature');
+  };
+
+  // =========================================================================
+  // 1B. NON-DESTRUCTIVE LOGO INJECTION
+  // Chèn Logo nhà trường độc lập vào Canvas ở góc trên (Lớp trên cùng)
+  // Tuyệt đối KHÔNG gọi lại layout generator, giữ nguyên vẹn 100% tọa độ các element khác.
+  // =========================================================================
+  const appendLogoToCanvas = (logoBase64: string = (schoolLogoImage || ''), initialAspect: number = 1) => {
+    if (!logoBase64) {
+      logoFileInputRef.current?.click();
+      return;
+    }
+
+    const defaultWidth = 140;
+    const defaultHeight = Math.round(defaultWidth * initialAspect);
+
+    const newLogoElement: CertificateElement = {
+      id: 'school_logo',
+      type: 'image',
+      content: logoBase64,
+      x: 160,
+      y: 80,
+      width: defaultWidth,
+      height: defaultHeight,
+      isCircleImage: false,
+      borderWidth: 0,
+      boxShadow: 'none',
+    };
+
+    setElements(prev => {
+      // Đặt ở cuối mảng để luôn render ở lớp trên cùng
+      const filtered = prev.filter(el => el.id !== 'school_logo');
+      return [...filtered, newLogoElement];
+    });
+    setActiveElementId('school_logo');
   };
 
   // Hàm tải ảnh chữ ký lên và tự động tách nền
@@ -330,12 +362,15 @@ export const CertificateView: React.FC = () => {
       img.crossOrigin = 'anonymous';
       img.onload = async () => {
         try {
-          const cleanSignature = await processSignatureBackground(img);
+          const cleanSignature = await processImageBackground(img);
           setTeacherSignatureImage(cleanSignature);
           localStorage.setItem(SIGNATURE_STORAGE_KEY, cleanSignature);
 
+          const aspect = (img.naturalWidth && img.naturalHeight) ? (img.naturalHeight / img.naturalWidth) : 0.5;
+
+          // NON-DESTRUCTIVE: Chỉ gắn thêm con dấu chữ ký vào bản vẽ hiện tại, KHÔNG reset layout
           if (autoInsertSignature) {
-            insertOrUpdateSignatureElement(cleanSignature);
+            appendSignatureToCanvas(cleanSignature, aspect);
           }
           confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
         } catch (err) {
@@ -351,49 +386,59 @@ export const CertificateView: React.FC = () => {
     e.target.value = '';
   };
 
+  // Hàm tải ảnh Logo lên và tự động tách nền
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingLogo(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const rawDataUrl = event.target?.result as string;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = async () => {
+        try {
+          const cleanLogo = await processImageBackground(img);
+          setSchoolLogoImage(cleanLogo);
+          localStorage.setItem(LOGO_STORAGE_KEY, cleanLogo);
+
+          const aspect = (img.naturalWidth && img.naturalHeight) ? (img.naturalHeight / img.naturalWidth) : 1;
+
+          // NON-DESTRUCTIVE: Thêm ngay vào canvas hiện tại, không reset layout
+          appendLogoToCanvas(cleanLogo, aspect);
+          confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+        } catch (err) {
+          console.error('Lỗi tách nền logo:', err);
+          alert('Không thể tách nền logo. Vui lòng thử lại với ảnh rõ nét hơn!');
+        } finally {
+          setIsProcessingLogo(false);
+        }
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   // Hàm xóa chữ ký đã lưu
   const handleRemoveSavedSignature = () => {
     setTeacherSignatureImage(null);
     localStorage.removeItem(SIGNATURE_STORAGE_KEY);
-    setElements(prev => prev.filter(el => el.id !== 'teacher_signature_img'));
-    if (activeElementId === 'teacher_signature_img') setActiveElementId(null);
+    setElements(prev => prev.filter(el => el.id !== 'signature' && el.id !== 'teacher_signature_img'));
+    if (activeElementId === 'signature' || activeElementId === 'teacher_signature_img') {
+      setActiveElementId(null);
+    }
   };
 
-  // Hàm thả hoặc cập nhật Element chữ ký vào bản vẽ Canvas
-  const insertOrUpdateSignatureElement = (sigImage = teacherSignatureImage) => {
-    if (!sigImage) {
-      signatureFileInputRef.current?.click();
-      return;
+  // Hàm xóa logo đã lưu
+  const handleRemoveSavedLogo = () => {
+    setSchoolLogoImage(null);
+    localStorage.removeItem(LOGO_STORAGE_KEY);
+    setElements(prev => prev.filter(el => el.id !== 'school_logo'));
+    if (activeElementId === 'school_logo') {
+      setActiveElementId(null);
     }
-
-    let sigX = 1320;
-    let sigY = 915;
-    if (currentLayoutVariant === 2) {
-      sigX = 1300;
-      sigY = 730;
-    } else if (currentLayoutVariant === 3) {
-      sigX = 1260;
-      sigY = 730;
-    }
-
-    const sigElement: CertificateElement = {
-      id: 'teacher_signature_img',
-      type: 'image',
-      content: sigImage,
-      x: sigX,
-      y: sigY,
-      width: 260,
-      height: 120,
-      isCircleImage: false,
-      borderWidth: 0,
-      boxShadow: 'none',
-    };
-
-    setElements(prev => {
-      const filtered = prev.filter(el => el.id !== 'teacher_signature_img');
-      return [...filtered, sigElement];
-    });
-    setActiveElementId('teacher_signature_img');
   };
 
   // Fetch dynamic templates from public/certificates/
@@ -726,7 +771,7 @@ export const CertificateView: React.FC = () => {
       // Tự động chèn chữ ký điện tử đã tách nền nếu bật
       if (teacherSignatureImage && autoInsertSignature) {
         elementsResult.push({
-          id: 'teacher_signature_img',
+          id: 'signature',
           type: 'image',
           content: teacherSignatureImage,
           x: 1340,
@@ -924,7 +969,7 @@ export const CertificateView: React.FC = () => {
       // Tự động chèn chữ ký điện tử đã tách nền nếu bật
       if (teacherSignatureImage && autoInsertSignature) {
         elementsResult.push({
-          id: 'teacher_signature_img',
+          id: 'signature',
           type: 'image',
           content: teacherSignatureImage,
           x: 1300,
@@ -1122,7 +1167,7 @@ export const CertificateView: React.FC = () => {
       // Tự động chèn chữ ký điện tử đã tách nền nếu bật
       if (teacherSignatureImage && autoInsertSignature) {
         elementsResult.push({
-          id: 'teacher_signature_img',
+          id: 'signature',
           type: 'image',
           content: teacherSignatureImage,
           x: 1260,
@@ -1204,7 +1249,7 @@ export const CertificateView: React.FC = () => {
   // - MouseDown + MouseMove: Drag and move position (X, Y)
   // ==========================================
   const handleElementMouseDown = (e: React.MouseEvent, id: string) => {
-    if (!isEditMode) return;
+    if (!isEditMode || isExporting) return;
     e.stopPropagation();
     setActiveElementId(id);
 
@@ -1221,7 +1266,7 @@ export const CertificateView: React.FC = () => {
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent) => {
-    if (!isEditMode || !isDraggingRef.current || !activeElementId) return;
+    if (!isEditMode || isExporting || !isDraggingRef.current || !activeElementId) return;
 
     const deltaX = (e.clientX - dragStartRef.current.startX) / previewScale;
     const deltaY = (e.clientY - dragStartRef.current.startY) / previewScale;
@@ -1290,8 +1335,11 @@ export const CertificateView: React.FC = () => {
   };
 
   // =========================================================================
-  // ACTION BUTTON 4: TẢI HÀNG LOẠT (BATCH EXPORT WITH FLAWLESS 1920x1080)
-  // Preserves custom coordinates and exports full resolution without corner shrinking
+  // 2. MASTER TEMPLATE BULK EXPORT (CONSISTENT BATCH RENDERING)
+  // Tuyệt đối không sinh lại layout ngẫu nhiên trong vòng lặp.
+  // Sử dụng Deep Copy của elements hiện tại làm Master Template bất biến,
+  // chỉ hoán đổi nội dung (Name, Avatar, Reason, Class) của từng học sinh,
+  // bảo toàn 100% tọa độ, font chữ, màu sắc, chữ ký mà giáo viên đã căn chỉnh.
   // =========================================================================
   const handleExportBatch = async () => {
     if (!certificatePrintRef.current || selectedStudents.length === 0) return;
@@ -1299,26 +1347,56 @@ export const CertificateView: React.FC = () => {
     setIsExporting(true);
     setExportProgress(0);
     setActiveElementId(null);
-    setExportMessage('Đang chuẩn bị xuất ảnh độ phân giải cao 1920x1080 Full HD...');
+    setIsEditMode(false); // Khóa chế độ chỉnh sửa để ngăn click/drag làm lệch tọa độ
+
+    // BƯỚC 1: Lấy mảng elements hiện tại làm Master Template (Deep Copy bất biến)
+    const masterTemplate: CertificateElement[] = JSON.parse(JSON.stringify(elements));
+    const initialPreviewStudentId = previewStudentId;
+    const totalCount = selectedStudents.length;
 
     try {
       let exportedCount = 0;
-      const totalCount = selectedStudents.length;
 
+      // BƯỚC 2: Bắt đầu vòng lặp qua danh sách học sinh được chọn
       for (let i = 0; i < totalCount; i++) {
         const studentId = selectedStudents[i];
         const student = currentClassStudents.find(s => s.id === studentId);
-        const studentNameClean = student?.name || `HocSinh_${i + 1}`;
+        const studentNameClean = student?.name || `Học sinh ${i + 1}`;
+        const studentAvatar = student?.originalAvatar || student?.avatar || '';
+        const className = activeClass?.name ? `Lớp ${activeClass.name}` : 'Lớp 4A1';
 
-        setExportMessage(`Đang xuất thư khen cho: ${studentNameClean} (${i + 1}/${totalCount})`);
+        setExportMessage(`Đang xuất thư khen (${i + 1}/${totalCount}): ${studentNameClean}`);
         setPreviewStudentId(studentId);
 
-        // Update student in elements preserving user-edited coordinates
-        setElements(prev => updateStudentInElements(student, prev));
+        // BƯỚC 3 (Cloning & Mapping): Biến đổi content từ masterTemplate
+        const currentStudentElements: CertificateElement[] = masterTemplate.map(el => {
+          // Tên học sinh: Giữ nguyên x, y, font, color, letterSpacing... CHỈ đổi content
+          if (el.id === 'student_name' || el.id === 'studentName') {
+            return { ...el, content: studentNameClean };
+          }
+          // Avatar học sinh: Giữ nguyên x, y, size, border, shadow... CHỈ đổi content
+          if (el.id === 'student_avatar' || el.id === 'avatar') {
+            return { ...el, content: studentAvatar };
+          }
+          // Lý do khen thưởng: CHỈ đổi content
+          if (el.id === 'reason_body' || el.id === 'reason') {
+            return { ...el, content: `“${reason}”` };
+          }
+          // Lớp học sinh: Cập nhật tên lớp hiện tại
+          if (el.id === 'student_class' || el.id === 'studentClass') {
+            return { ...el, content: `Học sinh ${className}` };
+          }
+          // Các element khác (Tiêu đề, Chữ ký, Ngày tháng, Lời dẫn, Tên trường, GVCN...) Giữ nguyên 100%
+          return { ...el };
+        });
 
-        // Allow React state change & image re-render
-        await waitForNextFrame(320);
+        // BƯỚC 4: setElements(currentStudentElements) để Canvas cập nhật
+        setElements(currentStudentElements);
 
+        // BƯỚC 5: Chờ DOM render & nạp ảnh hoàn tất bức thư khen mới (600ms theo đúng đặc tả)
+        await new Promise(r => setTimeout(r, 600));
+
+        // BƯỚC 6: Chụp ảnh bằng html-to-image (1920x1080 Full HD) và tải xuống
         if (certificatePrintRef.current) {
           const dataUrl = await toPng(certificatePrintRef.current, {
             quality: 1,
@@ -1332,7 +1410,6 @@ export const CertificateView: React.FC = () => {
             cacheBust: true,
           });
 
-          // Trigger download
           const link = document.createElement('a');
           const safeName = studentNameClean.replace(/\s+/g, '_');
           link.download = `ThuKhen_${safeName}_${activeClass?.name || 'Lop'}.png`;
@@ -1342,15 +1419,20 @@ export const CertificateView: React.FC = () => {
 
         exportedCount++;
         setExportProgress(Math.round((exportedCount / totalCount) * 100));
-        await waitForNextFrame(150);
+        await new Promise(resolve => setTimeout(resolve, 150));
       }
 
       setExportMessage('Hoàn tất xuất tất cả thư khen!');
       confetti({ particleCount: 150, spread: 85, origin: { y: 0.6 } });
     } catch (error) {
-      console.error('Error batch exporting certificate:', error);
+      console.error('Lỗi khi xuất thư khen hàng loạt:', error);
       alert('Có lỗi xảy ra trong quá trình xuất thư khen hàng loạt.');
     } finally {
+      // BƯỚC 7: Restore lại layout Master Template ban đầu và học sinh preview để giao diện không bị kẹt
+      setElements(masterTemplate);
+      if (initialPreviewStudentId) {
+        setPreviewStudentId(initialPreviewStudentId);
+      }
       setIsExporting(false);
       setExportProgress(0);
       setExportMessage('');
@@ -1479,7 +1561,8 @@ export const CertificateView: React.FC = () => {
           <button
             type="button"
             onClick={handleAutoLayout}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 shadow-2xs transition-all hover-zoom-btn uppercase"
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 shadow-2xs transition-all hover-zoom-btn disabled:opacity-50 disabled:pointer-events-none uppercase"
             title="Ngẫu nhiên đổi 1 trong 3 layout mỹ thuật (Cổ điển, Hiện đại, Sáng tạo)"
           >
             <Shuffle className="w-4 h-4 text-indigo-600" />
@@ -1490,7 +1573,8 @@ export const CertificateView: React.FC = () => {
           <button
             type="button"
             onClick={handleResetLayout}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all hover-zoom-btn uppercase"
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all hover-zoom-btn disabled:opacity-50 disabled:pointer-events-none uppercase"
             title="Khôi phục vị trí mặc định ban đầu"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -1805,7 +1889,98 @@ export const CertificateView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* MODULE: CHỮ KÝ ĐIỆN TỬ TÁCH NỀN THÔNG MINH */}
+                {/* ========================================================= */}
+                {/* MODULE 1: TẢI LÊN LOGO NHÀ TRƯỜNG (TÁCH NỀN TRONG SUỐT) */}
+                {/* ========================================================= */}
+                <div className="space-y-2.5 pt-3 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Award className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Logo Nhà Trường</span>
+                    </label>
+                    <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      Tách nền Canvas 2D
+                    </span>
+                  </div>
+
+                  {/* Hidden logo file input */}
+                  <input
+                    type="file"
+                    ref={logoFileInputRef}
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+
+                  {/* Button 1: Tải lên Logo */}
+                  <button
+                    type="button"
+                    onClick={() => logoFileInputRef.current?.click()}
+                    disabled={isProcessingLogo}
+                    className="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-amber-300 hover:border-amber-500 bg-amber-50/50 hover:bg-amber-50 text-amber-800 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-2xs group cursor-pointer"
+                  >
+                    {isProcessingLogo ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin text-amber-600" />
+                        <span>Đang quét & tách nền logo...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 text-amber-600 group-hover:-translate-y-0.5 transition-transform" />
+                        <span>{schoolLogoImage ? 'Thay đổi ảnh Logo khác' : 'Tải lên Logo nhà trường'}</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Logo Preview & Action */}
+                  {schoolLogoImage && (
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Logo đã tách nền trong suốt:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveSavedLogo}
+                          className="text-slate-400 hover:text-rose-500 p-0.5 transition-colors cursor-pointer"
+                          title="Xóa logo đã lưu"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div 
+                        className="h-16 w-full rounded-lg border border-slate-300 flex items-center justify-center p-1.5 overflow-hidden shadow-2xs"
+                        style={{
+                          backgroundImage: 'linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)',
+                          backgroundSize: '12px 12px',
+                          backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0px',
+                          backgroundColor: '#ffffff'
+                        }}
+                      >
+                        <img
+                          src={schoolLogoImage}
+                          alt="Logo đã tách nền"
+                          className="max-h-full max-w-full object-contain filter drop-shadow-xs"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => appendLogoToCanvas()}
+                        disabled={isExporting}
+                        className="w-full py-1.5 px-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:pointer-events-none text-white text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                      >
+                        <Award className="w-3.5 h-3.5" />
+                        <span>Chèn Logo vào bản thiết kế ngay</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* ========================================================= */}
+                {/* MODULE 2: TẢI LÊN CHỮ KÝ TAY (TÁCH NỀN TRONG SUỐT) */}
+                {/* ========================================================= */}
                 <div className="space-y-2.5 pt-3 border-t border-slate-200">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
@@ -1817,7 +1992,7 @@ export const CertificateView: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Hidden file input */}
+                  {/* Hidden signature file input */}
                   <input
                     type="file"
                     ref={signatureFileInputRef}
@@ -1826,7 +2001,7 @@ export const CertificateView: React.FC = () => {
                     className="hidden"
                   />
 
-                  {/* Upload Button */}
+                  {/* Button 2: Tải lên Chữ ký tay */}
                   <button
                     type="button"
                     onClick={() => signatureFileInputRef.current?.click()}
@@ -1836,12 +2011,12 @@ export const CertificateView: React.FC = () => {
                     {isProcessingSignature ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
-                        <span>Đang quét & tách nền canvas...</span>
+                        <span>Đang quét & tách nền chữ ký...</span>
                       </>
                     ) : (
                       <>
                         <Upload className="w-4 h-4 text-indigo-600 group-hover:-translate-y-0.5 transition-transform" />
-                        <span>{teacherSignatureImage ? 'Thay đổi ảnh chữ ký khác' : 'Tải lên ảnh chụp chữ ký tay'}</span>
+                        <span>{teacherSignatureImage ? 'Thay đổi ảnh chữ ký khác' : 'Tải lên Chữ ký tay'}</span>
                       </>
                     )}
                   </button>
@@ -1861,7 +2036,7 @@ export const CertificateView: React.FC = () => {
                     <span>Tự động chèn chữ ký khi Tạo thư khen</span>
                   </label>
 
-                  {/* Signature Preview & Action Area */}
+                  {/* Signature Preview & Action */}
                   {teacherSignatureImage ? (
                     <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                       <div className="flex items-center justify-between">
@@ -1878,7 +2053,6 @@ export const CertificateView: React.FC = () => {
                         </button>
                       </div>
 
-                      {/* Transparent Checkerboard Container Preview */}
                       <div 
                         className="h-16 w-full rounded-lg border border-slate-300 flex items-center justify-center p-1.5 overflow-hidden shadow-2xs"
                         style={{
@@ -1895,19 +2069,19 @@ export const CertificateView: React.FC = () => {
                         />
                       </div>
 
-                      {/* Insert Now Button */}
                       <button
                         type="button"
-                        onClick={() => insertOrUpdateSignatureElement()}
-                        className="w-full py-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                        onClick={() => appendSignatureToCanvas()}
+                        disabled={isExporting}
+                        className="w-full py-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none text-white text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                       >
                         <PenTool className="w-3.5 h-3.5" />
-                        <span>Chèn chữ ký vào bản thiết kế ngay</span>
+                        <span>Chèn Chữ ký vào bản thiết kế ngay</span>
                       </button>
                     </div>
                   ) : (
                     <p className="text-[11px] text-slate-500 italic">
-                      💡 Mẹo: Chụp chữ ký mực xanh hoặc đen trên giấy trắng, thuật toán sẽ tự động xóa sạch nền và giữ nguyên nét mực trong suốt.
+                      💡 Mẹo: Chụp ảnh chữ ký hoặc logo trên giấy trắng, thuật toán sẽ tự động xóa sạch nền và giữ nguyên nét mực trong suốt.
                     </p>
                   )}
                 </div>
@@ -2238,24 +2412,31 @@ export const CertificateView: React.FC = () => {
                           </div>
                         </>
                       ) : (
-                        /* DIGITAL SIGNATURE CONTROLS */
+                        /* DIGITAL SIGNATURE & LOGO CONTROLS */
                         <>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[11px] font-bold text-slate-300">Kích thước chữ ký:</span>
+                            <span className="text-[11px] font-bold text-slate-300">
+                              Kích thước {activeElement.id === 'school_logo' ? 'Logo' : (activeElement.id === 'signature' ? 'chữ ký' : 'ảnh')}:
+                            </span>
                             <input
                               type="range"
-                              min="120"
-                              max="550"
-                              value={activeElement.width || 260}
+                              min="60"
+                              max="600"
+                              value={activeElement.width || (activeElement.id === 'school_logo' ? 140 : 260)}
                               onChange={e => {
                                 const val = Number(e.target.value);
-                                const newHeight = Math.round(val * 0.46);
-                                updateActiveElement({ width: val, height: newHeight });
+                                // Can thiệp vào width, giữ nguyên tỷ lệ aspect ratio gốc hoặc để height auto
+                                if (activeElement.width && activeElement.height) {
+                                  const ratio = activeElement.height / activeElement.width;
+                                  updateActiveElement({ width: val, height: Math.round(val * ratio) });
+                                } else {
+                                  updateActiveElement({ width: val, height: undefined });
+                                }
                               }}
                               className="w-32 accent-indigo-500 cursor-pointer"
                             />
                             <span className="text-xs font-mono font-bold text-indigo-300 w-12 text-center">
-                              {activeElement.width || 260}px
+                              {activeElement.width || (activeElement.id === 'school_logo' ? 140 : 260)}px
                             </span>
                           </div>
 
@@ -2264,24 +2445,34 @@ export const CertificateView: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const currentW = activeElement.width || 260;
-                                const nextW = Math.max(120, currentW - 20);
-                                updateActiveElement({ width: nextW, height: Math.round(nextW * 0.46) });
+                                const currentW = activeElement.width || (activeElement.id === 'school_logo' ? 140 : 260);
+                                const nextW = Math.max(60, currentW - 20);
+                                if (activeElement.width && activeElement.height) {
+                                  const ratio = activeElement.height / activeElement.width;
+                                  updateActiveElement({ width: nextW, height: Math.round(nextW * ratio) });
+                                } else {
+                                  updateActiveElement({ width: nextW, height: undefined });
+                                }
                               }}
                               className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 transition-colors"
-                              title="Thu nhỏ chữ ký"
+                              title="Thu nhỏ 20px"
                             >
                               -20px
                             </button>
                             <button
                               type="button"
                               onClick={() => {
-                                const currentW = activeElement.width || 260;
-                                const nextW = Math.min(550, currentW + 20);
-                                updateActiveElement({ width: nextW, height: Math.round(nextW * 0.46) });
+                                const currentW = activeElement.width || (activeElement.id === 'school_logo' ? 140 : 260);
+                                const nextW = Math.min(600, currentW + 20);
+                                if (activeElement.width && activeElement.height) {
+                                  const ratio = activeElement.height / activeElement.width;
+                                  updateActiveElement({ width: nextW, height: Math.round(nextW * ratio) });
+                                } else {
+                                  updateActiveElement({ width: nextW, height: undefined });
+                                }
                               }}
                               className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 transition-colors"
-                              title="Phóng to chữ ký"
+                              title="Phóng to 20px"
                             >
                               +20px
                             </button>
@@ -2320,11 +2511,22 @@ export const CertificateView: React.FC = () => {
                       Vui lòng click chọn một đoạn chữ hoặc hình ảnh trên thư khen để chỉnh sửa.
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-2.5 text-[11px] text-slate-400">
                     <button
                       type="button"
-                      onClick={() => insertOrUpdateSignatureElement()}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer"
+                      onClick={() => appendLogoToCanvas()}
+                      disabled={isExporting}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-600/80 hover:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer"
+                      title="Chèn logo nhà trường đã tách nền vào bản vẽ"
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      <span>{schoolLogoImage ? 'Chèn Logo ngay' : 'Tải & chèn Logo'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => appendSignatureToCanvas()}
+                      disabled={isExporting}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 disabled:opacity-50 disabled:pointer-events-none text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer"
                       title="Chèn chữ ký điện tử đã tách nền vào bản vẽ"
                     >
                       <FileSignature className="w-3.5 h-3.5" />
@@ -2448,21 +2650,28 @@ export const CertificateView: React.FC = () => {
                         style={{
                           left: `${el.x}px`,
                           top: `${el.y}px`,
-                          width: `${el.width || (isAvatar ? 460 : 260)}px`,
-                          height: `${el.height || (isAvatar ? 460 : 120)}px`,
-                          borderRadius: isAvatar ? '50%' : '8px',
-                          overflow: 'hidden',
+                          width: `${el.width || (isAvatar ? 460 : (el.id === 'school_logo' ? 140 : 260))}px`,
+                          height: isAvatar 
+                            ? `${el.height || 460}px` 
+                            : (el.height ? `${el.height}px` : 'auto'),
+                          borderRadius: isAvatar ? '50%' : '0px',
+                          overflow: isAvatar ? 'hidden' : 'visible',
                           border: isAvatar ? `${bw}px solid ${bc}` : (bw > 0 ? `${bw}px solid ${bc}` : 'none'),
                           boxShadow: isAvatar ? (el.boxShadow || '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 4px #fbbf24') : 'none',
                           backgroundColor: isAvatar ? '#e2e8f0' : 'transparent',
-                          zIndex: isActive ? 40 : 20,
+                          zIndex: isActive ? 40 : (el.id === 'school_logo' || el.id === 'signature' ? 30 : 20),
                         }}
                       >
                         {el.content ? (
                           <img
                             src={el.content}
-                            alt={isAvatar ? "Student Avatar" : "Chữ ký giáo viên"}
-                            className={`w-full h-full pointer-events-none ${isAvatar ? 'object-cover' : 'object-contain'}`}
+                            alt={isAvatar ? "Student Avatar" : (el.id === 'school_logo' ? "Logo nhà trường" : "Chữ ký giáo viên")}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: isAvatar ? 'cover' : 'contain',
+                            }}
+                            className="pointer-events-none block"
                             draggable={false}
                           />
                         ) : isAvatar ? (

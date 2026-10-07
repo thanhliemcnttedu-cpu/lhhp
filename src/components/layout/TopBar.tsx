@@ -61,7 +61,7 @@ const VIEW_TITLES: Record<NavigationMenuId, { title: string; shortTitle: string;
   picker: {
     title: 'GỌI TÊN HỌC SINH',
     shortTitle: 'GỌI TÊN',
-    subtitle: '5 TRÒ CHƠI GỌI TÊN HÀO HỨNG: VÒNG QUAY, CUỘN PHIM, TÀU VŨ TRỤ, HỘP QUÀ BÍ MẬT VÀ ĐUA VỊT'
+    subtitle: '6 TRÒ CHƠI GỌI TÊN HÀO HỨNG: VÒNG QUAY, CUỘN PHIM, TÀU VŨ TRỤ, HỘP QUÀ, ĐUA VỊT VÀ QUIZ NGHIÊNG ĐẦU'
   },
   wheel: {
     title: 'VÒNG QUAY MAY MẮN',

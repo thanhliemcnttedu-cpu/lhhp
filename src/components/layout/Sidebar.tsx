@@ -121,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'picker',
       label: 'Gọi tên học sinh',
       icon: Sparkles,
-      badge: '5 GAME',
+      badge: '6 GAME',
       badgeType: 'hot'
     },
     {

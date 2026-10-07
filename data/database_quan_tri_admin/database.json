@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-05T23:02:48.370Z",
+  "lastSync": "2026-10-07T17:12:22.470Z",
   "users": [
     {
       "id": "user-admin",
@@ -42,9 +42,243 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791241368370
+    "lastGithubPushAt": 1791393142470
   },
   "auditLogs": [
+    {
+      "id": "log-1791388236247-ipx643",
+      "timestamp": 1791388236247,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thanh Liêm)"
+    },
+    {
+      "id": "log-1791379673556-1vnkvz",
+      "timestamp": 1791379673556,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Thanh Liêm)"
+    },
+    {
+      "id": "log-1791375430472-38kqn4",
+      "timestamp": 1791375430472,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791374200847-vi0rhs",
+      "timestamp": 1791374200847,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791373564239-rtvk6k",
+      "timestamp": 1791373564239,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791372840112-ggb1ux",
+      "timestamp": 1791372840112,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791371398137-zgqqvv",
+      "timestamp": 1791371398137,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791370749118-18xbig",
+      "timestamp": 1791370749118,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791369042408-9almcr",
+      "timestamp": 1791369042408,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn An"
+    },
+    {
+      "id": "log-1791369036751-mv163z",
+      "timestamp": 1791369036751,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn An"
+    },
+    {
+      "id": "log-1791365864803-o2e6r1",
+      "timestamp": 1791365864803,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791365849938-9me5ww",
+      "timestamp": 1791365849938,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Mặc định (Hoạt hình) cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791365841194-gx7cf2",
+      "timestamp": 1791365841194,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Mặc định (Hoạt hình) cho lớp 4A1 (Cập nhật: 0 học sinh, Ghi đè: Không)"
+    },
+    {
+      "id": "log-1791365832807-uu32rx",
+      "timestamp": 1791365832807,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn An"
+    },
+    {
+      "id": "log-1791365024005-03f2if",
+      "timestamp": 1791365024005,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn An"
+    },
+    {
+      "id": "log-1791364426163-g4uu2v",
+      "timestamp": 1791364426163,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lưu Quang Thịnh"
+    },
+    {
+      "id": "log-1791364394775-vlnr7i",
+      "timestamp": 1791364394775,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791364310046-p24pco",
+      "timestamp": 1791364310046,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791363872448-hacyaq",
+      "timestamp": 1791363872448,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791363853373-851yhj",
+      "timestamp": 1791363853373,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Mặc định (Hoạt hình) cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791363119706-mpywwl",
+      "timestamp": 1791363119706,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791362954480-0jzmtm",
+      "timestamp": 1791362954480,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791362930579-w8g6p2",
+      "timestamp": 1791362930579,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Mặc định (Hoạt hình) cho lớp 4A1 (Cập nhật: 30 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791361743303-51puf9",
+      "timestamp": 1791361743303,
+      "username": "nguyenthanhliem",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Văn An"
+    },
+    {
+      "id": "log-1791361667672-r0atx4",
+      "timestamp": 1791361667672,
+      "username": "nguyenthanhliem",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1791242128394-ffh8yn",
+      "timestamp": 1791242128394,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "subject",
+      "actionType": "RESTORE_DATA",
+      "description": "Khôi phục độc lập dữ liệu từ file JSON Sao_Luu_Lop_Hoc_Hanh_Phuc_nguyenthanhliem_homeroom_2026-10-04.json"
+    },
     {
       "id": "log-1791241296111-6795vr",
       "timestamp": 1791241296111,

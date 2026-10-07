@@ -82,7 +82,7 @@ function ClassroomApp() {
       case 'certificate':
         return <CertificateView />;
       case 'picker':
-        return <RandomStudentPickerView initialGame="wheel" />;
+        return <RandomStudentPickerView initialGame="dashboard" />;
       case 'wheel':
         return <RandomStudentPickerView initialGame="wheel" />;
       case 'reel':
