@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-07T13:27:53.850Z",
+  "lastSync": "2026-10-07T15:53:07.485Z",
   "users": [
     {
       "id": "user-admin",
@@ -6244,7 +6244,7 @@
         "afternoonPeriods": 3,
         "hasSaturday": false
       },
-      "teacherRole": "subject",
+      "teacherRole": "homeroom",
       "subjectTeacherConfig": {
         "subjectName": "TIN HỌC",
         "subject2": "CÔNG NGHỆ",
@@ -6872,7 +6872,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791379673850
+      "updatedAt": 1791388387485
     },
     "nguyenthitrangtu1": {
       "classes": [
@@ -20886,9 +20886,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791379561053
+    "lastGithubPushAt": 1791379683293
   },
   "auditLogs": [
+    {
+      "id": "log-1791388236247-ipx643",
+      "timestamp": 1791388236247,
+      "username": "nguyenthanhliem",
+      "userFullName": "Nguyễn Thanh Liêm",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thanh Liêm)"
+    },
     {
       "id": "log-1791379673556-1vnkvz",
       "timestamp": 1791379673556,
