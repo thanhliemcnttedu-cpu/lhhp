@@ -7,7 +7,9 @@ import { compressImage } from '../../utils/imageCompressor';
 import { AvatarEditorModal } from '../modals/AvatarEditorModal';
 import { ClassAvatarEditorModal } from '../modals/ClassAvatarEditorModal';
 import { ExportStudentListModal } from '../modals/ExportStudentListModal';
+import { AutoAssignAvatarModal } from '../modals/AutoAssignAvatarModal';
 import { InitSubjectClassesModal } from './classes/InitSubjectClassesModal';
+import { AvatarSourceType } from '../../utils/avatarConfig';
 import { 
   Users, UserPlus, ClipboardPaste, Camera, 
   Trash2, Edit3, Search, Check, Plus, Minus,
@@ -70,7 +72,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     classes, activeClassId, setActiveClassId, addClass, updateClass, deleteClass,
     bulkDeleteClasses, bulkUpdateClasses, deleteAllClasses,
     students, currentClassStudents, addStudent, updateStudent, deleteStudent, 
-    bulkAddStudents, autoAssignRealAvatarsToClass, clearClassStudents, resetStudentsCoins,
+    bulkAddStudents, autoAssignRealAvatarsToClass, autoAssignAvatarsToClass, clearClassStudents, resetStudentsCoins,
     awardPoints, deductPoints, subjects, addSubject, updateSubject, deleteSubject,
     toggleSubjectApplied, setAppliedSubjects, resetDefaultSubjects,
     criteria, teacherProfile, updateTeacherProfile, resetToDefaultData,
@@ -316,6 +318,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   
   // Avatar editor modal
   const [avatarEditingStudent, setAvatarEditingStudent] = useState<Student | null>(null);
+
+  // Auto Assign Avatar Modal states
+  const [isAutoAssignAvatarModalOpen, setIsAutoAssignAvatarModalOpen] = useState(false);
+  const [autoAssignInitialType, setAutoAssignInitialType] = useState<AvatarSourceType>('default');
 
   // Quick Award / Tặng Sao / Trừ Xu Modal (User Request 3)
   const [rewardingStudent, setRewardingStudent] = useState<Student | null>(null);
@@ -1545,18 +1551,31 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   <span>⚙️ CẤU HÌNH NHẬN XU</span>
                 </button>
 
+                {/* 2 Nút Tự Động Gán Avatar Mẫu (Default & Real Demo) */}
                 <button
                   type="button"
                   onClick={() => {
-                    if (window.confirm('Thầy/Cô có muốn tự động cập nhật ảnh đại diện học sinh thật từ kho ảnh máy tính (51 ảnh) cho toàn bộ học sinh trong lớp này không?')) {
-                      autoAssignRealAvatarsToClass(activeClassId);
-                    }
+                    setAutoAssignInitialType('default');
+                    setIsAutoAssignAvatarModalOpen(true);
                   }}
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-purple-600/20 transition-all hover-zoom-btn uppercase shrink-0"
-                  title="Tự động cập nhật ảnh thẻ thật từ kho ảnh máy tính cho toàn bộ học sinh trong lớp"
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-blue-600/20 transition-all hover-zoom-btn uppercase shrink-0"
+                  title="Tự động chèn Avatar mặc định hoạt hình phân loại Nam/Nữ cho học sinh"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                  <span>📸 TỰ ĐỘNG CHÈN ẢNH THẬT</span>
+                  <span>🎨 GÁN AVATAR MẶC ĐỊNH</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAutoAssignInitialType('real_demo');
+                    setIsAutoAssignAvatarModalOpen(true);
+                  }}
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-purple-600/20 transition-all hover-zoom-btn uppercase shrink-0"
+                  title="Tự động chèn Avatar ảnh thẻ thật demo từ kho thư mục máy tính cho học sinh"
+                >
+                  <Camera className="w-3.5 h-3.5 text-pink-200" />
+                  <span>📸 GÁN AVATAR ẢNH THẬT</span>
                 </button>
               </div>
 
@@ -4710,7 +4729,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         </div>
       )}
 
-      {/* MODAL: STUDENT AVATAR EDITOR (Yêu cầu 5: Khắc phục triệt để lỗi crop ảnh) */}
+      {/* MODAL: STUDENT AVATAR EDITOR (Yêu cầu 5: Khắc phục triệt để lỗi crop ảnh & Lật ảnh) */}
       {avatarEditingStudent && (
         <AvatarEditorModal
           isOpen={!!avatarEditingStudent}
@@ -4719,13 +4738,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
           originalAvatar={avatarEditingStudent.originalAvatar || avatarEditingStudent.avatar}
           currentScale={avatarEditingStudent.avatarScale || 1}
           currentPosition={avatarEditingStudent.avatarPosition || { x: 0, y: 0 }}
+          currentFlipX={avatarEditingStudent.flipX || false}
           onClose={() => setAvatarEditingStudent(null)}
-          onSave={(croppedUrl, originalUrl, scale, position) => {
+          onSave={(croppedUrl, originalUrl, scale, position, flipX) => {
             const avatarData = {
               avatar: croppedUrl,
               originalAvatar: originalUrl,
               avatarScale: scale,
-              avatarPosition: position
+              avatarPosition: position,
+              flipX: flipX ?? false
             };
             updateStudent(avatarEditingStudent.id, avatarData);
             if (editingStudent && editingStudent.id === avatarEditingStudent.id) {
@@ -4813,6 +4834,27 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         isOpen={isInitSubjectClassesModalOpen}
         onClose={() => setIsInitSubjectClassesModalOpen(false)}
       />
+
+      {/* MODAL: TỰ ĐỘNG GÁN AVATAR (DEFAULT & REAL DEMO) */}
+      {isAutoAssignAvatarModalOpen && activeClass && (
+        <AutoAssignAvatarModal
+          isOpen={isAutoAssignAvatarModalOpen}
+          onClose={() => setIsAutoAssignAvatarModalOpen(false)}
+          classNameTitle={activeClass.name}
+          classId={activeClassId}
+          totalStudents={currentClassStudents.length}
+          studentsWithoutAvatarCount={
+            currentClassStudents.filter(
+              s => !s.avatar || !s.avatar.trim() || s.avatar.includes('api.dicebear.com/7.x/bottts/svg?seed=student-')
+            ).length
+          }
+          defaultType={autoAssignInitialType}
+          onConfirm={(type, overwrite) => {
+            const res = autoAssignAvatarsToClass(activeClassId, type, overwrite);
+            alert(`Đã hoàn tất tự động gán ảnh đại diện (${type === 'default' ? 'Mặc định' : 'Ảnh thật demo'}) cho ${res.updatedCount} học sinh lớp ${activeClass.name}!`);
+          }}
+        />
+      )}
     </div>
   );
 };

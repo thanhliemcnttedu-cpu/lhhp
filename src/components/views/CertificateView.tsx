@@ -1,12 +1,34 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Award, Download, RefreshCw, Wand2, CheckSquare, Square, Settings, Image as ImageIcon, Upload, X, Move, Type, Maximize, Trash2, Edit2, Zap } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { 
+  Award, Download, RefreshCw, CheckSquare, Square, 
+  Image as ImageIcon, Sparkles, Check, 
+  Filter, BookOpen, Users,
+  Eye, GraduationCap, RotateCcw, Move,
+  Type, Palette, Trash2, Edit3, Lock, Unlock, Shuffle,
+  Sliders, Info, MousePointer, ShieldCheck,
+  PenTool, Upload, FileSignature, X
+} from 'lucide-react';
 import { toPng } from 'html-to-image';
-import { useClassroom } from '../../context/ClassroomContext';
 import confetti from 'canvas-confetti';
-import Tesseract from 'tesseract.js';
-interface CanvasElement {
+import { useClassroom } from '../../context/ClassroomContext';
+import { APP_AUTHOR_INFO } from '../../data/initialData';
+
+// Canvas Native Resolution 1920 x 1080 Full HD
+const CANVAS_WIDTH = 1920;
+const CANVAS_HEIGHT = 1080;
+
+// Dynamic Template Item Interface
+export interface CertificateTemplate {
   id: string;
-  type: 'text' | 'avatar' | 'signature';
+  name: string;
+  url: string;
+  filename: string;
+}
+
+// Draggable Certificate Element Definition
+export interface CertificateElement {
+  id: string;
+  type: 'text' | 'image';
   content: string;
   x: number;
   y: number;
@@ -15,802 +37,2480 @@ interface CanvasElement {
   fontSize?: number;
   fontFamily?: string;
   color?: string;
-  fontWeight?: string;
+  fontWeight?: string | number;
   fontStyle?: string;
-  textAlign?: 'left' | 'center' | 'right' | 'justify';
-  isEditing?: boolean;
-  removeBg?: boolean; // For signature AI removal
+  textAlign?: 'left' | 'center' | 'right';
+  letterSpacing?: string;
+  lineHeight?: number | string;
+  textTransform?: 'uppercase' | 'none' | 'capitalize';
+  whiteSpace?: 'nowrap' | 'normal' | string;
+  isCircleImage?: boolean;
+  borderWidth?: number;
+  borderColor?: string;
+  border?: string;
+  boxShadow?: string;
 }
 
-const DEFAULT_TEMPLATES = [
-  { id: 't1', name: 'Mẫu Học Tập', bgImage: '/templates/tpl_1.jpg', bgColor: 'bg-white' },
-  { id: 't2', name: 'Mẫu Cổ Điển', bgImage: '/templates/tpl_2.jpg', bgColor: 'bg-white' },
-  { id: 't3', name: 'Mẫu Bầu Trời', bgImage: '/templates/tpl_3.jpg', bgColor: 'bg-white' },
-  { id: 't4', name: 'Mẫu Cắm Trại', bgImage: '/templates/tpl_4.jpg', bgColor: 'bg-white' },
+// Fallback certificate templates strictly in /certificates/
+const DEFAULT_CERTIFICATE_TEMPLATES: CertificateTemplate[] = [
+  { id: 'cert-tpl_1.jpg', name: 'Mẫu Học Tập', url: '/certificates/tpl_1.jpg', filename: 'tpl_1.jpg' },
+  { id: 'cert-tpl_2.jpg', name: 'Mẫu Cổ Điển', url: '/certificates/tpl_2.jpg', filename: 'tpl_2.jpg' },
+  { id: 'cert-tpl_3.jpg', name: 'Mẫu Bầu Trời', url: '/certificates/tpl_3.jpg', filename: 'tpl_3.jpg' },
+  { id: 'cert-tpl_4.jpg', name: 'Mẫu Cắm Trại', url: '/certificates/tpl_4.jpg', filename: 'tpl_4.jpg' },
 ];
 
-const FONTS = [
-  { name: 'Mặc định (Sans)', value: '"Plus Jakarta Sans", sans-serif' },
-  { name: 'Có chân (Serif)', value: '"Times New Roman", serif' },
-  { name: 'Nghệ thuật (Dancing)', value: '"Dancing Script", cursive' },
-  { name: 'Sang trọng (Great Vibes)', value: '"Great Vibes", cursive' },
-  { name: 'Trẻ trung (Comic)', value: '"Comic Sans MS", cursive' }
+// Helper to format friendly template display names from filenames
+const formatTemplateName = (rawFilename: string, index: number): string => {
+  const cleanName = rawFilename
+    .replace(/\.[^/.]+$/, '')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+
+  if (/^tpl\s*\d+$/i.test(cleanName)) {
+    const num = cleanName.match(/\d+/)?.[0] || String(index + 1);
+    const friendlyMap: Record<string, string> = {
+      '1': 'Mẫu Học Tập',
+      '2': 'Mẫu Cổ Điển',
+      '3': 'Mẫu Bầu Trời',
+      '4': 'Mẫu Cắm Trại',
+    };
+    return friendlyMap[num] || `Mẫu Khen Thưởng ${num}`;
+  }
+
+  return cleanName.length > 0
+    ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1)
+    : `Mẫu Thư Khen ${index + 1}`;
+};
+
+// Available artistic fonts categorized by typography styles
+export interface CertFontOption {
+  id: string;
+  name: string;
+  font: string;
+  category: 'cursive' | 'serif' | 'sans';
+}
+
+const CERT_FONTS: CertFontOption[] = [
+  // Nhóm Ký tên / Cursive nghệ thuật (Dành cho Tên học sinh & Chữ ký)
+  { id: 'dancing', name: 'Nghệ thuật (Dancing Script)', font: '"Dancing Script", cursive', category: 'cursive' },
+  { id: 'great_vibes', name: 'Ký tên Quý phái (Great Vibes)', font: '"Great Vibes", cursive', category: 'cursive' },
+  { id: 'pattaya', name: 'Mềm mại Bay bổng (Pattaya)', font: '"Pattaya", cursive', category: 'cursive' },
+  { id: 'charm', name: 'Thanh lịch Duyên dáng (Charm)', font: '"Charm", cursive', category: 'cursive' },
+  { id: 'pacifico', name: 'Trẻ trung Phóng khoáng (Pacifico)', font: '"Pacifico", cursive', category: 'cursive' },
+
+  // Nhóm Sang trọng & Cổ điển (Serif - Dành cho Tiêu đề THƯ KHEN & Lời dẫn)
+  { id: 'playfair', name: 'Sang trọng Hoàng gia (Playfair Display)', font: '"Playfair Display", serif', category: 'serif' },
+  { id: 'lora', name: 'Trang nhã Học thuật (Lora)', font: '"Lora", serif', category: 'serif' },
+  { id: 'merriweather', name: 'Cổ điển Đậm đà (Merriweather)', font: '"Merriweather", serif', category: 'serif' },
+  { id: 'times', name: 'Truyền thống (Times New Roman)', font: '"Times New Roman", serif', category: 'serif' },
+
+  // Nhóm Hiện đại & Chuẩn mực (Sans-Serif - Dành cho Trường học, Lớp, Lý do)
+  { id: 'montserrat', name: 'Hiện đại Đẳng cấp (Montserrat)', font: '"Montserrat", sans-serif', category: 'sans' },
+  { id: 'jakarta', name: 'Hiện đại Tinh tế (Plus Jakarta Sans)', font: '"Plus Jakarta Sans", sans-serif', category: 'sans' },
+  { id: 'be_vietnam', name: 'Việt hóa Chuẩn mực (Be Vietnam Pro)', font: '"Be Vietnam Pro", sans-serif', category: 'sans' },
+  { id: 'arial', name: 'Tiêu chuẩn Cơ bản (Arial)', font: 'Arial, sans-serif', category: 'sans' },
+];
+
+// Curated Artistic Palettes (Paired Harmony: Title + Student Name + Accents)
+export interface ArtisticPalette {
+  name: string;
+  titleColor: string;
+  nameColor: string;
+  subColor: string;
+  leadColor: string;
+  accentBorder: string;
+}
+
+const ARTISTIC_PALETTES: ArtisticPalette[] = [
+  {
+    name: 'Hoàng Gia (Vàng Kim & Xanh Navy)',
+    titleColor: '#d4af37', // Vàng Kim Hoàng Gia
+    nameColor: '#000080',  // Xanh Navy Đậm
+    subColor: '#b45309',   // Vàng Nâu Đậm
+    leadColor: '#475569',
+    accentBorder: '#fbbf24',
+  },
+  {
+    name: 'Quý Phái (Đỏ Đô & Vàng Ánh Kim)',
+    titleColor: '#800000', // Đỏ Đô Quý Phái
+    nameColor: '#b45309',  // Vàng Kim / Nâu Vàng
+    subColor: '#c2410c',   // Cam Đồng
+    leadColor: '#475569',
+    accentBorder: '#f59e0b',
+  },
+  {
+    name: 'Emerald (Xanh Ngọc & Đỏ Rượu)',
+    titleColor: '#065f46', // Xanh Ngọc Emerald
+    nameColor: '#881337',  // Đỏ Rượu Vang
+    subColor: '#0d9488',   // Teal
+    leadColor: '#475569',
+    accentBorder: '#10b981',
+  },
+  {
+    name: 'Tím Quý Tộc & Sapphire',
+    titleColor: '#581c87', // Tím Hoàng Gia
+    nameColor: '#1e3a8a',  // Xanh Royal Sapphire
+    subColor: '#7c3aed',   // Tím Sáng
+    leadColor: '#475569',
+    accentBorder: '#a855f7',
+  },
+  {
+    name: 'Ruby Cổ Điển & Xanh Đậm',
+    titleColor: '#b91c1c', // Ruby Đỏ Rực
+    nameColor: '#0a2540',  // Xanh Đêm Thẳm
+    subColor: '#c2410c',   // Cam Nâu
+    leadColor: '#475569',
+    accentBorder: '#f43f5e',
+  },
 ];
 
 export const CertificateView: React.FC = () => {
-  const { classes, activeClassId, setActiveClassId, students, currentUser } = useClassroom();
-  
-  const currentClassStudents = students.filter(s => s.classId === activeClassId);
-  const activeClass = classes.find(c => c.id === activeClassId);
+  const { classes, activeClassId, setActiveClassId, students, teacherProfile, currentUser } = useClassroom();
 
+  const currentClassStudents = useMemo(() => {
+    return students.filter(s => s.classId === activeClassId);
+  }, [students, activeClassId]);
+
+  const activeClass = useMemo(() => {
+    return classes.find(c => c.id === activeClassId);
+  }, [classes, activeClassId]);
+
+  // Dynamic template scanning state from /api/certificates
+  const [templates, setTemplates] = useState<CertificateTemplate[]>(DEFAULT_CERTIFICATE_TEMPLATES);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
+    DEFAULT_CERTIFICATE_TEMPLATES[0]?.id || 'cert-tpl_1.jpg'
+  );
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Form Fields
+  const [certType, setCertType] = useState<'Tuần' | 'Tháng' | 'Học Kì' | 'Năm Học' | 'Đột Xuất'>('Tuần');
+  const [certTypeDetail, setCertTypeDetail] = useState('1');
+  const [academicYear, setAcademicYear] = useState('2026–2027');
+  const [reason, setReason] = useState('Đã có nhiều tiến bộ vượt bậc trong học tập và rèn luyện');
+  const [issueDate, setIssueDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+  // System Defaults: Trường Tiểu học Số 1 Tân Uyên, Giáo viên Nguyễn Thanh Liêm
+  const defaultSchool = APP_AUTHOR_INFO.schoolName || 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN';
+  const defaultTeacherName = APP_AUTHOR_INFO.name || 'NGUYỄN THANH LIÊM';
+
+  const [schoolName, setSchoolName] = useState(() => {
+    return teacherProfile?.schoolName || defaultSchool;
+  });
+
+  const [teacherName, setTeacherName] = useState(() => {
+    return teacherProfile?.name || currentUser?.fullName || defaultTeacherName;
+  });
+
+  // Student Selection & Preview
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [template, setTemplate] = useState(DEFAULT_TEMPLATES[0].id);
-  const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
-
-  const [certType, setCertType] = useState('Tuần');
-  const [certTypeDetail, setCertTypeDetail] = useState('1'); 
-  const [academicYear, setAcademicYear] = useState(new Date().getFullYear() + '-' + (new Date().getFullYear() + 1));
-  
-  const [reason, setReason] = useState('Đã có nhiều tiến bộ trong học tập và rèn luyện');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  
-  const [coinThreshold, setCoinThreshold] = useState(50);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  
   const [previewStudentId, setPreviewStudentId] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
+  const [coinThreshold, setCoinThreshold] = useState(50);
+  const [isFilterSettingsOpen, setIsFilterSettingsOpen] = useState(false);
+  const [isSidebarSection, setIsSidebarSection] = useState<'templates' | 'content' | 'students'>('templates');
 
-  // AI Processing State
-  const [isAiProcessing, setIsAiProcessing] = useState(false);
-  const [aiProcessingText, setAiProcessingText] = useState('');
-  const [isMagicScanning, setIsMagicScanning] = useState(false);
+  // Canvas Scaling State (Live Preview responsive scaling)
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(0.5);
 
-  // Dynamic Canvas Dimensions
-  const [canvasDim, setCanvasDim] = useState({ width: 960, height: 540 });
+  // Draggable Elements Canvas State
+  const [elements, setElements] = useState<CertificateElement[]>([]);
+  const [activeElementId, setActiveElementId] = useState<string | null>(null);
 
-  // Editor states
-  const [elements, setElements] = useState<CanvasElement[]>([]);
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [scaleMultiplier, setScaleMultiplier] = useState(1); 
+  // Edit Mode Toggle: Khi bật, cho phép click chọn và hiển thị Fixed Properties Panel
+  const [isEditMode, setIsEditMode] = useState(true);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const certificateRef = useRef<HTMLDivElement>(null);
+  // Current Layout Variant tracking: 1 (Cổ điển), 2 (Hiện đại), 3 (Sáng tạo)
+  const [currentLayoutVariant, setCurrentLayoutVariant] = useState<1 | 2 | 3>(1);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth - 32;
-        const containerHeight = containerRef.current.clientHeight - 32;
-        const scaleX = containerWidth / canvasDim.width;
-        const scaleY = containerHeight / canvasDim.height;
-        const newScale = Math.min(scaleX, scaleY, 1);
-        setScaleMultiplier(newScale);
+  // Drag interaction state
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number }>({
+    startX: 0,
+    startY: 0,
+    initialX: 0,
+    initialY: 0,
+  });
+
+  // Export State
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportMessage, setExportMessage] = useState('');
+
+  const certificatePrintRef = useRef<HTMLDivElement>(null);
+
+  // =========================================================================
+  // DIGITAL SIGNATURE & CANVAS SMART BACKGROUND REMOVAL
+  // =========================================================================
+  const SIGNATURE_STORAGE_KEY = 'lhhp_cert_teacher_signature';
+  const AUTO_SIGNATURE_KEY = 'lhhp_cert_auto_signature';
+
+  const [teacherSignatureImage, setTeacherSignatureImage] = useState<string | null>(() => {
+    return localStorage.getItem(SIGNATURE_STORAGE_KEY) || null;
+  });
+
+  const [autoInsertSignature, setAutoInsertSignature] = useState<boolean>(() => {
+    const saved = localStorage.getItem(AUTO_SIGNATURE_KEY);
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [isProcessingSignature, setIsProcessingSignature] = useState(false);
+  const signatureFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Thuật toán tách nền trắng bằng Canvas API 2D (Pixel-level Alpha manipulation)
+  const processSignatureBackground = (img: HTMLImageElement): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 1000;
+      let width = img.naturalWidth || img.width || 800;
+      let height = img.naturalHeight || img.height || 400;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
       }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [canvasDim.width, canvasDim.height]);
 
-  useEffect(() => {
-    const eligible = currentClassStudents.filter(s => s.points >= coinThreshold).map(s => s.id);
-    setSelectedStudents(eligible);
-    if (eligible.length > 0) setPreviewStudentId(eligible[0]);
-    else if (currentClassStudents.length > 0) setPreviewStudentId(currentClassStudents[0].id);
-  }, [activeClassId, currentClassStudents.length, coinThreshold]);
-
-  useEffect(() => {
-    const previewStudent = currentClassStudents.find(s => s.id === previewStudentId);
-    const stuName = previewStudent ? previewStudent.name : 'Tên Học Sinh';
-    const stuAvatar = previewStudent ? previewStudent.avatar : '';
-    
-    let fullTypeStr = `THƯ KHEN ${certType.toUpperCase()}`;
-    if (certType === 'Tuần') fullTypeStr = `THƯ KHEN TUẦN ${certTypeDetail}`;
-    if (certType === 'Tháng') fullTypeStr = `THƯ KHEN THÁNG ${certTypeDetail}`;
-    if (certType === 'Học Kì') fullTypeStr = `THƯ KHEN HỌC KÌ ${certTypeDetail} - NĂM HỌC ${academicYear}`;
-    if (certType === 'Năm Học') fullTypeStr = `THƯ KHEN NĂM HỌC ${academicYear}`;
-
-    const dateSplit = date.split('-');
-    const dateStr = `Ngày ${dateSplit[2]} tháng ${dateSplit[1]} năm ${dateSplit[0]}`;
-
-    const initialElements: CanvasElement[] = [
-      { id: 'title', type: 'text', content: 'THƯ KHEN', x: 280, y: 40, fontSize: 64, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#b91c1c', textAlign: 'center', width: 400 },
-      { id: 'subtitle', type: 'text', content: fullTypeStr, x: 280, y: 120, fontSize: 24, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#c2410c', textAlign: 'center', width: 400 },
-      { id: 'avatar', type: 'avatar', content: stuAvatar, x: 420, y: 170, width: 120, height: 120 },
-      { id: 'khen_tang', type: 'text', content: 'Trân trọng khen ngợi em:', x: 280, y: 300, fontSize: 20, fontFamily: '"Times New Roman", serif', color: '#374151', textAlign: 'center', width: 400 },
-      { id: 'studentName', type: 'text', content: stuName, x: 180, y: 340, fontSize: 56, fontFamily: '"Dancing Script", cursive', color: '#1e3a8a', textAlign: 'center', width: 600 },
-      { id: 'reason', type: 'text', content: reason, x: 130, y: 420, fontSize: 28, fontFamily: '"Great Vibes", cursive', color: '#111827', textAlign: 'center', width: 700 },
-      { id: 'classDate', type: 'text', content: `Lớp ${activeClass?.name || '...'} \n ${dateStr}`, x: 60, y: 460, fontSize: 18, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#4b5563', textAlign: 'center', width: 250 },
-      { id: 'teacherLabel', type: 'text', content: 'Giáo Viên', x: 650, y: 460, fontSize: 18, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#4b5563', textAlign: 'center', width: 250 },
-      { id: 'teacherName', type: 'text', content: currentUser?.fullName || 'Tên giáo viên', x: 650, y: 490, fontSize: 32, fontFamily: '"Dancing Script", cursive', color: '#1e3a8a', textAlign: 'center', width: 250 },
-    ];
-    
-    setElements(prev => {
-      if (prev.length === 0) return initialElements;
-      return prev.map(p => {
-        if (p.id === 'studentName') return { ...p, content: stuName };
-        if (p.id === 'avatar') return { ...p, content: stuAvatar };
-        if (p.id === 'subtitle') return { ...p, content: fullTypeStr };
-        if (p.id === 'reason') return { ...p, content: reason };
-        if (p.id === 'classDate') return { ...p, content: `Lớp ${activeClass?.name || '...'} \n ${dateStr}` };
-        return p;
-      });
-    });
-  }, [previewStudentId, certType, certTypeDetail, academicYear, date, reason, activeClass, currentUser]);
-
-
-  const handleSelectStudent = (id: string) => {
-    setSelectedStudents(prev => 
-      prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
-    );
-    setPreviewStudentId(id);
-  };
-
-  const handleSelectAllEligible = () => {
-    const eligible = currentClassStudents.filter(s => s.points >= coinThreshold).map(s => s.id);
-    setSelectedStudents(eligible);
-    if (eligible.length > 0) setPreviewStudentId(eligible[0]);
-  };
-
-  const simulateAiProcessing = (stages: string[], onComplete: () => void) => {
-    setIsAiProcessing(true);
-    let currentStage = 0;
-    
-    const interval = setInterval(() => {
-      if (currentStage >= stages.length) {
-        clearInterval(interval);
-        setIsAiProcessing(false);
-        onComplete();
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(img.src);
         return;
       }
-      setAiProcessingText(stages[currentStage]);
-      currentStage++;
-    }, 800);
+
+      // 1. Vẽ ảnh gốc lên canvas
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // 2. Lấy dữ liệu điểm ảnh thô (RGBA)
+      const imgData = ctx.getImageData(0, 0, width, height);
+      const data = imgData.data;
+
+      // 3. Quét từng pixel (mỗi pixel chiếm 4 bytes: R, G, B, A)
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        // Độ sáng nhận thức mắt người (Luminance)
+        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // Điểm sáng / Nền giấy trắng: Biến thành trong suốt
+        if (luminance > 195 || (r > 190 && g > 190 && b > 190)) {
+          data[i + 3] = 0; // Alpha = 0 (Hoàn toàn trong suốt)
+        } else if (luminance > 160) {
+          // Vùng rìa nét chữ: Khử răng cưa mịn màng (Anti-aliasing)
+          const alphaRatio = (195 - luminance) / (195 - 160);
+          data[i + 3] = Math.round(data[i + 3] * Math.max(0, Math.min(1, alphaRatio)));
+        } else {
+          // Nét mực bút: Giữ nguyên màu thực tế và làm đậm nét rõ ràng
+          data[i + 3] = 255;
+        }
+      }
+
+      // 4. Ghi ngược dữ liệu đã tách nền trở lại canvas và xuất file PNG trong suốt
+      ctx.putImageData(imgData, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    });
   };
 
-  const handleCustomBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const url = event.target?.result as string;
-        
-        // Cập nhật tỉ lệ khung hình theo ảnh tải lên
-        const img = new Image();
-        img.onload = () => {
-          // Tính toán width/height phù hợp, giới hạn chiều rộng max khoảng 1200px để không quá nặng
-          let w = img.width;
-          let h = img.height;
-          if (w > 1200) {
-            h = (1200 / w) * h;
-            w = 1200;
-          }
-          setCanvasDim({ width: w, height: h });
-          setCustomBgUrl(url);
-          setTemplate('custom');
-          setElements([]);
-        };
-        img.src = url;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+  // Hàm tải ảnh chữ ký lên và tự động tách nền
   const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setElements(prev => [
-          ...prev, 
-          { id: 'sig_' + Date.now(), type: 'signature', content: event.target?.result as string, x: 700, y: 380, width: 150, height: 100, removeBg: true }
-        ]);
+    if (!file) return;
+
+    setIsProcessingSignature(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const rawDataUrl = event.target?.result as string;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = async () => {
+        try {
+          const cleanSignature = await processSignatureBackground(img);
+          setTeacherSignatureImage(cleanSignature);
+          localStorage.setItem(SIGNATURE_STORAGE_KEY, cleanSignature);
+
+          if (autoInsertSignature) {
+            insertOrUpdateSignatureElement(cleanSignature);
+          }
+          confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
+        } catch (err) {
+          console.error('Lỗi tách nền chữ ký:', err);
+          alert('Không thể tách nền chữ ký. Vui lòng thử lại với ảnh chụp rõ nét hơn!');
+        } finally {
+          setIsProcessingSignature(false);
+        }
       };
-      reader.readAsDataURL(file);
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Hàm xóa chữ ký đã lưu
+  const handleRemoveSavedSignature = () => {
+    setTeacherSignatureImage(null);
+    localStorage.removeItem(SIGNATURE_STORAGE_KEY);
+    setElements(prev => prev.filter(el => el.id !== 'teacher_signature_img'));
+    if (activeElementId === 'teacher_signature_img') setActiveElementId(null);
+  };
+
+  // Hàm thả hoặc cập nhật Element chữ ký vào bản vẽ Canvas
+  const insertOrUpdateSignatureElement = (sigImage = teacherSignatureImage) => {
+    if (!sigImage) {
+      signatureFileInputRef.current?.click();
+      return;
     }
+
+    let sigX = 1320;
+    let sigY = 915;
+    if (currentLayoutVariant === 2) {
+      sigX = 1300;
+      sigY = 730;
+    } else if (currentLayoutVariant === 3) {
+      sigX = 1260;
+      sigY = 730;
+    }
+
+    const sigElement: CertificateElement = {
+      id: 'teacher_signature_img',
+      type: 'image',
+      content: sigImage,
+      x: sigX,
+      y: sigY,
+      width: 260,
+      height: 120,
+      isCircleImage: false,
+      borderWidth: 0,
+      boxShadow: 'none',
+    };
+
+    setElements(prev => {
+      const filtered = prev.filter(el => el.id !== 'teacher_signature_img');
+      return [...filtered, sigElement];
+    });
+    setActiveElementId('teacher_signature_img');
   };
 
-  const addCustomText = () => {
-    setElements(prev => [
-      ...prev, 
-      { id: 'txt_' + Date.now(), type: 'text', content: 'Văn bản mới', x: 400, y: 250, width: 200, fontSize: 24, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#000000', textAlign: 'center' }
-    ]);
+  // Fetch dynamic templates from public/certificates/
+  const refreshTemplates = useCallback(async () => {
+    setIsLoadingTemplates(true);
+    try {
+      const res = await fetch('/api/certificates');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.templates) && data.templates.length > 0) {
+          const formattedList: CertificateTemplate[] = data.templates.map((item: any, idx: number) => ({
+            id: item.id || `cert-${item.filename}`,
+            name: formatTemplateName(item.filename, idx),
+            url: item.url.startsWith('/') ? item.url : `/${item.url}`,
+            filename: item.filename
+          }));
+          setTemplates(formattedList);
+          if (!formattedList.some(t => t.id === selectedTemplateId)) {
+            setSelectedTemplateId(formattedList[0].id);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch /api/certificates, using fallback in /certificates/:', err);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  }, [selectedTemplateId]);
+
+  useEffect(() => {
+    refreshTemplates();
+  }, []);
+
+  // Compute live responsive scale factor based on container dimensions
+  useEffect(() => {
+    const updateScale = () => {
+      if (previewContainerRef.current) {
+        const containerW = previewContainerRef.current.clientWidth - 48;
+        const containerH = previewContainerRef.current.clientHeight - 80;
+        const scaleX = containerW / CANVAS_WIDTH;
+        const scaleY = containerH / CANVAS_HEIGHT;
+        const calculatedScale = Math.min(scaleX, scaleY);
+        setPreviewScale(Math.max(0.18, Math.min(calculatedScale, 0.95)));
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
+  // Auto-select eligible students when class changes
+  useEffect(() => {
+    if (currentClassStudents.length > 0) {
+      const eligible = currentClassStudents.filter(s => s.points >= coinThreshold).map(s => s.id);
+      const initialSelection = eligible.length > 0 ? eligible : [currentClassStudents[0].id];
+      setSelectedStudents(initialSelection);
+      setPreviewStudentId(initialSelection[0] || currentClassStudents[0].id);
+    } else {
+      setSelectedStudents([]);
+      setPreviewStudentId(null);
+    }
+  }, [activeClassId, currentClassStudents.length, coinThreshold]);
+
+  // Active Template
+  const activeTemplate = useMemo(() => {
+    return templates.find(t => t.id === selectedTemplateId) || templates[0] || DEFAULT_CERTIFICATE_TEMPLATES[0];
+  }, [templates, selectedTemplateId]);
+
+  // Currently previewed student
+  const previewStudent = useMemo(() => {
+    return currentClassStudents.find(s => s.id === previewStudentId) || currentClassStudents[0] || null;
+  }, [currentClassStudents, previewStudentId]);
+
+  // Formatted Title
+  const certificateTitle = useMemo(() => {
+    if (certType === 'Tuần') return `THƯ KHEN TUẦN ${certTypeDetail || '1'}`;
+    if (certType === 'Tháng') return `THƯ KHEN THÁNG ${certTypeDetail || '1'}`;
+    if (certType === 'Học Kì') return `THƯ KHEN HỌC KÌ ${certTypeDetail || '1'} • NĂM HỌC ${academicYear}`;
+    if (certType === 'Năm Học') return `THƯ KHEN XUẤT SẮC NĂM HỌC ${academicYear}`;
+    return 'THƯ KHEN ĐỘT XUẤT';
+  }, [certType, certTypeDetail, academicYear]);
+
+  // Formatted Date
+  const formattedDate = useMemo(() => {
+    try {
+      const [year, month, day] = issueDate.split('-');
+      if (year && month && day) {
+        return `Ngày ${parseInt(day, 10)} tháng ${parseInt(month, 10)} năm ${year}`;
+      }
+    } catch {
+      // fallback
+    }
+    const now = new Date();
+    return `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
+  }, [issueDate]);
+
+  // =========================================================================
+  // SMART RANDOMIZED AUTO-LAYOUT (ART DIRECTOR QUALITY 1920x1080)
+  // Generates 1 of 3 distinct layout variations with randomized aesthetic fonts and colors:
+  // - Layout 1 (Cổ điển): Avatar lớn ở giữa trên cùng, chữ căn giữa toàn bộ.
+  // - Layout 2 (Hiện đại): Avatar lớn lệch trái, toàn bộ text căn lề trái nằm ở nửa bên phải.
+  // - Layout 3 (Sáng tạo): Avatar lớn góc phải, Tên học sinh khổng lồ và nội dung bên trái.
+  // =========================================================================
+  // =========================================================================
+  // SMART RANDOMIZED AUTO-LAYOUT V2 (ART DIRECTOR QUALITY 1920x1080)
+  // Generates 1 of 3 distinct layout variations with randomized aesthetic fonts and colors:
+  // - White space breathing room on Y-axis (No overlaps, generous vertical spacing)
+  // - whiteSpace: 'nowrap' on ALL text elements (Guaranteed zero unexpected line-breaks)
+  // - Paired harmonic palettes: Title color paired with Student Name & Accents
+  // - Curated typography hierarchy: Serif/Playfair for Title, Cursive/Script for Student Name, Sans for body
+  // =========================================================================
+  const generateRandomizedLayout = useCallback((
+    student = previewStudent,
+    forceVariant?: 1 | 2 | 3
+  ): { layout: CertificateElement[]; variant: 1 | 2 | 3 } => {
+    const studentName = student?.name || 'Nguyễn Văn An';
+    const studentAvatar = student?.originalAvatar || student?.avatar || '';
+    const className = activeClass?.name ? `Lớp ${activeClass.name}` : 'Lớp 4A1';
+
+    // Pick random variant 1, 2, or 3
+    const variant: 1 | 2 | 3 = forceVariant || (Math.floor(Math.random() * 3) + 1 as 1 | 2 | 3);
+
+    // Pick random curated script font for student name
+    const scriptFonts = [
+      '"Dancing Script", cursive',
+      '"Great Vibes", cursive',
+      '"Pattaya", cursive',
+      '"Charm", cursive',
+      '"Pacifico", cursive'
+    ];
+    const randomScriptFont = scriptFonts[Math.floor(Math.random() * scriptFonts.length)];
+
+    // Pick paired artistic harmonic palette
+    const palette = ARTISTIC_PALETTES[Math.floor(Math.random() * ARTISTIC_PALETTES.length)];
+
+    let elementsResult: CertificateElement[] = [];
+
+    if (variant === 1) {
+      // -------------------------------------------------------------
+      // LAYOUT 1: CỔ ĐIỂN ĐỐI XỨNG (CENTERPIECE HERO AVATAR 460px - WHITE SPACE CHUẨN MỰC)
+      // Y: 75 -> Tên trường (Tracking rộng)
+      // Y: 130 -> Tiêu đề THƯ KHEN (Playfair Display, Size 98)
+      // Y: 235 -> Tiêu đề phụ (Tuần/Tháng)
+      // Y: 285 -> Trung tâm Avatar 460x460 (Đáy Y: 745)
+      // Y: 765 -> Lời dẫn "Trân trọng khen ngợi em:" (Lora italic)
+      // Y: 810 -> Tên học sinh KHỔNG LỒ 145px (Cursive nghệ thuật, không rớt dòng)
+      // Y: 955 -> Lớp học
+      // Y: 995 -> Lý do khen thưởng
+      // Chân trang: Y: 990 (Ngày tháng) & Y: 960-1000 (Giáo viên chủ nhiệm)
+      // -------------------------------------------------------------
+      const avatarSize = 460;
+      const avatarX = Math.round((CANVAS_WIDTH - avatarSize) / 2); // 730
+
+      elementsResult = [
+        {
+          id: 'school_header',
+          type: 'text',
+          content: schoolName.toUpperCase(),
+          x: 260,
+          y: 75,
+          width: 1400,
+          fontSize: 30,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#334155',
+          fontWeight: 800,
+          textAlign: 'center',
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'title_master',
+          type: 'text',
+          content: 'THƯ KHEN',
+          x: 360,
+          y: 130,
+          width: 1200,
+          fontSize: 98,
+          fontFamily: '"Playfair Display", serif',
+          color: palette.titleColor,
+          fontWeight: 900,
+          textAlign: 'center',
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'title_sub',
+          type: 'text',
+          content: certificateTitle,
+          x: 360,
+          y: 235,
+          width: 1200,
+          fontSize: 28,
+          fontFamily: '"Plus Jakarta Sans", sans-serif',
+          color: palette.subColor,
+          fontWeight: 800,
+          textAlign: 'center',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        // HERO AVATAR 460x460 WITH LUXURY BORDER & PAIRED GLOW
+        {
+          id: 'student_avatar',
+          type: 'image',
+          content: studentAvatar,
+          x: avatarX,
+          y: 285,
+          width: avatarSize,
+          height: avatarSize,
+          isCircleImage: true,
+          borderWidth: 10,
+          borderColor: '#ffffff',
+          boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 5px ${palette.accentBorder}`,
+        },
+        {
+          id: 'lead_text',
+          type: 'text',
+          content: 'Trân trọng khen ngợi em:',
+          x: 460,
+          y: 765,
+          width: 1000,
+          fontSize: 34,
+          fontFamily: '"Lora", serif',
+          fontStyle: 'italic',
+          color: palette.leadColor,
+          fontWeight: 600,
+          textAlign: 'center',
+          letterSpacing: '0.04em',
+          whiteSpace: 'nowrap',
+        },
+        // GIANT ARTISTIC STUDENT NAME (145px - Cursived & Non-breaking)
+        {
+          id: 'student_name',
+          type: 'text',
+          content: studentName,
+          x: 160,
+          y: 810,
+          width: 1600,
+          fontSize: 145,
+          fontFamily: randomScriptFont,
+          color: palette.nameColor,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'student_class',
+          type: 'text',
+          content: `Học sinh ${className}`,
+          x: 660,
+          y: 955,
+          width: 600,
+          fontSize: 26,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#0f172a',
+          fontWeight: 800,
+          letterSpacing: '0.1em',
+          textAlign: 'center',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'reason_body',
+          type: 'text',
+          content: `“${reason}”`,
+          x: 260,
+          y: 995,
+          width: 1400,
+          fontSize: 32,
+          fontFamily: '"Be Vietnam Pro", sans-serif',
+          fontStyle: 'italic',
+          color: '#1e293b',
+          fontWeight: 500,
+          textAlign: 'center',
+          lineHeight: 1.4,
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'date_text',
+          type: 'text',
+          content: formattedDate,
+          x: 120,
+          y: 990,
+          width: 480,
+          fontSize: 24,
+          fontFamily: '"Be Vietnam Pro", sans-serif',
+          color: '#475569',
+          fontWeight: 600,
+          textAlign: 'center',
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'teacher_title',
+          type: 'text',
+          content: 'GIÁO VIÊN CHỦ NHIỆM',
+          x: 1340,
+          y: 960,
+          width: 480,
+          fontSize: 25,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#334155',
+          fontWeight: 800,
+          textAlign: 'center',
+          letterSpacing: '0.09em',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'teacher_signature',
+          type: 'text',
+          content: teacherName,
+          x: 1340,
+          y: 1000,
+          width: 480,
+          fontSize: 50,
+          fontFamily: '"Dancing Script", cursive',
+          color: palette.nameColor,
+          fontWeight: 700,
+          textAlign: 'center',
+          letterSpacing: '0.03em',
+          whiteSpace: 'nowrap',
+        },
+      ];
+
+      // Tự động chèn chữ ký điện tử đã tách nền nếu bật
+      if (teacherSignatureImage && autoInsertSignature) {
+        elementsResult.push({
+          id: 'teacher_signature_img',
+          type: 'image',
+          content: teacherSignatureImage,
+          x: 1340,
+          y: 915,
+          width: 260,
+          height: 120,
+          isCircleImage: false,
+          borderWidth: 0,
+          boxShadow: 'none',
+        });
+      }
+    } else if (variant === 2) {
+      // -------------------------------------------------------------
+      // LAYOUT 2: HIỆN ĐẠI (SPLIT: HERO AVATAR LỆCH TRÁI 480px, TEXT STACK PHẢI)
+      // -------------------------------------------------------------
+      const avatarSize = 480;
+
+      elementsResult = [
+        {
+          id: 'school_header',
+          type: 'text',
+          content: schoolName.toUpperCase(),
+          x: 150,
+          y: 75,
+          width: 1640,
+          fontSize: 30,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#334155',
+          fontWeight: 800,
+          textAlign: 'left',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        // HERO AVATAR ON LEFT
+        {
+          id: 'student_avatar',
+          type: 'image',
+          content: studentAvatar,
+          x: 160,
+          y: 200,
+          width: avatarSize,
+          height: avatarSize,
+          isCircleImage: true,
+          borderWidth: 12,
+          borderColor: '#ffffff',
+          boxShadow: `0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 5px ${palette.accentBorder}`,
+        },
+        // TEXT STACK ON RIGHT (X: 740, ALIGNED LEFT)
+        {
+          id: 'title_master',
+          type: 'text',
+          content: 'THƯ KHEN',
+          x: 740,
+          y: 160,
+          width: 1060,
+          fontSize: 98,
+          fontFamily: '"Playfair Display", serif',
+          color: palette.titleColor,
+          fontWeight: 900,
+          textAlign: 'left',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'title_sub',
+          type: 'text',
+          content: certificateTitle,
+          x: 740,
+          y: 265,
+          width: 1060,
+          fontSize: 30,
+          fontFamily: '"Plus Jakarta Sans", sans-serif',
+          color: palette.subColor,
+          fontWeight: 800,
+          textAlign: 'left',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'lead_text',
+          type: 'text',
+          content: 'Trân trọng khen ngợi em:',
+          x: 740,
+          y: 335,
+          width: 1060,
+          fontSize: 32,
+          fontFamily: '"Lora", serif',
+          fontStyle: 'italic',
+          color: palette.leadColor,
+          fontWeight: 600,
+          textAlign: 'left',
+          letterSpacing: '0.04em',
+          whiteSpace: 'nowrap',
+        },
+        // GIANT ARTISTIC STUDENT NAME
+        {
+          id: 'student_name',
+          type: 'text',
+          content: studentName,
+          x: 740,
+          y: 385,
+          width: 1100,
+          fontSize: 145,
+          fontFamily: randomScriptFont,
+          color: palette.nameColor,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+          textAlign: 'left',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'student_class',
+          type: 'text',
+          content: `Học sinh ${className}`,
+          x: 740,
+          y: 535,
+          width: 1060,
+          fontSize: 28,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#0f172a',
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textAlign: 'left',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'reason_body',
+          type: 'text',
+          content: `“${reason}”`,
+          x: 740,
+          y: 590,
+          width: 1060,
+          fontSize: 34,
+          fontFamily: '"Be Vietnam Pro", sans-serif',
+          fontStyle: 'italic',
+          color: '#1e293b',
+          fontWeight: 500,
+          textAlign: 'left',
+          lineHeight: 1.4,
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+        },
+        // BOTTOM FOOTER
+        {
+          id: 'date_text',
+          type: 'text',
+          content: formattedDate,
+          x: 160,
+          y: 760,
+          width: 480,
+          fontSize: 24,
+          fontFamily: '"Be Vietnam Pro", sans-serif',
+          color: '#475569',
+          fontWeight: 600,
+          textAlign: 'center',
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'teacher_title',
+          type: 'text',
+          content: 'GIÁO VIÊN CHỦ NHIỆM',
+          x: 1300,
+          y: 770,
+          width: 480,
+          fontSize: 25,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#334155',
+          fontWeight: 800,
+          textAlign: 'center',
+          letterSpacing: '0.08em',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'teacher_signature',
+          type: 'text',
+          content: teacherName,
+          x: 1300,
+          y: 815,
+          width: 480,
+          fontSize: 50,
+          fontFamily: '"Dancing Script", cursive',
+          color: palette.nameColor,
+          fontWeight: 700,
+          textAlign: 'center',
+          letterSpacing: '0.03em',
+          whiteSpace: 'nowrap',
+        },
+      ];
+
+      // Tự động chèn chữ ký điện tử đã tách nền nếu bật
+      if (teacherSignatureImage && autoInsertSignature) {
+        elementsResult.push({
+          id: 'teacher_signature_img',
+          type: 'image',
+          content: teacherSignatureImage,
+          x: 1300,
+          y: 730,
+          width: 260,
+          height: 120,
+          isCircleImage: false,
+          borderWidth: 0,
+          boxShadow: 'none',
+        });
+      }
+    } else {
+      // -------------------------------------------------------------
+      // LAYOUT 3: SÁNG TẠO (HERO AVATAR BÊN PHẢI 480px, TYPOGRAPHY BÊN TRÁI)
+      // -------------------------------------------------------------
+      const avatarSize = 480;
+
+      elementsResult = [
+        {
+          id: 'school_header',
+          type: 'text',
+          content: schoolName.toUpperCase(),
+          x: 160,
+          y: 75,
+          width: 1600,
+          fontSize: 30,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#334155',
+          fontWeight: 800,
+          textAlign: 'left',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        // TEXT STACK ON LEFT (X: 160)
+        {
+          id: 'title_master',
+          type: 'text',
+          content: 'THƯ KHEN',
+          x: 160,
+          y: 160,
+          width: 1040,
+          fontSize: 98,
+          fontFamily: '"Playfair Display", serif',
+          color: palette.titleColor,
+          fontWeight: 900,
+          textAlign: 'left',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'title_sub',
+          type: 'text',
+          content: certificateTitle,
+          x: 160,
+          y: 265,
+          width: 1040,
+          fontSize: 30,
+          fontFamily: '"Plus Jakarta Sans", sans-serif',
+          color: palette.subColor,
+          fontWeight: 800,
+          textAlign: 'left',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        // HERO AVATAR ON RIGHT (X: 1260)
+        {
+          id: 'student_avatar',
+          type: 'image',
+          content: studentAvatar,
+          x: 1260,
+          y: 200,
+          width: avatarSize,
+          height: avatarSize,
+          isCircleImage: true,
+          borderWidth: 12,
+          borderColor: '#ffffff',
+          boxShadow: `0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 5px ${palette.accentBorder}`,
+        },
+        {
+          id: 'lead_text',
+          type: 'text',
+          content: 'Trân trọng khen ngợi em:',
+          x: 160,
+          y: 335,
+          width: 1040,
+          fontSize: 32,
+          fontFamily: '"Lora", serif',
+          fontStyle: 'italic',
+          color: palette.leadColor,
+          fontWeight: 600,
+          textAlign: 'left',
+          letterSpacing: '0.04em',
+          whiteSpace: 'nowrap',
+        },
+        // GIANT ARTISTIC STUDENT NAME
+        {
+          id: 'student_name',
+          type: 'text',
+          content: studentName,
+          x: 160,
+          y: 385,
+          width: 1080,
+          fontSize: 145,
+          fontFamily: randomScriptFont,
+          color: palette.nameColor,
+          fontWeight: 700,
+          letterSpacing: '0.02em',
+          textAlign: 'left',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'student_class',
+          type: 'text',
+          content: `Học sinh ${className}`,
+          x: 160,
+          y: 535,
+          width: 1040,
+          fontSize: 28,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#0f172a',
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textAlign: 'left',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'reason_body',
+          type: 'text',
+          content: `“${reason}”`,
+          x: 160,
+          y: 590,
+          width: 1040,
+          fontSize: 34,
+          fontFamily: '"Be Vietnam Pro", sans-serif',
+          fontStyle: 'italic',
+          color: '#1e293b',
+          fontWeight: 500,
+          textAlign: 'left',
+          lineHeight: 1.4,
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+        },
+        // BOTTOM FOOTER
+        {
+          id: 'date_text',
+          type: 'text',
+          content: formattedDate,
+          x: 160,
+          y: 760,
+          width: 480,
+          fontSize: 24,
+          fontFamily: '"Be Vietnam Pro", sans-serif',
+          color: '#475569',
+          fontWeight: 600,
+          textAlign: 'left',
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'teacher_title',
+          type: 'text',
+          content: 'GIÁO VIÊN CHỦ NHIỆM',
+          x: 1260,
+          y: 770,
+          width: 480,
+          fontSize: 25,
+          fontFamily: '"Montserrat", sans-serif',
+          color: '#334155',
+          fontWeight: 800,
+          textAlign: 'center',
+          letterSpacing: '0.08em',
+          whiteSpace: 'nowrap',
+        },
+        {
+          id: 'teacher_signature',
+          type: 'text',
+          content: teacherName,
+          x: 1260,
+          y: 815,
+          width: 480,
+          fontSize: 50,
+          fontFamily: '"Dancing Script", cursive',
+          color: palette.nameColor,
+          fontWeight: 700,
+          textAlign: 'center',
+          letterSpacing: '0.03em',
+          whiteSpace: 'nowrap',
+        },
+      ];
+
+      // Tự động chèn chữ ký điện tử đã tách nền nếu bật
+      if (teacherSignatureImage && autoInsertSignature) {
+        elementsResult.push({
+          id: 'teacher_signature_img',
+          type: 'image',
+          content: teacherSignatureImage,
+          x: 1260,
+          y: 730,
+          width: 260,
+          height: 120,
+          isCircleImage: false,
+          borderWidth: 0,
+          boxShadow: 'none',
+        });
+      }
+    }
+
+    return { layout: elementsResult, variant };
+  }, [previewStudent, schoolName, certificateTitle, activeClass, reason, formattedDate, teacherName, teacherSignatureImage, autoInsertSignature]);
+
+  // Initial layout initialization on mount
+  useEffect(() => {
+    const { layout, variant } = generateRandomizedLayout(previewStudent, 1);
+    setElements(layout);
+    setCurrentLayoutVariant(variant);
+  }, [generateRandomizedLayout]);
+
+  // Update dynamic content in elements while preserving user-adjusted coordinates
+  const updateStudentInElements = useCallback((student: any, existingElements: CertificateElement[]): CertificateElement[] => {
+    const studentName = student?.name || 'Nguyễn Văn An';
+    const studentAvatar = student?.originalAvatar || student?.avatar || '';
+    const className = activeClass?.name ? `Lớp ${activeClass.name}` : 'Lớp 4A1';
+
+    return existingElements.map(el => {
+      if (el.id === 'student_name') return { ...el, content: studentName };
+      if (el.id === 'student_avatar') return { ...el, content: studentAvatar };
+      if (el.id === 'student_class') return { ...el, content: `Học sinh ${className}` };
+      if (el.id === 'reason_body') return { ...el, content: `“${reason}”` };
+      if (el.id === 'school_header') return { ...el, content: schoolName.toUpperCase() };
+      if (el.id === 'title_sub') return { ...el, content: certificateTitle };
+      if (el.id === 'date_text') return { ...el, content: formattedDate };
+      if (el.id === 'teacher_signature') return { ...el, content: teacherName };
+      return el;
+    });
+  }, [activeClass, reason, schoolName, certificateTitle, formattedDate, teacherName]);
+
+  // Keep elements content in sync when form fields change
+  useEffect(() => {
+    setElements(prev => updateStudentInElements(previewStudent, prev));
+  }, [previewStudent, updateStudentInElements]);
+
+  // ==========================================
+  // ACTION BUTTON 1: TẠO THƯ KHEN (Randomizes Layout 1, 2 or 3)
+  // ==========================================
+  const handleAutoLayout = () => {
+    let nextVariant: 1 | 2 | 3 = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
+    if (nextVariant === currentLayoutVariant) {
+      nextVariant = (currentLayoutVariant % 3 + 1) as 1 | 2 | 3;
+    }
+    const { layout, variant } = generateRandomizedLayout(previewStudent, nextVariant);
+    setElements(layout);
+    setCurrentLayoutVariant(variant);
+    setActiveElementId(null);
+    confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
   };
 
-  const updateElement = (id: string, updates: Partial<CanvasElement>) => {
-    setElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el));
+  // ==========================================
+  // ACTION BUTTON 2: TẠO LẠI (Clears & Resets with random variations)
+  // ==========================================
+  const handleResetLayout = () => {
+    setElements([]); // Clear
+    setTimeout(() => {
+      const { layout, variant } = generateRandomizedLayout(previewStudent);
+      setElements(layout);
+      setCurrentLayoutVariant(variant);
+      setActiveElementId(null);
+    }, 20);
   };
 
-  const removeElement = (id: string) => {
-    setElements(prev => prev.filter(el => el.id !== id));
-    if (selectedElementId === id) setSelectedElementId(null);
-  };
-
-  // Drag logic
-  const handleMouseDown = (e: React.MouseEvent, id: string) => {
+  // ==========================================
+  // CLICK-TO-SELECT & SEPARATE MOUSE DRAG EVENT HANDLERS
+  // - Click (onClick): Select object (activeElementId)
+  // - MouseDown + MouseMove: Drag and move position (X, Y)
+  // ==========================================
+  const handleElementMouseDown = (e: React.MouseEvent, id: string) => {
+    if (!isEditMode) return;
     e.stopPropagation();
-    setSelectedElementId(id);
-    const el = elements.find(el => el.id === id);
-    if (el) {
-      setIsDragging(true);
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
-      const clickX = e.clientX;
-      const clickY = e.clientY;
-      const unscaledClickX = clickX / scaleMultiplier;
-      const unscaledClickY = clickY / scaleMultiplier;
-      setDragOffset({ x: unscaledClickX - el.x, y: unscaledClickY - el.y });
-    }
+    setActiveElementId(id);
+
+    const targetElement = elements.find(el => el.id === id);
+    if (!targetElement) return;
+
+    isDraggingRef.current = true;
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: targetElement.x,
+      initialY: targetElement.y,
+    };
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && selectedElementId) {
-      const unscaledX = e.clientX / scaleMultiplier;
-      const unscaledY = e.clientY / scaleMultiplier;
-      updateElement(selectedElementId, {
-        x: unscaledX - dragOffset.x,
-        y: unscaledY - dragOffset.y
+  const handleCanvasMouseMove = (e: React.MouseEvent) => {
+    if (!isEditMode || !isDraggingRef.current || !activeElementId) return;
+
+    const deltaX = (e.clientX - dragStartRef.current.startX) / previewScale;
+    const deltaY = (e.clientY - dragStartRef.current.startY) / previewScale;
+
+    const newX = Math.round(dragStartRef.current.initialX + deltaX);
+    const newY = Math.round(dragStartRef.current.initialY + deltaY);
+
+    setElements(prev => prev.map(el => {
+      if (el.id === activeElementId) {
+        return { ...el, x: newX, y: newY };
+      }
+      return el;
+    }));
+  };
+
+  const handleCanvasMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  // Helper wait for DOM update
+  const waitForNextFrame = (ms: number = 320) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // =========================================================================
+  // ACTION BUTTON 3: TẢI THƯ KHEN (FLAWLESS 1920x1080 EXPORT)
+  // Fixes corner shrink bug using html-to-image override options:
+  // canvasWidth: 1920, canvasHeight: 1080, style: { transform: 'scale(1)', transformOrigin: 'top left' }
+  // =========================================================================
+  const handleDownloadSingle = async () => {
+    if (!certificatePrintRef.current) return;
+    setIsExporting(true);
+    setExportProgress(50);
+    setExportMessage(`Đang xuất ảnh thư khen ${previewStudent?.name || ''}...`);
+
+    try {
+      // CLEAR ACTIVE ELEMENT FOCUS BEFORE EXPORTING
+      setActiveElementId(null);
+      await waitForNextFrame(180);
+
+      const dataUrl = await toPng(certificatePrintRef.current, {
+        quality: 1,
+        pixelRatio: 1,
+        canvasWidth: CANVAS_WIDTH,
+        canvasHeight: CANVAS_HEIGHT,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        },
+        cacheBust: true,
       });
+
+      const studentNameClean = previewStudent?.name || 'HocSinh';
+      const link = document.createElement('a');
+      link.download = `ThuKhen_${studentNameClean.replace(/\s+/g, '_')}_1920x1080.png`;
+      link.href = dataUrl;
+      link.click();
+
+      confetti({ particleCount: 110, spread: 75, origin: { y: 0.6 } });
+    } catch (err) {
+      console.error('Error downloading certificate:', err);
+      alert('Không thể tạo file ảnh. Vui lòng thử lại!');
+    } finally {
+      setIsExporting(false);
+      setExportProgress(0);
+      setExportMessage('');
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  // =========================================================================
+  // ACTION BUTTON 4: TẢI HÀNG LOẠT (BATCH EXPORT WITH FLAWLESS 1920x1080)
+  // Preserves custom coordinates and exports full resolution without corner shrinking
+  // =========================================================================
+  const handleExportBatch = async () => {
+    if (!certificatePrintRef.current || selectedStudents.length === 0) return;
+
+    setIsExporting(true);
+    setExportProgress(0);
+    setActiveElementId(null);
+    setExportMessage('Đang chuẩn bị xuất ảnh độ phân giải cao 1920x1080 Full HD...');
+
+    try {
+      let exportedCount = 0;
+      const totalCount = selectedStudents.length;
+
+      for (let i = 0; i < totalCount; i++) {
+        const studentId = selectedStudents[i];
+        const student = currentClassStudents.find(s => s.id === studentId);
+        const studentNameClean = student?.name || `HocSinh_${i + 1}`;
+
+        setExportMessage(`Đang xuất thư khen cho: ${studentNameClean} (${i + 1}/${totalCount})`);
+        setPreviewStudentId(studentId);
+
+        // Update student in elements preserving user-edited coordinates
+        setElements(prev => updateStudentInElements(student, prev));
+
+        // Allow React state change & image re-render
+        await waitForNextFrame(320);
+
+        if (certificatePrintRef.current) {
+          const dataUrl = await toPng(certificatePrintRef.current, {
+            quality: 1,
+            pixelRatio: 1,
+            canvasWidth: CANVAS_WIDTH,
+            canvasHeight: CANVAS_HEIGHT,
+            style: {
+              transform: 'scale(1)',
+              transformOrigin: 'top left',
+            },
+            cacheBust: true,
+          });
+
+          // Trigger download
+          const link = document.createElement('a');
+          const safeName = studentNameClean.replace(/\s+/g, '_');
+          link.download = `ThuKhen_${safeName}_${activeClass?.name || 'Lop'}.png`;
+          link.href = dataUrl;
+          link.click();
+        }
+
+        exportedCount++;
+        setExportProgress(Math.round((exportedCount / totalCount) * 100));
+        await waitForNextFrame(150);
+      }
+
+      setExportMessage('Hoàn tất xuất tất cả thư khen!');
+      confetti({ particleCount: 150, spread: 85, origin: { y: 0.6 } });
+    } catch (error) {
+      console.error('Error batch exporting certificate:', error);
+      alert('Có lỗi xảy ra trong quá trình xuất thư khen hàng loạt.');
+    } finally {
+      setIsExporting(false);
+      setExportProgress(0);
+      setExportMessage('');
+    }
   };
 
-  const handleCanvasClick = () => {
-    setSelectedElementId(null);
+  // Update properties of the currently active element (Two-way realtime binding)
+  const updateActiveElement = (updates: Partial<CertificateElement>) => {
+    if (!activeElementId) return;
+    setElements(prev => prev.map(el => {
+      if (el.id === activeElementId) {
+        return { ...el, ...updates };
+      }
+      return el;
+    }));
   };
 
-  const aiSuggestions = [
-    'Đã có nhiều tiến bộ trong học tập và rèn luyện',
-    'Đạt thành tích xuất sắc trong học tập tuần qua',
-    'Tích cực phát biểu, hăng hái xây dựng bài',
-    'Hoàn thành tốt các bài tập, chăm ngoan học giỏi',
-    'Có ý thức kỷ luật tốt, giúp đỡ bạn bè'
+  // Remove the currently active element
+  const deleteActiveElement = () => {
+    if (!activeElementId) return;
+    setElements(prev => prev.filter(el => el.id !== activeElementId));
+    setActiveElementId(null);
+  };
+
+  const activeElement = elements.find(el => el.id === activeElementId);
+
+  // Student selection helpers
+  const handleToggleStudent = (studentId: string) => {
+    setSelectedStudents(prev => {
+      const exists = prev.includes(studentId);
+      const next = exists ? prev.filter(id => id !== studentId) : [...prev, studentId];
+      if (!exists && !previewStudentId) {
+        setPreviewStudentId(studentId);
+      }
+      return next;
+    });
+    setPreviewStudentId(studentId);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedStudents.length === currentClassStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      setSelectedStudents(currentClassStudents.map(s => s.id));
+      if (currentClassStudents.length > 0 && !previewStudentId) {
+        setPreviewStudentId(currentClassStudents[0].id);
+      }
+    }
+  };
+
+  const handleSelectEligible = () => {
+    const eligible = currentClassStudents.filter(s => s.points >= coinThreshold).map(s => s.id);
+    setSelectedStudents(eligible);
+    if (eligible.length > 0) setPreviewStudentId(eligible[0]);
+  };
+
+  // Preset reason recommendations
+  const presetReasons = [
+    'Đã có nhiều tiến bộ vượt bậc trong học tập và rèn luyện',
+    'Tích cực hăng hái phát biểu xây dựng bài trong tuần',
+    'Hoàn thành xuất sắc nhiệm vụ và đạt điểm thi đua cao nhất',
+    'Chăm ngoan, lễ phép, tích cực giúp đỡ bạn bè trong lớp',
+    'Đạt danh hiệu Học sinh Tiêu biểu - Lớp học Hạnh phúc',
   ];
 
-  // Helper for delaying loop to allow React to render avatar & text changes
-  const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const handleDownload = async () => {
-    if (!certificateRef.current || selectedStudents.length === 0) return;
-    setIsGenerating(true);
-    setGenerationProgress(0);
-    setSelectedElementId(null); 
-    
-    const currentTransform = certificateRef.current.style.transform;
-    certificateRef.current.style.transform = 'none';
-
-    try {
-      let count = 0;
-      for (const studentId of selectedStudents) {
-        setPreviewStudentId(studentId);
-        // Wait for React to re-render the canvas with the new student's data
-        await wait(500); 
-
-        const dataUrl = await toPng(certificateRef.current, {
-          quality: 1,
-          pixelRatio: 2, 
-          canvasWidth: 1920,
-          canvasHeight: 1080,
-        });
-        
-        const link = document.createElement('a');
-        const stuName = currentClassStudents.find(s => s.id === studentId)?.name || 'HocSinh';
-        link.download = `ThuKhen_${stuName}_${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-        
-        count++;
-        setGenerationProgress(Math.round((count / selectedStudents.length) * 100));
-        await wait(200); // Small pause before next download to prevent browser freeze
-      }
-      confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-    } catch (err) {
-      console.error('Lỗi khi tạo ảnh:', err);
-      alert('Có lỗi xảy ra khi tạo thư khen.');
-    } finally {
-      certificateRef.current.style.transform = currentTransform; 
-      setIsGenerating(false);
-      setGenerationProgress(0);
-    }
-  };
-
-  const handleMagicLayer = async () => {
-    if (!customBgUrl) return;
-    setIsMagicScanning(true);
-    setAiProcessingText('Đang khởi tạo AI Engine...');
-    
-    try {
-      const result = await Tesseract.recognize(
-        customBgUrl,
-        'vie', // Nhận diện tiếng Việt
-        { 
-          logger: m => {
-            if (m.status === 'recognizing text') {
-              setAiProcessingText(`Đang đọc văn bản... ${Math.round(m.progress * 100)}%`);
-            } else {
-              setAiProcessingText('Đang xử lý hình ảnh...');
-            }
-          } 
-        }
-      );
-
-      const lines = (result.data as any).lines || [];
-      const newElements: CanvasElement[] = [];
-
-      lines.forEach((line: any, index: number) => {
-        const text = line.text.trim();
-        if (!text) return;
-
-        // Tính tọa độ bbox theo tỷ lệ canvas hiện tại
-        // Tesseract trả về tọa độ pixel thật của ảnh. Cần scale theo canvasDim nếu cần. 
-        // Vì canvasDim đã được scale max width 1200 ở trên, ta cần lấy tỷ lệ.
-        
-        const bbox = line.bbox;
-        // Tạm tính scale. Vì img được load vào Tesseract nguyên bản, ta cần so sánh với canvasDim
-        const img = new Image();
-        img.src = customBgUrl;
-        
-        // Wait for image size conceptually, but since it's sync here, we estimate:
-        const scaleX = canvasDim.width / (img.width || canvasDim.width);
-        const scaleY = canvasDim.height / (img.height || canvasDim.height);
-
-        newElements.push({
-          id: `ml_text_${index}`,
-          type: 'text',
-          content: text,
-          x: bbox.x0 * scaleX,
-          y: bbox.y0 * scaleY,
-          fontSize: Math.max(16, (bbox.y1 - bbox.y0) * scaleY * 0.8), // Ước lượng fontSize từ chiều cao
-          fontFamily: '"Plus Jakarta Sans", sans-serif',
-          color: '#1e3a8a', // Màu mặc định
-          textAlign: 'left',
-          width: (bbox.x1 - bbox.x0) * scaleX + 20,
-        });
-      });
-
-      setElements(newElements);
-      setAiProcessingText('Hoàn tất tách lớp!');
-    } catch (error) {
-      console.error(error);
-      setAiProcessingText('Có lỗi xảy ra khi đọc ảnh.');
-    } finally {
-      setTimeout(() => {
-        setIsMagicScanning(false);
-      }, 1000);
-    }
-  };
-
-  const activeTemplate = customBgUrl && template === 'custom' 
-    ? { id: 'custom', name: 'Tùy chỉnh', bgImage: customBgUrl, bgColor: 'bg-white' }
-    : DEFAULT_TEMPLATES.find(t => t.id === template) || DEFAULT_TEMPLATES[0];
-
-  const selectedElement = elements.find(el => el.id === selectedElementId);
-
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-hidden select-none relative">
+    <div className="h-full flex flex-col bg-slate-100 overflow-hidden select-none">
       
-      {/* AI Processing Overlay */}
-      {isAiProcessing && (
-        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-          <div className="w-24 h-24 relative mb-6">
-            <div className="absolute inset-0 bg-indigo-500 rounded-full animate-ping opacity-20"></div>
-            <div className="absolute inset-2 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full animate-spin flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.6)]">
-              <Wand2 className="w-8 h-8 text-white animate-pulse" />
-            </div>
-          </div>
-          <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-widest">AI Tách Lớp Thông Minh</h2>
-          <p className="text-indigo-200 font-medium animate-pulse">{aiProcessingText}</p>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-md text-white">
-            <Award className="w-6 h-6" />
+      {/* TOP HEADER */}
+      <div className="bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between shadow-xs z-20 shrink-0">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
+            <Award className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-gray-800 tracking-tight uppercase">Tạo Thư Khen Điện Tử Pro</h1>
-            <p className="text-sm text-gray-500 font-medium">Chọn học sinh - Chỉnh sửa Canvas tự do - Xuất hàng loạt</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-black text-slate-800 tracking-tight uppercase">
+                TRÌNH THIẾT KẾ THƯ KHEN PRO • 1920 × 1080
+              </h1>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-700 uppercase tracking-wider">
+                LAYOUT {currentLayoutVariant === 1 ? 'CỔ ĐIỂN' : currentLayoutVariant === 2 ? 'HIỆN ĐẠI' : 'SÁNG TẠO'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              Bảng công cụ cố định • Focus Ring trực quan • Click & Drag độc lập • Xuất chuẩn 1920x1080 không lệch góc
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={activeClassId || ''}
-            onChange={(e) => setActiveClassId(e.target.value)}
-            className="border-2 border-indigo-200 rounded-xl px-4 py-2 text-indigo-700 font-bold bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+
+        {/* 4 ACTION BUTTONS + TOGGLE EDIT MODE */}
+        <div className="flex items-center gap-2">
+          {/* Class selector */}
+          <div className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 mr-1">
+            <GraduationCap className="w-4 h-4 text-indigo-600" />
+            <select
+              value={activeClassId || ''}
+              onChange={(e) => setActiveClassId(e.target.value)}
+              className="bg-transparent text-xs font-black text-indigo-700 outline-none cursor-pointer"
+            >
+              <option value="" disabled>-- Chọn Lớp --</option>
+              {classes.map(c => (
+                <option key={c.id} value={c.id}>Lớp {c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* TOGGLE EDIT MODE BUTTON */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsEditMode(!isEditMode);
+              if (isEditMode) setActiveElementId(null);
+            }}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black border transition-all ${
+              isEditMode 
+                ? 'bg-amber-50 text-amber-800 border-amber-300 shadow-2xs' 
+                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+            }`}
+            title={isEditMode ? 'Đang mở chế độ chỉnh sửa/kéo thả' : 'Đang khóa chế độ chỉnh sửa (tránh vô tình kéo lệch)'}
           >
-            <option value="" disabled>-- Chọn Lớp --</option>
-            {classes.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            {isEditMode ? <Unlock className="w-3.5 h-3.5 text-amber-600" /> : <Lock className="w-3.5 h-3.5 text-slate-500" />}
+            <span>{isEditMode ? 'CHỈNH SỬA: BẬT' : 'CHỈNH SỬA: TẮT'}</span>
+          </button>
+
+          {/* BUTTON 1: TẠO THƯ KHEN (Randomizes Layout 1, 2 or 3) */}
+          <button
+            type="button"
+            onClick={handleAutoLayout}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 shadow-2xs transition-all hover-zoom-btn uppercase"
+            title="Ngẫu nhiên đổi 1 trong 3 layout mỹ thuật (Cổ điển, Hiện đại, Sáng tạo)"
+          >
+            <Shuffle className="w-4 h-4 text-indigo-600" />
+            <span>TẠO THƯ KHEN</span>
+          </button>
+
+          {/* BUTTON 2: TẠO LẠI (Reset Layout) */}
+          <button
+            type="button"
+            onClick={handleResetLayout}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all hover-zoom-btn uppercase"
+            title="Khôi phục vị trí mặc định ban đầu"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>TẠO LẠI</span>
+          </button>
+
+          {/* BUTTON 3: TẢI THƯ KHEN (Single Download) */}
+          <button
+            type="button"
+            onClick={handleDownloadSingle}
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-all hover-zoom-btn disabled:opacity-50 uppercase"
+            title="Tải ảnh thư khen học sinh đang chọn chuẩn 1920x1080"
+          >
+            <Download className="w-4 h-4 text-blue-600" />
+            <span>TẢI THƯ KHEN</span>
+          </button>
+
+          {/* BUTTON 4: TẢI HÀNG LOẠT (Batch Export) */}
+          <button
+            type="button"
+            onClick={handleExportBatch}
+            disabled={isExporting || selectedStudents.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md shadow-emerald-600/20 transition-all hover-zoom-btn disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+            title="Xuất ảnh cho toàn bộ học sinh được chọn, giữ nguyên vị trí đã chỉnh sửa"
+          >
+            {isExporting ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Đang xuất ({exportProgress}%)</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                <span>TẢI HÀNG LOẠT ({selectedStudents.length})</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
+      {/* MAIN TWO-COLUMN WORKSPACE */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Left Sidebar Config */}
-        <div className="w-80 bg-white border-r border-gray-200 p-4 flex flex-col overflow-y-auto shrink-0 z-10 shadow-lg">
+        {/* LEFT COLUMN: Configuration Toolbar */}
+        <div className="w-96 bg-white border-r border-slate-200 flex flex-col shrink-0 overflow-hidden shadow-sm z-10">
           
-          <div className="mb-6">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center">
-              <ImageIcon className="w-4 h-4 mr-1.5" /> Mẫu Khung & Hình Nền
-            </h3>
-            
-            <label className="cursor-pointer flex items-center justify-center p-2 border-2 border-dashed border-indigo-300 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors mb-3">
-              <Wand2 className="w-4 h-4 mr-2" />
-              <span className="text-xs font-bold uppercase">AI Tải lên Mẫu Tùy chỉnh</span>
-              <input type="file" accept="image/*" className="hidden" onChange={handleCustomBgUpload} />
-            </label>
+          {/* Navigation Sub-Tabs */}
+          <div className="grid grid-cols-3 p-2 bg-slate-100/80 border-b border-slate-200 gap-1 text-center shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsSidebarSection('templates')}
+              className={`py-2 px-1 rounded-xl text-xs font-black transition-all uppercase flex items-center justify-center gap-1.5 ${
+                isSidebarSection === 'templates'
+                  ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>Mẫu ({templates.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSidebarSection('content')}
+              className={`py-2 px-1 rounded-xl text-xs font-black transition-all uppercase flex items-center justify-center gap-1.5 ${
+                isSidebarSection === 'content'
+                  ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Nội Dung</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSidebarSection('students')}
+              className={`py-2 px-1 rounded-xl text-xs font-black transition-all uppercase flex items-center justify-center gap-1.5 ${
+                isSidebarSection === 'students'
+                  ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Học Sinh ({selectedStudents.length})</span>
+            </button>
+          </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {DEFAULT_TEMPLATES.map(t => (
+          {/* Section 1: Dynamic Templates Grid */}
+          {isSidebarSection === 'templates' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Thư Viện Ảnh Mẫu Quét Động
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Lưu tại thư mục <code className="text-indigo-600 font-mono font-bold">public/certificates/</code>
+                  </p>
+                </div>
                 <button
-                  key={t.id}
-                  onClick={() => setTemplate(t.id)}
-                  className={`p-1.5 rounded-xl border-2 text-[10px] text-center transition-all flex flex-col items-center justify-center h-16 relative overflow-hidden
-                    ${template === t.id ? 'border-blue-500 ring-2 ring-blue-200 shadow-sm' : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-blue-200'}
-                  `}
+                  type="button"
+                  onClick={refreshTemplates}
+                  disabled={isLoadingTemplates}
+                  className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors"
+                  title="Làm mới danh sách mẫu"
                 >
-                  {t.bgImage ? (
-                    <img src={t.bgImage} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="" />
-                  ) : (
-                    <div className={`absolute inset-0 w-full h-full ${t.bgColor}`}></div>
-                  )}
-                  <span className="truncate w-full relative z-10 bg-white/80 px-1 py-0.5 rounded font-bold text-gray-800">{t.name}</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingTemplates ? 'animate-spin' : ''}`} />
                 </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mb-6 space-y-3">
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Loại & Chi tiết</label>
-              <div className="flex gap-2">
-                <select 
-                  value={certType} 
-                  onChange={e => setCertType(e.target.value)}
-                  className="w-1/2 border border-gray-300 rounded p-1.5 text-xs font-medium outline-none focus:border-blue-500"
-                >
-                  <option value="Tuần">Khen Tuần</option>
-                  <option value="Tháng">Khen Tháng</option>
-                  <option value="Học Kì">Khen Học Kì</option>
-                  <option value="Năm Học">Khen Năm học</option>
-                  <option value="Đột Xuất">Đột xuất</option>
-                </select>
-                {certType !== 'Đột Xuất' && (
-                  <input 
-                    type="text" 
-                    value={certTypeDetail}
-                    onChange={e => setCertTypeDetail(e.target.value)}
-                    placeholder="Số (VD: 1)"
-                    className="w-1/2 border border-gray-300 rounded p-1.5 text-xs font-medium outline-none focus:border-blue-500"
-                  />
-                )}
               </div>
-            </div>
 
-            {(certType === 'Học Kì' || certType === 'Năm Học') && (
-              <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Năm Học</label>
-                <input 
-                  type="text" 
-                  value={academicYear}
-                  onChange={e => setAcademicYear(e.target.value)}
-                  className="w-full border border-gray-300 rounded p-1.5 text-xs font-medium outline-none focus:border-blue-500"
-                />
+              {/* Grid of scanned template cards */}
+              <div className="grid grid-cols-2 gap-3">
+                {templates.map((tpl) => {
+                  const isSelected = selectedTemplateId === tpl.id;
+                  return (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => setSelectedTemplateId(tpl.id)}
+                      className={`group relative rounded-2xl p-1.5 border-2 text-left transition-all overflow-hidden flex flex-col ${
+                        isSelected
+                          ? 'border-indigo-600 ring-4 ring-indigo-500/15 shadow-md bg-indigo-50/50'
+                          : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-xs'
+                      }`}
+                    >
+                      <div className="aspect-[16/9] w-full rounded-xl overflow-hidden bg-slate-100 relative">
+                        <img
+                          src={tpl.url}
+                          alt={tpl.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md">
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-2 px-1">
+                        <p className={`text-xs font-black truncate ${isSelected ? 'text-indigo-900' : 'text-slate-800'}`}>
+                          {tpl.name}
+                        </p>
+                        <span className="text-[10px] text-slate-400 font-mono truncate block">
+                          {tpl.filename}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-            )}
 
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Lý do (AI)</label>
-              <textarea 
-                value={reason}
-                onChange={e => setReason(e.target.value)}
-                className="w-full border border-gray-300 rounded p-1.5 text-xs outline-none focus:border-blue-500 min-h-[60px] resize-none"
-              />
-              <div className="mt-1 flex flex-wrap gap-1">
-                {aiSuggestions.map((sug, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => setReason(sug)}
-                    className="text-[9px] font-medium bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full hover:bg-indigo-100 border border-indigo-100"
-                  >
-                    {sug.substring(0, 15)}...
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Ngày khen</label>
-              <input 
-                type="date" 
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                className="w-full border border-gray-300 rounded p-1.5 text-xs font-medium outline-none focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Chọn Học sinh ({selectedStudents.length}/{currentClassStudents.length})
-              </h3>
-              <button 
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className="text-gray-400 hover:text-blue-600 p-1 bg-gray-100 rounded-md"
-              >
-                <Settings className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            
-            {isSettingsOpen && (
-              <div className="mb-2 p-2 bg-blue-50 rounded text-xs border border-blue-100">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-blue-800">&gt;=</span>
-                  <input type="number" value={coinThreshold} onChange={e => setCoinThreshold(Number(e.target.value))} className="w-12 p-1 rounded border border-blue-200 text-center" />
-                  <span className="text-blue-700">xu</span>
-                  <button onClick={handleSelectAllEligible} className="ml-auto text-white bg-blue-600 px-2 rounded hover:bg-blue-700">Lọc</button>
+              {/* Layout Switcher helper */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200/80 text-[11px] text-slate-600 space-y-2">
+                <strong className="text-indigo-950 font-black block uppercase text-[10px] tracking-wider">
+                  🎨 Chọn nhanh 3 Bố Cục Nghệ Thuật:
+                </strong>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { id: 1, label: 'Cổ điển' },
+                    { id: 2, label: 'Hiện đại' },
+                    { id: 3, label: 'Sáng tạo' },
+                  ].map(b => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => {
+                        const { layout, variant } = generateRandomizedLayout(previewStudent, b.id as 1 | 2 | 3);
+                        setElements(layout);
+                        setCurrentLayoutVariant(variant);
+                        setActiveElementId(null);
+                      }}
+                      className={`py-1.5 px-1 rounded-xl text-[10px] font-black border transition-all ${
+                        currentLayoutVariant === b.id
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {b.label}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-
-            <div className="overflow-y-auto flex-1 bg-white border border-gray-200 rounded-lg shadow-inner">
-              {currentClassStudents.map(st => {
-                const isSelected = selectedStudents.includes(st.id);
-                const isPreview = previewStudentId === st.id;
-                return (
-                  <div 
-                    key={st.id}
-                    className={`flex items-center p-1.5 border-b border-gray-50 cursor-pointer ${isPreview ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-                    onClick={() => setPreviewStudentId(st.id)}
-                  >
-                    <button onClick={(e) => { e.stopPropagation(); handleSelectStudent(st.id); }} className="mr-2">
-                      {isSelected ? <CheckSquare className="w-4 h-4 text-blue-600" /> : <Square className="w-4 h-4 text-gray-300" />}
-                    </button>
-                    <div className="text-xs font-bold text-gray-700 flex-1 truncate">{st.name}</div>
-                  </div>
-                );
-              })}
             </div>
-          </div>
+          )}
 
-        </div>
-
-        {/* Main Canvas Editor Area */}
-        <div 
-          ref={containerRef}
-          className="flex-1 bg-slate-800 p-8 flex flex-col items-center justify-center overflow-hidden relative"
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onClick={handleCanvasClick}
-        >
-          
-          {/* Top Canvas Toolbar */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-xl flex items-center gap-4 z-20" onClick={e => e.stopPropagation()}>
-            {customBgUrl && template === 'custom' && (
-              <>
-                <button onClick={handleMagicLayer} className="flex items-center gap-1.5 text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 hover:scale-105 transition-transform drop-shadow-sm">
-                  <Wand2 className="w-4 h-4 text-purple-600"/> Magic Layer
-                </button>
-                <div className="w-px h-6 bg-slate-300"></div>
-              </>
-            )}
-            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 cursor-pointer">
-              <Upload className="w-4 h-4"/> Thêm ảnh chữ ký
-              <input type="file" accept="image/png, image/jpeg" className="hidden" onChange={handleSignatureUpload} />
-            </label>
-            <div className="w-px h-6 bg-slate-300"></div>
-            <button onClick={addCustomText} className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600">
-              <Type className="w-4 h-4"/> Thêm chữ
-            </button>
-            <div className="w-px h-6 bg-slate-300"></div>
-            <button className="flex items-center gap-1.5 text-xs font-bold text-emerald-600" onClick={() => setElements([])}>
-              <RefreshCw className="w-4 h-4"/> Đặt lại Canvas
-            </button>
-          </div>
-
-          {/* Element Properties Toolbar (shows when element is selected) */}
-          {selectedElement && (
-            <div className="absolute right-4 top-4 bg-white/90 backdrop-blur p-4 rounded-xl shadow-xl w-64 z-20 flex flex-col gap-3" onClick={e => e.stopPropagation()}>
-              <div className="flex justify-between items-center border-b pb-2">
-                <span className="text-xs font-black uppercase text-slate-700">Chỉnh sửa Lớp</span>
-                <button onClick={() => removeElement(selectedElement.id)} className="text-rose-500 hover:text-rose-700 p-1 rounded-md bg-rose-50"><Trash2 className="w-3.5 h-3.5"/></button>
+          {/* Section 2: Certificate Content Form */}
+          {isSidebarSection === 'content' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              
+              {/* Certificate Type */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
+                  Loại Thư Khen Thưởng
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(['Tuần', 'Tháng', 'Học Kì', 'Năm Học', 'Đột Xuất'] as const).map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setCertType(type)}
+                      className={`py-1.5 px-2 rounded-xl text-[11px] font-black transition-all border ${
+                        certType === type
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {selectedElement.type === 'text' && (
-                <>
+              {/* Number / Semester / Academic Year Detail */}
+              {certType !== 'Đột Xuất' && (
+                <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Nội dung</label>
-                    <textarea 
-                      value={selectedElement.content} 
-                      onChange={e => updateElement(selectedElement.id, { content: e.target.value })}
-                      className="w-full border rounded p-1.5 text-xs min-h-[40px]"
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                      {certType === 'Tuần' ? 'Số tuần' : certType === 'Tháng' ? 'Tháng số' : 'Học kì'}
+                    </label>
+                    <input
+                      type="text"
+                      value={certTypeDetail}
+                      onChange={e => setCertTypeDetail(e.target.value)}
+                      placeholder="Ví dụ: 1"
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Font chữ</label>
-                    <select 
-                      value={selectedElement.fontFamily} 
-                      onChange={e => updateElement(selectedElement.id, { fontFamily: e.target.value })}
-                      className="w-full border rounded p-1.5 text-xs"
-                    >
-                      {FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-                    </select>
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                      Năm học
+                    </label>
+                    <input
+                      type="text"
+                      value={academicYear}
+                      onChange={e => setAcademicYear(e.target.value)}
+                      placeholder="2026–2027"
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none"
+                    />
                   </div>
-                  <div className="flex gap-2">
-                    <div className="w-1/2">
-                      <label className="text-[10px] font-bold text-slate-500 block mb-1">Cỡ chữ</label>
-                      <input type="number" value={selectedElement.fontSize} onChange={e => updateElement(selectedElement.id, { fontSize: Number(e.target.value) })} className="w-full border rounded p-1 text-xs" />
-                    </div>
-                    <div className="w-1/2">
-                      <label className="text-[10px] font-bold text-slate-500 block mb-1">Màu chữ</label>
-                      <input type="color" value={selectedElement.color} onChange={e => updateElement(selectedElement.id, { color: e.target.value })} className="w-full h-7 rounded cursor-pointer" />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {selectedElement.type === 'signature' && (
-                <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-100 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-indigo-800 flex items-center gap-1"><Zap className="w-3 h-3"/> AI Tách Nền Trắng</span>
-                  <input 
-                    type="checkbox" 
-                    checked={selectedElement.removeBg || false} 
-                    onChange={e => updateElement(selectedElement.id, { removeBg: e.target.checked })}
-                    className="w-4 h-4 accent-indigo-600"
-                  />
                 </div>
               )}
 
-              {(selectedElement.type === 'avatar' || selectedElement.type === 'signature') && (
+              {/* Reason Form */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
+                    Nội Dung / Lý Do Khen Ngợi
+                  </label>
+                  <span className="text-[10px] text-indigo-600 font-bold">Gợi ý nhanh</span>
+                </div>
+                <textarea
+                  rows={3}
+                  value={reason}
+                  onChange={e => setReason(e.target.value)}
+                  className="w-full p-2.5 text-xs font-medium rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none resize-none leading-relaxed"
+                  placeholder="Nhập lý do khen ngợi..."
+                />
+                
+                {/* Reason Quick Pills */}
+                <div className="flex flex-col gap-1 pt-1">
+                  {presetReasons.map((r, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setReason(r)}
+                      className="text-left text-[11px] text-slate-600 hover:text-indigo-700 bg-slate-50 hover:bg-indigo-50/60 p-1.5 rounded-lg border border-slate-200 truncate transition-colors font-medium"
+                    >
+                      • {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* School and Teacher Signature defaults */}
+              <div className="space-y-3 pt-2 border-t border-slate-200">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Kích thước ảnh</label>
-                  <input 
-                    type="range" min="30" max="400" 
-                    value={selectedElement.width} 
-                    onChange={e => updateElement(selectedElement.id, { width: Number(e.target.value), height: selectedElement.type === 'avatar' ? Number(e.target.value) : undefined })}
-                    className="w-full accent-indigo-500" 
+                  <label className="text-[11px] font-black uppercase text-slate-600 block mb-1">
+                    Đơn vị / Tên Trường
+                  </label>
+                  <input
+                    type="text"
+                    value={schoolName}
+                    onChange={e => setSchoolName(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[11px] font-black uppercase text-slate-600 block mb-1">
+                      Giáo Viên Khen
+                    </label>
+                    <input
+                      type="text"
+                      value={teacherName}
+                      onChange={e => setTeacherName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-black uppercase text-slate-600 block mb-1">
+                      Ngày Khen
+                    </label>
+                    <input
+                      type="date"
+                      value={issueDate}
+                      onChange={e => setIssueDate(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs font-bold rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* MODULE: CHỮ KÝ ĐIỆN TỬ TÁCH NỀN THÔNG MINH */}
+                <div className="space-y-2.5 pt-3 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <FileSignature className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Chữ Ký Điện Tử</span>
+                    </label>
+                    <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Tách nền Canvas 2D
+                    </span>
+                  </div>
+
+                  {/* Hidden file input */}
+                  <input
+                    type="file"
+                    ref={signatureFileInputRef}
+                    accept="image/*"
+                    onChange={handleSignatureUpload}
+                    className="hidden"
+                  />
+
+                  {/* Upload Button */}
+                  <button
+                    type="button"
+                    onClick={() => signatureFileInputRef.current?.click()}
+                    disabled={isProcessingSignature}
+                    className="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-2xs group cursor-pointer"
+                  >
+                    {isProcessingSignature ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+                        <span>Đang quét & tách nền canvas...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 text-indigo-600 group-hover:-translate-y-0.5 transition-transform" />
+                        <span>{teacherSignatureImage ? 'Thay đổi ảnh chữ ký khác' : 'Tải lên ảnh chụp chữ ký tay'}</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Auto-Insert Checkbox */}
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-700 pt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={autoInsertSignature}
+                      onChange={(e) => {
+                        const val = e.target.checked;
+                        setAutoInsertSignature(val);
+                        localStorage.setItem(AUTO_SIGNATURE_KEY, String(val));
+                      }}
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                    />
+                    <span>Tự động chèn chữ ký khi Tạo thư khen</span>
+                  </label>
+
+                  {/* Signature Preview & Action Area */}
+                  {teacherSignatureImage ? (
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Chữ ký đã tách nền trong suốt:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveSavedSignature}
+                          className="text-slate-400 hover:text-rose-500 p-0.5 transition-colors cursor-pointer"
+                          title="Xóa chữ ký đã lưu"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Transparent Checkerboard Container Preview */}
+                      <div 
+                        className="h-16 w-full rounded-lg border border-slate-300 flex items-center justify-center p-1.5 overflow-hidden shadow-2xs"
+                        style={{
+                          backgroundImage: 'linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)',
+                          backgroundSize: '12px 12px',
+                          backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0px',
+                          backgroundColor: '#ffffff'
+                        }}
+                      >
+                        <img
+                          src={teacherSignatureImage}
+                          alt="Chữ ký đã tách nền"
+                          className="max-h-full max-w-full object-contain filter drop-shadow-xs"
+                        />
+                      </div>
+
+                      {/* Insert Now Button */}
+                      <button
+                        type="button"
+                        onClick={() => insertOrUpdateSignatureElement()}
+                        className="w-full py-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                      >
+                        <PenTool className="w-3.5 h-3.5" />
+                        <span>Chèn chữ ký vào bản thiết kế ngay</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-500 italic">
+                      💡 Mẹo: Chụp chữ ký mực xanh hoặc đen trên giấy trắng, thuật toán sẽ tự động xóa sạch nền và giữ nguyên nét mực trong suốt.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* Section 3: Student Selection List */}
+          {isSidebarSection === 'students' && (
+            <div className="flex-1 flex flex-col overflow-hidden p-4">
+              
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 shrink-0">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSelectAll}
+                    className="text-xs font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1.5"
+                  >
+                    {selectedStudents.length === currentClassStudents.length ? (
+                      <CheckSquare className="w-4 h-4 text-indigo-600" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-400" />
+                    )}
+                    <span>Chọn tất cả ({currentClassStudents.length})</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsFilterSettingsOpen(!isFilterSettingsOpen)}
+                  className={`p-1.5 rounded-lg border text-xs font-bold transition-colors flex items-center gap-1 ${
+                    isFilterSettingsOpen
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                  title="Lọc học sinh theo xu"
+                >
+                  <Filter className="w-3.5 h-3.5" />
+                  <span>Lọc Xu</span>
+                </button>
+              </div>
+
+              {/* Coin Threshold Filter Sub-bar */}
+              {isFilterSettingsOpen && (
+                <div className="p-2.5 my-2 rounded-xl bg-blue-50 border border-blue-200 text-xs flex items-center gap-2 shrink-0">
+                  <span className="font-bold text-blue-900">Điểm xu &ge;</span>
+                  <input
+                    type="number"
+                    value={coinThreshold}
+                    onChange={e => setCoinThreshold(Number(e.target.value) || 0)}
+                    className="w-16 px-2 py-1 rounded-lg border border-blue-300 text-center font-bold text-blue-900 bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSelectEligible}
+                    className="ml-auto px-2.5 py-1 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+              )}
+
+              {/* Student Scrollable List */}
+              <div className="flex-1 overflow-y-auto space-y-1.5 pt-3">
+                {currentClassStudents.length === 0 ? (
+                  <div className="text-center py-8 text-xs text-slate-400">
+                    Lớp chưa có học sinh. Vui lòng thêm học sinh ở phân hệ Lớp học.
+                  </div>
+                ) : (
+                  currentClassStudents.map(student => {
+                    const isSelected = selectedStudents.includes(student.id);
+                    const isPreview = previewStudentId === student.id;
+
+                    return (
+                      <div
+                        key={student.id}
+                        onClick={() => setPreviewStudentId(student.id)}
+                        className={`p-2 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-all ${
+                          isPreview
+                            ? 'bg-indigo-50/80 border-indigo-400 ring-2 ring-indigo-200 shadow-2xs'
+                            : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleStudent(student.id);
+                          }}
+                          className="text-slate-400 hover:text-indigo-600"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-indigo-600" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </button>
+
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
+                          {student.avatar ? (
+                            <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold">
+                              {student.name.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-slate-800 truncate">
+                            {student.name}
+                          </p>
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            {student.points} xu tích lũy
+                          </span>
+                        </div>
+
+                        {isPreview && (
+                          <div className="px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
+                            <Eye className="w-3 h-3" />
+                            <span>Xem</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+        {/* RIGHT COLUMN: Fixed Toolbar + Interactive Canvas Preview */}
+        <div className="flex-1 flex flex-col bg-slate-900 overflow-hidden">
+          
+          {/* =========================================================================
+              1. PERSISTENT PROPERTIES PANEL (Fixed Toolbar at the top of Right Column)
+              - Always rendered when isEditMode === true
+              - Empty state: Informative guidance message
+              - Active state: Immediate two-way binding controls for Text or Image
+          ========================================================================= */}
+          {isEditMode && (
+            <div className="bg-slate-800 border-b border-slate-700/80 px-5 py-2.5 flex items-center justify-between text-white shadow-md z-20 shrink-0 min-h-[52px]">
+              {activeElement ? (
+                <div className="flex items-center gap-3.5 flex-wrap w-full">
+                  <div className="flex items-center gap-1.5 text-xs font-black text-indigo-400 uppercase border-r border-slate-600 pr-3 shrink-0">
+                    <Sliders className="w-4 h-4 text-indigo-400" />
+                    <span>
+                      {activeElement.type === 'text' 
+                        ? 'ĐỐI TƯỢNG VĂN BẢN' 
+                        : activeElement.isCircleImage 
+                          ? 'ĐỐI TƯỢNG ẢNH AVATAR' 
+                          : 'ĐỐI TƯỢNG CHỮ KÝ ĐIỆN TỬ'}
+                    </span>
+                  </div>
+
+                  {/* TOOLS FOR TEXT ELEMENT */}
+                  {activeElement.type === 'text' && (
+                    <>
+                      {/* Text Input */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[11px] font-bold text-slate-300">Nội dung:</span>
+                        <input
+                          type="text"
+                          value={activeElement.content}
+                          onChange={e => updateActiveElement({ content: e.target.value })}
+                          className="text-xs font-bold bg-slate-900 border border-slate-600 focus:border-indigo-500 rounded-lg px-2.5 py-1 text-white outline-none w-48 sm:w-64"
+                          placeholder="Nhập nội dung chữ..."
+                        />
+                      </div>
+
+                      {/* Font Family Dropdown with preview font styling */}
+                      <div className="flex items-center gap-1.5 border-l border-slate-700 pl-3 shrink-0">
+                        <span className="text-[11px] font-bold text-slate-300">Phông chữ:</span>
+                        <select
+                          value={activeElement.fontFamily}
+                          onChange={e => updateActiveElement({ fontFamily: e.target.value })}
+                          className="text-xs font-bold bg-slate-900 border border-slate-600 focus:border-indigo-500 rounded-lg px-2.5 py-1 text-white outline-none cursor-pointer max-w-[210px]"
+                        >
+                          <optgroup label="── Ký tên & Nghệ thuật (Cursive) ──" className="text-amber-400 bg-slate-950 font-bold">
+                            {CERT_FONTS.filter(f => f.category === 'cursive').map(f => (
+                              <option key={f.id} value={f.font} style={{ fontFamily: f.font }} className="text-white py-1">
+                                {f.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="── Sang trọng & Cổ điển (Serif) ──" className="text-sky-400 bg-slate-950 font-bold">
+                            {CERT_FONTS.filter(f => f.category === 'serif').map(f => (
+                              <option key={f.id} value={f.font} style={{ fontFamily: f.font }} className="text-white py-1">
+                                {f.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="── Hiện đại & Chuẩn mực (Sans) ──" className="text-emerald-400 bg-slate-950 font-bold">
+                            {CERT_FONTS.filter(f => f.category === 'sans').map(f => (
+                              <option key={f.id} value={f.font} style={{ fontFamily: f.font }} className="text-white py-1">
+                                {f.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        </select>
+                      </div>
+
+                      {/* Font Size Input & Slider */}
+                      <div className="flex items-center gap-2 border-l border-slate-700 pl-3 shrink-0">
+                        <span className="text-[11px] font-bold text-slate-300">Cỡ chữ:</span>
+                        <input
+                          type="range"
+                          min="18"
+                          max="220"
+                          value={activeElement.fontSize || 32}
+                          onChange={e => updateActiveElement({ fontSize: Number(e.target.value) })}
+                          className="w-20 accent-indigo-500 cursor-pointer"
+                        />
+                        <input
+                          type="number"
+                          min="18"
+                          max="220"
+                          value={activeElement.fontSize || 32}
+                          onChange={e => updateActiveElement({ fontSize: Number(e.target.value) })}
+                          className="w-14 text-xs font-mono font-bold bg-slate-900 border border-slate-600 rounded-lg px-1.5 py-1 text-center text-indigo-300 outline-none"
+                        />
+                      </div>
+
+                      {/* Letter Spacing Slider & Input (Giãn khoảng cách chữ) */}
+                      <div className="flex items-center gap-2 border-l border-slate-700 pl-3 shrink-0">
+                        <span className="text-[11px] font-bold text-slate-300">Giãn chữ:</span>
+                        <input
+                          type="range"
+                          min="-0.05"
+                          max="0.4"
+                          step="0.01"
+                          value={parseFloat(activeElement.letterSpacing || '0') || 0}
+                          onChange={e => {
+                            const val = Number(e.target.value);
+                            updateActiveElement({ letterSpacing: `${val.toFixed(2)}em` });
+                          }}
+                          className="w-20 accent-indigo-500 cursor-pointer"
+                          title="Khoảng cách giữa các chữ cái (Tracking)"
+                        />
+                        <span className="text-xs font-mono font-bold text-indigo-300 w-14 text-center">
+                          {activeElement.letterSpacing || '0em'}
+                        </span>
+                      </div>
+
+                      {/* Color Picker */}
+                      <div className="flex items-center gap-2 border-l border-slate-700 pl-3 shrink-0">
+                        <span className="text-[11px] font-bold text-slate-300">Màu chữ:</span>
+                        <input
+                          type="color"
+                          value={activeElement.color || '#1e3a8a'}
+                          onChange={e => updateActiveElement({ color: e.target.value })}
+                          className="w-7 h-7 rounded-lg cursor-pointer border border-slate-600 bg-transparent p-0"
+                          title="Chọn màu chữ"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* TOOLS FOR IMAGE ELEMENT: AVATAR vs CHỮ KÝ */}
+                  {activeElement.type === 'image' && (
+                    <>
+                      {activeElement.isCircleImage ? (
+                        /* AVATAR CONTROLS */
+                        <>
+                          {/* Border Width Slider */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[11px] font-bold text-slate-300">Độ dày viền:</span>
+                            <input
+                              type="range"
+                              min="0"
+                              max="24"
+                              value={activeElement.borderWidth !== undefined ? activeElement.borderWidth : 10}
+                              onChange={e => {
+                                const bw = Number(e.target.value);
+                                updateActiveElement({ 
+                                  borderWidth: bw,
+                                  border: `${bw}px solid ${activeElement.borderColor || '#ffffff'}`
+                                });
+                              }}
+                              className="w-28 accent-indigo-500 cursor-pointer"
+                            />
+                            <span className="text-xs font-mono font-bold text-indigo-300 w-10">
+                              {activeElement.borderWidth !== undefined ? activeElement.borderWidth : 10}px
+                            </span>
+                          </div>
+
+                          {/* Border Color Picker */}
+                          <div className="flex items-center gap-2 border-l border-slate-700 pl-3 shrink-0">
+                            <span className="text-[11px] font-bold text-slate-300">Màu viền:</span>
+                            <input
+                              type="color"
+                              value={activeElement.borderColor || '#ffffff'}
+                              onChange={e => {
+                                const bc = e.target.value;
+                                const bw = activeElement.borderWidth !== undefined ? activeElement.borderWidth : 10;
+                                updateActiveElement({ 
+                                  borderColor: bc,
+                                  border: `${bw}px solid ${bc}`
+                                });
+                              }}
+                              className="w-7 h-7 rounded-lg cursor-pointer border border-slate-600 bg-transparent p-0"
+                              title="Chọn màu viền"
+                            />
+                          </div>
+
+                          {/* Avatar Size Slider */}
+                          <div className="flex items-center gap-2 border-l border-slate-700 pl-3 shrink-0">
+                            <span className="text-[11px] font-bold text-slate-300">Kích thước:</span>
+                            <input
+                              type="range"
+                              min="200"
+                              max="650"
+                              value={activeElement.width || 460}
+                              onChange={e => {
+                                const val = Number(e.target.value);
+                                updateActiveElement({ width: val, height: val });
+                              }}
+                              className="w-28 accent-indigo-500 cursor-pointer"
+                            />
+                            <span className="text-xs font-mono font-bold text-indigo-300 w-12">
+                              {activeElement.width || 460}px
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        /* DIGITAL SIGNATURE CONTROLS */
+                        <>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[11px] font-bold text-slate-300">Kích thước chữ ký:</span>
+                            <input
+                              type="range"
+                              min="120"
+                              max="550"
+                              value={activeElement.width || 260}
+                              onChange={e => {
+                                const val = Number(e.target.value);
+                                const newHeight = Math.round(val * 0.46);
+                                updateActiveElement({ width: val, height: newHeight });
+                              }}
+                              className="w-32 accent-indigo-500 cursor-pointer"
+                            />
+                            <span className="text-xs font-mono font-bold text-indigo-300 w-12 text-center">
+                              {activeElement.width || 260}px
+                            </span>
+                          </div>
+
+                          {/* Quick Scale Buttons */}
+                          <div className="flex items-center gap-1.5 border-l border-slate-700 pl-3 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentW = activeElement.width || 260;
+                                const nextW = Math.max(120, currentW - 20);
+                                updateActiveElement({ width: nextW, height: Math.round(nextW * 0.46) });
+                              }}
+                              className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 transition-colors"
+                              title="Thu nhỏ chữ ký"
+                            >
+                              -20px
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentW = activeElement.width || 260;
+                                const nextW = Math.min(550, currentW + 20);
+                                updateActiveElement({ width: nextW, height: Math.round(nextW * 0.46) });
+                              }}
+                              className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs font-bold text-slate-200 transition-colors"
+                              title="Phóng to chữ ký"
+                            >
+                              +20px
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  {/* Delete Element Button */}
+                  <div className="ml-auto flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveElementId(null)}
+                      className="px-2.5 py-1 text-xs font-bold text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition-colors"
+                    >
+                      Bỏ chọn
+                    </button>
+                    <button
+                      type="button"
+                      onClick={deleteActiveElement}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-400 hover:text-white rounded-lg hover:bg-rose-600 transition-colors border border-rose-500/40"
+                      title="Xóa đối tượng này"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Xóa</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* EMPTY STATE GUIDANCE */
+                <div className="flex items-center justify-between w-full text-slate-400 text-xs">
+                  <div className="flex items-center gap-2">
+                    <MousePointer className="w-4 h-4 text-indigo-400 animate-bounce" />
+                    <span className="font-medium text-slate-300">
+                      Vui lòng click chọn một đoạn chữ hoặc hình ảnh trên thư khen để chỉnh sửa.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-slate-400">
+                    <button
+                      type="button"
+                      onClick={() => insertOrUpdateSignatureElement()}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer"
+                      title="Chèn chữ ký điện tử đã tách nền vào bản vẽ"
+                    >
+                      <FileSignature className="w-3.5 h-3.5" />
+                      <span>{teacherSignatureImage ? 'Chèn chữ ký ngay' : 'Tải & chèn chữ ký'}</span>
+                    </button>
+                    <span>•</span>
+                    <span>Di chuột: <strong className="text-indigo-300">Kéo vị trí</strong></span>
+                    <span>•</span>
+                    <span>Tỷ lệ Zoom: <strong className="text-emerald-300">{Math.round(previewScale * 100)}%</strong></span>
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Canvas Wrapper for scaling */}
+          {/* =========================================================================
+              2. CANVAS WORKSPACE (Centering & Scaling 1920x1080)
+          ========================================================================= */}
           <div 
-            className="relative shadow-2xl bg-white overflow-hidden ring-4 ring-white/10 flex-shrink-0 transition-transform origin-center"
-            style={{ 
-              width: `${canvasDim.width}px`, 
-              height: `${canvasDim.height}px`,
-              transform: `scale(${scaleMultiplier})`, 
-            }}
+            ref={previewContainerRef}
+            className="flex-1 flex items-center justify-center p-4 sm:p-6 overflow-hidden relative cursor-default"
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+            onClick={() => setActiveElementId(null)}
           >
-            {/* Capture Area */}
-            <div 
-              ref={certificateRef}
-              className={`absolute inset-0 w-full h-full ${activeTemplate.bgColor}`}
+            {/* MASTER 1920x1080 CANVAS CONTAINER */}
+            <div
+              className="relative shadow-2xl rounded-2xl overflow-hidden ring-4 ring-white/10 shrink-0"
               style={{
-                backgroundImage: activeTemplate.bgImage ? `url(${activeTemplate.bgImage})` : 'none',
-                backgroundSize: '100% 100%',
-                backgroundPosition: 'center',
+                width: `${CANVAS_WIDTH * previewScale}px`,
+                height: `${CANVAS_HEIGHT * previewScale}px`,
               }}
             >
-              
-              {/* Magic Layer Scanning Animation */}
-              {isMagicScanning && (
-                <div className="absolute inset-0 z-40 overflow-hidden pointer-events-none rounded-xl">
-                  <div className="absolute inset-0 bg-purple-900/20 backdrop-blur-[1px]"></div>
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-400 to-transparent shadow-[0_0_15px_#a855f7] animate-[scan_2s_ease-in-out_infinite]"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-slate-900/80 text-white px-6 py-3 rounded-full font-bold text-sm flex items-center gap-3 backdrop-blur shadow-2xl border border-purple-500/30">
-                      <Wand2 className="w-5 h-5 text-purple-400 animate-pulse" />
-                      {aiProcessingText || 'AI Magic Layer đang xử lý...'}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div
+                ref={certificatePrintRef}
+                id="certificate-print-node-1920"
+                className="select-none overflow-hidden relative bg-white"
+                style={{
+                  width: `${CANVAS_WIDTH}px`,
+                  height: `${CANVAS_HEIGHT}px`,
+                  transform: `scale(${previewScale})`,
+                  transformOrigin: 'top left',
+                  backgroundImage: `url(${activeTemplate.url})`,
+                  backgroundSize: '100% 100%',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                }}
+              >
+                
+                {/* RENDER DRAGGABLE & SELECTABLE ELEMENTS */}
+                {elements.map(el => {
+                  const isActive = activeElementId === el.id;
 
-              {/* Overlay Elements */}
-              {elements.map(el => {
-                const isSelected = selectedElementId === el.id;
-                return (
-                  <div
-                    key={el.id}
-                    className={`absolute cursor-move group ${isSelected ? 'ring-1 ring-purple-500 bg-purple-500/5' : 'hover:ring-1 hover:ring-purple-400/50'}`}
-                    style={{
-                      left: el.x,
-                      top: el.y,
-                      width: el.width ? `${el.width}px` : 'auto',
-                      height: el.height ? `${el.height}px` : 'auto',
-                      zIndex: isSelected ? 50 : 10
-                    }}
-                    onMouseDown={(e) => handleMouseDown(e, el.id)}
-                    onClick={(e) => { e.stopPropagation(); setSelectedElementId(el.id); }}
-                  >
-                    {isSelected && (
-                      <>
-                        <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border border-purple-500 rounded-full cursor-nwse-resize"></div>
-                        <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border border-purple-500 rounded-full cursor-nesw-resize"></div>
-                        <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border border-purple-500 rounded-full cursor-nesw-resize"></div>
-                        <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border border-purple-500 rounded-full cursor-nwse-resize"></div>
-                      </>
-                    )}
-
-                    {el.type === 'text' && (
-                      <div 
+                  if (el.type === 'text') {
+                    return (
+                      <div
+                        key={el.id}
+                        onClick={(e) => {
+                          if (!isEditMode) return;
+                          e.stopPropagation();
+                          setActiveElementId(el.id);
+                        }}
+                        onMouseDown={(e) => handleElementMouseDown(e, el.id)}
+                        className={`absolute select-none transition-shadow ${
+                          isEditMode ? 'cursor-move' : 'cursor-default'
+                        } ${
+                          /* FOCUS RING: Viền nét đứt màu xanh dương bao quanh khi active */
+                          isActive && isEditMode
+                            ? 'ring-4 ring-blue-500 ring-offset-4 ring-offset-transparent border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-xl shadow-xl' 
+                            : isEditMode ? 'hover:ring-2 hover:ring-indigo-300/70 rounded-md bg-transparent' : 'bg-transparent'
+                        }`}
                         style={{
+                          left: `${el.x}px`,
+                          top: `${el.y}px`,
+                          width: el.width ? `${el.width}px` : 'auto',
                           fontSize: `${el.fontSize}px`,
                           fontFamily: el.fontFamily,
                           color: el.color,
                           fontWeight: el.fontWeight || 'normal',
                           fontStyle: el.fontStyle || 'normal',
-                          textAlign: el.textAlign || 'left',
-                          whiteSpace: 'pre-wrap',
-                          lineHeight: 1.2
+                          textAlign: el.textAlign || 'center',
+                          letterSpacing: el.letterSpacing || 'normal',
+                          lineHeight: el.lineHeight || 1.3,
+                          textTransform: el.textTransform || 'none',
+                          whiteSpace: 'nowrap',
+                          zIndex: isActive ? 40 : 20,
+                          padding: '6px 10px',
                         }}
                       >
                         {el.content}
                       </div>
-                    )}
+                    );
+                  }
 
-                    {el.type === 'avatar' && (
-                      <img 
-                        src={el.content} 
-                        alt="Avatar" 
-                        className="w-full h-full rounded-full border-4 border-white shadow-xl object-cover"
-                        draggable={false}
-                      />
-                    )}
+                  if (el.type === 'image') {
+                    const bw = el.borderWidth !== undefined ? el.borderWidth : 10;
+                    const bc = el.borderColor || '#ffffff';
+                    const isAvatar = Boolean(el.isCircleImage);
 
-                    {el.type === 'signature' && (
-                      <img 
-                        src={el.content} 
-                        alt="Signature" 
-                        className="w-full h-auto object-contain drop-shadow"
-                        style={el.removeBg ? { mixBlendMode: 'multiply', filter: 'contrast(1.5) grayscale(1)' } : {}}
-                        draggable={false}
-                      />
-                    )}
-                  </div>
-                );
-              })}
+                    return (
+                      <div
+                        key={el.id}
+                        onClick={(e) => {
+                          if (!isEditMode) return;
+                          e.stopPropagation();
+                          setActiveElementId(el.id);
+                        }}
+                        onMouseDown={(e) => handleElementMouseDown(e, el.id)}
+                        className={`absolute select-none transition-all ${
+                          isEditMode ? 'cursor-move' : 'cursor-default'
+                        } ${
+                          /* FOCUS RING: Viền nét đứt màu xanh dương bao quanh khi active */
+                          isActive && isEditMode
+                            ? isAvatar
+                              ? 'ring-8 ring-blue-500 ring-offset-8 ring-offset-transparent shadow-2xl scale-105'
+                              : 'ring-4 ring-blue-500 ring-offset-2 ring-offset-transparent border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-xl shadow-lg'
+                            : isEditMode 
+                              ? isAvatar ? 'hover:ring-4 hover:ring-indigo-300' : 'hover:ring-2 hover:ring-indigo-300/70 rounded-lg'
+                              : ''
+                        }`}
+                        style={{
+                          left: `${el.x}px`,
+                          top: `${el.y}px`,
+                          width: `${el.width || (isAvatar ? 460 : 260)}px`,
+                          height: `${el.height || (isAvatar ? 460 : 120)}px`,
+                          borderRadius: isAvatar ? '50%' : '8px',
+                          overflow: 'hidden',
+                          border: isAvatar ? `${bw}px solid ${bc}` : (bw > 0 ? `${bw}px solid ${bc}` : 'none'),
+                          boxShadow: isAvatar ? (el.boxShadow || '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 4px #fbbf24') : 'none',
+                          backgroundColor: isAvatar ? '#e2e8f0' : 'transparent',
+                          zIndex: isActive ? 40 : 20,
+                        }}
+                      >
+                        {el.content ? (
+                          <img
+                            src={el.content}
+                            alt={isAvatar ? "Student Avatar" : "Chữ ký giáo viên"}
+                            className={`w-full h-full pointer-events-none ${isAvatar ? 'object-cover' : 'object-contain'}`}
+                            draggable={false}
+                          />
+                        ) : isAvatar ? (
+                          <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-700 font-black text-7xl">
+                            {previewStudent?.name?.charAt(0) || 'A'}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }
 
+                  return null;
+                })}
+
+              </div>
             </div>
-          </div>
 
-          <div className="absolute bottom-6 bg-white rounded-xl shadow-2xl p-2.5 flex space-x-3 items-center border border-slate-200 z-20" onClick={e => e.stopPropagation()}>
-            <div className="text-xs font-bold text-slate-500 px-3">
-              Đã chọn: <span className="text-indigo-600">{selectedStudents.length}</span> HS
-            </div>
-            <button 
-              onClick={handleDownload}
-              disabled={!previewStudentId || isGenerating || selectedStudents.length === 0}
-              className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-sm uppercase rounded-lg hover:shadow-lg transition-all flex items-center disabled:opacity-50 relative overflow-hidden"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> 
-                  ĐANG XUẤT ẢNH ({generationProgress}%)
-                  <div className="absolute bottom-0 left-0 h-1 bg-white/50" style={{ width: `${generationProgress}%` }}></div>
-                </>
-              ) : (
-                <><Download className="w-4 h-4 mr-2" /> XUẤT HÀNG LOẠT {selectedStudents.length > 1 ? `(${selectedStudents.length})` : ''}</>
-              )}
-            </button>
+            {/* Bottom Export Overlay Progress (Visible during batch export) */}
+            {isExporting && (
+              <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white animate-in fade-in">
+                <div className="w-20 h-20 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin flex items-center justify-center mb-6">
+                  <Award className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h2 className="text-xl font-black uppercase tracking-wider mb-2">
+                  ĐANG KẾT XUẤT THƯ KHEN FULL HD (1920 × 1080)
+                </h2>
+                <p className="text-sm text-slate-300 font-medium mb-4">
+                  {exportMessage}
+                </p>
+                
+                {/* Progress Bar */}
+                <div className="w-80 h-3 rounded-full bg-slate-800 overflow-hidden border border-slate-700">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-green-400 transition-all duration-300"
+                    style={{ width: `${exportProgress}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs font-mono font-bold text-emerald-400 mt-2">
+                  {exportProgress}% hoàn thành
+                </span>
+              </div>
+            )}
           </div>
 
         </div>
+
       </div>
+
     </div>
   );
 };

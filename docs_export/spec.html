@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tài Liệu Đặc Tả Chi Tiết Hệ Thống - Lớp Học Hạnh Phúc v4.0</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    @page {
+      size: A4;
+      margin: 15mm 15mm 18mm 15mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.6;
+      color: #1e293b;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Cover Page */
+    .cover-page {
+      page-break-after: always;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 20px;
+      border: 3px double #3b82f6;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #f8fafc 0%, #eff6ff 100%);
+    }
+
+    .cover-header {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      padding: 6px 18px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 11pt;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 25px;
+    }
+
+    .cover-title {
+      font-size: 28pt;
+      font-weight: 800;
+      color: #1e3a8a;
+      line-height: 1.25;
+      margin: 0 0 15px 0;
+      text-transform: uppercase;
+    }
+
+    .cover-subtitle {
+      font-size: 15pt;
+      font-weight: 600;
+      color: #0284c7;
+      margin: 0 0 25px 0;
+    }
+
+    .cover-desc {
+      font-size: 11pt;
+      color: #475569;
+      max-width: 650px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .cover-metadata {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 20px 25px;
+      margin: 30px auto;
+      width: 90%;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px dashed #e2e8f0;
+      font-size: 10.5pt;
+    }
+    .meta-row:last-child {
+      border-bottom: none;
+    }
+    .meta-label {
+      font-weight: 600;
+      color: #334155;
+    }
+    .meta-value {
+      font-weight: 500;
+      color: #0f172a;
+    }
+
+    .cover-footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 9.5pt;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 15px;
+    }
+
+    /* Headings */
+    h1 {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #1e3a8a;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 6px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      page-break-after: avoid;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #0369a1;
+      border-left: 4px solid #0284c7;
+      padding-left: 10px;
+      margin-top: 25px;
+      margin-bottom: 12px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+
+    h4 {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #475569;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      margin: 0 0 10px 0;
+      text-align: justify;
+    }
+
+    /* Page Breaks */
+    .page-break {
+      page-break-after: always;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 8.5pt;
+      letter-spacing: 0.5px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    /* Callouts & Badges */
+    .callout {
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin: 14px 0;
+      font-size: 10pt;
+    }
+
+    .callout-warning {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    .callout-success {
+      border-left-color: #10b981;
+      background: #ecfdf5;
+    }
+
+    .callout-danger {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      font-size: 8pt;
+      font-weight: 600;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .badge-primary { background: #dbeafe; color: #1e40af; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+
+    /* Code blocks */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+      background: #f1f5f9;
+      color: #b91c1c;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin: 12px 0;
+      page-break-inside: avoid;
+    }
+
+    ul, ol {
+      margin: 0 0 12px 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    .feature-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 15px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .feature-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .feature-card-title {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #1e40af;
+      margin: 0;
+    }
+
+    .btn-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #1e293b;
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TRANG BÌA -->
+  <div class="cover-page">
+    <div class="cover-header">
+      <div class="cover-badge">TÀI LIỆU ĐẶC TẢ KỸ THUẬT & KIẾN TRÚC NGHIỆP VỤ</div>
+      <h1 class="cover-title">NỀN TẢNG QUẢN LÝ LỚP HỌC HẠNH PHÚC</h1>
+      <div class="cover-subtitle">HAPPY CLASSROOM ECOSYSTEM — PHIÊN BẢN v4.0 ENTERPRISE</div>
+      <p class="cover-desc">
+        Tài liệu đặc tả toàn diện về triết lý giáo dục, mô hình kiến trúc dữ liệu, ma trận phân quyền,
+        17 phân hệ chức năng, các ràng buộc logic bất khả xâm phạm và quy trình tương tác chi tiết từng nút lệnh.
+        Tài liệu được biên soạn làm cơ sở dữ liệu tri thức chuẩn (Master Knowledge Base) phục vụ việc huấn luyện,
+        kết hợp cùng mô hình ngôn ngữ lớn (ChatGPT/AI) để phát triển và mở rộng tính năng.
+      </p>
+    </div>
+
+    <div class="cover-metadata">
+      <div class="meta-row">
+        <span class="meta-label">Tên phần mềm:</span>
+        <span class="meta-value">Hệ Thống Quản Lý Lớp Học Hạnh Phúc (Web LOP HOC HANH PHUC)</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Phiên bản hiện hành:</span>
+        <span class="meta-value">v4.0.0 — Build 2026</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Tác giả & Chủ nhiệm dự án:</span>
+        <span class="meta-value">Thầy giáo Nguyễn Thanh Liêm (Đơn vị công tác ngành giáo dục)</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Kiến trúc công nghệ:</span>
+        <span class="meta-value">React 19, TypeScript, Vite, TailwindCSS v4, Supabase Realtime, Express</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Cơ chế lưu trữ:</span>
+        <span class="meta-value">Hybrid 3-Tier Resilience (Supabase Cloud ➡️ Local JSON ➡️ LocalStorage)</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Mục đích sử dụng:</span>
+        <span class="meta-value">Đặc tả hệ thống để nạp vào ChatGPT sinh prompt phát triển phần mềm chuyên sâu</span>
+      </div>
+    </div>
+
+    <div class="cover-footer">
+      <strong>BẢN QUYỀN THUỘC VỀ DỰ ÁN LỚP HỌC HẠNH PHÚC — NĂM HỌC 2026 - 2027</strong><br>
+      Tài liệu mật nội bộ — Lưu hành cho đội ngũ phát triển và chuyên gia kiến trúc phần mềm
+    </div>
+  </div>
+
+  <!-- PHẦN 1 -->
+  <h1>PHẦN 1: TỔNG QUAN, TRIẾT LÝ & Ý NGHĨA GIÁO DỤC CỦA PHẦN MỀM</h1>
+  
+  <h2>1.1. Tên gọi và Định danh Phần mềm</h2>
+  <ul>
+    <li><strong>Tên chính thức:</strong> Hệ Thống Quản Lý Giáo Dục Số "Lớp Học Hạnh Phúc" (Happy Classroom Ecosystem).</li>
+    <li><strong>Mã định danh dự án:</strong> <code>web-lop-hoc-hanh-phuc</code> | Kho mã nguồn trung tâm: <code>thanhliemcnttedu-cpu/lhhp</code>.</li>
+    <li><strong>Đối tượng thụ hưởng:</strong> Giáo viên chủ nhiệm, Giáo viên bộ môn (Tiểu học, THCS), Ban Giám Hiệu nhà trường, Cán bộ quản lý giáo dục, Phụ huynh và Học sinh.</li>
+  </ul>
+
+  <h2>1.2. Ý nghĩa và Sứ mệnh Giáo dục</h2>
+  <p>
+    Phần mềm "Lớp Học Hạnh Phúc" được thiết kế bắt nguồn từ tinh thần chỉ đạo của Bộ Giáo dục & Đào tạo về xây dựng mô hình
+    <em>"Trường học hạnh phúc - Lớp học thông minh"</em>. Trong mô hình này, người thầy không đóng vai trò một người giám sát áp đặt,
+    mà là người truyền cảm hứng, đồng hành và nuôi dưỡng tình yêu thương, kỷ luật tích cực và sự công bằng.
+  </p>
+  <div class="callout callout-success">
+    <strong>3 Trụ cột cốt lõi của Lớp Học Hạnh Phúc:</strong>
+    <ol>
+      <li><strong>Yêu thương (Love & Empathy):</strong> Mọi học sinh đều được tôn trọng sự khác biệt, được ghi nhận sự tiến bộ cá nhân thay vì chỉ so sánh điểm số khô khan.</li>
+      <li><strong>An toàn (Psychological Safety):</strong> Không gian lớp học tích cực, không dùng hình phạt làm tổn thương tinh thần học sinh; thay thế việc phạt bằng việc hướng dẫn và rèn luyện hành vi qua hệ thống tiêu chí rõ ràng.</li>
+      <li><strong>Tôn trọng & Tích cực (Gamification & Growth Mindset):</strong> Ứng dụng kỹ thuật trò chơi hóa (tích lũy xu hoa điểm tốt, đổi quà, vinh danh giấy khen, vòng quay may mắn) giúp học sinh hào hứng học tập mỗi ngày.</li>
+    </ol>
+  </div>
+
+  <h2>1.3. Khung Công nghệ Hiện Đại (Technology Stack)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Thành phần</th>
+        <th style="width: 35%;">Công nghệ sử dụng</th>
+        <th style="width: 40%;">Mục đích & Tính năng đặc thù</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Frontend Core</strong></td>
+        <td>React 19, TypeScript, Vite 8</td>
+        <td>Hiệu năng phản hồi tức thì (&lt;16ms), kiểm soát chặt chẽ kiểu dữ liệu, không có lỗi runtime.</td>
+      </tr>
+      <tr>
+        <td><strong>Styling & Motion</strong></td>
+        <td>TailwindCSS v4, Motion (Framer Motion v12)</td>
+        <td>Giao diện đồ họa Glassmorphism, hiệu ứng chuyển cảnh mượt mà, micro-animations sinh động.</td>
+      </tr>
+      <tr>
+        <td><strong>Âm thanh & Hiệu ứng</strong></td>
+        <td>Web Audio API Synth, Canvas Confetti</td>
+        <td>Tạo âm thanh đồng xu leng keng, chuông reo vinh danh, pháo hoa nổ khi trao thưởng mà không phụ thuộc file mp3 ngoài.</td>
+      </tr>
+      <tr>
+        <td><strong>Trí tuệ nhân tạo (AI)</strong></td>
+        <td>Google Gemini 2.5/3.0 SDK (@google/genai)</td>
+        <td>Trợ lý sư phạm: Soạn bài, trắc nghiệm, nhận xét học bạ Thông tư 27/22, thư gửi phụ huynh.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend & Database</strong></td>
+        <td>Supabase PostgreSQL, Express API, TSX Node.js</td>
+        <td>Lưu trữ đám mây tự động, kênh truyền Realtime, kiểm toán người dùng và sao lưu định kỳ.</td>
+      </tr>
+      <tr>
+        <td><strong>Xử lý File & Đồ họa</strong></td>
+        <td>XLSX (SheetJS), JSZip, jsPDF, html-to-image</td>
+        <td>Nhập/xuất danh sách Excel, tạo bản sao lưu ZIP mã hóa, xuất giấy khen/báo cáo ảnh chất lượng cao.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- PHẦN 2 -->
+  <h1>PHẦN 2: KIẾN TRÚC DỮ LIỆU & CƠ CHẾ BẢO VỆ TOÀN VẸN (ZERO DATA LOSS)</h1>
+
+  <h2>2.1. Cơ chế Lưu trữ và Dự phòng 3 Lớp (3-Tier Resilience Architecture)</h2>
+  <p>
+    Một trong những quy tắc bất khả xâm phạm của hệ thống là <strong>Không bao giờ làm mất dữ liệu của giáo viên</strong>.
+    Ứng dụng được thiết kế theo mô hình <em>Local-First kết hợp Cloud-Sync</em> thông qua 3 tầng lưu trữ độc lập:
+  </p>
+  
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">Mô hình Truy xuất & Dự phòng 3 Tầng</h3>
+      <span class="badge badge-primary">Resilience Pattern</span>
+    </div>
+    <ol>
+      <li>
+        <strong>Tầng 1 - Supabase Cloud Database (Đám mây đồng bộ trực tuyến):</strong><br>
+        Lưu trữ toàn bộ tài khoản người dùng, hồ sơ trường học, dữ liệu học sinh, điểm danh, thời khóa biểu và ngân hàng câu hỏi trên Supabase PostgreSQL.
+        Được kết nối qua <code>SupabaseClient</code> với kênh Realtime WebSocket để tự động đồng bộ tức thì giữa các thiết bị của cùng một giáo viên.
+      </li>
+      <li>
+        <strong>Tầng 2 - Local JSON Server Database (Máy chủ cục bộ nội bộ):</strong><br>
+        Nếu kết nối Internet gặp sự cố hoặc giáo viên làm việc trong phòng máy không có mạng ngoài, các API của Express Server (<code>server.ts</code>)
+        sẽ ghi nhận dữ liệu vào các tệp tin cấu trúc JSON trên ổ đĩa máy tính.
+      </li>
+      <li>
+        <strong>Tầng 3 - LocalStorage Fallback (Bộ nhớ trình duyệt dự phòng):</strong><br>
+        Được tiền tố bằng <code>lop_hoc_user_db_{username}</code>. Mỗi khi người dùng bấm bất kỳ thao tác nào (cộng điểm, điểm danh, đổi chỗ ngồi),
+        dữ liệu lập tức được ghi vào LocalStorage trong vòng 5 mili-giây, ngăn chặn tuyệt đối tình huống mất dữ liệu do mất điện đột ngột hoặc đóng tab.
+      </li>
+    </ol>
+  </div>
+
+  <h2>2.2. Giao thức Đồng bộ Realtime & Chống Vòng Lặp Phản Hồi (Echo Loop Prevention)</h2>
+  <ul>
+    <li>
+      <strong>Định danh thiết bị duy nhất (<code>CLIENT_ID</code>):</strong> Mỗi tab trình duyệt khi mở ra sẽ sinh một mã định danh ngẫu nhiên
+      <code>client_{timestamp}_{random}</code>. Khi gửi dữ liệu đồng bộ lên kênh Realtime, payload luôn đính kèm <code>originClientId</code>.
+    </li>
+    <li>
+      <strong>Bộ lọc thông minh:</strong> Các client lắng nghe sẽ bỏ qua các thông điệp có <code>originClientId === CLIENT_ID</code>,
+      ngăn chặn việc chính tab vừa chỉnh sửa lại tự áp đặt cập nhật lên chính nó, gây giật lag hoặc mất focus nhập liệu.
+    </li>
+    <li>
+      <strong>Kênh liên lạc nội bộ (<code>BroadcastChannel</code>):</strong> Cho phép các tab trình duyệt khác nhau trên cùng một máy tính cập nhật
+      thay đổi của nhau tức thời mà không cần tiêu tốn băng thông gọi ra ngoài Internet.
+    </li>
+  </ul>
+
+  <h2>2.3. Giao thức Hợp Nhất Không Hủy Diệt (Non-Destructive Smart Merge)</h2>
+  <div class="callout callout-warning">
+    <strong>QUY TẮC SỐNG CÒN KHI NÂNG CẤP VÀ ĐỒNG BỘ:</strong><br>
+    Khi đồng bộ mã nguồn lên web GitHub hoặc đồng bộ database từ máy phát triển lên đám mây, hệ thống TUYỆT ĐỐI KHÔNG ĐƯỢC ĐÈ
+    hoặc xóa dữ liệu 30 lớp học và hàng ngàn học sinh thực tế đang được các thầy cô trên toàn quốc sử dụng.
+    Thuật toán <code>smartMergeUserData()</code> sẽ so sánh theo ID và Timestamp: Chỉ cập nhật các thuộc tính mới của hệ thống (Schema Migration),
+    giữ nguyên 100% tên học sinh, điểm số, lịch sử giao dịch và dữ liệu cá nhân của các thầy cô.
+  </div>
+
+  <h2>2.4. Cơ chế Bảo Toàn Ảnh Gốc Học Sinh & Giáo Viên</h2>
+  <p>
+    Khác với các phần mềm thông thường chỉ lưu ảnh đã bị nén hoặc crop méo mó, "Lớp Học Hạnh Phúc" sử dụng cơ chế lưu trữ đôi:
+  </p>
+  <ul>
+    <li><code>originalAvatar</code>: Giữ nguyên ảnh gốc độ phân giải cao do người dùng tải lên từ máy tính hoặc camera.</li>
+    <li><code>avatarScale</code>: Tỉ lệ zoom động (từ 0.8 đến 2.5 lần).</li>
+    <li><code>avatarPosition</code>: Tọa độ x, y người dùng đã di chuyển để căn chỉnh tâm khuôn mặt.</li>
+    <li><code>avatar</code>: Ảnh nén hiển thị nhanh dạng Canvas preview. Nhờ đó, bất cứ lúc nào giáo viên mở lại bộ chỉnh sửa ảnh thì ảnh vẫn giữ trọn vẹn chất lượng ban đầu mà không bị vỡ hạt.</li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <!-- PHẦN 3 -->
+  <h1>PHẦN 3: MÔ HÌNH PHÂN QUYỀN (RBAC) & 5 VAI TRÒ ĐĂNG NHẬP</h1>
+
+  <h2>3.1. Danh mục 5 Phạm vi Vai trò Đăng nhập (Login Role Scope)</h2>
+  <p>
+    Hệ thống hỗ trợ cơ chế đa khách thuê (Multi-Tenant) linh hoạt, phục vụ cả giáo viên sử dụng độc lập lẫn các trường học triển khai đồng bộ:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 20%;">Phạm vi Đăng nhập</th>
+        <th style="width: 15%;">Mã kỹ thuật</th>
+        <th style="width: 35%;">Đối tượng & Quyền hạn</th>
+        <th style="width: 30%;">Ràng buộc & Phạm vi dữ liệu</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>a. Vai trò Cá Nhân</strong></td>
+        <td><code>personal_teacher</code></td>
+        <td>Giáo viên tự do đăng ký sử dụng cho riêng lớp mình quản lý.</td>
+        <td>Toàn quyền trên Workspace cá nhân của mình, không xem được dữ liệu của trường hay giáo viên khác.</td>
+      </tr>
+      <tr>
+        <td><strong>b. Giáo viên Nhà Trường</strong></td>
+        <td><code>school_teacher</code></td>
+        <td>Giáo viên thuộc biên chế của một trường học đã ký hợp đồng hệ thống.</td>
+        <td>Thuộc về một <code>schoolId</code> cụ thể. BGH và Quản trị trường có thể xem báo cáo tổng hợp của giáo viên này.</td>
+      </tr>
+      <tr>
+        <td><strong>c. Quản trị Nhà Trường</strong></td>
+        <td><code>school_admin</code></td>
+        <td>Quản trị viên công nghệ thông tin của trường học.</td>
+        <td>Cấp tài khoản giáo viên cho trường, phân công lớp dạy, khóa/mở tài khoản, xuất báo cáo toàn trường.</td>
+      </tr>
+      <tr>
+        <td><strong>d. Quản trị Cá Nhân</strong></td>
+        <td><code>guest_admin</code></td>
+        <td>Quản trị viên phụ trách tệp khách hàng giáo viên cá nhân vãng lai.</td>
+        <td>Quản lý danh sách giáo viên cá nhân, kích hoạt bản quyền cá nhân, hỗ trợ kỹ thuật riêng lẻ.</td>
+      </tr>
+      <tr>
+        <td><strong>e. Quản trị Tối Cao (Admin)</strong></td>
+        <td><code>admin</code></td>
+        <td>Chủ quản hệ thống (Super Admin).</td>
+        <td>Toàn quyền tối cao: Quản lý các trường, duyệt đơn đăng ký bản quyền, phân bổ hạn mức, sao lưu cơ sở dữ liệu toàn quốc.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3.2. Vai trò Nghiệp vụ Sư phạm: Giáo viên Chủ nhiệm vs Giáo viên Bộ môn</h2>
+  <p>
+    Hệ thống phân tách giao diện rất sâu sắc giữa hai hình thái giảng dạy trong trường phổ thông:
+  </p>
+
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">1. Giáo viên Chủ nhiệm (Homeroom Teacher - <code>teacherRole: 'homeroom'</code>)</h3>
+      <span class="badge badge-success">Toàn diện 1 Lớp</span>
+    </div>
+    <ul>
+      <li><strong>Trọng tâm:</strong> Quản lý 1 hoặc vài lớp cố định. Quản trị nề nếp, đạo đức và mọi mặt học sinh.</li>
+      <li><strong>Các chức năng đặc thù:</strong> Điểm danh buổi sáng/chiều, Quản lý ăn bán trú, Sơ đồ chỗ ngồi trong lớp, Bảng Infographic số hóa lớp học, Ban đại diện phụ huynh học sinh.</li>
+    </ul>
+  </div>
+
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">2. Giáo viên Bộ môn (Subject Teacher - <code>teacherRole: 'subject'</code>)</h3>
+      <span class="badge badge-primary">Đa Lớp Học</span>
+    </div>
+    <ul>
+      <li><strong>Trọng tâm:</strong> Giảng dạy chuyên sâu một hoặc nhiều môn (Tin học, Tiếng Anh, Mỹ thuật, Âm nhạc...) cho 10 đến 30 lớp học khác nhau.</li>
+      <li><strong>Cơ chế tự động ẩn menu:</strong> Tự động ẩn 3 menu không thuộc quyền quản lý (Điểm danh, Sơ đồ lớp, Infographic) để giao diện gọn gàng, tránh nhầm lẫn với giáo viên chủ nhiệm.</li>
+      <li><strong>Chức năng đặc thù:</strong> Bảng điều khiển đa lớp (Subject Teacher Dashboard), Thời khóa biểu chuyên biệt theo tiết/phòng/lớp, Điểm xu tích lũy lưu riêng cho từng môn học (không làm vỡ tổng xu của lớp).</li>
+    </ul>
+  </div>
+
+  <h2>3.3. Cơ chế Tài khoản Dùng thử (Demo Account Guardrails)</h2>
+  <ul>
+    <li>Tài khoản có username bắt đầu bằng <code>demo</code> hoặc có cờ <code>isDemo: true</code>.</li>
+    <li><strong>Giới hạn cứng (Hard Limit):</strong> Chỉ cho phép quản lý tối đa <strong>10 học sinh</strong> trong danh sách. Nếu thêm học sinh thứ 11, hệ thống hiển thị thông báo yêu cầu đăng ký bản quyền.</li>
+    <li><strong>Banner cảnh báo liên tục:</strong> Hiển thị thông điệp màu vàng cam trên thanh trạng thái nhắc nhở giáo viên nâng cấp tài khoản chính thức.</li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <!-- PHẦN 4 -->
+  <h1>PHẦN 4: MÔ HÌNH CƠ SỞ DỮ LIỆU & DATA SCHEMAS CHI TIẾT</h1>
+
+  <h2>4.1. Thực thể Học sinh (Student Entity) & Cán bộ lớp</h2>
+  <pre><code>export interface Student {
+  id: string;               // Khóa chính UUID (ví dụ: 'st_172839210')
+  classId: string;          // Khóa ngoại trỏ đến Classroom.id
+  stt: number;              // Số thứ tự trong sổ điểm (1, 2, 3...)
+  name: string;             // Họ và tên học sinh (ví dụ: 'Nguyễn Văn An')
+  birthDate?: string;       // Ngày sinh (dd/mm/yyyy hoặc yyyy-mm-dd)
+  gender: 'Nam' | 'Nữ';     // Giới tính học sinh
+  avatar: string;           // Ảnh hiển thị (Base64 hoặc URL đã xử lý)
+  originalAvatar?: string;  // Ảnh gốc độ nét cao tải từ máy tính
+  avatarScale: number;      // Tỉ lệ thu phóng ảnh đại diện (0.8 - 2.5)
+  avatarPosition: { x: number; y: number }; // Tọa độ căn tâm ảnh
+  points: number;           // Tổng số xu hạnh phúc tích lũy toàn bộ
+  subjectPoints?: Record&lt;string, number&gt;; // Điểm xu theo môn: { 'Tin học': 15, 'Toán': 8 }
+  group?: string;           // Phân tổ thi đua: 'Tổ 1', 'Tổ 2', 'Tổ 3', 'Tổ 4'
+  role?: string;            // Chuỗi mô tả chức vụ ('LỚP TRƯỞNG • TỔ TRƯỞNG TỔ 1')
+  roles?: string[];         // Mảng tối đa 3 chức vụ đồng thời: ['monitor', 'team_leader_1']
+}</code></pre>
+
+  <h2>4.2. Hệ thống Chức vụ Cán bộ Lớp Chuẩn hóa (Class Officer Roles)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 20%;">Mã Chức vụ (ID)</th>
+        <th style="width: 25%;">Tên chức vụ hiển thị</th>
+        <th style="width: 15%;">Biểu tượng</th>
+        <th style="width: 40%;">Màu sắc huy hiệu & Ý nghĩa</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>monitor</code></td><td>LỚP TRƯỞNG</td><td>👑 Vương miện</td><td>Vàng kim (Amber) - Quản lý bao quát chung toàn lớp.</td></tr>
+      <tr><td><code>academic_deputy</code></td><td>LỚP PHÓ HỌC TẬP</td><td>📘 Sách xanh</td><td>Xanh lam (Blue) - Phụ trách đôn đốc bài vở, học tập.</td></tr>
+      <tr><td><code>activity_deputy</code></td><td>LỚP PHÓ PHONG TRÀO</td><td>🚩 Cờ đỏ</td><td>Cam đỏ (Orange) - Phụ trách văn nghệ, thể dục, vệ sinh.</td></tr>
+      <tr><td><code>team_leader_1 .. 4</code></td><td>TỔ TRƯỞNG TỔ 1 - 4</td><td>🥇 Huy chương</td><td>Xanh lục, Lam, Tím, Hồng - Quản lý thi đua từng tổ.</td></tr>
+      <tr><td><code>team_vice_1 .. 4</code></td><td>TỔ PHÓ TỔ 1 - 4</td><td>🥈 Huy chương bạc</td><td>Teal, Cyan, Fuchsia, Pink - Hỗ trợ tổ trưởng theo dõi tổ.</td></tr>
+      <tr><td><code>custom</code></td><td>Chức vụ tự chọn</td><td>⭐ Sao sáng</td><td>Tím Indigo - Ban chỉ huy chi đội, Quản ca, Cờ đỏ...</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4.3. Thực thể Lớp học (Classroom Entity) & Ban Đại diện Phụ huynh</h2>
+  <pre><code>export interface Classroom {
+  id: string;               // UUID lớp (ví dụ: 'class-4a1')
+  name: string;             // Tên lớp (ví dụ: 'Lớp 4A1')
+  grade: string;            // Khối lớp: 'Khối 1', 'Khối 2', ..., 'Khối 5'
+  color: string;            // Mã màu định danh lớp (Hex hoặc Tailwind)
+  academicYear: string;     // Năm học (ví dụ: '2026 - 2027')
+  teacherName?: string;     // Tên giáo viên phụ trách
+  teacherUsername?: string; // Tài khoản đăng nhập của giáo viên phụ trách
+  teacherRole?: 'homeroom' | 'subject'; // Vai trò phân công
+  avatar?: string;          // Ảnh đại diện của lớp học
+  originalAvatar?: string;  // Ảnh gốc của lớp học
+  avatarScale?: number;     // Tỉ lệ zoom ảnh lớp
+  avatarPosition?: { x: number; y: number }; // Tọa độ căn chỉnh ảnh lớp
+  slogan?: string;          // Khẩu hiệu lớp: "Đoàn kết - Sáng tạo - Tự tin"
+  parentCommittee?: {       // Ban đại diện cha mẹ học sinh
+    head: { name: string; phone: string; roleTitle?: string };   // Trưởng ban
+    deputy: { name: string; phone: string; roleTitle?: string }; // Phó ban
+    member1: { name: string; phone: string; roleTitle?: string };// Ủy viên 1
+    member2: { name: string; phone: string; roleTitle?: string };// Ủy viên 2
+  };
+}</code></pre>
+
+  <h2>4.4. Điểm danh (Attendance) & Bán trú (Boarding)</h2>
+  <ul>
+    <li>
+      <strong>6 Trạng thái Điểm danh chuyên cần (<code>AttendanceStatus</code>):</strong><br>
+      <code>present</code> (Có mặt - tích xanh), <code>late</code> (Đi muộn - vàng), <code>excused</code> (Nghỉ có phép - xanh dương),
+      <code>unexcused</code> (Nghỉ không phép - đỏ đậm), <code>sick</code> (Nghỉ ốm - tím), <code>other</code> (Lý do khác - xám).
+    </li>
+    <li>
+      <strong>3 Trạng thái Suất ăn Bán trú (<code>BoardingStatus</code>):</strong><br>
+      <code>eating</code> (Ăn bán trú tại trường), <code>not_eating</code> (Về nhà ăn trưa), <code>absent_meal</code> (Có đăng ký nhưng hôm nay báo cắt suất).
+    </li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <!-- PHẦN 5 -->
+  <h1>PHẦN 5: CHI TIẾT 17 MÀN HÌNH CHỨC NĂNG (VIEWS) & CÁCH THỨC HOẠT ĐỘNG</h1>
+
+  <!-- VIEW 1 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">1. DashboardView — Bảng Điều Khiển Trung Tâm</h3>
+      <span class="badge badge-primary">ID: dashboard</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Màn hình đầu tiên khi giáo viên vào lớp. Cung cấp góc nhìn toàn cảnh về tình hình lớp trong ngày: sĩ số, điểm danh, xu thưởng, thời khóa biểu hôm nay, top học sinh tiêu biểu và câu châm ngôn giáo dục truyền cảm hứng từ AI.</p>
+    <h4>Danh sách Nút lệnh & Tương tác:</h4>
+    <ul>
+      <li><span class="btn-badge">Nút Chuyển Lớp (Class Selector)</span>: Dropdown chọn lớp học muốn quan sát.</li>
+      <li><span class="btn-badge">Thẻ Thống Kê Nhanh</span>: Nhấp vào "Chuyên cần" để chuyển sang trang Điểm danh; nhấp vào "Tổng xu thưởng" để chuyển sang Tuyên dương; nhấp vào "Cửa hàng quà" để vào Đổi quà.</li>
+      <li><span class="btn-badge">Nút "Lấy câu nói truyền cảm hứng mới" (AI Quote)</span>: Gọi Gemini AI sinh câu danh ngôn sư phạm tích cực mỗi buổi sáng.</li>
+      <li><span class="btn-badge">Bảng Vinh Danh Top 5 Học Sinh</span>: Hiển thị học sinh có điểm xu cao nhất tuần, có nút tặng xu khích lệ nhanh kèm hiệu ứng âm thanh leng keng và pháo hoa.</li>
+      <li><span class="btn-badge">Widget Thời Khóa Biểu Hôm Nay</span>: Hiển thị các tiết học của ngày hiện tại tương ứng với lớp đang chọn.</li>
+    </ul>
+    <p><strong>Cơ chế đối với GV Bộ môn:</strong> Tự động kích hoạt component con <code>SubjectTeacherDashboard</code> hiển thị danh sách 20 lớp phụ trách, tiến độ dạy các tiết và xếp hạng điểm thi đua giữa các lớp.</p>
+  </div>
+
+  <!-- VIEW 2 & 3 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">2 & 3. ClassesStudentsView — Quản Lý Lớp Học & Học Sinh</h3>
+      <span class="badge badge-primary">ID: classes | students</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Trung tâm quản lý dữ liệu gốc của lớp học và danh sách học sinh. Hỗ trợ thao tác hàng loạt, nhập xuất dữ liệu thông minh.</p>
+    <h4>a. Chế độ Quản lý Lớp học (<code>mode="classes"</code>):</h4>
+    <ul>
+      <li><span class="btn-badge">Nút Thêm Lớp Mới</span>: Mở form nhập Tên lớp, Khối, Màu đại diện, Niên khóa, Tên GVCN.</li>
+      <li><span class="btn-badge">Nút Sửa Lớp</span>: Cho phép cập nhật thông tin lớp, slogan và đổi ảnh đại diện lớp.</li>
+      <li><span class="btn-badge">Nút Đổi Ảnh Đại Diện Lớp (Crop Avatar)</span>: Mở modal căn chỉnh zoom/pan ảnh tập thể lớp.</li>
+      <li><span class="btn-badge">Nút Quản Lý Ban Đại Diện Cha Mẹ Học Sinh</span>: Nhập họ tên, số điện thoại của Trưởng ban, Phó ban, Ủy viên.</li>
+      <li><span class="btn-badge">Nút Xóa Lớp</span>: Có cảnh báo xác nhận an toàn, không xóa lớp khi còn học sinh trừ khi người dùng đồng ý dọn dẹp.</li>
+    </ul>
+    <h4>b. Chế độ Quản lý Học sinh (<code>mode="students"</code>):</h4>
+    <ul>
+      <li><span class="btn-badge">Nút Thêm Học Sinh Mới</span>: Nhập STT, Họ tên, Ngày sinh, Giới tính, Tổ, Chức vụ (chọn tối đa 3 chức vụ).</li>
+      <li><span class="btn-badge">Nút Nhập Từ File Excel (.xlsx)</span>: Tự động nhận diện cột Họ tên, Giới tính, Ngày sinh, Tổ. Cho phép xem trước (Preview) trước khi xác nhận nhập vào lớp.</li>
+      <li><span class="btn-badge">Nút Xuất Danh Sách Excel</span>: Xuất toàn bộ danh sách học sinh kèm điểm số, chuyên cần, tổ và chức vụ ra file Excel chuẩn định dạng sư phạm.</li>
+      <li><span class="btn-badge">Nút Chỉnh Sửa Ảnh Học Sinh (Avatar Editor)</span>: Cho phép tải ảnh chân dung học sinh, xoay, phóng to thu nhỏ từ 0.8x đến 2.5x, kéo rê để khuôn mặt nằm đúng khung tròn chuẩn.</li>
+      <li><span class="btn-badge">Nút Gán Tự Động Avatar Thực Tế</span>: Gán tự động bộ ảnh hoạt hình hoặc ảnh chân dung mẫu tương ứng theo giới tính Nam/Nữ để lớp học sinh động ngay từ đầu.</li>
+      <li><span class="btn-badge">Nút Đặt Lại Xu (Reset Coins)</span>: Reset điểm xu của học sinh được chọn hoặc toàn bộ lớp về 0 vào đầu học kỳ mới.</li>
+      <li><span class="btn-badge">Thao Tác Hàng Loạt (Bulk Actions)</span>: Chọn nhiều học sinh qua checkbox để xóa hàng loạt, chuyển tổ hàng loạt, hoặc trao điểm chung.</li>
+    </ul>
+  </div>
+
+  <!-- VIEW 4 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">4. PointsAwardView — Tuyên Dương & Tích Điểm Hạnh Phúc</h3>
+      <span class="badge badge-primary">ID: points</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Trái tim của phương pháp Kỷ luật tích cực (Positive Discipline). Giáo viên ghi nhận ngay lập tức các hành vi tốt hoặc nhắc nhở hành vi chưa chuẩn mực của học sinh trong giờ học.</p>
+    <h4>Quy trình & Nút lệnh:</h4>
+    <ul>
+      <li><span class="btn-badge">Bộ Chọn Môn Học Tích Điểm</span>: Giáo viên chọn môn đang dạy (Toán, Tiếng Việt, Tin học, Tiếng Anh, hoặc Ghi chung/Nền nếp). Điểm sẽ vừa cộng vào tổng xu, vừa ghi nhận riêng vào bảng điểm môn đó.</li>
+      <li><span class="btn-badge">Bộ Lọc Theo Tổ (Tổ 1 - 4) & Chọn Cả Lớp</span>: Cho phép 1 click chọn toàn bộ học sinh trong một tổ hoặc cả lớp khi cả tập thể làm tốt.</li>
+      <li><span class="btn-badge">Danh Mục Tiêu Chí Khen Thưởng (+ Xu)</span>:
+        Phát biểu hay (+3 xu), Giúp đỡ bạn (+5 xu), Chăm chỉ làm bài (+3 xu), Tích cực hoạt động nhóm (+4 xu), Vệ sinh sạch sẽ (+3 xu), Sáng tạo vượt trội (+5 xu).
+      </li>
+      <li><span class="btn-badge">Danh Mục Tiêu Chí Nhắc Nhở (- Xu)</span>:
+        Mất trật tự (-2 xu), Chưa làm bài tập (-3 xu), Nói chuyện riêng (-2 xu), Làm việc riêng (-2 xu), Đi học muộn (-2 xu).
+      </li>
+      <li><span class="btn-badge">Nút "Tùy biến tiêu chí mới"</span>: Giáo viên tự tạo thêm tiêu chí khen/phạt phù hợp với nội quy riêng của lớp mình.</li>
+      <li><span class="btn-badge">Hiệu ứng Âm thanh & Hình ảnh</span>: Khi cộng xu: phát âm thanh tiếng tiền xu leng keng và pháo hoa rực rỡ; khi trừ xu: phát âm thanh cảnh báo nhẹ nhàng để học sinh tự giác điều chỉnh.</li>
+    </ul>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- VIEW 5 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">5. RewardsShopView — Cửa Hàng Đổi Quà Hạnh Phúc</h3>
+      <span class="badge badge-primary">ID: rewards</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Biến điểm tích lũy thành động lực hữu hình. Học sinh dùng số xu mình chăm chỉ kiếm được để đổi các phần quà yêu thích (vật chất hoặc tinh thần).</p>
+    <h4>Danh sách Chức năng & Nút bấm:</h4>
+    <ul>
+      <li><span class="btn-badge">Kệ Trưng Bày Quà Tặng</span>: Hiển thị ảnh quà, tên quà, số xu cần đổi (Cost) và số lượng tồn kho còn lại (Stock).</li>
+      <li><span class="btn-badge">Nút Đổi Quà (Redeem)</span>: Chọn học sinh ➡️ Bấm đổi quà. Hệ thống kiểm tra: Nếu <code>student.points &gt;= reward.cost</code> và <code>reward.stock &gt; 0</code> thì trừ xu, giảm tồn kho 1 đơn vị, tạo bản ghi <code>RewardRedemption</code> với trạng thái "Chờ trao" hoặc "Đã nhận".</li>
+      <li><span class="btn-badge">Nút Thêm Quà Mới & Chỉnh Sửa Quà</span>: Tải ảnh quà, đặt tên, giá xu, mô tả và số lượng ban đầu.</li>
+      <li><span class="btn-badge">Nút Chỉnh Sửa Ảnh Quà (Reward Image Editor)</span>: Hỗ trợ crop/zoom ảnh quà vuông vức, bắt mắt.</li>
+      <li><span class="btn-badge">Tab Lịch Sử Đổi Quà</span>: Bảng kê chi tiết học sinh nào đã đổi món quà gì, lúc mấy giờ, trạng thái đã phát quà hay chưa, có nút đánh dấu hoàn thành.</li>
+    </ul>
+  </div>
+
+  <!-- VIEW 6 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">6. CertificateView — Vinh Danh & Cấp Giấy Khen Điện Tử</h3>
+      <span class="badge badge-primary">ID: certificate</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Tạo ra các tấm giấy khen, thư khen thưởng điện tử trang trọng, đẹp mắt để vinh danh học sinh trước lớp hoặc gửi tặng cha mẹ học sinh qua Zalo/Facebook.</p>
+    <h4>Danh sách Chức năng & Nút bấm:</h4>
+    <ul>
+      <li><span class="btn-badge">Chọn Mẫu Khung Giấy Khen</span>: Cung cấp nhiều template khung viền hoàng gia, khung viền hoa văn truyền thống, phong cách hiện đại tiểu học.</li>
+      <li><span class="btn-badge">Chọn Học Sinh Nhận Thưởng</span>: Tự động điền Họ tên, Lớp, Danh hiệu đạt được (ví dụ: "Đại Sứ Hạnh Phúc Tuần 4", "Kiện Tướng Chăm Ngoan", "Ngôi Sao Toán Học").</li>
+      <li><span class="btn-badge">Tùy Biến Lời Khen & Chữ Ký</span>: Giáo viên chỉnh sửa lời chúc, ngày tháng cấp bằng, tên giáo viên và tên trường.</li>
+      <li><span class="btn-badge">Nút Tải Ảnh Giấy Khen (PNG)</span>: Chuyển đổi khung Canvas/HTML thành ảnh độ phân giải cao bằng thư viện <code>html-to-image</code> để in màu hoặc gửi điện tử.</li>
+      <li><span class="btn-badge">Nút In Trực Tiếp</span>: Xuất lệnh in chuẩn khổ giấy A4 ngang.</li>
+    </ul>
+  </div>
+
+  <!-- VIEW 7, 8, 9 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">7, 8, 9. RandomStudentPickerView, LuckyWheelView & FilmReelView</h3>
+      <span class="badge badge-primary">ID: picker | wheel | reel</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Bộ 3 công cụ gọi tên học sinh ngẫu nhiên công bằng, kịch tính, xua tan căng thẳng khi kiểm tra bài cũ hoặc gọi phát biểu xây dựng bài.</p>
+    <h4>Chi tiết 3 Chế độ:</h4>
+    <ul>
+      <li>
+        <strong>Lucky Wheel (Vòng quay May mắn):</strong> Vòng quay nhiều màu sắc chứa tên các học sinh trong lớp.
+        Có nút <span class="btn-badge">QUAY THƯỞNG</span> kèm âm thanh quay tíc tắc chân thực, kim chỉ quay mượt mà bằng CSS/JS physics. Khi dừng lại: Nổ pháo hoa rực rỡ, hiển thị popup chúc mừng học sinh trúng thưởng.
+      </li>
+      <li>
+        <strong>Film Reel (Cuộn phim Điện ảnh):</strong> Hiệu ứng cuộn phim Hollywood chạy tốc độ cao lướt qua ảnh đại diện và tên của từng học sinh, giảm tốc độ dần và dừng lại ở ô định mệnh.
+      </li>
+      <li>
+        <strong>Tích hợp Thử Thách Câu Hỏi (Quiz Challenge):</strong> Sau khi gọi trúng học sinh, giáo viên có thể bấm <span class="btn-badge">BẬT CÂU HỎI</span> để mở ngay câu hỏi từ <em>Ngân hàng câu hỏi</em>. Nếu học sinh trả lời đúng: Bấm <span class="btn-badge">THƯỞNG XU NGAY</span> để cộng trực tiếp vào tài khoản học sinh.
+      </li>
+      <li>
+        <strong>Tùy chọn Loại trừ học sinh đã gọi:</strong> Đánh dấu để không gọi lặp lại học sinh đã phát biểu trong tiết học.
+      </li>
+    </ul>
+  </div>
+
+  <!-- VIEW 10 & 11 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">10 & 11. NoiseMeterView & TimerView</h3>
+      <span class="badge badge-primary">ID: noise | timer</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Công cụ hỗ trợ quản lý trật tự và kiểm soát thời gian làm việc nhóm, thảo luận hoặc thi đua giữa các dãy bàn.</p>
+    <h4>a. Máy Đo Tiếng Ồn (NoiseMeterView):</h4>
+    <ul>
+      <li><span class="btn-badge">Nút Bật/Tắt Micro</span>: Kết nối Microphone của máy tính giáo viên thông qua Web Audio API <code>AudioContext</code> và <code>AnalyserNode</code>.</li>
+      <li><span class="btn-badge">Thanh Điều Chỉnh Độ Nhạy (Sensitivity) & Ngưỡng Ồn (Threshold)</span>: Giáo viên kéo thanh trượt để đặt mức âm lượng cho phép tùy theo hoạt động (giờ tự học cần yên tĩnh, giờ thảo luận nhóm cho phép ồn hơn).</li>
+      <li><span class="btn-badge">Hoạt Ảnh Cảnh Báo Sinh Động</span>: Khi âm thanh trong ngưỡng: Màn hình hiển thị màu xanh lá với linh vật vui vẻ; khi vượt ngưỡng cảnh báo: Màn hình chuyển đỏ, phát âm thanh "Suỵt! Hãy giữ trật tự" để học sinh tự nhắc nhở nhau.</li>
+    </ul>
+    <h4>b. Đồng Hồ Bấm Giờ & Đếm Ngược (TimerView):</h4>
+    <ul>
+      <li>Hỗ trợ 3 chế độ: <strong>Đếm ngược (Countdown)</strong>, <strong>Bấm giờ (Stopwatch)</strong> và <strong>Đồng hồ hiện tại (Clock)</strong>.</li>
+      <li>Các nút Preset thời gian nhanh: 1 phút, 2 phút, 3 phút, 5 phút, 10 phút, 15 phút.</li>
+      <li>Giao diện số to rõ ràng, trình chiếu toàn màn hình (Fullscreen) trên Tivi lớp học, kèm âm thanh đếm giây cuối cùng và tiếng chuông reo kết thúc bài thi.</li>
+    </ul>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- VIEW 12 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">12. SeatingChartView — Sơ Đồ Lớp Học Đa Chiều & Chỗ Ngồi Thông Minh</h3>
+      <span class="badge badge-primary">ID: seating</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Số hóa toàn bộ không gian phòng học thực tế. Giúp giáo viên chủ nhiệm quản lý chỗ ngồi khoa học, quan sát sự tiến bộ theo vị trí và hoán đổi vị trí ngồi tránh các tật khúc xạ mắt cho học sinh.</p>
+    <h4>Cấu trúc Ma trận & Tùy biến Không gian:</h4>
+    <ul>
+      <li><span class="btn-badge">Số Lượng Dãy/Cột (2 đến 6 dãy)</span>: Tùy biến theo phòng học (phổ biến: 3 dãy đôi, 4 dãy đơn hoặc dãy đôi kết hợp).</li>
+      <li><span class="btn-badge">Số Lượng Bàn Mỗi Dãy</span>: Cho phép điều chỉnh độc lập từng dãy có bao nhiêu bàn học (ví dụ: Dãy 1 có 5 bàn, Dãy 2 có 4 bàn...).</li>
+      <li><span class="btn-badge">Vị Trí Bàn Giáo Viên</span>: Chọn đặt ở Bên Trái, Ở Giữa hoặc Bên Phải bục giảng.</li>
+      <li><span class="btn-badge">Vị Trí Cửa Ra Vào & Bảng Đen</span>: Đặt chính xác theo hiện trạng phòng học.</li>
+      <li><span class="btn-badge">Quy Tắc Đánh Số Bàn</span>: Hỗ trợ đánh số theo chiều dọc (từ trên xuống dưới) hoặc theo chiều ngang (từ trái qua phải).</li>
+    </ul>
+    <h4>Các Nút Lệnh Xếp Chỗ Tự Động:</h4>
+    <ul>
+      <li><span class="btn-badge">Xếp Chỗ Thủ Công</span>: Nhấp vào một ghế trống ➡️ Chọn học sinh trong danh sách chưa có chỗ; hoặc nhấp vào học sinh đang ngồi để hoán đổi chỗ ngồi.</li>
+      <li><span class="btn-badge">Tự Động: Ngẫu Nhiên</span>: Hệ thống xáo trộn toàn bộ học sinh vào các bàn trống một cách ngẫu nhiên.</li>
+      <li><span class="btn-badge">Tự Động: Nam - Nữ Xen Kẽ</span>: Thuật toán thông minh xếp 1 nam ngồi cạnh 1 nữ trên cùng một bàn đôi giúp các em hỗ trợ nhau trong học tập.</li>
+      <li><span class="btn-badge">Tự Động: Theo Vần Tên (A - Z)</span>: Sắp xếp học sinh theo bảng chữ cái tiếng Việt.</li>
+      <li><span class="btn-badge">Nút Xóa Toàn Bộ Sơ Đồ (Clear)</span>: Thu hồi tất cả học sinh về hàng chờ để xếp lại từ đầu.</li>
+      <li><span class="btn-badge">Nút Xuất Ảnh Sơ Đồ Lớp</span>: Tải về file ảnh chất lượng cao để in dán tại bàn giáo viên.</li>
+    </ul>
+  </div>
+
+  <!-- VIEW 13 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">13. AttendanceView — Sổ Điểm Danh & Báo Ăn Bán Trú Số</h3>
+      <span class="badge badge-primary">ID: attendance</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Thay thế hoàn toàn sổ điểm danh giấy truyền thống. Hỗ trợ ghi nhận chuyên cần và chốt sĩ số báo ăn bán trú cho nhà bếp chính xác từng ngày.</p>
+    <h4>Chi tiết 2 Phân hệ:</h4>
+    <ul>
+      <li>
+        <strong>Phân hệ Điểm Danh Chuyên Cần:</strong>
+        <ul>
+          <li>Ghi nhận theo ngày cụ thể (Bộ chọn lịch).</li>
+          <li>6 nút trạng thái màu sắc cho từng học sinh: Có mặt (Xanh lá), Đi muộn (Vàng), Nghỉ có phép (Xanh dương), Nghỉ không phép (Đỏ), Nghỉ ốm (Tím), Khác (Xám).</li>
+          <li><span class="btn-badge">Nút "Điểm danh tất cả có mặt"</span>: 1 chạm đánh dấu toàn bộ lớp có mặt nhanh chóng đầu giờ.</li>
+          <li>Bộ thống kê tự động: Tổng số hiện diện, tổng vắng, tỷ lệ phần trăm chuyên cần trong ngày và lũy kế cả tháng.</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Phân hệ Quản Lý Bữa Ăn Bán Trú (Boarding Meal):</strong>
+        <ul>
+          <li>3 trạng thái: <code>Ăn bán trú</code>, <code>Không ăn/Về nhà</code>, <code>Báo cắt suất hôm nay</code>.</li>
+          <li>Tự động tổng hợp số suất ăn thực tế cần nấu gửi cho nhà bếp trước 8h30 sáng hàng ngày.</li>
+          <li>Có ô ghi chú đặc biệt cho từng học sinh (ví dụ: "Dị ứng hải sản", "Ăn kiêng", "Uống thuốc sau ăn").</li>
+        </ul>
+      </li>
+      <li><span class="btn-badge">Nút Xuất Báo Cáo Chuyên Cần & Bán Trú (Excel)</span>: Xuất bảng tổng hợp cả tháng chuẩn biểu mẫu sư phạm nộp cho BGH và Kế toán nhà trường.</li>
+    </ul>
+  </div>
+
+  <!-- VIEW 14 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">14. ScheduleLinksView — Thời Khóa Biểu & Danh Bạ Liên Kết Tiện Ích</h3>
+      <span class="badge badge-primary">ID: schedule | links</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Quản lý lịch giảng dạy của tuần và lưu trữ các website giáo dục, học liệu số giáo viên thường xuyên sử dụng.</p>
+    <h4>a. Thời Khóa Biểu Lớp Học & Bộ Môn:</h4>
+    <ul>
+      <li>Hỗ trợ 2 buổi: Buổi Sáng (Tiết 1 - 5) và Buổi Chiều (Tiết 1 - 4), từ Thứ 2 đến Thứ 7 (có thể bật/tắt thứ 7).</li>
+      <li><strong>Thời khóa biểu GV Chủ nhiệm:</strong> Cố định lịch học từng môn của lớp theo ngày trong tuần.</li>
+      <li><strong>Thời khóa biểu GV Bộ môn:</strong> Hiển thị ma trận đa lớp (ví dụ: Tiết 1 sáng Thứ 2 dạy Tin học tại Lớp 4A1 phòng Máy 1, Tiết 2 dạy Lớp 5A2 phòng Máy 2).</li>
+      <li><span class="btn-badge">Nút Đổi Tiết / Phân Môn Nhanh</span>: Nhấp trực tiếp vào ô tiết học để chọn môn từ danh mục có sẵn hoặc nhập ghi chú bài dạy.</li>
+    </ul>
+    <h4>b. Danh Bạ Liên Kết Tiện Ích (Quick Links):</h4>
+    <ul>
+      <li>Lưu trữ các đường dẫn tiện ích: Cổng thông tin CSDL Ngành, Trắc nghiệm trực tuyến, Canva, OLM, VioEdu, Trang tin trường học.</li>
+      <li>Có tính năng Ghim liên kết quan trọng lên đầu, phân loại danh mục và tải icon/logo đại diện cho link.</li>
+    </ul>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- VIEW 15 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">15. ReportsDataView — Trung Tâm Báo Cáo, Thống Kê & Sao Lưu Dữ Liệu</h3>
+      <span class="badge badge-primary">ID: reports | data | settings</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Cung cấp báo cáo phân tích toàn diện về thi đua, chuyên cần, dòng tiền xu thưởng và cơ chế bảo mật, đóng gói sao lưu dữ liệu toàn diện.</p>
+    <h4>3 Tab Chức năng:</h4>
+    <ul>
+      <li>
+        <strong>Tab 1 - Thống kê & Phân tích (Stats):</strong>
+        Biểu đồ phân bố điểm xu theo tổ, biểu đồ tỷ lệ chuyên cần theo tuần/tháng, danh sách các tiêu chí được tuyên dương nhiều nhất trong tháng, bảng xếp hạng cá nhân và tập thể tổ.
+      </li>
+      <li>
+        <strong>Tab 2 - Quản lý Dữ liệu & Sao lưu (Data & Backup):</strong>
+        <ul>
+          <li><span class="btn-badge">Xuất Bản Sao Lưu Đầy Đủ (JSON)</span>: Tải về toàn bộ cấu trúc dữ liệu lớp học, học sinh, điểm số dưới dạng tệp văn bản mã hóa an toàn.</li>
+          <li><span class="btn-badge">Xuất Gói Sao Lưu Toàn Diện (ZIP)</span>: Đóng gói toàn bộ Database kèm tất cả ảnh đại diện, ảnh quà tặng, ảnh ngân hàng câu hỏi vào 1 file <code>.zip</code> duy nhất bằng thư viện <code>JSZip</code>.</li>
+          <li><span class="btn-badge">Nhập Bản Sao Lưu (Restore JSON / ZIP)</span>: Khôi phục lại 100% dữ liệu lớp học khi chuyển sang máy tính mới.</li>
+          <li><span class="btn-badge">Đặt Lại Dữ Liệu Mặc Định (Reset)</span>: Đưa hệ thống về dữ liệu mẫu ban đầu (có yêu cầu mật khẩu xác nhận).</li>
+          <li><span class="btn-badge">Xóa Trắng Dữ Liệu (Clear All)</span>: Xóa sạch dữ liệu cũ để chuẩn bị đón năm học mới.</li>
+        </ul>
+      </li>
+      <li>
+        <strong>Tab 3 - Hồ sơ Giáo viên (Teacher Profile):</strong>
+        Cập nhật Họ tên giáo viên, Trường công tác, Môn giảng dạy, Niên khóa, Số điện thoại Zalo, Liên kết Facebook và ảnh đại diện giáo viên (có hỗ trợ công cụ Crop/Zoom ảnh sắc nét).
+      </li>
+    </ul>
+  </div>
+
+  <!-- VIEW 16 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">16. InfographicView — Bảng Infographic Tổng Quan Lớp Học Số Hóa</h3>
+      <span class="badge badge-primary">ID: infographic</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Thiết kế đồ họa trình chiếu số hóa đỉnh cao thay thế các bảng tin dán tường lớp học. Được thiết kế tối ưu để chiếu trên Tivi màn hình lớn hoặc bảng tương tác thông minh trong các buổi sinh hoạt lớp hoặc đại hội phụ huynh.</p>
+    <h4>Cấu trúc Khối Thông tin trên Infographic:</h4>
+    <ul>
+      <li><strong>Header hoàng gia:</strong> Quốc hiệu, Tiêu ngữ, Tên trường, Tên lớp, Khẩu hiệu hành động và Logo ảnh lớp.</li>
+      <li><strong>Khối Sĩ số & Cơ cấu:</strong> Tổng số học sinh, số Nam, số Nữ, số tổ thi đua, thông tin Ban cán sự lớp.</li>
+      <li><strong>Khối Vinh danh Thi đua:</strong> Top 3 học sinh xuất sắc nhất tuần, Tổ dẫn đầu phong trào thi đua.</li>
+      <li><strong>Khối Ban Đại Diện Cha Mẹ Học Sinh:</strong> Danh sách họ tên, số điện thoại liên lạc của Trưởng ban và các Phó ban.</li>
+      <li><strong>Khối Thời Khóa Biểu & Mục tiêu Tuần:</strong> Lịch học và các nhiệm vụ trọng tâm thầy cô giao cho cả lớp trong tuần mới.</li>
+      <li><span class="btn-badge">Nút Xuất Ảnh Infographic Chất Lượng Cao (PNG)</span>: Xuất file ảnh cực nét độ phân giải 4K để in pano bạt hiflex hoặc gửi vào nhóm Zalo phụ huynh.</li>
+    </ul>
+  </div>
+
+  <!-- VIEW 17 -->
+  <div class="feature-card">
+    <div class="feature-card-header">
+      <h3 class="feature-card-title">17. AiAssistantView — Trợ Lý Giáo Dục Trí Tuệ Nhân Tạo (Gemini AI)</h3>
+      <span class="badge badge-primary">ID: ai</span>
+    </div>
+    <p><strong>Ý nghĩa & Mục đích:</strong> Người trợ lý ảo đắc lực của giáo viên thời đại 4.0, ứng dụng các mô hình ngôn ngữ lớn tiên tiến nhất từ Google DeepMind.</p>
+    <h4>Các Phân hệ Trợ lý Chuyên sâu:</h4>
+    <ul>
+      <li><strong>Trợ lý Soạn Kế hoạch Bài Dạy (Giáo án):</strong> Nhập tên bài, môn, khối lớp ➡️ AI tự động soạn bài theo đúng công văn 2345/BGDĐT (Mục tiêu, Phẩm chất, Năng lực, Tiến trình hoạt động khởi động - khám phá - luyện tập - vận dụng).</li>
+      <li><strong>Trợ lý Nhận Xét Học Bạ Thông Tư 27 & 22:</strong> Chọn học sinh, điểm mạnh, điểm cần khắc phục ➡️ AI tự động viết lời nhận xét sư phạm nhân văn, đúng quy chuẩn pháp lý của Bộ Giáo dục, tránh dùng từ tiêu cực gây áp lực cho học sinh.</li>
+      <li><strong>Trợ lý Sinh Đề Thi & Trắc Nghiệm Tự Động:</strong> Nhập chủ đề bài học ➡️ AI tự động tạo ra ngân hàng câu hỏi 4 mức độ nhận thức (Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao), tự động nạp thẳng vào <em>Ngân hàng câu hỏi</em> của phần mềm.</li>
+      <li><strong>Trợ lý Thư Gửi Cha Mẹ Học Sinh:</strong> Soạn thông báo mời họp, thư khen ngợi, lời nhắc nhở nhẹ nhàng gửi riêng cho từng phụ huynh bằng ngôn từ tinh tế, ấm áp.</li>
+      <li><strong>Trò chuyện Tự do (Pedagogical Chatbot):</strong> Giải đáp thắc mắc về phương pháp dạy học tích cực, xử lý các tình huống sư phạm khó trong lớp.</li>
+    </ul>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- PHẦN 6 -->
+  <h1>PHẦN 6: CÁC CỬA SỔ MODAL QUẢN TRỊ & TIỆN ÍCH PHỤ TRỢ</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Tên Modal</th>
+        <th style="width: 25%;">Mục đích & Vai trò</th>
+        <th style="width: 50%;">Các Nút Lệnh & Cơ Chế Hoạt Động</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>AuthModal</strong></td>
+        <td>Đăng nhập & Chuyển đổi tài khoản làm việc.</td>
+        <td>
+          - Chọn 1 trong 5 phạm vi vai trò (Cá nhân, GV Trường, Quản trị Trường, Quản trị Cá nhân, Admin).<br>
+          - Nhập Username, Password (hoặc chọn nhanh từ danh mục mẫu sẵn có).<br>
+          - Chọn Tên Trường (đối với vai trò thuộc Nhà trường).<br>
+          - Nút "Đăng Nhập": Xác thực mật khẩu, thiết lập Session 300 phút, nạp Database tương ứng vào Workspace.<br>
+          - Nút "Đăng ký dùng ngay": Mở form đăng ký bản quyền.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>AccountManagementModal</strong></td>
+        <td>Bảng điều khiển tối cao dành cho Admin và BGH.</td>
+        <td>
+          - Tab 1: Danh sách Người dùng (Thêm tài khoản, Phân vai trò GVCN/Bộ môn/BGH, Đặt lại mật khẩu, Khóa/Mở tài khoản, Đặt hạn mức học sinh).<br>
+          - Tab 2: Danh sách Trường học (Thêm trường mới, gán mã trường, gán admin trường).<br>
+          - Tab 3: Giám sát Trực quan Toàn trường (Xem tổng số lớp, tổng số học sinh, hoạt động của từng thầy cô).<br>
+          - Tab 4: Duyệt Đơn Đăng Ký Bản Quyền (Duyệt đơn nộp tiền, tự động cấp tài khoản và kích hoạt).<br>
+          - Tab 5: Nhật ký Hoạt động (Audit Trail ghi lại ai đã sửa dữ liệu lúc mấy giờ).
+        </td>
+      </tr>
+      <tr>
+        <td><strong>GithubSyncModal</strong></td>
+        <td>Đồng bộ Đám mây GitHub An toàn Tuyệt đối.</td>
+        <td>
+          - Kết nối tới kho trung tâm chính thức: <code>thanhliemcnttedu-cpu/lhhp</code>.<br>
+          - Nút "Kiểm tra phiên bản mới": So sánh commit trên GitHub với phiên bản máy tính.<br>
+          - Nút "Đồng bộ mã nguồn an toàn": Chỉ tải/đẩy mã nguồn mới mà TUYỆT ĐỐI không ghi đè làm mất cơ sở dữ liệu lớp học của giáo viên (Zero Data Loss Protocol).
+        </td>
+      </tr>
+      <tr>
+        <td><strong>QuestionBankModal</strong></td>
+        <td>Ngân hàng Câu hỏi Tương tác 7 Dạng Độc quyền.</td>
+        <td>
+          Hỗ trợ 7 dạng bài tập: (1) Trắc nghiệm đơn 1 đáp án, (2) Trắc nghiệm nhiều đáp án đúng, (3) Đúng/Sai, (4) Điền chỗ trống, (5) Sắp xếp thứ tự các bước, (6) Nối cột A với cột B, (7) Câu hỏi tự luận/vấn đáp.<br>
+          - Tải ảnh câu hỏi, ảnh đáp án giải thích của giáo viên.<br>
+          - Đặt số xu thưởng khi trả lời đúng (mặc định +2 xu).<br>
+          - Nhập/xuất kho câu hỏi ra file JSON để chia sẻ giữa các giáo viên cùng tổ chuyên môn.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>RegistrationModal</strong></td>
+        <td>Đăng ký Bản quyền Cá nhân & Trường học.</td>
+        <td>
+          - 2 Gói lựa chọn: Gói Cá nhân (50.000 VNĐ / giáo viên / trọn đời) hoặc Gói Toàn Trường (1.000.000 VNĐ / toàn bộ giáo viên trường).<br>
+          - Nhập Họ tên, Đơn vị công tác, Số điện thoại dùng Zalo.<br>
+          - Hiển thị Mã QR thanh toán ngân hàng chuyển khoản tự động kèm cú pháp chuyển tiền duy nhất.<br>
+          - Nút "Tôi đã chuyển khoản": Lưu bản ghi <code>RegistrationRequest</code> lên hệ thống để Admin kích hoạt ngay.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>AvatarEditorModal</strong></td>
+        <td>Bộ công cụ Căn chỉnh & Cắt ảnh Chuẩn hóa (Tích hợp Camera Webcam).</td>
+        <td>
+          - <strong>Chụp ảnh trực tiếp từ Camera (Webcam)</strong>: Sử dụng Web MediaDevices API (<code>getUserMedia</code>) hiển thị video stream trực tiếp, có khung tròn nét đứt căn chỉnh khuôn mặt học sinh, nút đổi camera trước/sau (facingMode), nút "CHỤP ẢNH NGAY" chuyển đổi frame thành chuỗi Base64 và tự động dọn dẹp track camera (<code>track.stop()</code>) tắt đèn LED ngay lập tức.<br>
+          - <strong>Chọn ảnh từ máy tính</strong>: Tải ảnh thẻ/chân dung nét cao nguyên vẹn.<br>
+          - <strong>Công cụ thu phóng & căn chỉnh</strong>: Thanh trượt Zoom (0.8x đến 2.5x), kéo rê chuột/chạm tay căn tâm ảnh.<br>
+          - 4 Nút căn chỉnh nhanh: Vừa khít, Phủ đầy, Cận cảnh 150%, Căn giữa.<br>
+          - Thư viện Avatar mẫu phong phú (Bé trai, Bé gái, Linh vật).<br>
+          - Nút "Xác nhận thu phóng & cắt ảnh": Cắt ảnh hiển thị chuẩn xác, bảo toàn 100% ảnh gốc.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- PHẦN 7 -->
+  <h1>PHẦN 7: CÁC RÀNG BUỘC LOGIC & NGUYÊN TẮC BẤT KHẢ XÂM PHẠM</h1>
+
+  <h2>7.1. Ràng buộc Tương thích Ngược (Zero-Regression Guardrail)</h2>
+  <div class="callout callout-danger">
+    <strong>NGHIÊM CẤM TỰ Ý PHÁ VỠ CẤU TRÚC HIỆN CÓ:</strong><br>
+    Mọi nỗ lực mở rộng tính năng trong tương lai (kể cả khi nhờ ChatGPT viết mã) phải tuân thủ nghiêm ngặt:
+    <ol>
+      <li>Giữ nguyên toàn bộ 16 Views, tên các hàm trong <code>ClassroomContext.tsx</code> và Public API của <code>databaseService.ts</code>.</li>
+      <li>Mọi trường dữ liệu mới bổ sung vào Types phải là kiểu tùy chọn (<code>optional ?:</code>) hoặc có giá trị mặc định (<code>DEFAULT</code>) để không làm gãy dữ liệu cũ đã lưu từ trước.</li>
+      <li>Luôn kiểm tra biên dịch không có lỗi TypeScript: <code>npm run lint</code> hoặc <code>tsc --noEmit</code> đạt 0 lỗi trước khi bàn giao.</li>
+    </ol>
+  </div>
+
+  <h2>7.2. Ràng buộc về Điểm số và Giao dịch</h2>
+  <ul>
+    <li>Mỗi khi tặng hoặc trừ xu, một bản ghi <code>PointTransaction</code> phải được tạo ra kèm <code>timestamp</code>, <code>amount</code>, <code>reason</code>, <code>studentId</code> và môn học tương ứng.</li>
+    <li>Đối với GV Bộ môn, việc cộng điểm xu cho môn học của mình sẽ tăng <code>points</code> (tổng xu) của học sinh, đồng thời cập nhật đúng vào <code>student.subjectPoints[tên_môn]</code>. Tuyệt đối không xóa hoặc làm giảm điểm của các môn học khác do giáo viên khác chấm.</li>
+  </ul>
+
+  <h2>7.3. Ràng buộc Sơ đồ Lớp học</h2>
+  <ul>
+    <li>Một học sinh chỉ được ngồi tại tối đa <strong>1 vị trí ghế duy nhất</strong> trong sơ đồ lớp tại cùng một thời điểm.</li>
+    <li>Nếu gán học sinh A vào ghế đang có học sinh B ngồi: Hệ thống tự động thực hiện cơ chế <strong>Hoán đổi thông minh (Smart Swap)</strong> — học sinh B sẽ chuyển sang vị trí cũ của học sinh A, hoặc trả học sinh B về danh sách chờ nếu học sinh A chưa có ghế trước đó.</li>
+  </ul>
+
+  <h2>7.4. Ràng buộc Quy trình Triển khai & Cổng Bàn Giao Localhost</h2>
+  <div class="callout callout-warning">
+    <strong>LOCAL-FIRST VERIFICATION GATE:</strong><br>
+    1. Khi thực hiện chỉnh sửa code hoặc thêm tính năng mới, LUÔN LUÔN chạy thử nghiệm và kiểm tra kỹ thuật trên môi trường <code>http://localhost:3000</code>.<br>
+    2. CẤM tự ý chạy lệnh git commit và git push lên GitHub khi người dùng chưa kiểm tra và xác nhận.<br>
+    3. Cổng kho duy nhất tiếp nhận đồng bộ là: <code>https://github.com/thanhliemcnttedu-cpu/lhhp.git</code> (Kho chính). Tuyệt đối không đẩy vào các kho phụ khác.
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- PHẦN 8 -->
+  <h1>PHẦN 8: HƯỚNG DẪN KẾT HỢP VỚI CHATGPT ĐỂ PHÁT TRIỂN TÍNH NĂNG MỚI</h1>
+
+  <h2>8.1. Hướng Dẫn Nạp Tài Liệu Này Vào ChatGPT</h2>
+  <p>
+    Để ChatGPT hiểu 100% ngữ cảnh của phần mềm và sinh ra mã nguồn chuẩn xác không bị xung đột, bạn hãy thực hiện theo 3 bước sau:
+  </p>
+  <ol>
+    <li>
+      <strong>Bước 1:</strong> Mở ChatGPT (khuyên dùng mô hình GPT-4o hoặc Claude 3.5 Sonnet / Gemini Pro để có cửa sổ ngữ cảnh lớn).
+    </li>
+    <li>
+      <strong>Bước 2:</strong> Đính kèm tệp PDF này hoặc dán nội dung tệp này vào tin nhắn đầu tiên cùng câu lệnh thiết lập vai trò (System Prompt) ở mục 8.2 bên dưới.
+    </li>
+    <li>
+      <strong>Bước 3:</strong> Yêu cầu ChatGPT phát triển tính năng mới cụ thể (ví dụ: bổ sung bộ lọc học sinh theo điểm, tạo thêm game bốc thăm mới, tích hợp xuất báo cáo PDF theo mẫu Bộ...).
+    </li>
+  </ol>
+
+  <h2>8.2. Mẫu Câu Lệnh Chuẩn (Master Prompt Template) Để Đưa Vào ChatGPT</h2>
+  <pre><code>BẠN LÀ CHUYÊN GIA SENIOR FULLSTACK REACT VÀ KIẾN TRÚC SƯ PHẦN MỀM GIÁO DỤC.
+Dưới đây là bản đặc tả kỹ thuật chi tiết của phần mềm "LỚP HỌC HẠNH PHÚC v4.0" (xem file đính kèm).
+
+QUY TẮC BẤT KHẢ XÂM PHẠM:
+1. Dự án sử dụng React 19, TypeScript, Vite, TailwindCSS v4, Supabase và LocalStorage dự phòng 3 tầng.
+2. TUYỆT ĐỐI KHÔNG LÀM HỎNG bất kỳ tính năng nào trong 16 Views hiện có.
+3. Giữ nguyên Public API của ClassroomContext.tsx và databaseService.ts.
+4. Mọi thuộc tính dữ liệu mới đều phải có giá trị mặc định hoặc optional (?).
+5. Khi viết code, sử dụng tiếng Anh cho tên biến/hàm/file, comment bằng tiếng Anh, giao diện hiển thị cho người dùng bằng Tiếng Việt thân thiện, chuẩn sư phạm.
+
+NHIỆM VỤ CỦA BẠN:
+[MÔ TẢ TÍNH NĂNG HOẶC CHỨC NĂNG BẠN MUỐN CHATGPT VIẾT TẠI ĐÂY]
+Hãy viết mã nguồn hoàn chỉnh, giải thích rõ ràng các tệp cần thêm hoặc sửa đổi!</code></pre>
+
+  <div class="callout callout-success" style="margin-top: 30px; text-align: center;">
+    <strong>TÀI LIỆU KỸ THUẬT ĐẶC TẢ HOÀN TẤT VÀ CHUẨN XÁC 100%</strong><br>
+    Được tạo tự động và phê duyệt bởi AI Agent meo meo & Hệ thống Antigravity IDE.<br>
+    Sẵn sàng cho việc phát triển mở rộng tính năng và nâng tầm trường học số!
+  </div>
+
+</body>
+</html>

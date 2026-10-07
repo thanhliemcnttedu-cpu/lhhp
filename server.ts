@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
@@ -528,6 +529,43 @@ app.get('/api/admin/all-data', (_req, res) => {
   }
 });
 
+// Dynamic Avatar Scanner API: Automatically scans public/avatars/default and public/avatars/real_demo
+app.get('/api/avatars-list', (_req, res) => {
+  try {
+    const supportedExts = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg', '.jfif', '.avif', '.gif']);
+    const getFilesInDir = (subDir: string): string[] => {
+      const fullPath = path.resolve(__dirname, 'public', 'avatars', subDir);
+      if (!fs.existsSync(fullPath)) return [];
+      try {
+        const files = fs.readdirSync(fullPath);
+        return files
+          .filter(f => supportedExts.has(path.extname(f).toLowerCase()))
+          .map(f => `/avatars/${subDir.replace(/\\/g, '/')}/${f}`);
+      } catch (_) {
+        return [];
+      }
+    };
+
+    const result = {
+      default: {
+        boys: getFilesInDir('default/boys'),
+        girls: getFilesInDir('default/girls')
+      },
+      real_demo: {
+        boys: getFilesInDir('real_demo/boys'),
+        girls: getFilesInDir('real_demo/girls')
+      }
+    };
+
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    return res.json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
 app.post('/api/admin/sync-all', (req, res) => {
   try {
     const { classes, students } = req.body;
@@ -1005,6 +1043,36 @@ app.delete('/api/registrations/:id', (req, res) => {
     return res.status(404).json({ success: false, message: 'Not found' });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+// API: List certificate templates from public/certificates directory
+app.get('/api/certificates', (_req, res) => {
+  try {
+    const certDir = path.resolve(__dirname, 'public', 'certificates');
+    if (!fs.existsSync(certDir)) {
+      fs.mkdirSync(certDir, { recursive: true });
+    }
+    const files = fs.readdirSync(certDir);
+    const validExtensions = new Set(['.png', '.jpg', '.jpeg', '.webp', '.svg']);
+    const certFiles = files.filter(f => validExtensions.has(path.extname(f).toLowerCase()));
+    
+    // Return list of certificate templates
+    const templates = certFiles.map((filename, index) => {
+      const ext = path.extname(filename);
+      const base = path.basename(filename, ext);
+      return {
+        id: `cert-${filename}`,
+        filename,
+        url: `/certificates/${filename}`,
+        name: base
+      };
+    });
+    
+    return res.json({ success: true, templates });
+  } catch (error: any) {
+    console.error('Error scanning public/certificates:', error);
+    return res.status(500).json({ success: false, message: error?.message, templates: [] });
   }
 });
 

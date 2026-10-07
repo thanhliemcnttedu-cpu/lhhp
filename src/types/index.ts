@@ -97,6 +97,7 @@ export interface Student {
   originalAvatar?: string; // Ảnh gốc chưa crop từ máy tính để luôn thu phóng chỉnh sửa nguyên vẹn
   avatarScale: number; // 0.8 - 2.5
   avatarPosition: { x: number; y: number };
+  flipX?: boolean; // Lật ngược chiều ngang (Horizontal Flip)
   points: number; // Tổng số xu tích lũy (không làm mất tổng xu hiện tại)
   subjectPoints?: Record<string, number>; // Điểm xu lưu theo từng môn học (User requirement)
   group?: string; // Tổ 1, Tổ 2, Tổ 3, Tổ 4

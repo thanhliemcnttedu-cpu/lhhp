@@ -21,6 +21,7 @@ import {
 import { playCoinSound, playDeductSound } from '../utils/audio';
 import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank, smartMergeQuizBank } from '../utils/quizParser';
 import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX } from '../services/databaseService';
+import { AvatarSourceType, getStudentAvatarAssignment } from '../utils/avatarConfig';
 
 interface ClassroomContextType {
   classes: Classroom[];
@@ -42,6 +43,7 @@ interface ClassroomContextType {
   clearClassStudents: (classId: string) => void;
   bulkAddStudents: (students: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }>) => void;
   autoAssignRealAvatarsToClass: (classId?: string) => void;
+  autoAssignAvatarsToClass: (classId?: string, type?: AvatarSourceType, overwrite?: boolean) => { updatedCount: number; totalCount: number };
   resetStudentsCoins: (studentIds?: string[], classId?: string) => void;
 
   subjects: Subject[];
@@ -281,6 +283,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             classesRef.current = next;
             return next;
           });
+        } else if (msg && msg.type === 'STUDENTS_BULK_UPDATED' && Array.isArray(msg.students)) {
+          setStudents(msg.students);
+          studentsRef.current = msg.students;
         }
       };
       return () => {
@@ -1727,23 +1732,102 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     logUserActivity('BATCH_STUDENTS', `Thêm mới danh sách ${newItems.length} học sinh vào lớp ${currentClass?.name || ''}`);
   };
 
-  // Tự động gán ảnh đại diện thật cho toàn bộ học sinh trong lớp
-  const autoAssignRealAvatarsToClass = (targetClassId?: string) => {
+  // Tự động gán ảnh đại diện (mặc định hoạt hình hoặc ảnh thật demo) phân chia theo giới tính Nam/Nữ
+  const autoAssignAvatarsToClass = (
+    targetClassId?: string,
+    type: AvatarSourceType = 'default',
+    overwrite: boolean = false
+  ): { updatedCount: number; totalCount: number } => {
     const cId = targetClassId || activeClassId;
-    if (!cId) return;
-    setStudents(prev => {
-      let counter = 0;
-      return prev.map(s => {
-        if (s.classId === cId) {
-          const newAvatar = getStudentRealAvatar(counter++, cId);
-          return {
-            ...s,
-            avatar: newAvatar
-          };
+    if (!cId) return { updatedCount: 0, totalCount: 0 };
+    let updatedCount = 0;
+    const usedUrls = new Set<string>();
+    const nowTs = Date.now();
+
+    const currentStudents = studentsRef.current;
+    const classStudents = currentStudents.filter(s => s.classId === cId);
+    const totalCount = classStudents.length;
+    let counter = 0;
+
+    const nextStudents = currentStudents.map(s => {
+      if (s.classId === cId) {
+        const hasCustomAvatar = Boolean(
+          s.avatar && 
+          s.avatar.trim() && 
+          !s.avatar.includes('api.dicebear.com/7.x/bottts/svg?seed=student-')
+        );
+        if (!overwrite && hasCustomAvatar) {
+          return s;
         }
-        return s;
-      });
+        const newAvatar = getStudentAvatarAssignment({
+          gender: s.gender || 'Nam',
+          type,
+          index: counter++,
+          classId: cId,
+          usedUrls
+        });
+        updatedCount++;
+        return {
+          ...s,
+          avatar: newAvatar,
+          originalAvatar: newAvatar,
+          avatarScale: 1,
+          avatarPosition: { x: 0, y: 0 }
+        };
+      }
+      return s;
     });
+
+    // 1. Cập nhật ngay lập tức React state & ref
+    studentsRef.current = nextStudents;
+    setStudents(nextStudents);
+
+    // 2. Kích hoạt quy trình lưu 3 tầng (LocalStorage, Supabase Cloud, Local JSON Server)
+    if (currentUser) {
+      if (currentUser.role === 'admin') {
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).catch(() => {});
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
+
+    // 3. Bắn sự kiện BroadcastChannel nội bộ cho tất cả các tab khác render lại ngay lập tức
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('lop_hoc_realtime_local');
+        bc.postMessage({ 
+          type: 'STUDENTS_BULK_UPDATED', 
+          classId: cId, 
+          students: nextStudents, 
+          timestamp: nowTs 
+        });
+        bc.close();
+      }
+    } catch (_) {}
+
+    const currentClass = classes.find(c => c.id === cId);
+    const typeLabel = type === 'default' ? 'Avatar Mặc định (Hoạt hình)' : 'Avatar Ảnh thật demo';
+    logUserActivity(
+      'AUTO_ASSIGN_AVATARS',
+      `Tự động gán ${typeLabel} cho lớp ${currentClass?.name || ''} (Cập nhật: ${updatedCount} học sinh, Ghi đè: ${overwrite ? 'Có' : 'Không'})`
+    );
+    return { updatedCount, totalCount };
+  };
+
+  // Tự động gán ảnh đại diện thật cho toàn bộ học sinh trong lớp (Backward compatibility)
+  const autoAssignRealAvatarsToClass = (targetClassId?: string) => {
+    autoAssignAvatarsToClass(targetClassId, 'real_demo', true);
   };
 
   // Subjects (Cấu hình nhận xu: Thêm, sửa, xóa, thiết lập áp dụng cho lớp/giáo viên)
@@ -2692,6 +2776,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       clearClassStudents,
       bulkAddStudents,
       autoAssignRealAvatarsToClass,
+      autoAssignAvatarsToClass,
       resetStudentsCoins,
 
       subjects,

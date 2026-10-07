@@ -185,7 +185,8 @@ export async function bakeCropFromFullImage(
   frameSize = 240,
   position: { x: number; y: number } = { x: 0, y: 0 },
   scale: number = 1,
-  outputSize: number = 360
+  outputSize: number = 360,
+  flipX: boolean = false
 ): Promise<string> {
   return new Promise((resolve) => {
     if (!imageSrc) {
@@ -193,8 +194,8 @@ export async function bakeCropFromFullImage(
       return;
     }
 
-    // If it's an external preset avatar without zoom or translation, return source directly
-    if (imageSrc.startsWith('http') && scale === 1 && position.x === 0 && position.y === 0) {
+    // If it's an external preset avatar without zoom or translation or flip, return source directly
+    if (imageSrc.startsWith('http') && scale === 1 && position.x === 0 && position.y === 0 && !flipX) {
       resolve(imageSrc);
       return;
     }
@@ -235,6 +236,9 @@ export async function bakeCropFromFullImage(
 
         ctx.save();
         ctx.translate(outputSize / 2, outputSize / 2);
+        if (flipX) {
+          ctx.scale(-1, 1);
+        }
         ctx.translate(position.x * R, position.y * R);
         ctx.scale(scale * s0 * R, scale * s0 * R);
 
