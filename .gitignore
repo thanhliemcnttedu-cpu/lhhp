@@ -8,3 +8,9 @@ coverage/
 !.env.example
 .agent/
 data/backups/
+
+# Always track static media assets
+!public/certificates/
+!public/certificates/**/*
+!public/avatars/
+!public/avatars/**/*

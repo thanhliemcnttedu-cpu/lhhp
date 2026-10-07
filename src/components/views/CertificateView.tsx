@@ -53,6 +53,10 @@ export interface CertificateElement {
 
 // Fallback certificate templates strictly in /certificates/
 const DEFAULT_CERTIFICATE_TEMPLATES: CertificateTemplate[] = [
+  { id: 'cert-1.png', name: 'Mẫu Khen Thưởng 1', url: '/certificates/1.png', filename: '1.png' },
+  { id: 'cert-2.png', name: 'Mẫu Khen Thưởng 2', url: '/certificates/2.png', filename: '2.png' },
+  { id: 'cert-3.png', name: 'Mẫu Khen Thưởng 3', url: '/certificates/3.png', filename: '3.png' },
+  { id: 'cert-4.png', name: 'Mẫu Khen Thưởng 4', url: '/certificates/4.png', filename: '4.png' },
   { id: 'cert-tpl_1.jpg', name: 'Mẫu Học Tập', url: '/certificates/tpl_1.jpg', filename: 'tpl_1.jpg' },
   { id: 'cert-tpl_2.jpg', name: 'Mẫu Cổ Điển', url: '/certificates/tpl_2.jpg', filename: 'tpl_2.jpg' },
   { id: 'cert-tpl_3.jpg', name: 'Mẫu Bầu Trời', url: '/certificates/tpl_3.jpg', filename: 'tpl_3.jpg' },
