@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T09:56:03.140Z",
+  "lastSync": "2026-10-08T09:56:10.240Z",
   "users": [
     {
       "id": "user-admin",
@@ -20911,7 +20911,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791453363140
+      "updatedAt": 1791453370240
     },
     "gv_canhan01": {
       "classes": [
@@ -22644,9 +22644,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791453338556
+    "lastGithubPushAt": 1791453370119
   },
   "auditLogs": [
+    {
+      "id": "log-1791453367381-6njxkl",
+      "timestamp": 1791453367381,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Mai Trấn Hưng)"
+    },
     {
       "id": "log-1791453358436-9e1qbz",
       "timestamp": 1791453358436,
