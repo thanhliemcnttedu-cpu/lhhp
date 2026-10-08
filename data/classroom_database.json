@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T13:30:04.432Z",
+  "lastSync": "2026-10-08T13:30:09.604Z",
   "users": [
     {
       "id": "user-admin",
@@ -6380,7 +6380,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791466204430
+      "updatedAt": 1791466209603
     },
     "gvcndemo": {
       "classes": [
@@ -7502,7 +7502,7 @@
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1791466204430
+      "updatedAt": 1791466209603
     },
     "gvbmdemo": {
       "classes": [
@@ -14799,7 +14799,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791466204430
+      "updatedAt": 1791466209603
     },
     "quantricanhan": {
       "classes": [
@@ -20479,7 +20479,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791466204430
+      "updatedAt": 1791466209603
     },
     "gvbmdemo2": {
       "classes": [
@@ -24255,7 +24255,7 @@
         "zalo": "0888358363",
         "teachingSubject": "Giáo viên chủ nhiệm"
       },
-      "updatedAt": 1791466204430
+      "updatedAt": 1791466209603
     },
     "nguyenviethien": {
       "classes": [
