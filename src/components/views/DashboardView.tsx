@@ -180,7 +180,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         const greetingUserName = isManagementAccount
           ? (currentUser?.fullName || 'Ban Giám Hiệu')
           : (activeClass?.teacherName || teacherProfile.name);
-        const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+        const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
         const displayAvatar = currentUser?.avatar || teacherProfile.avatar;
         const roleBadge = isBgh 
           ? { text: 'BGH', bg: 'bg-amber-600' }
@@ -760,7 +760,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         const greetingUserName = isManagementAccount
           ? (currentUser?.fullName || 'Ban Giám Hiệu')
           : (activeClass?.teacherName || teacherProfile.name);
-        const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+        const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
         const displayAvatar = currentUser?.avatar || teacherProfile.avatar;
 
         return (

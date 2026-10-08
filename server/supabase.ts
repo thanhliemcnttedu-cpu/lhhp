@@ -260,6 +260,24 @@ export async function saveSupabaseUserData(username: string, classroomData: any)
   }
 }
 
+export async function deleteSupabaseUserData(username: string): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    const cleanUsername = username.trim().toLowerCase();
+    const { error } = await client.from('user_classroom_data').delete().eq('username', cleanUsername);
+    if (error) {
+      console.error(`[Supabase] Lỗi khi xóa dữ liệu lớp học cho ${cleanUsername}:`, error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[Supabase] Ngoại lệ khi xóa dữ liệu lớp học cho ${username}:`, err);
+    return false;
+  }
+}
+
 // ==========================================
 // 3. NHẬT KÝ HOẠT ĐỘNG (AUDIT LOGS)
 // ==========================================

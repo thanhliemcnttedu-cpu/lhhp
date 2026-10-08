@@ -214,7 +214,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const isSchoolAdmin = Boolean(currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin);
   const isGuestAdmin = Boolean(currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin);
   const isAdmin = Boolean(currentUser?.role === 'admin' || isBgh || isSchoolAdmin || isGuestAdmin);
-  const canManageAccounts = Boolean((currentUser?.role === 'admin' || isSchoolAdmin || isGuestAdmin) && !isBgh);
+  const canManageAccounts = Boolean(currentUser?.role === 'admin' || isSchoolAdmin || isGuestAdmin || isBgh);
 
   const currentUserRef = useRef<UserAccount | null>(currentUser);
   useEffect(() => {
@@ -667,7 +667,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         name: user.fullName || 'Giáo viên bộ môn',
         role: 'GIÁO VIÊN BỘ MÔN',
         teachingSubject: user.subjectName || 'Tin học',
-        schoolName: user.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+        schoolName: user.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
         avatar: user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.username}&backgroundColor=b6e3f4`,
         phone: user.phone || '0888358363',
         zalo: user.phone || '0888358363',
@@ -1379,6 +1379,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // BGH check helper
   const checkBghPermission = () => {
+    if (isSuperAdmin) return true; // Supreme Privileges: Toàn quyền can thiệp CSDL
     if (isBgh && !isSchoolAdmin && currentUser?.role !== 'admin') {
       setPermissionAlert("Bạn chỉ có quyền xem thông tin, hãy tôn trọng tính chính xác của giáo viên đã cập nhật.");
       return false;
@@ -1387,6 +1388,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const checkAttendancePermission = () => {
+    if (isSuperAdmin) return true; // Supreme Privileges: Toàn quyền
     if ((isBgh || isSchoolAdmin) && currentUser?.role !== 'admin') {
       setPermissionAlert("Bạn không có quyền điểm danh, công việc này thuộc về giáo viên chủ nhiệm.");
       return false;
@@ -1404,9 +1406,38 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     const newId = `class-${Date.now()}`;
     const newCls: Classroom = { ...cls, id: newId };
-    setClasses(prev => [...prev, newCls]);
+    const nextClasses = [...classes, newCls];
+    setClasses(nextClasses);
+    classesRef.current = nextClasses;
     setActiveClassId(newId);
     logUserActivity('CREATE_CLASS', `Mở thêm lớp học mới: ${newCls.name} (${newCls.grade || ''})`, { classId: newId, name: newCls.name });
+
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        databaseService.updateAdminClass(newCls).catch(() => {});
+        databaseService.syncAdminAllData(nextClasses, studentsRef.current.length > 0 ? studentsRef.current : students).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          classes: nextClasses,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   const updateClass = (id: string, updated: Partial<Classroom>) => {
@@ -1429,7 +1460,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Immediate database synchronization
     if (currentUser) {
       setDbSyncStatus('syncing');
-      if (currentUser.role === 'admin') {
+      if (isSuperAdmin) {
         databaseService.updateAdminClass(target).catch(() => {});
         databaseService.syncAdminAllData(nextClasses, studentsRef.current.length > 0 ? studentsRef.current : students).then(() => {
           setDbSyncStatus('synced');
@@ -1468,11 +1499,14 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const target = classes.find(c => c.id === id);
     const remaining = classes.filter(c => c.id !== id);
     setClasses(remaining);
+    classesRef.current = remaining;
     if (activeClassId === id) {
       setActiveClassId(remaining.length > 0 ? remaining[0].id : '');
     }
     // Clean up students belonging to deleted class
-    setStudents(prev => prev.filter(s => s.classId !== id));
+    const remainingStudents = students.filter(s => s.classId !== id);
+    setStudents(remainingStudents);
+    studentsRef.current = remainingStudents;
     // Clean up seating
     setSeatingAssignments(prev => {
       const next = { ...prev };
@@ -1490,6 +1524,39 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return true;
     }));
     logUserActivity('DELETE_CLASS', `Xóa lớp học: ${target?.name || id}`, { classId: id, name: target?.name });
+
+    // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        databaseService.deleteClass(id, {
+          isSuperAdmin: true,
+          teacherUsername: target?.teacherUsername,
+          currentUserId: currentUser.id
+        }).catch(() => {});
+        databaseService.syncAdminAllData(remaining, remainingStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          classes: remaining,
+          students: remainingStudents,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   const bulkDeleteClasses = (ids: string[]) => {
@@ -1501,13 +1568,16 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const remaining = classes.filter(c => !targetSet.has(c.id));
     setClasses(remaining);
+    classesRef.current = remaining;
 
     if (targetSet.has(activeClassId)) {
       setActiveClassId(remaining.length > 0 ? remaining[0].id : '');
     }
 
     // Clean up students belonging to deleted classes
-    setStudents(prev => prev.filter(s => !targetSet.has(s.classId)));
+    const remainingStudents = students.filter(s => !targetSet.has(s.classId));
+    setStudents(remainingStudents);
+    studentsRef.current = remainingStudents;
 
     // Clean up seating
     setSeatingAssignments(prev => {
@@ -1532,6 +1602,42 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const deletedNames = targetClasses.map(c => c.name).join(', ');
     logUserActivity('DELETE_CLASS', `Xóa đồng loạt ${ids.length} lớp học: ${deletedNames}`, { classIds: ids });
+
+    // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        ids.forEach(classId => {
+          const clsObj = targetClasses.find(c => c.id === classId);
+          databaseService.deleteClass(classId, {
+            isSuperAdmin: true,
+            teacherUsername: clsObj?.teacherUsername,
+            currentUserId: currentUser.id
+          }).catch(() => {});
+        });
+        databaseService.syncAdminAllData(remaining, remainingStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          classes: remaining,
+          students: remainingStudents,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   const bulkUpdateClasses = (ids: string[], updates: Partial<Classroom>) => {
@@ -1545,13 +1651,43 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const deleteAllClasses = () => {
     if (!checkBghPermission()) return;
     setClasses([]);
+    classesRef.current = [];
     setActiveClassId('');
     setStudents([]);
+    studentsRef.current = [];
     setSeatingAssignments({});
     setAttendanceRecords([]);
     setBoardingRecords([]);
     setSubjectTimetable([]);
     logUserActivity('DELETE_CLASS', 'Xóa toàn bộ danh sách lớp học');
+
+    // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        databaseService.syncAdminAllData([], []).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          classes: [],
+          students: [],
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   // Student methods
@@ -1578,9 +1714,38 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       avatarScale: st.avatarScale || 1,
       avatarPosition: st.avatarPosition || { x: 0, y: 0 }
     };
-    setStudents(prev => [...prev, newStudent]);
+    const nextStudents = [...students, newStudent];
+    setStudents(nextStudents);
+    studentsRef.current = nextStudents;
     const currentClass = classes.find(c => c.id === activeClassId);
     logUserActivity('ADD_STUDENT', `Thêm mới học sinh: ${newStudent.name} (STT ${newStt}) vào lớp ${currentClass?.name || ''}`);
+
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        databaseService.updateAdminStudent(newStudent).catch(() => {});
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   const updateStudent = (id: string, data: Partial<Student>) => {
@@ -1603,7 +1768,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Immediate database synchronization to Server & Supabase Cloud
     if (currentUser) {
       setDbSyncStatus('syncing');
-      if (currentUser.role === 'admin') {
+      if (isSuperAdmin) {
         databaseService.updateAdminStudent(targetStudent).catch(() => {});
         databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
           setDbSyncStatus('synced');
@@ -1641,7 +1806,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!checkBghPermission()) return;
     const st = students.find(s => s.id === id);
     const currentClass = classes.find(c => c.id === st?.classId);
-    setStudents(prev => prev.filter(s => s.id !== id));
+    const remainingStudents = students.filter(s => s.id !== id);
+    setStudents(remainingStudents);
+    studentsRef.current = remainingStudents;
     // also clean up seating assignment
     setSeatingAssignments(prev => {
       const next = { ...prev };
@@ -1651,6 +1818,39 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return next;
     });
     logUserActivity('DELETE_STUDENT', `Xóa học sinh: ${st?.name || id} khỏi lớp ${currentClass?.name || ''}`);
+
+    // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        databaseService.deleteStudent(id, {
+          isSuperAdmin: true,
+          classId: st?.classId,
+          teacherUsername: currentClass?.teacherUsername,
+          currentUserId: currentUser.id
+        }).catch(() => {});
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, remainingStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: remainingStudents,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   const bulkDeleteStudents = (studentIds: string[]) => {
@@ -1658,7 +1858,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (studentIds.length === 0) return;
     const idSet = new Set(studentIds);
     const currentClass = classes.find(c => c.id === activeClassId);
-    setStudents(prev => prev.filter(s => !idSet.has(s.id)));
+    const remainingStudents = students.filter(s => !idSet.has(s.id));
+    setStudents(remainingStudents);
+    studentsRef.current = remainingStudents;
     setSeatingAssignments(prev => {
       const next = { ...prev };
       Object.keys(next).forEach(k => {
@@ -1667,6 +1869,42 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return next;
     });
     logUserActivity('DELETE_STUDENT', `Xóa ${studentIds.length} học sinh khỏi lớp ${currentClass?.name || ''}`);
+
+    // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        studentIds.forEach(id => {
+          const st = students.find(s => s.id === id);
+          databaseService.deleteStudent(id, {
+            isSuperAdmin: true,
+            classId: st?.classId,
+            teacherUsername: currentClass?.teacherUsername,
+            currentUserId: currentUser.id
+          }).catch(() => {});
+        });
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, remainingStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: remainingStudents,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   const clearClassStudents = (classId: string) => {
@@ -1674,7 +1912,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const targetClass = classes.find(c => c.id === classId);
     const count = students.filter(s => s.classId === classId).length;
     const targetIds = new Set(students.filter(s => s.classId === classId).map(s => s.id));
-    setStudents(prev => prev.filter(s => s.classId !== classId));
+    const remainingStudents = students.filter(s => s.classId !== classId);
+    setStudents(remainingStudents);
+    studentsRef.current = remainingStudents;
     setSeatingAssignments(prev => {
       const next = { ...prev };
       Object.keys(next).forEach(k => {
@@ -1683,6 +1923,41 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return next;
     });
     logUserActivity('DELETE_STUDENT', `Xóa toàn bộ ${count} học sinh của lớp ${targetClass?.name || classId}`);
+
+    // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin) {
+        targetIds.forEach(id => {
+          databaseService.deleteStudent(id, {
+            isSuperAdmin: true,
+            classId,
+            teacherUsername: targetClass?.teacherUsername,
+            currentUserId: currentUser.id
+          }).catch(() => {});
+        });
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, remainingStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: remainingStudents,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   const resetStudentsCoins = (studentIds?: string[], classId?: string) => {

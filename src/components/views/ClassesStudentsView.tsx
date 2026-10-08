@@ -469,11 +469,23 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   const handleConfirmDeleteClass = () => {
     if (!deleteConfirmClass) return;
+    if (isSuperAdmin) {
+      const confirmed = window.confirm(
+        `⚠️ BẠN ĐANG THỰC THI QUYỀN QUẢN TRỊ TỐI CAO:\n\nBạn có chắc chắn muốn xóa Lớp học "${deleteConfirmClass.name}"? Mọi học sinh trong lớp cũng sẽ bị xóa vĩnh viễn trên toàn hệ thống CSDL Của trường/giáo viên sở hữu.`
+      );
+      if (!confirmed) return;
+    }
     deleteClass(deleteConfirmClass.id);
     setDeleteConfirmClass(null);
   };
 
   const handleConfirmDeleteAllClasses = () => {
+    if (isSuperAdmin) {
+      const confirmed = window.confirm(
+        `⚠️ BẠN ĐANG THỰC THI QUYỀN QUẢN TRỊ TỐI CAO:\n\nCẢNH BÁO NGUY HIỂM: Thao tác này sẽ xóa sạch TOÀN BỘ ${classes.length} LỚP HỌC và TẤT CẢ HỌC SINH trên toàn bộ hệ thống! Bạn có chắc chắn tuyệt đối muốn thực hiện không?`
+      );
+      if (!confirmed) return;
+    }
     deleteAllClasses();
     setIsDeleteAllClassesOpen(false);
     confetti({ particleCount: 40, spread: 60 });
@@ -846,6 +858,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   };
 
   const handleBulkDeleteSelected = () => {
+    if (isSuperAdmin) {
+      const confirmed = window.confirm(
+        `⚠️ BẠN ĐANG THỰC THI QUYỀN QUẢN TRỊ TỐI CAO:\n\nXác nhận xóa ${selectedStudentIds.length} học sinh đã chọn khỏi toàn bộ hệ thống? Thao tác này không thể hoàn tác. Bạn có chắc chắn không?`
+      );
+      if (!confirmed) return;
+    }
     selectedStudentIds.forEach(id => deleteStudent(id));
     setSelectedStudentIds([]);
     setIsBulkDeleteConfirmOpen(false);
@@ -853,6 +871,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   const handleConfirmBulkDeleteClasses = () => {
     if (selectedClassIds.length === 0) return;
+    if (isSuperAdmin) {
+      const confirmed = window.confirm(
+        `⚠️ BẠN ĐANG THỰC THI QUYỀN QUẢN TRỊ TỐI CAO:\n\nXác nhận xóa hàng loạt ${selectedClassIds.length} Lớp học đã chọn? Toàn bộ học sinh và dữ liệu liên quan sẽ bị xóa vĩnh viễn trên toàn hệ thống CSDL. Bạn có chắc chắn không?`
+      );
+      if (!confirmed) return;
+    }
     bulkDeleteClasses(selectedClassIds);
     playDeductSound();
     setSelectedClassIds([]);
@@ -876,6 +900,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   };
 
   const handleClearAllClassStudents = () => {
+    if (isSuperAdmin) {
+      const confirmed = window.confirm(
+        `⚠️ BẠN ĐANG THỰC THI QUYỀN QUẢN TRỊ TỐI CAO:\n\nXác nhận xóa toàn bộ học sinh của lớp này khỏi hệ thống? Bạn có chắc chắn không?`
+      );
+      if (!confirmed) return;
+    }
     clearClassStudents(activeClassId);
     setSelectedStudentIds([]);
     setIsClearAllConfirmOpen(false);
@@ -1405,16 +1435,24 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => setEditingClass(cls)}
-                          className="p-1.5 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors hover-zoom-btn"
-                          title="Sửa thông tin lớp học"
+                          className={`p-1.5 rounded-lg transition-colors hover-zoom-btn border ${
+                            isSuperAdmin
+                              ? 'text-indigo-800 bg-indigo-100 hover:bg-indigo-200 border-indigo-300 ring-1 ring-indigo-300 font-bold'
+                              : 'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200'
+                          }`}
+                          title={isSuperAdmin ? "Quyền Quản Trị Tối Cao: Sửa thông tin lớp học này" : "Sửa thông tin lớp học"}
                         >
                           <Edit3 className="w-3 h-3" />
                         </button>
 
                         <button
                           onClick={() => setDeleteConfirmClass(cls)}
-                          className="p-1.5 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors hover-zoom-btn"
-                          title="Xóa lớp học này"
+                          className={`p-1.5 rounded-lg transition-colors hover-zoom-btn border ${
+                            isSuperAdmin
+                              ? 'text-rose-700 bg-rose-100 hover:bg-rose-200 border-rose-300 ring-1 ring-rose-300 font-bold shadow-xs'
+                              : 'text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200'
+                          }`}
+                          title={isSuperAdmin ? "Quyền Quản Trị Tối Cao: Xóa lớp học này trên toàn hệ thống" : "Xóa lớp học này"}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -2151,8 +2189,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             setEditingStudent(student);
                             setEditingRoles(getStudentRolesList(student));
                           }}
-                          className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 flex items-center justify-center transition-all hover-zoom-btn border border-indigo-200/80 shadow-2xs shrink-0"
-                          title="Sửa thông tin học sinh"
+                          className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl flex items-center justify-center transition-all hover-zoom-btn border shadow-2xs shrink-0 ${
+                            isSuperAdmin
+                              ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-300 ring-1 ring-indigo-300'
+                              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80'
+                          }`}
+                          title={isSuperAdmin ? "Quyền Quản Trị Tối Cao: Sửa thông tin học sinh này" : "Sửa thông tin học sinh"}
                           aria-label={`Sửa thông tin học sinh ${student.name}`}
                         >
                           <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
@@ -2160,12 +2202,24 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
                         <button
                           onClick={() => {
-                            if (confirm(`Bạn có chắc muốn xóa học sinh "${student.name}" khỏi lớp?`)) {
+                            const canEditOrDeleteStudent = isSuperAdmin || ((student as any).teacher_id ? (student as any).teacher_id === currentUser?.id : true);
+                            if (!canEditOrDeleteStudent) {
+                              alert("Bạn không có quyền thao tác trên học sinh này!");
+                              return;
+                            }
+                            const confirmMsg = isSuperAdmin
+                              ? `⚠️ BẠN ĐANG THỰC THI QUYỀN QUẢN TRỊ TỐI CAO:\n\nXác nhận xóa học sinh "${student.name}" khỏi toàn bộ hệ thống? Thao tác này sẽ xóa vĩnh viễn trên toàn bộ CSDL và không thể hoàn tác. Bạn có chắc chắn không?`
+                              : `Bạn có chắc muốn xóa học sinh "${student.name}" khỏi lớp?`;
+                            if (window.confirm(confirmMsg)) {
                               deleteStudent(student.id);
                             }
                           }}
-                          className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-all hover-zoom-btn border border-slate-200/70 shrink-0"
-                          title="Xóa học sinh"
+                          className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl flex items-center justify-center transition-all hover-zoom-btn border shrink-0 ${
+                            isSuperAdmin
+                              ? 'bg-rose-100 hover:bg-rose-200 text-rose-700 border-rose-300 ring-1 ring-rose-300 font-bold shadow-xs'
+                              : 'bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/70'
+                          }`}
+                          title={isSuperAdmin ? "Quyền Quản Trị Tối Cao: Xóa học sinh này trên toàn hệ thống" : "Xóa học sinh"}
                           aria-label={`Xóa học sinh ${student.name}`}
                         >
                           <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -3531,7 +3585,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
             <div className="text-center">
               <h3 className="text-base font-black text-rose-950">Xóa Lớp {deleteConfirmClass.name}?</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              {isSuperAdmin && (
+                <div className="mt-2.5 p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-900 text-[11px] font-bold text-left leading-relaxed">
+                  👑 <strong>QUYỀN QUẢN TRỊ TỐI CAO:</strong> Bạn đang thực thi xóa Lớp học này trên toàn bộ hệ thống CSDL. Mọi học sinh và dữ liệu thuộc lớp này sẽ bị xóa vĩnh viễn khỏi toàn bộ tài khoản giáo viên/nhà trường.
+                </div>
+              )}
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                 Toàn bộ dữ liệu học sinh, điểm thi đua và sơ đồ của lớp này sẽ bị xóa.
               </p>
             </div>

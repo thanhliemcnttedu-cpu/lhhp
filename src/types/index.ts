@@ -402,6 +402,8 @@ export interface SchoolEntity {
   address?: string;
   phone?: string;
   adminUsername?: string;
+  adminPassword?: string;
+  adminFullName?: string;
   createdAt?: number;
 }
 

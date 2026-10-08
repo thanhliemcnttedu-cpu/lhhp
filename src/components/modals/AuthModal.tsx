@@ -35,7 +35,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // 🎯 5 VAI TRÒ ĐĂNG NHẬP THEO YÊU CẦU
   const [selectedRoleScope, setSelectedRoleScope] = useState<LoginRoleScope>('school_teacher');
   const [schools, setSchools] = useState<SchoolEntity[]>([]);
-  const [selectedSchoolName, setSelectedSchoolName] = useState<string>('TIỂU HỌC SỐ 1 TÂN UYÊN');
+  const [selectedSchoolName, setSelectedSchoolName] = useState<string>('TRƯỜNG HỌC HẠNH PHÚC DEMO');
 
   useEffect(() => {
     if (isOpen) {

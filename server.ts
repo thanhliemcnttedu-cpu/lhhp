@@ -805,7 +805,8 @@ app.put('/api/schools/:id', (req, res) => {
 
 app.delete('/api/schools/:id', (req, res) => {
   try {
-    const result = deleteSchool(req.params.id);
+    const schoolName = req.query.schoolName as string | undefined;
+    const result = deleteSchool(req.params.id, schoolName);
     return res.status(result.success ? 200 : 400).json(result);
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message });

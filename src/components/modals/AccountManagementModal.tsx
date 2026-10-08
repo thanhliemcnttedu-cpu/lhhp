@@ -4,7 +4,7 @@ import {
   X, Users, UserPlus, KeyRound, Trash2, Edit3, ShieldAlert,
   Database, Download, Upload, CheckCircle2, AlertCircle, RefreshCw, 
   School, Laptop, Check, Search, ShieldCheck, FileSpreadsheet,
-  FileUp, ArrowDownToLine, AlertTriangle, Sparkles, History, Eye,
+  FileUp, ArrowDownToLine, AlertTriangle, Sparkles, History, Eye, EyeOff, Copy,
   Activity, Calendar, Clock, Filter, RotateCcw, GitBranch,
   FolderTree, Building2, Plus, Crown, ArrowRightLeft, FileText
 } from 'lucide-react';
@@ -39,9 +39,9 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
   // 🎯 QUYỀN HẠN PHÂN CẤP 3 NHÓM CHÍNH (Yêu cầu e, c, d)
   const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
-  const isSchoolAdmin = currentUser?.role === 'school_admin' || Boolean(currentUser?.isSchoolAdmin);
+  const isSchoolAdmin = currentUser?.role === 'school_admin' || Boolean(currentUser?.isSchoolAdmin) || currentUser?.role === 'bgh' || Boolean(currentUser?.isBgh);
   const isGuestAdmin = currentUser?.role === 'guest_admin' || Boolean(currentUser?.isGuestAdmin) || currentUser?.username?.toLowerCase() === 'admin';
-  const currentSchoolScope = currentUser?.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+  const currentSchoolScope = currentUser?.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
 
   // Quản lý CSDL Trường Học
   const [schoolsList, setSchoolsList] = useState<SchoolEntity[]>([]);
@@ -52,8 +52,18 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     code: '',
     address: '',
     phone: '',
-    adminUsername: 'adminths1'
+    adminUsername: '',
+    adminPassword: '123456',
+    adminFullName: ''
   });
+  const [showSchoolPassword, setShowSchoolPassword] = useState(false);
+  const [provisionedSchoolInfo, setProvisionedSchoolInfo] = useState<{
+    schoolName: string;
+    code: string;
+    username: string;
+    password?: string;
+    fullName: string;
+  } | null>(null);
 
   // Tenant categorization filter: Trường học vs Giáo viên vãng lai vs Demo
   const [tenantFilter, setTenantFilter] = useState<string>('all');
@@ -65,6 +75,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   const [selectedResetSchoolName, setSelectedResetSchoolName] = useState<string>(currentSchoolScope);
   const [schoolResetConfirmCode, setSchoolResetConfirmCode] = useState('');
   const [isResettingSchool, setIsResettingSchool] = useState(false);
+  const [deletingSchoolId, setDeletingSchoolId] = useState<string | null>(null);
 
   // 🚀 DI CHUYỂN TOÀN BỘ CSDL GIÁO VIÊN VÃNG LAI VÀO NHÀ TRƯỜNG (SUPER ADMIN)
   const [transferModalOpen, setTransferModalOpen] = useState(false);
@@ -122,7 +133,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     email: '',
     assignedClassName: '4A1',
     subjectName: 'Tin học',
-    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
     tenantType: 'school' as 'school' | 'guest' | 'demo'
   });
 
@@ -202,13 +213,20 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         
         // Chuyển luôn đến giao diện khởi tạo tài khoản csdl database cho nhà trường
         setActiveTab('schools');
-        setEditingSchool(null);
+        const schoolNameVal = reg.schoolName || reg.organization || '';
+        const slugCode = schoolNameVal
+          ? 'TH_' + schoolNameVal.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase()
+          : '';
+        const slugUser = slugCode ? `bgh_${slugCode.slice(3).toLowerCase()}` : '';
+
         setSchoolFormData({
-          name: reg.schoolName || reg.organization || '',
-          code: '',
+          name: schoolNameVal,
+          code: slugCode,
           address: '',
           phone: reg.phone || '',
-          adminUsername: 'adminths1'
+          adminUsername: slugUser,
+          adminPassword: '123456',
+          adminFullName: schoolNameVal ? `Ban Giám Hiệu ${schoolNameVal}` : ''
         });
         setSchoolModalOpen(true);
       } else {
@@ -310,27 +328,59 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     }
   };
 
+  const handleSchoolNameChange = (nameVal: string) => {
+    if (editingSchool) {
+      setSchoolFormData(prev => ({ ...prev, name: nameVal }));
+      return;
+    }
+    // Gợi ý mã trường và username BGH nếu chưa nhập
+    const slug = nameVal
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .toUpperCase()
+      .replace(/[^A-Z0-9\s]/g, '')
+      .trim();
+    const words = slug.split(/\s+/).filter(Boolean);
+    const letters = words.map(w => w[0]).join('');
+    const suggestedCode = letters ? `TH_${letters}`.slice(0, 10) : '';
+    const suggestedUsername = letters ? `bgh_${letters.toLowerCase()}` : '';
+
+    setSchoolFormData(prev => ({
+      ...prev,
+      name: nameVal,
+      code: prev.code ? prev.code : suggestedCode,
+      adminUsername: prev.adminUsername ? prev.adminUsername : suggestedUsername,
+      adminFullName: prev.adminFullName ? prev.adminFullName : (nameVal ? `Ban Giám Hiệu ${nameVal}` : '')
+    }));
+  };
+
   const handleStartCreateSchool = () => {
     setEditingSchool(null);
+    setProvisionedSchoolInfo(null);
     setSchoolFormData({
       name: '',
       code: '',
       address: '',
       phone: '',
-      adminUsername: 'adminths1'
+      adminUsername: '',
+      adminPassword: '123456',
+      adminFullName: ''
     });
     setSchoolModalOpen(true);
   };
 
   const handleStartEditSchool = (school: SchoolEntity) => {
-    window.alert("Bạn đang thực hiện sửa thông tin CSDL nhà trường");
     setEditingSchool(school);
+    setProvisionedSchoolInfo(null);
     setSchoolFormData({
       name: school.name,
       code: school.code,
       address: school.address || '',
       phone: school.phone || '',
-      adminUsername: school.adminUsername || 'adminths1'
+      adminUsername: school.adminUsername || '',
+      adminPassword: school.adminPassword || '123456',
+      adminFullName: school.adminFullName || `Ban Giám Hiệu ${school.name}`
     });
     setSchoolModalOpen(true);
   };
@@ -340,6 +390,20 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     if (!schoolFormData.name.trim()) {
       showNotify('error', 'Vui lòng nhập tên trường học.');
       return;
+    }
+    if (!schoolFormData.code.trim()) {
+      showNotify('error', 'Vui lòng nhập mã trường học.');
+      return;
+    }
+    if (!editingSchool) {
+      if (!schoolFormData.adminUsername.trim()) {
+        showNotify('error', 'Vui lòng nhập tên đăng nhập của Ban Giám Hiệu.');
+        return;
+      }
+      if (!schoolFormData.adminPassword?.trim()) {
+        showNotify('error', 'Vui lòng nhập mật khẩu khởi tạo cho Ban Giám Hiệu.');
+        return;
+      }
     }
     setLoading(true);
     try {
@@ -356,10 +420,20 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       } else {
         const res = await databaseService.createSchool(schoolFormData);
         if (res.success) {
-          showNotify('success', 'Đã khởi tạo cơ sở dữ liệu trường học mới thành công!');
-          setSchoolModalOpen(false);
+          showNotify('success', 'Đã khởi tạo cơ sở dữ liệu trường học và cấp tài khoản BGH thành công!');
           loadSchools();
           onRefreshUsers();
+          if (res.adminAccount) {
+            setProvisionedSchoolInfo({
+              schoolName: res.school?.name || schoolFormData.name,
+              code: res.school?.code || schoolFormData.code,
+              username: res.adminAccount.username,
+              password: res.adminAccount.password || schoolFormData.adminPassword || '123456',
+              fullName: res.adminAccount.fullName || schoolFormData.adminFullName || `Ban Giám Hiệu ${schoolFormData.name}`
+            });
+          } else {
+            setSchoolModalOpen(false);
+          }
         } else {
           showNotify('error', res.message || 'Không thể tạo trường mới.');
         }
@@ -372,24 +446,34 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   };
 
   const handleDeleteSchool = async (school: SchoolEntity) => {
+    // 🛡️ BẢO TỒN CẢNH BÁO ĐẦU TIÊN
     if (!window.confirm("Bạn có chắc muốn xóa CSDL nhà trường hiện tại đang lựa chọn hay không? Việc làm này sẽ thực hiện xóa sạch toàn bộ CSDL về nhà trường, mô hình lớp học, các tài khoản đăng nhập và mật khẩu liên quan đề CSDL nhà trường đều bị xóa")) {
       return;
     }
+
+    // ⏳ TRẠNG THÁI LOADING & KHÓA NÚT THAO TÁC
+    setDeletingSchoolId(school.id);
     setLoading(true);
+
     try {
+      // Gọi thuật toán Xóa liên đới có lập trình (Programmatic Cascade Delete 6 bước)
       const res = await databaseService.deleteSchool(school.id, school.name);
       if (res && res.success) {
-        showNotify('success', res.message || 'Đã xóa trường học thành công.');
+        showNotify('success', res.message || `Đã dọn dẹp liên đới và xóa sạch CSDL trường "${school.name}" thành công.`);
         loadSchools();
         onRefreshUsers();
         loadStats();
         loadSummaries();
       } else {
-        showNotify('error', res?.message || 'Không thể xóa trường học.');
+        const errorDetail = res?.message || 'Không thể xóa CSDL trường học.';
+        console.error('Lỗi quy trình xóa trường học:', errorDetail);
+        showNotify('error', errorDetail);
       }
     } catch (err: any) {
-      showNotify('error', err?.message || 'Lỗi khi xóa trường.');
+      console.error('Chi tiết lỗi ngoại lệ khi xóa CSDL trường học:', err);
+      showNotify('error', err?.message || 'Có lỗi xảy ra trong quá trình dọn dẹp dữ liệu trường học.');
     } finally {
+      setDeletingSchoolId(null);
       setLoading(false);
     }
   };
@@ -425,7 +509,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   // 🚀 Mở hộp thoại Di chuyển CSDL Giáo viên vào Nhà trường (Super Admin)
   const handleOpenTransferModal = (user: UserAccount) => {
     setUserToTransfer(user);
-    const defaultTarget = schoolsList[0]?.name || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+    const defaultTarget = schoolsList[0]?.name || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
     setTargetSchoolName(defaultTarget);
     setCustomSchoolName('');
     setTransferModalOpen(true);
@@ -554,7 +638,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
   const handleStartCreate = () => {
     setEditingUser(null);
-    const defaultSchool = isSchoolAdmin ? currentSchoolScope : (schoolsList[0]?.name || 'TIỂU HỌC SỐ 1 TÂN UYÊN');
+    const defaultSchool = isSchoolAdmin ? currentSchoolScope : (schoolsList[0]?.name || 'TRƯỜNG HỌC HẠNH PHÚC DEMO');
     const defaultTenant = isGuestAdmin ? 'guest' : 'school';
     setFormData({
       username: '',
@@ -586,7 +670,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       email: user.email || '',
       assignedClassName: user.assignedClassName || '4A1',
       subjectName: user.subjectName || 'Tin học',
-      schoolName: user.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+      schoolName: user.schoolName || (schoolsList[0]?.name || 'TRƯỜNG HỌC HẠNH PHÚC DEMO'),
       tenantType: user.tenantType || 'school'
     });
     setActiveTab('add');
@@ -792,7 +876,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         'Lớp chủ nhiệm / Môn dạy': u.role === 'homeroom' ? (u.assignedClassName || 'Chưa gán') : (u.subjectName || 'Tin học'),
         'Số điện thoại': u.phone || '',
         'Email': u.email || '',
-        'Đơn vị trường học': u.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+        'Đơn vị trường học': u.schoolName || (schoolsList[0]?.name || 'TRƯỜNG HỌC HẠNH PHÚC DEMO'),
         'Trạng thái': u.status === 'locked' ? 'Tạm khóa' : 'Đang hoạt động',
         'Ngày tạo': u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : 'Mặc định'
       }));
@@ -827,6 +911,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   // 2. Chức năng tải biểu mẫu Excel mẫu để nhập đồng loạt
   const handleDownloadTemplate = () => {
     try {
+      const sampleSchool = schoolsList[0]?.name || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
       const templateRows = [
         {
           'STT': 1,
@@ -837,7 +922,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': '1A1',
           'Số điện thoại': '0912345671',
           'Email': 'co.lan@truong.edu.vn',
-          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
+          'Đơn vị trường học': sampleSchool
         },
         {
           'STT': 2,
@@ -848,7 +933,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': '2A1',
           'Số điện thoại': '0912345672',
           'Email': 'thay.bach@truong.edu.vn',
-          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
+          'Đơn vị trường học': sampleSchool
         },
         {
           'STT': 3,
@@ -859,7 +944,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': 'Tiếng Anh',
           'Số điện thoại': '0912345673',
           'Email': 'co.thu@truong.edu.vn',
-          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
+          'Đơn vị trường học': sampleSchool
         },
         {
           'STT': 4,
@@ -870,7 +955,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           'Lớp chủ nhiệm / Môn giảng dạy': 'Âm nhạc',
           'Số điện thoại': '0912345674',
           'Email': 'thay.huy@truong.edu.vn',
-          'Đơn vị trường học': 'TIỂU HỌC SỐ 1 TÂN UYÊN'
+          'Đơn vị trường học': sampleSchool
         }
       ];
 
@@ -936,7 +1021,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           const classOrSubject = getVal(['lớp', 'môn', 'phụ trách', 'bộ môn', 'chủ nhiệm']);
           const phone = getVal(['điện thoại', 'sđt', 'phone', 'mobile']);
           const email = getVal(['email', 'thư điện tử']);
-          const schoolName = getVal(['trường', 'đơn vị', 'school']) || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+          const schoolName = getVal(['trường', 'đơn vị', 'school']) || (schoolsList[0]?.name || 'TRƯỜNG HỌC HẠNH PHÚC DEMO');
 
           // Chuẩn hóa username: không dấu, viết thường, không khoảng cách
           const cleanUsername = usernameRaw
@@ -1062,14 +1147,22 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     if (tenantFilter === 'admin_super') {
       return u.role === 'admin' || u.username.toLowerCase() === 'adminquantri';
     }
-    if (tenantFilter === 'th1_tu') {
-      return !!u.schoolName?.toUpperCase().includes('TÂN UYÊN') || !!u.schoolName?.toUpperCase().includes('TH1_TU');
+    if (tenantFilter.startsWith('school_')) {
+      const schId = tenantFilter.replace('school_', '');
+      const sch = schoolsList.find(s => s.id === schId);
+      if (sch) {
+        if (sch.id === 'school-demo-hp' || sch.name.toUpperCase().includes('DEMO')) {
+          return (!!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO')) && u.role !== 'admin';
+        }
+        return (u.schoolName?.trim().toLowerCase() === sch.name.trim().toLowerCase() || u.schoolId === sch.id) && u.role !== 'admin';
+      }
+      return false;
     }
     if (tenantFilter === 'demo_hp') {
-      return !!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO');
+      return (!!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO')) && u.role !== 'admin';
     }
     if (tenantFilter === 'guest') {
-      return u.tenantType === 'guest' && !u.isDemo;
+      return (u.tenantType === 'guest' || (!u.schoolName && !u.isDemo)) && !u.isDemo && u.role !== 'admin';
     }
     return true;
   }).sort((a, b) => {
@@ -1426,11 +1519,23 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                               </button>
                               <button
                                 type="button"
+                                disabled={deletingSchoolId === school.id || loading}
                                 onClick={() => handleDeleteSchool(school)}
-                                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
-                                title="Xóa CSDL trường này"
+                                className={`p-1.5 rounded-lg border transition-all ${
+                                  deletingSchoolId === school.id
+                                    ? 'bg-amber-50 text-amber-700 border-amber-300 cursor-not-allowed shadow-none'
+                                    : 'text-rose-500 hover:bg-rose-50 border-transparent hover:border-rose-200'
+                                }`}
+                                title={deletingSchoolId === school.id ? "Đang dọn dẹp dữ liệu..." : "Xóa CSDL trường này"}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                {deletingSchoolId === school.id ? (
+                                  <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 px-1.5 py-0.5 animate-pulse">
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    <span>Đang dọn dẹp dữ liệu...</span>
+                                  </span>
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                )}
                               </button>
                             </div>
                           </td>
@@ -1531,30 +1636,38 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                   <Crown className="w-3.5 h-3.5" />
                   <span>Quản trị Tối cao ({allUsers.filter(u => u.role === 'admin' || u.username.toLowerCase() === 'adminquantri').length})</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setTenantFilter('demo_hp')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                    tenantFilter === 'demo_hp'
-                      ? 'bg-amber-500 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-amber-700'
-                  }`}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Khối TRƯỜNG HỌC HẠNH PHÚC DEMO ({allUsers.filter(u => !!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO')).length})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTenantFilter('th1_tu')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                    tenantFilter === 'th1_tu'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-blue-700'
-                  }`}
-                >
-                  <School className="w-3.5 h-3.5" />
-                  <span>Khối TIỂU HỌC SỐ 1 TÂN UYÊN ({allUsers.filter(u => !!u.schoolName?.toUpperCase().includes('TÂN UYÊN') || !!u.schoolName?.toUpperCase().includes('TH1_TU')).length})</span>
-                </button>
+                {/* 🏫 RENDER ĐỘNG CÁC KHỐI TRƯỜNG HỌC TỪ CƠ SỞ DỮ LIỆU (MULTI-TENANT SAAS) */}
+                {schoolsList.map((sch) => {
+                  const filterKey = `school_${sch.id}`;
+                  const isSelected = tenantFilter === filterKey || (sch.id === 'school-demo-hp' && tenantFilter === 'demo_hp');
+                  const isDemo = sch.id === 'school-demo-hp' || sch.name.toUpperCase().includes('DEMO');
+                  const count = allUsers.filter(u => {
+                    if (isDemo) {
+                      return (!!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO')) && u.role !== 'admin';
+                    }
+                    return (u.schoolName?.trim().toLowerCase() === sch.name.trim().toLowerCase() || u.schoolId === sch.id) && u.role !== 'admin';
+                  }).length;
+
+                  return (
+                    <button
+                      key={sch.id}
+                      type="button"
+                      onClick={() => setTenantFilter(isSelected ? 'all' : filterKey)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                        isSelected
+                          ? isDemo
+                            ? 'bg-amber-500 text-white shadow-xs'
+                            : 'bg-blue-600 text-white shadow-xs'
+                          : isDemo
+                            ? 'text-slate-600 hover:text-amber-700'
+                            : 'text-slate-600 hover:text-blue-700'
+                      }`}
+                    >
+                      {isDemo ? <Sparkles className="w-3.5 h-3.5" /> : <School className="w-3.5 h-3.5" />}
+                      <span>Khối {sch.name} ({count})</span>
+                    </button>
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => setTenantFilter('guest')}
@@ -1565,7 +1678,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                   }`}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  <span>Khối Giáo viên Cá nhân / Vãng lai ({allUsers.filter(u => u.tenantType === 'guest' && !u.isDemo).length})</span>
+                  <span>Khối Giáo viên Cá nhân / Vãng lai ({allUsers.filter(u => (u.tenantType === 'guest' || (!u.schoolName && !u.isDemo)) && !u.isDemo && u.role !== 'admin').length})</span>
                 </button>
               </div>
             )}
@@ -1606,7 +1719,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                       const isSelf = currentUser ? u.id === currentUser.id : false;
                       const isDefaultAdmin = u.username.toLowerCase() === 'admin';
                       const getAccountLevel = (user: any) => {
-                        if (user.role === 'admin') return (user.schoolName?.toUpperCase().includes('TÂN UYÊN') || user.schoolName?.toUpperCase().includes('DEMO')) ? 'Cấp 2' : 'Cấp 1';
+                        if (user.role === 'admin') return (user.schoolName?.toUpperCase().includes('DEMO') || user.schoolName?.toUpperCase().includes('DEMO')) ? 'Cấp 2' : 'Cấp 1';
                         if (user.role === 'guest_admin' || user.isGuestAdmin || user.isSchoolAdmin) return 'Cấp 2';
                         if (user.role === 'bgh' || user.isBgh) return 'Cấp 3';
                         if (user.role === 'homeroom') return 'Cấp 5';
@@ -3535,117 +3648,263 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         </div>
       )}
 
-      {/* Modal Thêm Mới / Sửa CSDL Trường Học (Yêu cầu e: Super Admin) */}
+      {/* Modal Thêm Mới / Sửa CSDL Trường Học (Multi-tenant SaaS: Super Admin) */}
       {schoolModalOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-black">
-                  <Building2 className="w-5 h-5" />
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            {/* Nếu vừa khởi tạo thành công -> Hiển thị Phiếu Bàn Giao Tài Khoản BGH */}
+            {provisionedSchoolInfo ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-md shadow-emerald-600/20 shrink-0">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 uppercase">
+                      Khởi Tạo CSDL & Cấp Tài Khoản BGH Thành Công!
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Phiếu bàn giao thông tin đăng nhập dành cho Ban Giám Hiệu
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-900 uppercase">
-                    {editingSchool ? 'Chỉnh Sửa Thông Tin CSDL Trường' : 'Khởi Tạo Cơ Sở Dữ Liệu Trường Mới'}
-                  </h3>
-                  <p className="text-[11px] text-slate-500">Quản trị danh mục và CSDL trường trong hệ thống</p>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-xs">
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Trường học:</span>
+                    <span className="font-black text-slate-900">{provisionedSchoolInfo.schoolName}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Mã trường:</span>
+                    <span className="font-mono font-bold text-indigo-700">{provisionedSchoolInfo.code}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Đại diện BGH:</span>
+                    <span className="font-bold text-slate-800">{provisionedSchoolInfo.fullName}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Tài khoản BGH:</span>
+                    <span className="font-mono font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+                      @{provisionedSchoolInfo.username}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-slate-500 font-medium">Mật khẩu khởi tạo:</span>
+                    <span className="font-mono font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                      {provisionedSchoolInfo.password || '123456'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 text-[11px] text-blue-900 flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Quy trình bàn giao phân cấp SaaS:</strong> Bàn giao tài khoản này cho Ban Giám Hiệu nhà trường. BGH đăng nhập bằng tài khoản trên để tự tạo danh sách GVCN, GVBM. Sau đó các giáo viên đăng nhập tự mở lớp và cập nhật học sinh.
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const textToCopy = `THÔNG TIN BÀN GIAO PHẦN MỀM LỚP HỌC HẠNH PHÚC\n- Đơn vị: ${provisionedSchoolInfo.schoolName}\n- Mã trường: ${provisionedSchoolInfo.code}\n- Tài khoản BGH: ${provisionedSchoolInfo.username}\n- Mật khẩu khởi tạo: ${provisionedSchoolInfo.password || '123456'}\n- Cổng đăng nhập: Quản trị Nhà Trường (BGH)\n- Địa chỉ trang web: ${window.location.origin}`;
+                      navigator.clipboard.writeText(textToCopy);
+                      showNotify('success', 'Đã sao chép thông tin bàn giao vào clipboard!');
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase transition-all shadow-md shadow-indigo-600/20 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Sao Chép Bàn Giao</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProvisionedSchoolInfo(null);
+                      setSchoolModalOpen(false);
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold uppercase transition-colors cursor-pointer"
+                  >
+                    Hoàn Tất & Đóng
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setSchoolModalOpen(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveSchool} className="space-y-3.5">
+            ) : (
               <div>
-                <label className="block text-xs font-black text-slate-700 uppercase mb-1">
-                  Tên Trường Học <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={schoolFormData.name}
-                  onChange={(e) => setSchoolFormData({ ...schoolFormData, name: e.target.value })}
-                  placeholder="Ví dụ: Trường Tiểu học số 1 Tân Uyên"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-black text-slate-700 uppercase mb-1">
-                    Mã Trường
-                  </label>
-                  <input
-                    type="text"
-                    value={schoolFormData.code}
-                    onChange={(e) => setSchoolFormData({ ...schoolFormData, code: e.target.value })}
-                    placeholder="Ví dụ: TH-TU01"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800"
-                  />
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-black">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900 uppercase">
+                        {editingSchool ? 'Chỉnh Sửa Thông Tin CSDL Trường' : 'Khởi Tạo Cơ Sở Dữ Liệu Trường Mới (SaaS)'}
+                      </h3>
+                      <p className="text-[11px] text-slate-500">Khởi tạo trường và cấp phát tài khoản quản trị Ban Giám Hiệu</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSchoolModalOpen(false)}
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-slate-700 uppercase mb-1">
-                    TK Quản Trị Trường
-                  </label>
-                  <input
-                    type="text"
-                    value={schoolFormData.adminUsername}
-                    onChange={(e) => setSchoolFormData({ ...schoolFormData, adminUsername: e.target.value })}
-                    placeholder="adminths1"
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-indigo-700"
-                  />
-                </div>
-              </div>
+                <form onSubmit={handleSaveSchool} className="space-y-4 pt-2">
+                  {/* Nhóm 1: Thông tin trường */}
+                  <div className="space-y-3">
+                    <div className="text-[11px] font-black uppercase text-slate-500 flex items-center gap-1.5">
+                      <School className="w-3.5 h-3.5 text-blue-600" />
+                      <span>1. THÔNG TIN TRƯỜNG HỌC</span>
+                    </div>
 
-              <div>
-                <label className="block text-xs font-black text-slate-700 uppercase mb-1">
-                  Địa Chỉ Trường
-                </label>
-                <input
-                  type="text"
-                  value={schoolFormData.address}
-                  onChange={(e) => setSchoolFormData({ ...schoolFormData, address: e.target.value })}
-                  placeholder="Ví dụ: Thị xã Tân Uyên, Tỉnh Bình Dương"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800"
-                />
-              </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                        Tên Trường Học <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolFormData.name}
+                        onChange={(e) => handleSchoolNameChange(e.target.value)}
+                        placeholder="Ví dụ: Trường Tiểu học Hoa Sen"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                        required
+                      />
+                    </div>
 
-              <div>
-                <label className="block text-xs font-black text-slate-700 uppercase mb-1">
-                  Số Điện Thoại Liên Hệ
-                </label>
-                <input
-                  type="text"
-                  value={schoolFormData.phone}
-                  onChange={(e) => setSchoolFormData({ ...schoolFormData, phone: e.target.value })}
-                  placeholder="0274 382 1234"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800"
-                />
-              </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Mã Trường <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={schoolFormData.code}
+                          onChange={(e) => setSchoolFormData({ ...schoolFormData, code: e.target.value.toUpperCase() })}
+                          placeholder="TH_HOASEN"
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                          required
+                        />
+                      </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setSchoolModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>{editingSchool ? 'LƯU CSDL TRƯỜNG' : 'TẠO CSDL TRƯỜNG'}</span>
-                </button>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Số Điện Thoại
+                        </label>
+                        <input
+                          type="text"
+                          value={schoolFormData.phone}
+                          onChange={(e) => setSchoolFormData({ ...schoolFormData, phone: e.target.value })}
+                          placeholder="0888 123 456"
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                        Địa Chỉ Trường
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolFormData.address}
+                        onChange={(e) => setSchoolFormData({ ...schoolFormData, address: e.target.value })}
+                        placeholder="Quận/Huyện, Tỉnh/Thành phố"
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Nhóm 2: Cấp phát tài khoản Ban Giám Hiệu (BGH) */}
+                  <div className="p-3.5 bg-gradient-to-br from-indigo-50/70 to-purple-50/70 rounded-2xl border border-indigo-200/80 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-black uppercase text-indigo-900 flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>2. TÀI KHOẢN QUẢN TRỊ (BAN GIÁM HIỆU)</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white uppercase">
+                        SaaS Tenant
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-600">
+                      Tài khoản BGH sẽ được cấp phát cho nhà trường để đăng nhập, tự tạo tài khoản GVCN/GVBM và quản lý toàn bộ cơ sở dữ liệu.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                          Tên Đăng Nhập (BGH) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={schoolFormData.adminUsername}
+                          onChange={(e) => setSchoolFormData({ ...schoolFormData, adminUsername: e.target.value.toLowerCase() })}
+                          placeholder="bgh_hoasen"
+                          className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-mono font-bold text-indigo-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                          Mật Khẩu Khởi Tạo <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showSchoolPassword ? "text" : "password"}
+                            value={schoolFormData.adminPassword}
+                            onChange={(e) => setSchoolFormData({ ...schoolFormData, adminPassword: e.target.value })}
+                            placeholder="123456"
+                            className="w-full pl-3 pr-8 py-1.5 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowSchoolPassword(!showSchoolPassword)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                          >
+                            {showSchoolPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
+                        Họ & Tên Đại Diện BGH
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolFormData.adminFullName}
+                        onChange={(e) => setSchoolFormData({ ...schoolFormData, adminFullName: e.target.value })}
+                        placeholder="Ban Giám Hiệu Trường Tiểu học Hoa Sen"
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setSchoolModalOpen(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors cursor-pointer"
+                    >
+                      Hủy Bỏ
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{editingSchool ? 'LƯU CSDL TRƯỜNG' : 'TẠO CSDL & CẤP TÀI KHOẢN BGH'}</span>
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-08T04:06:52.390Z",
+  "lastSync": "2026-10-08T08:52:05.388Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -16,7 +16,7 @@
       "schoolName": "Hệ thống Quản trị Lớp học Hạnh phúc",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1791432412390
+      "lastLoginAt": 1791433699622
     }
   ],
   "systemSettings": {
@@ -27,9 +27,105 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791393142470
+    "lastGithubPushAt": 1791448264949
   },
   "auditLogs": [
+    {
+      "id": "log-1791448241859-amla6z",
+      "timestamp": 1791448241859,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa toàn bộ danh sách lớp học"
+    },
+    {
+      "id": "log-1791448232676-ropdlj",
+      "timestamp": 1791448232676,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 2A1",
+      "details": {
+        "classId": "class-trang-2a1",
+        "name": "2A1"
+      }
+    },
+    {
+      "id": "log-1791446294729-7ymvyk",
+      "timestamp": 1791446294729,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791446291339-ujh6r2",
+      "timestamp": 1791446291339,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791446286193-00egjm",
+      "timestamp": 1791446286193,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791446283702-slcuwc",
+      "timestamp": 1791446283702,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791446278231-0d89cd",
+      "timestamp": 1791446278231,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791433699949-wpqdft",
+      "timestamp": 1791433699949,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
     {
       "id": "log-1791388236247-ipx643",
       "timestamp": 1791388236247,
@@ -1541,8 +1637,8 @@
     }
   ],
   "masterSummary": {
-    "totalUsers": 18,
-    "totalSchools": 2,
-    "totalClassesConfigured": 13
+    "totalUsers": 12,
+    "totalSchools": 1,
+    "totalClassesConfigured": 14
   }
 }
