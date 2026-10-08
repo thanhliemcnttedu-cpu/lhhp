@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T07:58:11.527Z",
+  "lastSync": "2026-10-08T07:58:16.118Z",
   "users": [
     {
       "id": "user-admin",
@@ -2949,7 +2949,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791446291527
+      "updatedAt": 1791446296118
     },
     "gvcndemo": {
       "classes": [
@@ -18058,9 +18058,22 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791393142470
+    "lastGithubPushAt": 1791446295823
   },
   "auditLogs": [
+    {
+      "id": "log-1791446294729-7ymvyk",
+      "timestamp": 1791446294729,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
     {
       "id": "log-1791446291339-ujh6r2",
       "timestamp": 1791446291339,
