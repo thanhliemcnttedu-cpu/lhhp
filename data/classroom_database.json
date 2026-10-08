@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T14:06:37.279Z",
+  "lastSync": "2026-10-08T14:07:16.557Z",
   "users": [
     {
       "id": "user-admin",
@@ -6539,7 +6539,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "gvcndemo": {
       "classes": [
@@ -7974,7 +7974,7 @@
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "gvbmdemo": {
       "classes": [
@@ -15528,7 +15528,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "quantricanhan": {
       "classes": [
@@ -17908,7 +17908,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "bghdemo": {
       "classes": [
@@ -19265,7 +19265,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "gvcn1a1demo": {
       "classes": [
@@ -21768,7 +21768,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "gvbmdemo2": {
       "classes": [
@@ -25550,7 +25550,7 @@
         "zalo": "0888358363",
         "teachingSubject": "Giáo viên chủ nhiệm"
       },
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "nguyenviethien": {
       "classes": [
@@ -27281,7 +27281,7 @@
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "gv_canhan01": {
       "classes": [
@@ -28981,7 +28981,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468397278
+      "updatedAt": 1791468436556
     },
     "admintruongdemo": {
       "classes": [],
@@ -30056,7 +30056,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791468384826
+    "lastGithubPushAt": 1791468405966
   },
   "auditLogs": [
     {
