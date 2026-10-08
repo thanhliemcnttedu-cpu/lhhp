@@ -1,5 +1,21 @@
 [
   {
+    "id": "user-admin",
+    "username": "admin",
+    "password": "123456",
+    "fullName": "Quản trị viên Hệ thống",
+    "role": "guest_admin",
+    "email": "admin@lophoc.edu.vn",
+    "phone": "0901234567",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9",
+    "schoolName": "Hệ thống Quản lý Lớp học Hạnh phúc",
+    "createdAt": 1790689856611,
+    "status": "active",
+    "lastLoginAt": 1791431255306,
+    "tenantType": "school",
+    "isGuestAdmin": true
+  },
+  {
     "id": "user-gv-canhan01",
     "username": "gv_canhan01",
     "password": "123456",

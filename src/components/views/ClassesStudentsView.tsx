@@ -92,6 +92,18 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [adminTeacherFilter, setAdminTeacherFilter] = useState<string>('all');
   const [newClassAssignedUsername, setNewClassAssignedUsername] = useState<string>('');
 
+  // 🎯 PHÂN CẤP TÀI KHOẢN & LOGIC GIỚI HẠN TÀI NGUYÊN BẢN DEMO
+  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
+  const isDemoAccount = !isSuperAdmin && Boolean(
+    currentUser?.isDemo ||
+    currentUser?.username?.toLowerCase().startsWith('demo') ||
+    currentUser?.username?.toLowerCase().includes('demo') ||
+    currentUser?.tenantType === 'demo' ||
+    (currentUser?.schoolName && currentUser.schoolName.toLowerCase().includes('demo'))
+  );
+  const isClassLimitReached = isDemoAccount && classes.length >= 1;
+  const isStudentLimitReached = isDemoAccount && currentClassStudents.length >= 10;
+
   // 🌟 Lọc danh sách giáo viên phụ trách theo phạm vi trường của BGH / Quản trị
   // QUY TẮC CỐT LÕI: Chỉ quản lý và tổng hợp từ GIÁO VIÊN CHỦ NHIỆM (role === 'homeroom')
   const relevantTeachers = React.useMemo(() => {
@@ -369,6 +381,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   // 1. CLASS MANAGEMENT HANDLERS (User Request 1 & 2)
   const handleCreateClass = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isClassLimitReached) {
+      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+      return;
+    }
     if (!newClassName.trim()) return;
 
     const assignedTeacher = isAdmin 
@@ -584,6 +600,11 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   // 4. EXCEL UPLOAD
   const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isStudentLimitReached) {
+      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+      e.target.value = '';
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -650,7 +671,21 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   const handleConfirmExcelImport = () => {
     if (excelParsedStudents.length > 0) {
-      bulkAddStudents(excelParsedStudents);
+      let finalStudents = [...excelParsedStudents];
+      if (isDemoAccount) {
+        if (currentClassStudents.length >= 10) {
+          alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+          setIsExcelPreviewOpen(false);
+          setExcelParsedStudents([]);
+          return;
+        }
+        const allowedToAdd = 10 - currentClassStudents.length;
+        if (finalStudents.length > allowedToAdd) {
+          alert(`Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp! Hệ thống chỉ thêm ${allowedToAdd} học sinh đầu tiên để trải nghiệm.`);
+          finalStudents = finalStudents.slice(0, allowedToAdd);
+        }
+      }
+      bulkAddStudents(finalStudents);
       setIsExcelPreviewOpen(false);
       setExcelParsedStudents([]);
       confetti({ particleCount: 70, spread: 80 });
@@ -660,6 +695,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   // Single Add (Yêu cầu 1 & 2: Thêm đầy đủ thông tin & chức vụ - Tối đa 3 chức vụ)
   const handleSingleAdd = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isStudentLimitReached) {
+      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+      return;
+    }
     if (!singleName.trim()) return;
     const finalRoles = singleRoles.slice(0, 3);
     addStudent({
@@ -1021,11 +1060,22 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               {teacherRole === 'subject' && (
                 <button
                   type="button"
-                  onClick={() => setIsInitSubjectClassesModalOpen(true)}
-                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all hover-zoom-btn shadow-md shadow-emerald-600/25 uppercase"
-                  title="Khởi tạo nhanh danh sách các lớp dạy bộ môn, điền thông tin lớp và số lượng học sinh"
+                  disabled={isClassLimitReached}
+                  onClick={() => {
+                    if (isClassLimitReached) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
+                    setIsInitSubjectClassesModalOpen(true);
+                  }}
+                  className={`px-4 py-2.5 rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all uppercase ${
+                    isClassLimitReached
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none'
+                      : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white hover-zoom-btn shadow-md shadow-emerald-600/25'
+                  }`}
+                  title={isClassLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khởi tạo nhanh danh sách các lớp dạy bộ môn, điền thông tin lớp và số lượng học sinh'}
                 >
-                  <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+                  <Sparkles className={`w-4 h-4 ${isClassLimitReached ? 'text-slate-400' : 'text-amber-300 animate-pulse'}`} />
                   <span>KHỞI TẠO LỚP DẠY BỘ MÔN</span>
                 </button>
               )}
@@ -1044,8 +1094,20 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => setIsCreateClassOpen(true)}
-                className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 text-white rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn uppercase"
+                disabled={isClassLimitReached}
+                onClick={() => {
+                  if (isClassLimitReached) {
+                    alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                    return;
+                  }
+                  setIsCreateClassOpen(true);
+                }}
+                className={`px-5 py-2.5 rounded-2xl font-black text-xs md:text-sm flex items-center gap-2 transition-all uppercase ${
+                  isClassLimitReached
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none'
+                    : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 text-white shadow-md shadow-indigo-600/25 hover-zoom-btn'
+                }`}
+                title={isClassLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Thêm lớp học mới'}
               >
                 <Plus className="w-4 h-4" />
                 <span>THÊM LỚP HỌC MỚI</span>
@@ -1151,18 +1213,39 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <button
                   onClick={() => {
+                    if (isDemoAccount) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học và 10 học sinh. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
                     resetToDefaultData();
                     playFanfareSound();
                     confetti({ particleCount: 60, spread: 70 });
                   }}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs shadow-md shadow-emerald-600/25 transition-all hover-zoom-btn inline-flex items-center gap-2 uppercase"
+                  className={`px-5 py-2.5 rounded-2xl font-black text-xs transition-all inline-flex items-center gap-2 uppercase ${
+                    isDemoAccount
+                      ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/25 hover-zoom-btn'
+                  }`}
+                  title={isDemoAccount ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học và 10 học sinh. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khôi phục lớp mẫu 4A1'}
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>KHÔI PHỤC LỚP MẪU 4A1 (30 HỌC SINH)</span>
                 </button>
                 <button
-                  onClick={() => setIsCreateClassOpen(true)}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs shadow-md shadow-indigo-600/25 transition-all hover-zoom-btn inline-flex items-center gap-2 uppercase"
+                  disabled={isClassLimitReached}
+                  onClick={() => {
+                    if (isClassLimitReached) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
+                    setIsCreateClassOpen(true);
+                  }}
+                  className={`px-5 py-2.5 rounded-2xl font-black text-xs inline-flex items-center gap-2 uppercase transition-all ${
+                    isClassLimitReached
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 hover-zoom-btn'
+                  }`}
+                  title={isClassLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Tạo lớp học mới'}
                 >
                   <Plus className="w-4 h-4" />
                   <span>TẠO LỚP HỌC MỚI</span>
@@ -1537,11 +1620,21 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 w-full">
               <div className="flex flex-wrap items-center gap-1.5">
                 <button
+                  disabled={isStudentLimitReached}
                   onClick={() => {
+                    if (isStudentLimitReached) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
                     setIsSingleAddOpen(true);
                     setSingleRoles([]);
                   }}
-                  className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-indigo-600/20 transition-all hover-zoom-btn uppercase shrink-0"
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all uppercase shrink-0 ${
+                    isStudentLimitReached
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20 hover-zoom-btn'
+                  }`}
+                  title={isStudentLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Thêm học sinh mới'}
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>THÊM HỌC SINH</span>
@@ -1555,11 +1648,22 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   onChange={handleExcelUpload}
                 />
                 <button
-                  onClick={() => excelFileInputRef.current?.click()}
-                  className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
-                  title="Nhập danh sách học sinh từ file Excel"
+                  disabled={isStudentLimitReached}
+                  onClick={() => {
+                    if (isStudentLimitReached) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
+                    excelFileInputRef.current?.click();
+                  }}
+                  className={`px-2.5 py-1.5 border rounded-lg text-[11px] font-black flex items-center gap-1 transition-all uppercase shrink-0 ${
+                    isStudentLimitReached
+                      ? 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60 shadow-none'
+                      : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200 hover-zoom-btn'
+                  }`}
+                  title={isStudentLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Nhập danh sách học sinh từ file Excel'}
                 >
-                  <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                  <Upload className={`w-3.5 h-3.5 ${isStudentLimitReached ? 'text-slate-400' : 'text-indigo-600'}`} />
                   <span>NHẬP TỪ FILE EXCEL</span>
                 </button>
 
@@ -1758,11 +1862,20 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button
                   onClick={() => {
+                    if (isDemoAccount) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Không thể khôi phục 30 học sinh mẫu. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
                     resetToDefaultData();
                     playFanfareSound();
                     confetti({ particleCount: 60, spread: 70 });
                   }}
-                  className="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-black hover-zoom-btn flex items-center gap-1.5 uppercase"
+                  className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 uppercase ${
+                    isDemoAccount
+                      ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
+                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover-zoom-btn'
+                  }`}
+                  title={isDemoAccount ? 'Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khôi phục danh sách mẫu'}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>KHÔI PHỤC 30 HỌC SINH MẪU LỚP 4A1</span>
@@ -1774,8 +1887,20 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   TẢI FILE MẪU EXCEL
                 </button>
                 <button
-                  onClick={() => setIsSingleAddOpen(true)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black hover-zoom-btn uppercase"
+                  disabled={isStudentLimitReached}
+                  onClick={() => {
+                    if (isStudentLimitReached) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
+                    setIsSingleAddOpen(true);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase ${
+                    isStudentLimitReached
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60'
+                      : 'bg-indigo-600 text-white hover-zoom-btn'
+                  }`}
+                  title={isStudentLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Thêm thủ công'}
                 >
                   THÊM THỦ CÔNG
                 </button>

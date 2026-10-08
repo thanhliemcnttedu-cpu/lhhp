@@ -38,9 +38,9 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // 🎯 QUYỀN HẠN PHÂN CẤP 3 NHÓM CHÍNH (Yêu cầu e, c, d)
-  const isSuperAdmin = currentUser?.role === 'admin';
+  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
   const isSchoolAdmin = currentUser?.role === 'school_admin' || Boolean(currentUser?.isSchoolAdmin);
-  const isGuestAdmin = currentUser?.role === 'guest_admin' || Boolean(currentUser?.isGuestAdmin);
+  const isGuestAdmin = currentUser?.role === 'guest_admin' || Boolean(currentUser?.isGuestAdmin) || currentUser?.username?.toLowerCase() === 'admin';
   const currentSchoolScope = currentUser?.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
 
   // Quản lý CSDL Trường Học
@@ -123,7 +123,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     assignedClassName: '4A1',
     subjectName: 'Tin học',
     schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
-    tenantType: 'school' as 'school' | 'guest'
+    tenantType: 'school' as 'school' | 'guest' | 'demo'
   });
 
   const [localUsage, setLocalUsage] = useState<{ bytes: number; sizeKB: number; formatted: string } | null>(null);
@@ -323,6 +323,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   };
 
   const handleStartEditSchool = (school: SchoolEntity) => {
+    window.alert("Bạn đang thực hiện sửa thông tin CSDL nhà trường");
     setEditingSchool(school);
     setSchoolFormData({
       name: school.name,
@@ -371,18 +372,20 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   };
 
   const handleDeleteSchool = async (school: SchoolEntity) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa cơ sở dữ liệu trường "${school.name}" (${school.code})?`)) {
+    if (!window.confirm("Bạn có chắc muốn xóa CSDL nhà trường hiện tại đang lựa chọn hay không? Việc làm này sẽ thực hiện xóa sạch toàn bộ CSDL về nhà trường, mô hình lớp học, các tài khoản đăng nhập và mật khẩu liên quan đề CSDL nhà trường đều bị xóa")) {
       return;
     }
     setLoading(true);
     try {
-      const res = await databaseService.deleteSchool(school.id);
-      if (res.success) {
+      const res = await databaseService.deleteSchool(school.id, school.name);
+      if (res && res.success) {
         showNotify('success', res.message || 'Đã xóa trường học thành công.');
         loadSchools();
         onRefreshUsers();
+        loadStats();
+        loadSummaries();
       } else {
-        showNotify('error', res.message || 'Không thể xóa trường học.');
+        showNotify('error', res?.message || 'Không thể xóa trường học.');
       }
     } catch (err: any) {
       showNotify('error', err?.message || 'Lỗi khi xóa trường.');
@@ -603,7 +606,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       if (editingUser) {
         // Update user
         const res = await databaseService.updateUser(editingUser.id, {
-          fullName: formData.fullName,
+          username: isSuperAdmin && formData.username.trim() ? formData.username.trim() : undefined,
+          fullName: formData.fullName.trim(),
           role: formData.role,
           phone: formData.phone,
           email: formData.email,
@@ -663,19 +667,21 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       showNotify('error', 'Bạn chỉ có quyền xóa tài khoản giáo viên thuộc trường của mình.');
       return;
     }
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa tài khoản "${user.fullName}" (${user.username})?`)) {
+    // Chốt chặn xác nhận bắt buộc
+    if (!window.confirm("Bạn có chắc chắn muốn xóa tài khoản này hay không?")) {
       return;
     }
 
     setLoading(true);
     try {
       const res = await databaseService.deleteUser(user.id);
-      if (res.success) {
+      if (res && res.success) {
         showNotify('success', `Đã xóa tài khoản "${user.username}" khỏi hệ thống.`);
         onRefreshUsers();
         loadStats();
+        loadSummaries();
       } else {
-        showNotify('error', res.message || 'Không thể xóa tài khoản.');
+        showNotify('error', res?.message || 'Không thể xóa tài khoản.');
       }
     } catch (err: any) {
       showNotify('error', err?.message || 'Lỗi khi xóa tài khoản.');
@@ -1816,19 +1822,26 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Username */}
                 <div>
-                  <label className="block text-xs font-black text-slate-700 uppercase mb-1.5">
-                    Tên Đăng Nhập <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-black text-slate-700 uppercase mb-1.5 flex items-center justify-between">
+                    <span>Tên Đăng Nhập <span className="text-rose-500">*</span></span>
+                    {editingUser && isSuperAdmin && (
+                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Admin Super được đổi
+                      </span>
+                    )}
                   </label>
                   <input
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    disabled={!!editingUser}
+                    disabled={editingUser ? !isSuperAdmin : false}
                     placeholder="Ví dụ: gvcn5a2, gvtienganh..."
-                    className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 text-xs font-bold text-slate-800 disabled:bg-slate-100"
+                    className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-300 text-xs font-bold text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
                     required
                   />
-                  {editingUser && <span className="text-[10px] text-slate-400">Không thể đổi tên đăng nhập</span>}
+                  {editingUser && !isSuperAdmin && (
+                    <span className="text-[10px] text-slate-400">Chỉ Admin Super mới có thể đổi tên đăng nhập</span>
+                  )}
                 </div>
 
                 {/* Password (for new user) */}

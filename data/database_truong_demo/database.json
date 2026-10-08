@@ -1,7 +1,7 @@
 {
   "partition": "truong_demo",
   "title": "Cơ Sở Dữ Liệu Trường Học DEMO (TRƯỜNG HỌC HẠNH PHÚC DEMO)",
-  "lastSync": "2026-10-07T17:18:45.425Z",
+  "lastSync": "2026-10-08T03:47:49.440Z",
   "schools": [
     {
       "id": "school-demo-hp",
@@ -64,7 +64,7 @@
       "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790868544167
+      "lastLoginAt": 1791431269440
     },
     {
       "id": "user-gvbmdemo",

@@ -202,7 +202,14 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
   const [permissionAlert, setPermissionAlert] = useState<string | null>(null);
 
-  const isDemo = Boolean(currentUser?.isDemo || currentUser?.username?.toLowerCase().startsWith('demo'));
+  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
+  const isDemo = !isSuperAdmin && Boolean(
+    currentUser?.isDemo ||
+    currentUser?.username?.toLowerCase().startsWith('demo') ||
+    currentUser?.username?.toLowerCase().includes('demo') ||
+    currentUser?.tenantType === 'demo' ||
+    (currentUser?.schoolName && currentUser.schoolName.toLowerCase().includes('demo'))
+  );
   const isBgh = Boolean(currentUser?.isBgh || currentUser?.role === 'bgh');
   const isSchoolAdmin = Boolean(currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin);
   const isGuestAdmin = Boolean(currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin);
@@ -1390,6 +1397,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Class methods
   const addClass = (cls: Omit<Classroom, 'id'>) => {
     if (!checkBghPermission()) return;
+    if (isDemo && classes.length >= 1) {
+      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+      setIsRegistrationModalOpen(true);
+      return;
+    }
     const newId = `class-${Date.now()}`;
     const newCls: Classroom = { ...cls, id: newId };
     setClasses(prev => [...prev, newCls]);
@@ -1547,7 +1559,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!checkBghPermission()) return;
     const classStudents = students.filter(s => s.classId === activeClassId);
     if (isDemo && classStudents.length >= 10) {
-      alert('⚠️ Bạn đang sử dụng tài khoản Demo.\nTài khoản Demo chỉ được phép tạo tối đa 10 học sinh trong lớp để xem và trải nghiệm tính năng.\n\nVui lòng bấm nút "ĐĂNG KÝ SỬ DỤNG" để được cấp tài khoản Full chức năng!');
+      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
       setIsRegistrationModalOpen(true);
       return;
     }
@@ -1690,13 +1702,13 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (isDemo) {
       if (currentList.length >= 10) {
-        alert('⚠️ Bạn đang sử dụng tài khoản Demo.\nLớp học đã đạt giới hạn 10 học sinh demo.\n\nVui lòng bấm nút "ĐĂNG KÝ SỬ DỤNG" để nâng cấp tài khoản Full chức năng!');
+        alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!');
         setIsRegistrationModalOpen(true);
         return;
       }
       const allowedToAdd = 10 - currentList.length;
       if (items.length > allowedToAdd) {
-        alert(`⚠️ Bạn đang dùng tài khoản Demo (giới hạn tối đa 10 học sinh). Hệ thống chỉ thêm ${allowedToAdd} học sinh đầu tiên để trải nghiệm.\n\nVui lòng liên hệ Tác giả hoặc bấm "ĐĂNG KÝ SỬ DỤNG" để nhận bản Full!`);
+        alert(`Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp! Hệ thống chỉ thêm ${allowedToAdd} học sinh đầu tiên để trải nghiệm.`);
         items = items.slice(0, allowedToAdd);
       }
     }
@@ -2386,6 +2398,18 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const initSubjectClasses = (items: InitSubjectClassItem[], replaceExisting: boolean = false) => {
+    if (isDemo) {
+      if (classes.length >= 1 && !replaceExisting) {
+        alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+        setIsRegistrationModalOpen(true);
+        return;
+      }
+      if (items.length > 1) {
+        alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Hệ thống sẽ khởi tạo 01 lớp đầu tiên với tối đa 10 học sinh.');
+        items = items.slice(0, 1);
+      }
+    }
+
     let newClassesList: Classroom[] = replaceExisting ? [] : [...classes];
     let newStudentsList: Student[] = replaceExisting ? [] : [...students];
 
@@ -2421,7 +2445,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       // Generate students
-      const studentCount = Math.max(1, Math.min(item.studentCount || 32, 60));
+      let studentCount = Math.max(1, Math.min(item.studentCount || 32, 60));
+      if (isDemo && studentCount > 10) {
+        studentCount = 10;
+      }
       // Remove any existing students of this class
       newStudentsList = newStudentsList.filter(s => s.classId !== classId);
       

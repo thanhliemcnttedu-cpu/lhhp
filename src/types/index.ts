@@ -415,7 +415,7 @@ export interface UserAccount {
   isBgh?: boolean;
   isSchoolAdmin?: boolean;
   isGuestAdmin?: boolean;
-  tenantType?: 'school' | 'guest'; // 'school': Tổ chức Nhà trường, 'guest': Giáo viên vãng lai
+  tenantType?: 'school' | 'guest' | 'demo'; // 'school': Tổ chức Nhà trường, 'guest': Giáo viên vãng lai, 'demo': Thử nghiệm
   schoolId?: string;
   maxStudentsAllowed?: number; // Giới hạn số học sinh (10 cho tài khoản demo)
   email?: string;

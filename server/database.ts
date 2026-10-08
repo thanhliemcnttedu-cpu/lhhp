@@ -119,7 +119,7 @@ export const DEFAULT_USERS: UserAccountServer[] = [
   {
     id: 'user-adminquantri',
     username: 'adminquantri',
-    password: 'Tanuyen@2026',
+    password: 'Tanuyen22026',
     fullName: 'Quản trị viên Hệ thống Cấp cao',
     role: 'admin',
     tenantType: 'school',
@@ -133,14 +133,15 @@ export const DEFAULT_USERS: UserAccountServer[] = [
   {
     id: 'user-admin',
     username: 'admin',
-    password: 'Tanuyen@2026',
-    fullName: 'Quản trị viên Hệ thống',
-    role: 'admin',
-    tenantType: 'school',
+    password: '123456',
+    fullName: 'Quản trị Khách / Cá nhân (Các Tỉnh)',
+    role: 'guest_admin',
+    isGuestAdmin: true,
+    tenantType: 'guest',
     email: 'admin@lophoc.edu.vn',
     phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9',
-    schoolName: 'Hệ thống Quản lý Lớp học Hạnh phúc',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8',
+    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
     createdAt: Date.now(),
     status: 'active'
   },
@@ -1580,12 +1581,19 @@ export function createUser(payload: {
     return { success: false, message: `Tên đăng nhập "${cleanUsername}" đã tồn tại trên hệ thống.` };
   }
 
+  const isDemo = Boolean(
+    (payload.schoolName && payload.schoolName.toLowerCase().includes('demo')) ||
+    cleanUsername.includes('demo')
+  );
+
   const newUser: UserAccountServer = {
     id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
     username: cleanUsername,
     password: payload.password || '123456',
     fullName: payload.fullName.trim() || cleanUsername,
     role: payload.role,
+    isDemo: isDemo || undefined,
+    maxStudentsAllowed: isDemo ? 10 : undefined,
     email: payload.email || '',
     phone: payload.phone || '',
     assignedClassName: payload.assignedClassName || (payload.role === 'homeroom' ? 'Lớp mới' : undefined),
@@ -1643,12 +1651,19 @@ export function createUsersBulk(items: Array<{
       continue;
     }
 
+    const isDemo = Boolean(
+      (item.schoolName && item.schoolName.toLowerCase().includes('demo')) ||
+      cleanUsername.includes('demo')
+    );
+
     const newUser: UserAccountServer = {
       id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 5)}-${i}`,
       username: cleanUsername,
       password: item.password || '123456',
       fullName: (item.fullName || cleanUsername).trim(),
       role: item.role === 'subject' ? 'subject' : item.role === 'admin' ? 'admin' : 'homeroom',
+      isDemo: isDemo || undefined,
+      maxStudentsAllowed: isDemo ? 10 : undefined,
       email: item.email?.trim() || '',
       phone: item.phone?.trim() || '',
       assignedClassName: item.assignedClassName?.trim() || (item.role === 'homeroom' ? 'Lớp mới' : undefined),
@@ -1690,7 +1705,7 @@ export function createUsersBulk(items: Array<{
 
 export function updateUser(id: string, updates: Partial<UserAccountServer>): { success: boolean; user?: UserAccountServer; message?: string } {
   const db = loadDatabase();
-  const index = db.users.findIndex(u => u.id === id);
+  const index = db.users.findIndex(u => u.id === id || u.username.toLowerCase() === id.toLowerCase());
 
   if (index === -1) {
     return { success: false, message: 'Không tìm thấy tài khoản người dùng.' };
@@ -1703,26 +1718,42 @@ export function updateUser(id: string, updates: Partial<UserAccountServer>): { s
     return { success: false, message: 'Không được đổi tên đăng nhập tài khoản quản trị mặc định (admin).' };
   }
 
-  // If changing role of a user
+  // Check if new username is already taken by another account
+  if (updates.username && updates.username.trim().toLowerCase() !== current.username.trim().toLowerCase()) {
+    const newUsernameClean = updates.username.trim().toLowerCase();
+    const existing = db.users.find(u => u.username.toLowerCase() === newUsernameClean && u.id !== current.id);
+    if (existing) {
+      return { success: false, message: `Tên đăng nhập "${updates.username}" đã tồn tại trên hệ thống. Vui lòng chọn tên khác.` };
+    }
+  }
+
+  const oldCleanUsername = current.username.trim().toLowerCase();
   const updatedUser: UserAccountServer = {
     ...current,
     ...updates,
+    username: updates.username ? updates.username.trim().toLowerCase() : current.username,
     id: current.id, // preserve ID
   };
+  const newCleanUsername = updatedUser.username.trim().toLowerCase();
 
   db.users[index] = updatedUser;
 
+  // Di chuyển dữ liệu lớp học nếu username thay đổi
+  if (oldCleanUsername !== newCleanUsername && db.userData[oldCleanUsername]) {
+    db.userData[newCleanUsername] = db.userData[oldCleanUsername];
+    delete db.userData[oldCleanUsername];
+  }
+
   // Đồng bộ thông tin schoolName vào userData của giáo viên nếu có thay đổi
-  const cleanUsername = updatedUser.username.trim().toLowerCase();
-  if (updates.schoolName && db.userData[cleanUsername]) {
-    if (!db.userData[cleanUsername].teacherProfile) {
-      db.userData[cleanUsername].teacherProfile = {};
+  if (updates.schoolName && db.userData[newCleanUsername]) {
+    if (!db.userData[newCleanUsername].teacherProfile) {
+      db.userData[newCleanUsername].teacherProfile = {};
     }
-    db.userData[cleanUsername].teacherProfile.schoolName = updates.schoolName;
-    if (db.userData[cleanUsername].settings) {
-      db.userData[cleanUsername].settings.schoolName = updates.schoolName;
+    db.userData[newCleanUsername].teacherProfile.schoolName = updates.schoolName;
+    if (db.userData[newCleanUsername].settings) {
+      db.userData[newCleanUsername].settings.schoolName = updates.schoolName;
     }
-    db.userData[cleanUsername].updatedAt = Date.now();
+    db.userData[newCleanUsername].updatedAt = Date.now();
   }
 
   saveDatabase(db);
@@ -2535,6 +2566,28 @@ export function deleteSchool(id: string) {
     return { success: false, message: 'Không tìm thấy trường học cần xóa.' };
   }
 
+  // 💥 CASCADE DELETE TOÀN DIỆN CSDL TRƯỜNG HỌC:
+  // 1. Tìm tất cả tài khoản thuộc trường (loại trừ tài khoản Super Admin)
+  const usersInSchool = db.users.filter(u => u.schoolName === target.name && u.role !== 'admin' && u.username !== 'adminquantri');
+  const deletedUsernames: string[] = [];
+
+  for (const u of usersInSchool) {
+    deletedUsernames.push(u.username);
+    const cleanUser = u.username.trim().toLowerCase();
+    // Xóa sạch toàn bộ mô hình lớp học, học sinh, điểm số của tài khoản đó
+    if (db.userData && db.userData[cleanUser]) {
+      delete db.userData[cleanUser];
+    }
+    // Xóa người dùng trên Supabase nếu đã cấu hình
+    if (isSupabaseConfigured()) {
+      deleteSupabaseUser(u.id).catch(() => {});
+    }
+  }
+
+  // 2. Xóa các tài khoản thuộc trường khỏi danh sách users
+  db.users = db.users.filter(u => !(u.schoolName === target.name && u.role !== 'admin' && u.username !== 'adminquantri'));
+
+  // 3. Xóa trường khỏi danh mục schools
   db.schools = db.schools.filter(s => s.id !== id);
   saveDatabase(db);
 
@@ -2543,11 +2596,14 @@ export function deleteSchool(id: string) {
     userFullName: 'Quản trị viên Hệ thống',
     role: 'admin',
     actionType: 'OTHER',
-    description: `Xóa cơ sở dữ liệu trường học: ${target.name} (${target.code})`,
-    details: target
+    description: `Xóa CSDL trường học (Cascade): ${target.name} (${target.code}) - Đã xóa ${usersInSchool.length} tài khoản và toàn bộ lớp học liên đới`,
+    details: { school: target, deletedAccounts: deletedUsernames }
   });
 
-  return { success: true, message: `Đã xóa cơ sở dữ liệu trường ${target.name} thành công.` };
+  return { 
+    success: true, 
+    message: `Đã xóa sạch CSDL trường ${target.name} cùng ${usersInSchool.length} tài khoản và mô hình lớp học liên đới.` 
+  };
 }
 
 /**

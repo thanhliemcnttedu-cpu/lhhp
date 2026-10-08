@@ -1,27 +1,12 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-07T17:18:45.425Z",
+  "lastSync": "2026-10-08T03:47:49.440Z",
   "users": [
-    {
-      "id": "user-admin",
-      "username": "admin",
-      "password": "Tanuyen@2026",
-      "fullName": "Quản trị viên Hệ thống",
-      "role": "admin",
-      "email": "admin@lophoc.edu.vn",
-      "phone": "0901234567",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9",
-      "schoolName": "Hệ thống Quản lý Lớp học Hạnh phúc",
-      "createdAt": 1790689856611,
-      "status": "active",
-      "lastLoginAt": 1790830498403,
-      "tenantType": "school"
-    },
     {
       "id": "user-adminquantri",
       "username": "adminquantri",
-      "password": "Tanuyen@2026",
+      "password": "Tanuyen22026",
       "fullName": "Quản trị viên Hệ thống Cấp cao",
       "role": "admin",
       "tenantType": "school",
@@ -31,7 +16,7 @@
       "schoolName": "Hệ thống Quản trị Lớp học Hạnh phúc",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790868370158
+      "lastLoginAt": 1791431248723
     }
   ],
   "systemSettings": {

@@ -1,22 +1,23 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-07T17:18:45.425Z",
+  "lastSync": "2026-10-08T03:47:49.440Z",
   "users": [
     {
       "id": "user-admin",
       "username": "admin",
-      "password": "Tanuyen@2026",
+      "password": "123456",
       "fullName": "Quản trị viên Hệ thống",
-      "role": "admin",
+      "role": "guest_admin",
       "email": "admin@lophoc.edu.vn",
       "phone": "0901234567",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminBoss&backgroundColor=d1d4f9",
       "schoolName": "Hệ thống Quản lý Lớp học Hạnh phúc",
       "createdAt": 1790689856611,
       "status": "active",
-      "lastLoginAt": 1790830498403,
-      "tenantType": "school"
+      "lastLoginAt": 1791431255306,
+      "tenantType": "school",
+      "isGuestAdmin": true
     },
     {
       "id": "user-gv-canhan01",
@@ -37,7 +38,7 @@
     {
       "id": "user-adminquantri",
       "username": "adminquantri",
-      "password": "Tanuyen@2026",
+      "password": "Tanuyen22026",
       "fullName": "Quản trị viên Hệ thống Cấp cao",
       "role": "admin",
       "tenantType": "school",
@@ -47,7 +48,7 @@
       "schoolName": "Hệ thống Quản trị Lớp học Hạnh phúc",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790868370158
+      "lastLoginAt": 1791431248723
     },
     {
       "id": "user-quantricanhan",
@@ -198,7 +199,7 @@
       "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1790868544167
+      "lastLoginAt": 1791431269440
     },
     {
       "id": "user-gvbmdemo",
