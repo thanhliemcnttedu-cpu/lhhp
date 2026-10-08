@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T14:02:11.755Z",
+  "lastSync": "2026-10-08T14:02:15.884Z",
   "users": [
     {
       "id": "user-admin",
@@ -6539,7 +6539,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "gvcndemo": {
       "classes": [
@@ -7974,7 +7974,7 @@
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "gvbmdemo": {
       "classes": [
@@ -15528,7 +15528,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "quantricanhan": {
       "classes": [
@@ -17908,7 +17908,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "bghdemo": {
       "classes": [
@@ -19265,7 +19265,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "gvcn1a1demo": {
       "classes": [
@@ -21768,7 +21768,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "gvbmdemo2": {
       "classes": [
@@ -25550,7 +25550,7 @@
         "zalo": "0888358363",
         "teachingSubject": "Giáo viên chủ nhiệm"
       },
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "nguyenviethien": {
       "classes": [
@@ -27281,7 +27281,7 @@
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "gv_canhan01": {
       "classes": [
@@ -28981,7 +28981,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468131754
+      "updatedAt": 1791468135883
     },
     "admintruongdemo": {
       "classes": [],
