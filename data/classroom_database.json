@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T09:58:58.664Z",
+  "lastSync": "2026-10-08T10:11:13.095Z",
   "users": [
     {
       "id": "user-admin",
@@ -46,26 +46,8 @@
       "email": "quantricanhan@lophoc.edu.vn",
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=QuanTriCaNhan&backgroundColor=fbcfe8",
-      "createdAt": 1790834208376,
-      "status": "active",
-      "lastLoginAt": 1790834268969
-    },
-    {
-      "id": "user-admintruongdemo",
-      "username": "admintruongdemo",
-      "password": "123456",
-      "fullName": "Quản trị Nhà Trường DEMO",
-      "role": "school_admin",
-      "isSchoolAdmin": true,
-      "isDemo": true,
-      "tenantType": "school",
-      "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
-      "email": "admintruongdemo@lophoc.edu.vn",
-      "phone": "0888358363",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminTruongDemo&backgroundColor=a7f3d0",
-      "createdAt": 1790834208376,
-      "status": "active",
-      "lastLoginAt": 1790834269197
+      "createdAt": 1791454095257,
+      "status": "active"
     },
     {
       "id": "user-admin-canhan",
@@ -79,7 +61,7 @@
       "email": "admin.canhan@lophoc.edu.vn",
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8",
-      "createdAt": 1791443738354,
+      "createdAt": 1791454095257,
       "status": "active"
     },
     {
@@ -94,7 +76,7 @@
       "email": "nguyenthitrangtu1@lophoc.edu.vn",
       "phone": "0987654321",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiTrang1991&backgroundColor=fde047",
-      "createdAt": 1791451875494,
+      "createdAt": 1791454095257,
       "status": "active"
     },
     {
@@ -109,7 +91,23 @@
       "email": "gv.canhan@lophoc.edu.vn",
       "phone": "0912345678",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=CoLeHoangYen&backgroundColor=fed7aa",
-      "createdAt": 1791451875494,
+      "createdAt": 1791454095257,
+      "status": "active"
+    },
+    {
+      "id": "user-admintruongdemo",
+      "username": "admintruongdemo",
+      "password": "123456",
+      "fullName": "Quản trị Nhà Trường DEMO",
+      "role": "school_admin",
+      "isSchoolAdmin": true,
+      "isDemo": true,
+      "tenantType": "school",
+      "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
+      "email": "admintruongdemo@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminTruongDemo&backgroundColor=a7f3d0",
+      "createdAt": 1791454095257,
       "status": "active"
     },
     {
@@ -125,7 +123,7 @@
       "email": "bghdemo@lophoc.edu.vn",
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a",
-      "createdAt": 1791453499909,
+      "createdAt": 1791454095257,
       "status": "active"
     },
     {
@@ -142,7 +140,7 @@
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiHuong&backgroundColor=ffd5dc",
       "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
-      "createdAt": 1791453499909,
+      "createdAt": 1791454095257,
       "status": "active"
     },
     {
@@ -159,7 +157,7 @@
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenPhuongAnh_1A1&backgroundColor=ffd5dc",
       "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
-      "createdAt": 1791453499909,
+      "createdAt": 1791454095257,
       "status": "active"
     },
     {
@@ -176,7 +174,7 @@
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenGiaPhuc&backgroundColor=b6e3f4",
       "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
-      "createdAt": 1791453499909,
+      "createdAt": 1791454095257,
       "status": "active"
     },
     {
@@ -193,7 +191,7 @@
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4",
       "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
-      "createdAt": 1791453499909,
+      "createdAt": 1791454095257,
       "status": "active"
     }
   ],
@@ -6123,7 +6121,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791452236273
+      "updatedAt": 1791454273094
     },
     "gvcndemo": {
       "classes": [
@@ -22040,9 +22038,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791453528633
+    "lastGithubPushAt": 1791453547031
   },
   "auditLogs": [
+    {
+      "id": "log-1791453579773-m7iw3r",
+      "timestamp": 1791453579773,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị Tài khoản Cá Nhân)"
+    },
     {
       "id": "log-1791453536992-rj2608",
       "timestamp": 1791453536992,
