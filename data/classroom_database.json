@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T09:07:59.145Z",
+  "lastSync": "2026-10-08T09:08:03.972Z",
   "users": [
     {
       "id": "user-admin",
@@ -1534,25 +1534,6 @@
             "x": 0,
             "y": 0
           }
-        },
-        {
-          "id": "hs-1790918203976-6tkd",
-          "stt": 10,
-          "name": "gfhghg",
-          "role": "",
-          "group": "Tổ 1",
-          "roles": [],
-          "avatar": "/avatars/real_demo/boys/student-avatar-37.jpg",
-          "gender": "Nam",
-          "points": 0,
-          "classId": "class-gvcndemo-4a1",
-          "birthDate": "",
-          "avatarScale": 1,
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "/avatars/real_demo/boys/student-avatar-37.jpg"
         },
         {
           "id": "hs-class-lớptựdo4-1",
@@ -5286,7 +5267,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791450479144
+      "updatedAt": 1791450483972
     },
     "gvcndemo": {
       "classes": [
@@ -5513,25 +5494,6 @@
             "y": 0
           },
           "originalAvatar": "/avatars/real_demo/girls/student-avatar-27.jpg"
-        },
-        {
-          "id": "hs-1790918203976-6tkd",
-          "stt": 10,
-          "name": "gfhghg",
-          "role": "",
-          "group": "Tổ 1",
-          "roles": [],
-          "avatar": "/avatars/real_demo/boys/student-avatar-37.jpg",
-          "gender": "Nam",
-          "points": 0,
-          "classId": "class-gvcndemo-4a1",
-          "birthDate": "",
-          "avatarScale": 1,
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "/avatars/real_demo/boys/student-avatar-37.jpg"
         }
       ],
       "subjects": [
@@ -6415,7 +6377,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791450479144
+      "updatedAt": 1791450483972
     },
     "gvbmdemo": {
       "classes": [
@@ -18606,6 +18568,15 @@
     "lastGithubPushAt": 1791448264949
   },
   "auditLogs": [
+    {
+      "id": "log-1791450483702-dcbb5s",
+      "timestamp": 1791450483702,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: gfhghg khỏi lớp 4A1"
+    },
     {
       "id": "log-1791450466725-abdblh",
       "timestamp": 1791450466725,
