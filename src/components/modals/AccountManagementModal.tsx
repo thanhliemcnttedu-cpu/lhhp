@@ -77,6 +77,10 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   const [isResettingSchool, setIsResettingSchool] = useState(false);
   const [deletingSchoolId, setDeletingSchoolId] = useState<string | null>(null);
 
+  // 🗑️ State cho Modal xác nhận xóa trường học & người dùng (UI cao cấp)
+  const [schoolToDelete, setSchoolToDelete] = useState<SchoolEntity | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserAccount | null>(null);
+
   // 🚀 DI CHUYỂN TOÀN BỘ CSDL GIÁO VIÊN VÃNG LAI VÀO NHÀ TRƯỜNG (SUPER ADMIN)
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [userToTransfer, setUserToTransfer] = useState<UserAccount | null>(null);
@@ -445,25 +449,22 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     }
   };
 
-  const handleDeleteSchool = async (school: SchoolEntity) => {
-    // 🛡️ BẢO TỒN CẢNH BÁO ĐẦU TIÊN
-    if (!window.confirm("Bạn có chắc muốn xóa CSDL nhà trường hiện tại đang lựa chọn hay không? Việc làm này sẽ thực hiện xóa sạch toàn bộ CSDL về nhà trường, mô hình lớp học, các tài khoản đăng nhập và mật khẩu liên quan đề CSDL nhà trường đều bị xóa")) {
-      return;
-    }
-
-    // ⏳ TRẠNG THÁI LOADING & KHÓA NÚT THAO TÁC
+  const handleConfirmDeleteSchool = async () => {
+    if (!schoolToDelete) return;
+    const school = schoolToDelete;
     setDeletingSchoolId(school.id);
     setLoading(true);
 
     try {
-      // Gọi thuật toán Xóa liên đới có lập trình (Programmatic Cascade Delete 6 bước)
+      // Gọi thuật toán Xóa liên đới có lập trình (Programmatic Cascade Delete)
       const res = await databaseService.deleteSchool(school.id, school.name);
       if (res && res.success) {
         showNotify('success', res.message || `Đã dọn dẹp liên đới và xóa sạch CSDL trường "${school.name}" thành công.`);
-        loadSchools();
-        onRefreshUsers();
-        loadStats();
-        loadSummaries();
+        setSchoolToDelete(null);
+        await loadSchools();
+        await onRefreshUsers();
+        await loadStats();
+        await loadSummaries();
       } else {
         const errorDetail = res?.message || 'Không thể xóa CSDL trường học.';
         console.error('Lỗi quy trình xóa trường học:', errorDetail);
@@ -476,6 +477,10 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       setDeletingSchoolId(null);
       setLoading(false);
     }
+  };
+
+  const handleDeleteSchool = (school: SchoolEntity) => {
+    setSchoolToDelete(school);
   };
 
   const handleExecuteResetSchool = async () => {
@@ -742,28 +747,18 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     }
   };
 
-  const handleDeleteUser = async (user: UserAccount) => {
-    if (user.role === 'admin' || user.username.toLowerCase() === 'adminquantri') {
-      showNotify('error', 'Không được phép xóa tài khoản quản trị tối cao.');
-      return;
-    }
-    if (isSchoolAdmin && (user.schoolName !== currentSchoolScope || user.isGuestAdmin)) {
-      showNotify('error', 'Bạn chỉ có quyền xóa tài khoản giáo viên thuộc trường của mình.');
-      return;
-    }
-    // Chốt chặn xác nhận bắt buộc
-    if (!window.confirm("Bạn có chắc chắn muốn xóa tài khoản này hay không?")) {
-      return;
-    }
-
+  const handleConfirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    const user = userToDelete;
     setLoading(true);
     try {
       const res = await databaseService.deleteUser(user.id);
       if (res && res.success) {
         showNotify('success', `Đã xóa tài khoản "${user.username}" khỏi hệ thống.`);
-        onRefreshUsers();
-        loadStats();
-        loadSummaries();
+        setUserToDelete(null);
+        await onRefreshUsers();
+        await loadStats();
+        await loadSummaries();
       } else {
         showNotify('error', res?.message || 'Không thể xóa tài khoản.');
       }
@@ -772,6 +767,18 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteUser = (user: UserAccount) => {
+    if (user.role === 'admin' || user.username.toLowerCase() === 'adminquantri') {
+      showNotify('error', 'Không được phép xóa tài khoản quản trị tối cao.');
+      return;
+    }
+    if (isSchoolAdmin && (user.schoolName !== currentSchoolScope || user.isGuestAdmin)) {
+      showNotify('error', 'Bạn chỉ có quyền xóa tài khoản giáo viên thuộc trường của mình.');
+      return;
+    }
+    setUserToDelete(user);
   };
 
   const handleResetPassword = async (user: UserAccount) => {
@@ -1437,20 +1444,26 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                         <span>📁 Nhánh 1: Nhà Trường ({schoolsList.length})</span>
                       </div>
                       <div className="pl-4 space-y-1 text-slate-300 text-[11px]">
-                        {schoolsList.map((s) => {
-                          const countGV = allUsers.filter(u => u.schoolName === s.name && u.role !== 'admin').length;
-                          return (
-                            <div key={s.id} className="flex flex-col py-1 hover:text-white border-b border-slate-800/50">
-                              <div className="flex items-center gap-1">
-                                <span>├── 🏫</span>
-                                <span className="font-bold text-slate-200 truncate" title={s.name}>{s.name}</span>
+                        {schoolsList.length === 0 ? (
+                          <div className="py-2 text-[10.5px] text-slate-400 italic">
+                            Chưa có trường học nào. Nhấn nút "+ Khởi Tạo CSDL Trường Mới" bên trên.
+                          </div>
+                        ) : (
+                          schoolsList.map((s) => {
+                            const countGV = allUsers.filter(u => u.schoolName === s.name && u.role !== 'admin').length;
+                            return (
+                              <div key={s.id} className="flex flex-col py-1 hover:text-white border-b border-slate-800/50">
+                                <div className="flex items-center gap-1">
+                                  <span>├── 🏫</span>
+                                  <span className="font-bold text-slate-200 truncate" title={s.name}>{s.name}</span>
+                                </div>
+                                <div className="pl-5 text-[10px] text-slate-400">
+                                  Mã: {s.code} • GV: {countGV}
+                                </div>
                               </div>
-                              <div className="pl-5 text-[10px] text-slate-400">
-                                Mã: {s.code} • GV: {countGV}
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })
+                        )}
                       </div>
                     </div>
 
@@ -1483,64 +1496,92 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
-                      {schoolsList.map((school, idx) => (
-                        <tr key={school.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-2 px-2 text-center font-bold text-slate-400">{idx + 1}</td>
-                          <td className="py-2 px-2">
-                            <div className="font-black text-slate-900 flex items-center gap-1.5">
-                              <School className="w-4 h-4 text-blue-600 shrink-0" />
-                              <span>{school.name}</span>
-                            </div>
-                            <div className="text-[10px] font-mono text-amber-600 mt-0.5">TK: @{school.adminUsername || 'adminths1'}</div>
-                          </td>
-                          <td className="py-2 px-2 font-mono font-bold text-blue-700">{school.code}</td>
-                          <td className="py-2 px-2 text-slate-600 font-mono hidden md:table-cell">{school.phone || '—'}</td>
-                          <td className="py-2 px-2 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                      {schoolsList.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-12 px-4 text-center">
+                            <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center space-y-3">
+                              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 flex items-center justify-center shadow-xs">
+                                <School className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                  Chưa có CSDL Trường học nào
+                                </h4>
+                                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                  Hệ thống đang ở trạng thái CSDL trắng hoàn toàn. Hãy khởi tạo trường học đầu tiên để bắt đầu vận hành!
+                                </p>
+                              </div>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setTenantFilter('school');
-                                  setSearchTerm(school.name);
-                                  setActiveTab('accounts');
-                                }}
-                                className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition-colors"
-                                title="Quản lý tài khoản thuộc trường"
+                                onClick={handleStartCreateSchool}
+                                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                               >
-                                <Users className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleStartEditSchool(school)}
-                                className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors"
-                                title="Chỉnh sửa thông tin trường"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={deletingSchoolId === school.id || loading}
-                                onClick={() => handleDeleteSchool(school)}
-                                className={`p-1.5 rounded-lg border transition-all ${
-                                  deletingSchoolId === school.id
-                                    ? 'bg-amber-50 text-amber-700 border-amber-300 cursor-not-allowed shadow-none'
-                                    : 'text-rose-500 hover:bg-rose-50 border-transparent hover:border-rose-200'
-                                }`}
-                                title={deletingSchoolId === school.id ? "Đang dọn dẹp dữ liệu..." : "Xóa CSDL trường này"}
-                              >
-                                {deletingSchoolId === school.id ? (
-                                  <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 px-1.5 py-0.5 animate-pulse">
-                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                    <span>Đang dọn dẹp dữ liệu...</span>
-                                  </span>
-                                ) : (
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                )}
+                                <Plus className="w-4 h-4" />
+                                <span>Khởi Tạo Trường Đầu Tiên</span>
                               </button>
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        schoolsList.map((school, idx) => (
+                          <tr key={school.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-2 px-2 text-center font-bold text-slate-400">{idx + 1}</td>
+                            <td className="py-2 px-2">
+                              <div className="font-black text-slate-900 flex items-center gap-1.5">
+                                <School className="w-4 h-4 text-blue-600 shrink-0" />
+                                <span>{school.name}</span>
+                              </div>
+                              <div className="text-[10px] font-mono text-amber-600 mt-0.5">TK: @{school.adminUsername || 'adminths1'}</div>
+                            </td>
+                            <td className="py-2 px-2 font-mono font-bold text-blue-700">{school.code}</td>
+                            <td className="py-2 px-2 text-slate-600 font-mono hidden md:table-cell">{school.phone || '—'}</td>
+                            <td className="py-2 px-2 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTenantFilter('school');
+                                    setSearchTerm(school.name);
+                                    setActiveTab('accounts');
+                                  }}
+                                  className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition-colors"
+                                  title="Quản lý tài khoản thuộc trường"
+                                >
+                                  <Users className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEditSchool(school)}
+                                  className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors"
+                                  title="Chỉnh sửa thông tin trường"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={deletingSchoolId === school.id || loading}
+                                  onClick={() => handleDeleteSchool(school)}
+                                  className={`p-1.5 rounded-lg border transition-all ${
+                                    deletingSchoolId === school.id
+                                      ? 'bg-amber-50 text-amber-700 border-amber-300 cursor-not-allowed shadow-none'
+                                      : 'text-rose-500 hover:bg-rose-50 border-transparent hover:border-rose-200'
+                                  }`}
+                                  title={deletingSchoolId === school.id ? "Đang dọn dẹp dữ liệu..." : "Xóa CSDL trường này"}
+                                >
+                                  {deletingSchoolId === school.id ? (
+                                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 px-1.5 py-0.5 animate-pulse">
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                      <span>Đang dọn dẹp dữ liệu...</span>
+                                    </span>
+                                  ) : (
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -4220,6 +4261,100 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🗑️ MODAL XÁC NHẬN XÓA CSDL TRƯỜNG HỌC (CHUẨN GIAO DIỆN PREMIUM NHƯ MODAL XÓA HỌC SINH) */}
+      {schoolToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-2xs">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-base font-black text-rose-950 uppercase tracking-tight">
+                XÓA CSDL TRƯỜNG HỌC?
+              </h3>
+              <p className="text-xs text-rose-800 mt-1.5 leading-relaxed font-bold">
+                Xác nhận xóa trường: <strong className="text-rose-900 font-black">"{schoolToDelete.name}"</strong>
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                Hành động này sẽ xóa sạch toàn bộ CSDL về nhà trường, mô hình lớp học, học sinh và các tài khoản thuộc trường.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => setSchoolToDelete(null)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleConfirmDeleteSchool}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-md shadow-rose-600/25 hover-zoom-btn transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Đang Xóa...</span>
+                  </>
+                ) : (
+                  <span>Xóa Ngay</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🗑️ MODAL XÁC NHẬN XÓA TÀI KHOẢN (CHUẨN GIAO DIỆN PREMIUM NHƯ MODAL XÓA HỌC SINH) */}
+      {userToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-2xs">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-base font-black text-rose-950 uppercase tracking-tight">
+                XÓA TÀI KHOẢN NGƯỜI DÙNG?
+              </h3>
+              <p className="text-xs text-rose-800 mt-1.5 leading-relaxed font-bold">
+                Xác nhận xóa tài khoản: <strong className="text-rose-900 font-black">@{userToDelete.username}</strong>
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                Người dùng: {userToDelete.fullName} • Vai trò: {userToDelete.role}. Dữ liệu lớp học của giáo viên này sẽ được dọn dẹp.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => setUserToDelete(null)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleConfirmDeleteUser}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl shadow-md shadow-rose-600/25 hover-zoom-btn transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Đang Xóa...</span>
+                  </>
+                ) : (
+                  <span>Xóa Ngay</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1893,20 +1893,35 @@ export function getAdminAllData(): {
     }
   }
 
-  // 2. Also incorporate any classes created under admin that might have been assigned to teachers
+  // 2. Also incorporate any classes created under admin and adminquantri
   const adminData = db.userData['admin'] || {};
   if (Array.isArray(adminData.classes)) {
     for (const c of adminData.classes) {
       if (!allClassesMap.has(c.id)) {
         allClassesMap.set(c.id, c);
-        // Only include students belonging to this new class
-        if (Array.isArray(adminData.students)) {
-          for (const s of adminData.students) {
-            if (s.classId === c.id && !allStudentsMap.has(s.id)) {
-              allStudentsMap.set(s.id, s);
-            }
-          }
-        }
+      }
+    }
+  }
+  if (Array.isArray(adminData.students)) {
+    for (const s of adminData.students) {
+      if (!allStudentsMap.has(s.id)) {
+        allStudentsMap.set(s.id, s);
+      }
+    }
+  }
+
+  const superAdminData = db.userData['adminquantri'] || {};
+  if (Array.isArray(superAdminData.classes)) {
+    for (const c of superAdminData.classes) {
+      if (!allClassesMap.has(c.id)) {
+        allClassesMap.set(c.id, c);
+      }
+    }
+  }
+  if (Array.isArray(superAdminData.students)) {
+    for (const s of superAdminData.students) {
+      if (!allStudentsMap.has(s.id)) {
+        allStudentsMap.set(s.id, s);
       }
     }
   }
@@ -1915,7 +1930,8 @@ export function getAdminAllData(): {
   const maxTeacherUpdatedAt = Math.max(
     0,
     ...teachers.map(t => Number(db.userData[t.username.toLowerCase()]?.updatedAt) || 0),
-    Number(db.userData['admin']?.updatedAt) || 0
+    Number(db.userData['admin']?.updatedAt) || 0,
+    Number(db.userData['adminquantri']?.updatedAt) || 0
   );
 
   return {
@@ -1931,81 +1947,94 @@ export function getAdminAllData(): {
 export function syncAdminClassroomData(classes: any[], students: any[]): { success: boolean; timestamp: number } {
   const db = loadDatabase();
   const now = Date.now();
-  const teachers = db.users.filter(u => u.role === 'homeroom' || u.role === 'subject');
 
-  for (const t of teachers) {
-    const tUser = t.username.toLowerCase();
-    
-    // Classes assigned to this teacher (or fallback to matching role)
-    const tClasses = classes.filter(c => {
-      if (c.teacherUsername) {
-        return c.teacherUsername.toLowerCase() === tUser;
+  // 1. Phân bổ và hợp nhất lớp học & học sinh vào TẤT CẢ các tài khoản người dùng có quản lý các lớp này
+  const classIdsToSync = new Set(classes.map(c => c.id));
+  const classesById = new Map<string, any>();
+  for (const c of classes) {
+    classesById.set(c.id, c);
+  }
+  const studentsByClassId = new Map<string, any[]>();
+  for (const s of students) {
+    if (s.classId) {
+      if (!studentsByClassId.has(s.classId)) {
+        studentsByClassId.set(s.classId, []);
       }
-      if (c.teacherRole) {
-        return c.teacherRole === t.role;
-      }
-      // If neither, fallback by role or default user
-      return t.role === 'homeroom';
-    }).map(c => ({
-      ...c,
-      teacherUsername: t.username,
-      teacherRole: t.role,
-      teacherName: c.teacherName || t.fullName
-    }));
-
-    // 🛡️ BẢO TOÀN DỮ LIỆU: Nếu danh sách đồng bộ không có lớp nào của giáo viên này,
-    // TUYỆT ĐỐI KHÔNG xóa dữ liệu hiện có của họ!
-    if (tClasses.length === 0) {
-      continue;
+      studentsByClassId.get(s.classId)!.push(s);
     }
-
-    const tClassIds = new Set(tClasses.map(c => c.id));
-    const tStudents = students.filter(s => tClassIds.has(s.classId));
-
-    if (!db.userData[tUser]) {
-      db.userData[tUser] = { classes: [], students: [], updatedAt: now };
-    }
-
-    // Hợp nhất cộng dồn theo ID lớp, không xóa các lớp khác của giáo viên
-    const existingClasses = Array.isArray(db.userData[tUser].classes) ? db.userData[tUser].classes : [];
-    const classMap = new Map<string, any>();
-    for (const ec of existingClasses) {
-      classMap.set(ec.id, ec);
-    }
-    for (const tc of tClasses) {
-      const ex = classMap.get(tc.id);
-      classMap.set(tc.id, {
-        ...ex,
-        ...tc,
-        teacherUsername: t.username,
-        teacherRole: t.role,
-        teacherName: tc.teacherName || ex?.teacherName || t.fullName
-      });
-    }
-
-    // Hợp nhất học sinh theo ID
-    const existingStudents = Array.isArray(db.userData[tUser].students) ? db.userData[tUser].students : [];
-    const studentMap = new Map<string, any>();
-    for (const es of existingStudents) {
-      studentMap.set(es.id, es);
-    }
-    for (const ts of tStudents) {
-      const ex = studentMap.get(ts.id);
-      studentMap.set(ts.id, {
-        ...ex,
-        ...ts
-      });
-    }
-
-    db.userData[tUser].classes = Array.from(classMap.values());
-    db.userData[tUser].students = Array.from(studentMap.values());
-    db.userData[tUser].updatedAt = now;
   }
 
-  // Hợp nhất snapshot cho admin (giữ nguyên toàn bộ các lớp của các giáo viên khác)
+  // Quét toàn bộ db.userData để cập nhật mọi tài khoản (giáo viên, bgh, admin...) có chứa các lớp đang đồng bộ
+  for (const [uName, uData] of Object.entries(db.userData)) {
+    if (!uData || typeof uData !== 'object') continue;
+    const existingClasses = Array.isArray((uData as any).classes) ? (uData as any).classes : [];
+    const hasAnyTargetClass = existingClasses.some((c: any) => classIdsToSync.has(c.id));
+    
+    if (hasAnyTargetClass) {
+      // Cập nhật thông tin lớp học
+      const classMap = new Map<string, any>();
+      for (const ec of existingClasses) {
+        classMap.set(ec.id, ec);
+      }
+      for (const [cId, freshClass] of classesById.entries()) {
+        if (classMap.has(cId)) {
+          classMap.set(cId, { ...classMap.get(cId), ...freshClass });
+        }
+      }
+
+      // Cập nhật học sinh thuộc các lớp này trong uData
+      const existingStudents = Array.isArray((uData as any).students) ? (uData as any).students : [];
+      const studentMap = new Map<string, any>();
+      for (const es of existingStudents) {
+        studentMap.set(es.id, es);
+      }
+      for (const cId of classMap.keys()) {
+        const freshStudents = studentsByClassId.get(cId) || [];
+        for (const fs of freshStudents) {
+          studentMap.set(fs.id, { ...(studentMap.get(fs.id) || {}), ...fs });
+        }
+      }
+
+      (uData as any).classes = Array.from(classMap.values());
+      (uData as any).students = Array.from(studentMap.values());
+      (uData as any).updatedAt = now;
+    }
+  }
+
+  // Phân bổ thêm cho các giáo viên được chỉ định cụ thể qua teacherUsername
+  for (const c of classes) {
+    if (c.teacherUsername) {
+      const tUser = c.teacherUsername.toLowerCase();
+      if (!db.userData[tUser]) {
+        db.userData[tUser] = { classes: [], students: [], updatedAt: now };
+      }
+      const uData = db.userData[tUser];
+      const curClasses = Array.isArray(uData.classes) ? uData.classes : [];
+      const cIdx = curClasses.findIndex((item: any) => item.id === c.id);
+      if (cIdx >= 0) {
+        curClasses[cIdx] = { ...curClasses[cIdx], ...c };
+      } else {
+        curClasses.push(c);
+      }
+      uData.classes = curClasses;
+
+      const curStudents = Array.isArray(uData.students) ? uData.students : [];
+      const sMap = new Map<string, any>();
+      for (const cs of curStudents) sMap.set(cs.id, cs);
+      const cStudents = studentsByClassId.get(c.id) || [];
+      for (const cs of cStudents) sMap.set(cs.id, { ...(sMap.get(cs.id) || {}), ...cs });
+      uData.students = Array.from(sMap.values());
+      uData.updatedAt = now;
+    }
+  }
+
+  // 2. Hợp nhất snapshot toàn diện cho cả 'admin' và 'adminquantri'
   const adminClassesMap = new Map<string, any>();
   for (const ac of (db.userData['admin']?.classes || [])) {
     adminClassesMap.set(ac.id, ac);
+  }
+  for (const ac of (db.userData['adminquantri']?.classes || [])) {
+    if (!adminClassesMap.has(ac.id)) adminClassesMap.set(ac.id, ac);
   }
   for (const c of classes) {
     adminClassesMap.set(c.id, { ...(adminClassesMap.get(c.id) || {}), ...c });
@@ -2015,28 +2044,36 @@ export function syncAdminClassroomData(classes: any[], students: any[]): { succe
   for (const as of (db.userData['admin']?.students || [])) {
     adminStudentsMap.set(as.id, as);
   }
+  for (const as of (db.userData['adminquantri']?.students || [])) {
+    if (!adminStudentsMap.has(as.id)) adminStudentsMap.set(as.id, as);
+  }
   for (const s of students) {
     adminStudentsMap.set(s.id, { ...(adminStudentsMap.get(s.id) || {}), ...s });
   }
 
-  db.userData['admin'] = {
-    ...(db.userData['admin'] || {}),
+  const adminSnapshot = {
     classes: Array.from(adminClassesMap.values()),
     students: Array.from(adminStudentsMap.values()),
     updatedAt: now
   };
 
+  db.userData['admin'] = {
+    ...(db.userData['admin'] || {}),
+    ...adminSnapshot
+  };
+
+  db.userData['adminquantri'] = {
+    ...(db.userData['adminquantri'] || {}),
+    ...adminSnapshot
+  };
+
   saveDatabase(db);
 
   if (isSupabaseConfigured()) {
-    for (const t of teachers) {
-      const tUser = t.username.toLowerCase();
-      if (db.userData[tUser]) {
-        saveSupabaseUserData(tUser, db.userData[tUser]).catch(() => {});
+    for (const [uName, uData] of Object.entries(db.userData)) {
+      if (uData && (uData as any).updatedAt === now) {
+        saveSupabaseUserData(uName, uData).catch(() => {});
       }
-    }
-    if (db.userData['admin']) {
-      saveSupabaseUserData('admin', db.userData['admin']).catch(() => {});
     }
   }
 
@@ -2406,8 +2443,8 @@ export function compactDatabase() {
  */
 export function getSchools(): SchoolEntity[] {
   const db = loadDatabase();
-  if (!Array.isArray(db.schools) || db.schools.length === 0) {
-    db.schools = [...DEFAULT_SCHOOLS];
+  if (!Array.isArray(db.schools)) {
+    db.schools = [];
     saveDatabase(db);
   }
   return db.schools;

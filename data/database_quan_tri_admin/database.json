@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-08T09:08:13.065Z",
+  "lastSync": "2026-10-08T14:14:30.430Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -27,9 +27,1148 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791450490768
+    "lastGithubPushAt": 1791468870429
   },
   "auditLogs": [
+    {
+      "id": "log-1791453480888-zw5pt1",
+      "timestamp": 1791453480888,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Gia Bình khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453480699-mj4vt4",
+      "timestamp": 1791453480699,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Thảo Ánh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453480554-9m7pze",
+      "timestamp": 1791453480554,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453478458-cu72eh",
+      "timestamp": 1791453478458,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Hải Nga khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453478338-p7sone",
+      "timestamp": 1791453478338,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Khánh Minh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453477807-77j3v2",
+      "timestamp": 1791453477807,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Thị Oanh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453477653-zikdtn",
+      "timestamp": 1791453477653,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Quang Quang khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453477507-otlcbz",
+      "timestamp": 1791453477507,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Ánh Như khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453477366-rqq0jt",
+      "timestamp": 1791453477366,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Đình Phúc khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453477206-rgzobw",
+      "timestamp": 1791453477206,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Thu Ngọc khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453477088-gv43fi",
+      "timestamp": 1791453477088,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Hữu Phi khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453476971-spv2kv",
+      "timestamp": 1791453476971,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Gia Nhân khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453476831-99qgdp",
+      "timestamp": 1791453476831,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Châu Thảo Mai khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453476698-az48s5",
+      "timestamp": 1791453476698,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Văn Nghĩa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453476527-t4af8m",
+      "timestamp": 1791453476527,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Như Loan khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453476373-mxb5pq",
+      "timestamp": 1791453476373,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Diệu Lan khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453476233-y9cxxd",
+      "timestamp": 1791453476233,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Thành Lâm khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453476092-zt4alj",
+      "timestamp": 1791453476092,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Minh Huyền khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453475960-hs1yat",
+      "timestamp": 1791453475961,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Mai Hoa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453475703-s9d16h",
+      "timestamp": 1791453475703,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Minh Hùng khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453475159-59vg7h",
+      "timestamp": 1791453475159,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Tuấn Khoa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453475011-oubfci",
+      "timestamp": 1791453475011,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Châu Thị Hạnh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453474886-s33dy5",
+      "timestamp": 1791453474886,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Quang Hiếu khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453474759-1iwnpw",
+      "timestamp": 1791453474760,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Ánh Dương khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453474624-sdyt9j",
+      "timestamp": 1791453474624,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Đình Đức khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453474438-k6hk8k",
+      "timestamp": 1791453474438,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Thu Diệp khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453471837-e4p74f",
+      "timestamp": 1791453471837,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Hữu Dũng khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453471703-ei6r1w",
+      "timestamp": 1791453471703,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Hải Châu khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453471548-plmpme",
+      "timestamp": 1791453471548,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Thảo Ánh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453471332-3kmhy1",
+      "timestamp": 1791453471332,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Gia Bình khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453471174-kjif58",
+      "timestamp": 1791453471174,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453470416-6auzis",
+      "timestamp": 1791453470416,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Thảo Ánh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453470268-cgk29w",
+      "timestamp": 1791453470268,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Gia Bình khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453470116-w7sug0",
+      "timestamp": 1791453470116,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Hải Châu khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453469951-pkhkcp",
+      "timestamp": 1791453469951,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Hữu Dũng khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453469760-yncdkg",
+      "timestamp": 1791453469760,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Minh Tài khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453469605-hgienz",
+      "timestamp": 1791453469605,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Hữu Phi khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453469461-zrowp3",
+      "timestamp": 1791453469461,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Như Loan khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453469332-9y8g8c",
+      "timestamp": 1791453469332,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Khánh Minh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453469211-joxvln",
+      "timestamp": 1791453469211,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Minh Hùng khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453469076-83w64m",
+      "timestamp": 1791453469076,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Thị Oanh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453468947-5w0khw",
+      "timestamp": 1791453468948,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Quang Quang khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453466805-cz2kzj",
+      "timestamp": 1791453466805,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Ánh Như khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453466688-irdwg4",
+      "timestamp": 1791453466688,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Đình Phúc khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453466554-m85fp5",
+      "timestamp": 1791453466554,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Thu Ngọc khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453466429-1ze942",
+      "timestamp": 1791453466429,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Hải Nga khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453466293-ww5bep",
+      "timestamp": 1791453466293,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Gia Nhân khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453466175-5d4wj7",
+      "timestamp": 1791453466175,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Châu Thảo Mai khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453466043-a4n8ng",
+      "timestamp": 1791453466043,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Văn Nghĩa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453465924-gcsgb3",
+      "timestamp": 1791453465924,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Diệu Lan khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453465770-1ujm5v",
+      "timestamp": 1791453465770,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Thành Lâm khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453465610-6zocdk",
+      "timestamp": 1791453465610,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Minh Huyền khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453465478-ag7gjl",
+      "timestamp": 1791453465478,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Tuấn Khoa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453465344-0fafiz",
+      "timestamp": 1791453465344,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Mai Hoa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453465221-dpzvzh",
+      "timestamp": 1791453465221,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Châu Thị Hạnh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453465094-i5tn21",
+      "timestamp": 1791453465094,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Quang Hiếu khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453464957-lty0u3",
+      "timestamp": 1791453464957,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Ánh Dương khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453464738-mxmzis",
+      "timestamp": 1791453464738,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Đình Đức khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453464435-ro6t2j",
+      "timestamp": 1791453464435,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Thu Diệp khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453463890-7sjlfk",
+      "timestamp": 1791453463890,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453458355-e12ol7",
+      "timestamp": 1791453458355,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Châu Mai Quỳnh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453458245-kcmizi",
+      "timestamp": 1791453458245,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Minh Tài khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453458137-hdfbyb",
+      "timestamp": 1791453458137,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Thị Oanh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453458023-ispzo4",
+      "timestamp": 1791453458023,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Quang Quang khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457908-8vnp68",
+      "timestamp": 1791453457908,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Ánh Như khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457797-txm585",
+      "timestamp": 1791453457797,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Đình Phúc khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457670-g5rj2j",
+      "timestamp": 1791453457670,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Thu Ngọc khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457544-lzjj84",
+      "timestamp": 1791453457544,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Hữu Phi khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457371-p3e8pe",
+      "timestamp": 1791453457371,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Thành Lâm khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457244-hmgpd6",
+      "timestamp": 1791453457244,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Minh Huyền khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457127-4j04p6",
+      "timestamp": 1791453457127,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Tuấn Khoa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453457013-ma045m",
+      "timestamp": 1791453457013,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Minh Hùng khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453456856-l99bmd",
+      "timestamp": 1791453456856,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Hải Nga khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453456712-78ohiw",
+      "timestamp": 1791453456712,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Gia Nhân khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453456588-qs6i65",
+      "timestamp": 1791453456588,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Châu Thảo Mai khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453456470-waquv0",
+      "timestamp": 1791453456470,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Văn Nghĩa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453456344-cryq4n",
+      "timestamp": 1791453456344,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Như Loan khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453456235-jejc7w",
+      "timestamp": 1791453456235,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Khánh Minh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453456120-8ts9uj",
+      "timestamp": 1791453456120,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Diệu Lan khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455999-1o576j",
+      "timestamp": 1791453455999,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Mai Hoa khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455852-lzj4ex",
+      "timestamp": 1791453455852,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Châu Thị Hạnh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455720-rbx3qk",
+      "timestamp": 1791453455720,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lưu Quang Hiếu khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455594-bs5muw",
+      "timestamp": 1791453455594,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Hồ Hữu Dũng khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455466-0ewhe5",
+      "timestamp": 1791453455466,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đặng Hải Châu khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455337-3iktqk",
+      "timestamp": 1791453455337,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phan Gia Bình khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455192-3b5wjr",
+      "timestamp": 1791453455192,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Phạm Thảo Ánh khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453455043-m5kw5z",
+      "timestamp": 1791453455043,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Đào Ánh Dương khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453454880-cwxn34",
+      "timestamp": 1791453454880,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lâm Đình Đức khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453454635-dfkz5j",
+      "timestamp": 1791453454635,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Lý Thu Diệp khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453454440-dkmlmi",
+      "timestamp": 1791453454440,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453432765-b5seqj",
+      "timestamp": 1791453432765,
+      "username": "gv_canhan01",
+      "userFullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Cô Lê Hoàng Yến (GV Cá Nhân))"
+    },
+    {
+      "id": "log-1791453414838-rjz7gh",
+      "timestamp": 1791453414838,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Mai Trấn Hưng)"
+    },
+    {
+      "id": "log-1791453401295-o5ele0",
+      "timestamp": 1791453401295,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Mai Trấn Hưng)"
+    },
+    {
+      "id": "log-1791453367381-6njxkl",
+      "timestamp": 1791453367381,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Mai Trấn Hưng)"
+    },
+    {
+      "id": "log-1791453358436-9e1qbz",
+      "timestamp": 1791453358436,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Nguyễn Thị Trang",
+      "role": "homeroom",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 2A1",
+      "details": {
+        "classId": "class-trang-2a1",
+        "name": "2A1"
+      }
+    },
+    {
+      "id": "log-1791453348314-dryoiq",
+      "timestamp": 1791453348314,
+      "username": "nguyenthitrangtu1",
+      "userFullName": "Nguyễn Thị Trang",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Thị Trang)"
+    },
+    {
+      "id": "log-1791453331772-v3izkf",
+      "timestamp": 1791453331772,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453327485-gk44wy",
+      "timestamp": 1791453327485,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453321964-7dy38h",
+      "timestamp": 1791453321964,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
+    {
+      "id": "log-1791453300011-j5hyf1",
+      "timestamp": 1791453300011,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 2A1",
+      "details": {
+        "classId": "class-trang-2a1",
+        "name": "2A1"
+      }
+    },
+    {
+      "id": "log-1791453296832-snmvas",
+      "timestamp": 1791453296832,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: Lớp Tự Do 4",
+      "details": {
+        "classId": "class-lớptựdo4",
+        "name": "Lớp Tự Do 4"
+      }
+    },
+    {
+      "id": "log-1791453285227-je4lvt",
+      "timestamp": 1791453285227,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị Tài khoản Cá Nhân)"
+    },
+    {
+      "id": "log-1791453244076-witvdy",
+      "timestamp": 1791453244076,
+      "username": "admintruongdemo",
+      "userFullName": "Quản trị Nhà Trường DEMO",
+      "role": "school_admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị Nhà Trường DEMO)"
+    },
+    {
+      "id": "log-1791453214104-duc5jl",
+      "timestamp": 1791453214104,
+      "username": "admintruongdemo",
+      "userFullName": "Quản trị Nhà Trường DEMO",
+      "role": "school_admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791453169228-9y60hs",
+      "timestamp": 1791453169228,
+      "username": "gvbmdemo",
+      "userFullName": "Nguyễn Gia Phúc",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Gia Phúc)"
+    },
+    {
+      "id": "log-1791453159335-nvywhx",
+      "timestamp": 1791453159335,
+      "username": "gvbmdemo",
+      "userFullName": "Nguyễn Gia Phúc",
+      "role": "subject",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa toàn bộ danh sách lớp học"
+    },
+    {
+      "id": "log-1791453149387-6i9698",
+      "timestamp": 1791453149387,
+      "username": "gvbmdemo",
+      "userFullName": "Nguyễn Gia Phúc",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Gia Phúc)"
+    },
+    {
+      "id": "log-1791453131831-r0isy2",
+      "timestamp": 1791453131831,
+      "username": "gvbmdemo2",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Mai Trấn Hưng)"
+    },
+    {
+      "id": "log-1791453121441-v0rhqj",
+      "timestamp": 1791453121441,
+      "username": "gvbmdemo2",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "subject",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa toàn bộ danh sách lớp học"
+    },
+    {
+      "id": "log-1791453116925-yh18pf",
+      "timestamp": 1791453116925,
+      "username": "gvbmdemo2",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "subject",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-demo2-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791453108343-i6ijda",
+      "timestamp": 1791453108343,
+      "username": "gvbmdemo2",
+      "userFullName": "Mai Trấn Hưng",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Mai Trấn Hưng)"
+    },
+    {
+      "id": "log-1791453091446-7l2q45",
+      "timestamp": 1791453091446,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1791453080752-k169x0",
+      "timestamp": 1791453080752,
+      "username": "gvcndemo",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1791453075342-gwz602",
+      "timestamp": 1791453075342,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Phương Anh)"
+    },
+    {
+      "id": "log-1791453003437-6ynydm",
+      "timestamp": 1791453003437,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 1A1",
+      "details": {
+        "classId": "class-1a1demo",
+        "name": "1A1"
+      }
+    },
+    {
+      "id": "log-1791452994508-ht1dgj",
+      "timestamp": 1791452994508,
+      "username": "gvcn1a1demo",
+      "userFullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Nguyễn Phương Anh)"
+    },
+    {
+      "id": "log-1791452945467-kh906x",
+      "timestamp": 1791452945467,
+      "username": "admintruongdemo",
+      "userFullName": "Quản trị Nhà Trường DEMO",
+      "role": "school_admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 4A1",
+      "details": {
+        "classId": "class-4a1",
+        "name": "4A1"
+      }
+    },
+    {
+      "id": "log-1791452941268-r5itt8",
+      "timestamp": 1791452941268,
+      "username": "admintruongdemo",
+      "userFullName": "Quản trị Nhà Trường DEMO",
+      "role": "school_admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa lớp học: 1A1",
+      "details": {
+        "classId": "class-1a1demo",
+        "name": "1A1"
+      }
+    },
+    {
+      "id": "log-1791452933492-z9a5s2",
+      "timestamp": 1791452933492,
+      "username": "admintruongdemo",
+      "userFullName": "Quản trị Nhà Trường DEMO",
+      "role": "school_admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị Nhà Trường DEMO)"
+    },
+    {
+      "id": "log-1791452192234-jep6lo",
+      "timestamp": 1791452192234,
+      "username": "adminquantri",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "admin",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Trần Bảo Long"
+    },
+    {
+      "id": "log-1791452095650-cwiwss",
+      "timestamp": 1791452095650,
+      "username": "adminquantri",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "admin",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 1A1 (Cập nhật: 11 học sinh, Ghi đè: Có)"
+    },
+    {
+      "id": "log-1791452022216-ndpeo7",
+      "timestamp": 1791452022216,
+      "username": "adminquantri",
+      "userFullName": "Trịnh Thị Hương",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Trịnh Thị Hương)"
+    },
+    {
+      "id": "log-1791451753533-clhc4l",
+      "timestamp": 1791451753533,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
     {
       "id": "log-1791450483702-dcbb5s",
       "timestamp": 1791450483702,
@@ -1655,8 +2794,8 @@
     }
   ],
   "masterSummary": {
-    "totalUsers": 8,
+    "totalUsers": 6,
     "totalSchools": 1,
-    "totalClassesConfigured": 14
+    "totalClassesConfigured": 15
   }
 }

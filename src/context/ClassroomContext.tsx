@@ -1786,6 +1786,12 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (currentUser) {
       setDbSyncStatus('syncing');
       if (isSuperAdmin) {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).catch(() => {});
         databaseService.updateAdminStudent(targetStudent).catch(() => {});
         databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
           setDbSyncStatus('synced');
@@ -2058,7 +2064,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const hasCustomAvatar = Boolean(
           s.avatar && 
           s.avatar.trim() && 
-          !s.avatar.includes('api.dicebear.com/7.x/bottts/svg?seed=student-')
+          !s.avatar.includes('api.dicebear.com/7.x/bottts/svg?seed=student-') &&
+          !s.avatar.includes('api.dicebear.com/7.x/shapes/svg?seed=student-')
         );
         if (!overwrite && hasCustomAvatar) {
           return s;
@@ -2088,8 +2095,21 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     // 2. Kích hoạt quy trình lưu 3 tầng (LocalStorage, Supabase Cloud, Local JSON Server)
     if (currentUser) {
-      if (currentUser.role === 'admin') {
-        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).catch(() => {});
+      setDbSyncStatus('syncing');
+      if (isSuperAdmin || currentUser.role === 'admin') {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).catch(() => {});
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
       } else {
         const payload: UserClassroomData = {
           ...getCurrentUserData(),

@@ -194,6 +194,7 @@ export interface Classroom {
   slogan?: string; // Slogan lớp học
   branch?: string; // Phân hiệu (ví dụ: 'Phân hiệu 1', 'Cơ sở A'...)
   campus?: string; // Điểm trường (ví dụ: 'Điểm trường Trung tâm', 'Điểm Suối Cát'...)
+  schoolName?: string; // Tên trường học sở thuộc (ví dụ: 'TRƯỜNG HỌC HẠNH PHÚC DEMO'...)
   parentCommittee?: ParentCommittee; // Ban đại diện phụ huynh học sinh
 }
 

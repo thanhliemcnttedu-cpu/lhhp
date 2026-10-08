@@ -334,18 +334,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <School className="w-3.5 h-3.5" />
                       <span>Chọn Tên Trường:</span>
                     </label>
-                    <select
-                      value={selectedSchoolName}
-                      onChange={(e) => setSelectedSchoolName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                      style={{ borderColor: 'rgba(59, 130, 246, 0.3)' }}
-                    >
-                      {schools.map((s) => (
-                        <option key={s.id} value={s.name}>
-                          🏫 {s.name} ({s.code})
-                        </option>
-                      ))}
-                    </select>
+                    {schools.length > 0 ? (
+                      <select
+                        value={selectedSchoolName}
+                        onChange={(e) => setSelectedSchoolName(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        style={{ borderColor: 'rgba(59, 130, 246, 0.3)' }}
+                      >
+                        {schools.map((s) => (
+                          <option key={s.id} value={s.name}>
+                            🏫 {s.name} ({s.code})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="p-2.5 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-medium">
+                        Hệ thống chưa có CSDL Trường học nào. Hãy đăng nhập bằng tài khoản <strong className="text-white">@adminquantri</strong> để khởi tạo trường đầu tiên!
+                      </div>
+                    )}
                   </div>
                 )}
 

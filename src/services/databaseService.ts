@@ -1619,6 +1619,14 @@ export const databaseService = {
           updated_at: new Date().toISOString()
         });
 
+        const { data: superAdminRow } = await supabase.from('user_classroom_data').select('data').eq('username', 'adminquantri').maybeSingle();
+        const superAdminData = superAdminRow?.data || {};
+        await supabase.from('user_classroom_data').upsert({
+          username: 'adminquantri',
+          data: { ...superAdminData, classes, students, updatedAt: nowTs },
+          updated_at: new Date().toISOString()
+        });
+
         // Broadcast to all connected clients
         initSupabaseRealtime();
         if (realtimeChannel) {
@@ -2123,9 +2131,8 @@ export const databaseService = {
         const data = await res.json();
         if (data.success && Array.isArray(data.schools)) {
           const cleanSchools = purgeRemovedSchools(data.schools);
-          const finalSchools = cleanSchools.length > 0 ? cleanSchools : FALLBACK_SCHOOLS;
-          localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(finalSchools));
-          return finalSchools;
+          localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(cleanSchools));
+          return cleanSchools;
         }
       }
     } catch (_) {}
@@ -2134,17 +2141,14 @@ export const databaseService = {
       const cached = localStorage.getItem(LOCAL_SCHOOLS_KEY);
       if (cached) {
         const list = JSON.parse(cached);
-        if (Array.isArray(list) && list.length > 0) {
+        if (Array.isArray(list)) {
           const cleanList = purgeRemovedSchools(list);
-          if (cleanList.length > 0) {
-            localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(cleanList));
-            return cleanList;
-          }
+          return cleanList;
         }
       }
     } catch (_) {}
 
-    return FALLBACK_SCHOOLS;
+    return [];
   },
 
   async createSchool(schoolData: Partial<SchoolEntity> & { adminPassword?: string; adminFullName?: string }): Promise<{
@@ -2288,24 +2292,25 @@ export const databaseService = {
         }
 
         // BƯỚC 6: CUỐI CÙNG, thực hiện lệnh xóa CSDL Trường học (Schools)
-        let delSchQuery = supabase.from('schools').delete();
-        if (schoolName) {
-          delSchQuery = delSchQuery.or(`id.eq.${id},name.eq.${schoolName}`);
-        } else {
-          delSchQuery = delSchQuery.eq('id', id);
+        try {
+          let delSchQuery = supabase.from('schools').delete();
+          if (schoolName) {
+            delSchQuery = delSchQuery.or(`id.eq.${id},name.eq.${schoolName}`);
+          } else {
+            delSchQuery = delSchQuery.eq('id', id);
+          }
+          const { error: schErr } = await delSchQuery;
+          if (schErr) {
+            console.warn('[Cascade Step 6] Supabase delete schools warning:', schErr.message);
+            // Nếu bảng schools chưa được tạo trên Supabase hoặc lỗi schema cache, không chặn quy trình xóa local
+          } else {
+            console.log(`[Cascade Delete] Đã xóa thành công trường học trên Supabase: ${id}`);
+          }
+        } catch (schEx) {
+          console.warn('[Cascade Step 6] Bỏ qua lỗi xóa bảng schools trên Supabase:', schEx);
         }
-        const { error: schErr } = await delSchQuery;
-        if (schErr) {
-          console.error('[Cascade Step 6] Lỗi Supabase khi xóa bảng schools:', schErr);
-          throw new Error(`Lỗi Supabase khi xóa trường: ${schErr.message}`);
-        }
-        console.log(`[Cascade Delete] Đã xóa thành công trường học trên Supabase: ${id}`);
       } catch (err: any) {
-        console.error('Lỗi quy trình xóa liên đới Supabase:', err);
-        // Ném lỗi chi tiết để UI nhận biết
-        if (err?.message && !err.message.includes('fetch')) {
-          return { success: false, message: err.message };
-        }
+        console.warn('Lỗi quy trình xóa liên đới Supabase (sẽ fallback sang local API):', err);
       }
     }
 

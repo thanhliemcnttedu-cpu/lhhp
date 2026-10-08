@@ -17,7 +17,8 @@ import {
   Star, Award, CheckCircle2, ChevronRight, X,
   FileSpreadsheet, Download, Upload, Calendar, AlertTriangle, CheckSquare,
   Settings, BookOpen, Calculator, Globe, Atom, Map, Monitor, Palette, Music, Activity, Heart,
-  Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins, Wand2
+  Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins, Wand2,
+  Building2, MapPin
 } from 'lucide-react';
 import { playCoinSound, playDeductSound, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -94,6 +95,20 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   // 🎯 PHÂN CẤP TÀI KHOẢN & LOGIC GIỚI HẠN TÀI NGUYÊN BẢN DEMO
   const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
+  const isSchoolScopeAccount = Boolean(
+    currentUser?.role === 'school_admin' || 
+    currentUser?.isSchoolAdmin || 
+    currentUser?.role === 'bgh' || 
+    currentUser?.isBgh
+  );
+
+  // 🌟 BỘ LỌC ĐA TẦNG THEO YÊU CẦU NGƯỜI DÙNG:
+  // - Trên Admin Quản trị: Lọc xem các lớp theo Trường (School)
+  // - Trên Tài khoản Trường / BGH: Lọc xem các lớp theo Phân hiệu (Branch) hoặc theo Điểm trường (Campus)
+  const [selectedSchoolFilter, setSelectedSchoolFilter] = useState<string>('all');
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all');
+  const [selectedCampusFilter, setSelectedCampusFilter] = useState<string>('all');
+
   const isDemoAccount = !isSuperAdmin && Boolean(
     currentUser?.isDemo ||
     currentUser?.username?.toLowerCase().startsWith('demo') ||
@@ -103,6 +118,59 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   );
   const isClassLimitReached = isDemoAccount && classes.length >= 1;
   const isStudentLimitReached = isDemoAccount && currentClassStudents.length >= 10;
+
+  // 🌟 Danh sách trường học hệ thống phục vụ lọc cho Super Admin
+  const availableSchools = React.useMemo(() => {
+    const schoolSet = new Set<string>();
+    // Lấy từ các tài khoản người dùng
+    allUsers.forEach(u => {
+      if (u.schoolName && u.schoolName.trim() && !u.isGuestAdmin && u.tenantType !== 'guest') {
+        schoolSet.add(u.schoolName.trim());
+      }
+    });
+    // Lấy từ các lớp học nếu có trường schoolName
+    classes.forEach(c => {
+      if (c.schoolName && c.schoolName.trim()) {
+        schoolSet.add(c.schoolName.trim());
+      }
+    });
+    if (schoolSet.size === 0) {
+      schoolSet.add('TRƯỜNG HỌC HẠNH PHÚC DEMO');
+    }
+    return Array.from(schoolSet).sort();
+  }, [allUsers, classes]);
+
+  // 🌟 Danh sách Phân hiệu phục vụ lọc cho Tài khoản Trường / BGH
+  const availableBranches = React.useMemo(() => {
+    const branchSet = new Set<string>();
+    classes.forEach(c => {
+      if (c.branch && c.branch.trim()) {
+        branchSet.add(c.branch.trim());
+      }
+    });
+    return Array.from(branchSet).sort();
+  }, [classes]);
+
+  // 🌟 Danh sách Điểm trường thuộc Phân hiệu đã chọn (hoặc tất cả nếu chọn 'all')
+  const availableCampuses = React.useMemo(() => {
+    const campusSet = new Set<string>();
+    classes.forEach(c => {
+      const b = (c.branch || '').trim();
+      if (selectedBranchFilter === 'all' || b === selectedBranchFilter) {
+        if (c.campus && c.campus.trim()) {
+          campusSet.add(c.campus.trim());
+        }
+      }
+    });
+    return Array.from(campusSet).sort();
+  }, [classes, selectedBranchFilter]);
+
+  // Tự động reset Điểm trường khi đổi Phân hiệu nếu điểm trường không khớp
+  React.useEffect(() => {
+    if (selectedCampusFilter !== 'all' && !availableCampuses.includes(selectedCampusFilter)) {
+      setSelectedCampusFilter('all');
+    }
+  }, [selectedBranchFilter, availableCampuses, selectedCampusFilter]);
 
   // 🌟 Lọc danh sách giáo viên phụ trách theo phạm vi trường của BGH / Quản trị
   // QUY TẮC CỐT LÕI: Chỉ quản lý và tổng hợp từ GIÁO VIÊN CHỦ NHIỆM (role === 'homeroom')
@@ -127,22 +195,73 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     });
   }, [allTeachers, currentUser]);
 
-  // Lọc danh sách lớp học theo tài khoản giáo viên khi Admin đăng nhập
+  // Lọc danh sách lớp học theo tài khoản giáo viên, trường học, phân hiệu & điểm trường
   const displayedClasses = React.useMemo(() => {
-    if (!isAdmin || adminTeacherFilter === 'all') {
-      return classes;
-    }
     return classes.filter(c => {
-      if (c.teacherUsername) {
-        return c.teacherUsername.toLowerCase() === adminTeacherFilter.toLowerCase();
+      // 1. Lọc theo Giáo viên khi Admin chọn
+      if (isAdmin && adminTeacherFilter !== 'all') {
+        let matchTeacher = false;
+        if (c.teacherUsername) {
+          matchTeacher = c.teacherUsername.toLowerCase() === adminTeacherFilter.toLowerCase();
+        } else {
+          const t = allTeachers.find(u => u.username.toLowerCase() === adminTeacherFilter.toLowerCase());
+          matchTeacher = t ? (
+            Boolean(c.teacherName && t.fullName && c.teacherName.toLowerCase() === t.fullName.toLowerCase()) ||
+            c.teacherRole === t.role
+          ) : true;
+        }
+        if (!matchTeacher) return false;
       }
-      const t = allTeachers.find(u => u.username.toLowerCase() === adminTeacherFilter.toLowerCase());
-      return t ? (
-        (c.teacherName && t.fullName && c.teacherName.toLowerCase() === t.fullName.toLowerCase()) ||
-        c.teacherRole === t.role
-      ) : true;
+
+      // 2. Lọc theo TRƯỜNG HỌC (Dành cho Quản trị viên Cấp cao Super Admin)
+      if (isSuperAdmin && selectedSchoolFilter !== 'all') {
+        const targetSchoolNorm = selectedSchoolFilter.trim().toLowerCase();
+        // Kiểm tra qua schoolName của lớp
+        const classSchool = (c.schoolName || '').trim().toLowerCase();
+        // Hoặc kiểm tra qua giáo viên phụ trách lớp
+        const teacherObj = allUsers.find(u => 
+          (c.teacherUsername && u.username.toLowerCase() === c.teacherUsername.toLowerCase()) ||
+          (c.teacherName && u.fullName && c.teacherName.toLowerCase() === u.fullName.toLowerCase())
+        );
+        const teacherSchool = (teacherObj?.schoolName || '').trim().toLowerCase();
+
+        const matchClassSchool = classSchool === targetSchoolNorm || classSchool.includes(targetSchoolNorm);
+        const matchTeacherSchool = teacherSchool === targetSchoolNorm || teacherSchool.includes(targetSchoolNorm);
+
+        if (!matchClassSchool && !matchTeacherSchool) {
+          return false;
+        }
+      }
+
+      // 3. Lọc theo PHÂN HIỆU (Dành cho Quản trị Trường & BGH)
+      if (selectedBranchFilter !== 'all') {
+        const cBranch = (c.branch || '').trim().toLowerCase();
+        if (cBranch !== selectedBranchFilter.trim().toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 4. Lọc theo ĐIỂM TRƯỜNG (Dành cho Quản trị Trường & BGH)
+      if (selectedCampusFilter !== 'all') {
+        const cCampus = (c.campus || '').trim().toLowerCase();
+        if (cCampus !== selectedCampusFilter.trim().toLowerCase()) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [classes, isAdmin, adminTeacherFilter, allTeachers]);
+  }, [
+    classes, 
+    isAdmin, 
+    isSuperAdmin, 
+    adminTeacherFilter, 
+    selectedSchoolFilter, 
+    selectedBranchFilter, 
+    selectedCampusFilter, 
+    allTeachers, 
+    allUsers
+  ]);
   
   // Selection for bulk student actions
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -1012,6 +1131,177 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </div>
             </div>
           </div>
+
+          {/* 🏫 BỘ LỌC DÀNH CHO ADMIN QUẢN TRỊ CẤP CAO: LỌC XEM CÁC LỚP THEO TRƯỜNG */}
+          {isSuperAdmin && (
+            <div className="p-4 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl border-2 border-indigo-300/90 shadow-xs space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-xs">
+                    <Building2 className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <span className="text-xs md:text-sm font-black text-indigo-950 uppercase block">
+                      QUẢN TRỊ TỐI CAO • LỌC KHÔNG GIAN LỚP HỌC THEO TRƯỜNG HỌC:
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Cho phép lọc nhanh và phân bổ danh sách lớp học của từng đơn vị trường học trên toàn hệ thống
+                    </span>
+                  </div>
+                </div>
+                <div className="text-[11px] text-indigo-900 font-bold uppercase bg-white/80 px-2.5 py-1 rounded-xl border border-indigo-200">
+                  Hiển thị: <strong className="text-indigo-700">{displayedClasses.length} lớp</strong> / tổng số <strong className="text-slate-700">{classes.length} lớp</strong>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSchoolFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 hover-zoom-btn ${
+                    selectedSchoolFilter === 'all'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs'
+                      : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
+                  }`}
+                >
+                  <span>🌐</span>
+                  <span>TẤT CẢ CÁC TRƯỜNG ({classes.length})</span>
+                </button>
+
+                {availableSchools.map(schName => {
+                  const targetNorm = schName.trim().toLowerCase();
+                  const schClassesCount = classes.filter(c => {
+                    const cSch = (c.schoolName || '').trim().toLowerCase();
+                    const teacher = allUsers.find(u => 
+                      (c.teacherUsername && u.username.toLowerCase() === c.teacherUsername.toLowerCase()) ||
+                      (c.teacherName && u.fullName && c.teacherName.toLowerCase() === u.fullName.toLowerCase())
+                    );
+                    const tSch = (teacher?.schoolName || '').trim().toLowerCase();
+                    return cSch === targetNorm || cSch.includes(targetNorm) || tSch === targetNorm || tSch.includes(targetNorm);
+                  }).length;
+
+                  return (
+                    <button
+                      key={schName}
+                      type="button"
+                      onClick={() => setSelectedSchoolFilter(schName)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 hover-zoom-btn ${
+                        selectedSchoolFilter === schName
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xs ring-2 ring-purple-300'
+                          : 'bg-white text-slate-700 hover:bg-purple-50 border border-slate-200'
+                      }`}
+                    >
+                      <span>🏫</span>
+                      <span>{schName} ({schClassesCount} lớp)</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 🏛️ BỘ LỌC DÀNH CHO TÀI KHOẢN TRƯỜNG & BAN GIÁM HIỆU: LỌC THEO PHÂN HIỆU HOẶC ĐIỂM TRƯỜNG */}
+          {(isSchoolScopeAccount || isSuperAdmin) && (availableBranches.length > 0 || availableCampuses.length > 0) && (
+            <div className="p-3.5 bg-gradient-to-r from-sky-500/10 via-teal-500/10 to-emerald-500/10 rounded-3xl border-2 border-teal-200/90 shadow-xs space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl shadow-xs">
+                    <MapPin className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <span className="text-xs md:text-sm font-black text-teal-950 uppercase block">
+                      QUẢN TRỊ TRƯỜNG • LỌC XEM THEO PHÂN HIỆU HOẶC ĐIỂM TRƯỜNG:
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      Phân chia không gian lớp học theo Phân hiệu (Cơ sở) hoặc theo Điểm trường trực thuộc
+                    </span>
+                  </div>
+                </div>
+                {(selectedBranchFilter !== 'all' || selectedCampusFilter !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBranchFilter('all');
+                      setSelectedCampusFilter('all');
+                    }}
+                    className="text-[11px] font-bold text-teal-700 hover:text-teal-900 bg-white px-2 py-0.5 rounded-lg border border-teal-200 hover-zoom-btn"
+                  >
+                    🔄 Đặt lại tất cả điểm/phân hiệu
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 pt-1">
+                {/* Cấp 1: Phân hiệu */}
+                {availableBranches.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-black text-teal-900 uppercase flex items-center gap-1">
+                      <span>🏛️ Phân hiệu:</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBranchFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        selectedBranchFilter === 'all'
+                          ? 'bg-teal-600 text-white shadow-2xs'
+                          : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
+                      }`}
+                    >
+                      Tất cả
+                    </button>
+                    {availableBranches.map(br => (
+                      <button
+                        key={br}
+                        type="button"
+                        onClick={() => setSelectedBranchFilter(br)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                          selectedBranchFilter === br
+                            ? 'bg-teal-600 text-white shadow-2xs ring-1 ring-teal-400'
+                            : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
+                        }`}
+                      >
+                        {br}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Cấp 2: Điểm trường */}
+                {availableCampuses.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-black text-sky-900 uppercase flex items-center gap-1">
+                      <span>📍 Điểm trường:</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCampusFilter('all')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        selectedCampusFilter === 'all'
+                          ? 'bg-sky-600 text-white shadow-2xs'
+                          : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
+                      }`}
+                    >
+                      Tất cả
+                    </button>
+                    {availableCampuses.map(cp => (
+                      <button
+                        key={cp}
+                        type="button"
+                        onClick={() => setSelectedCampusFilter(cp)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                          selectedCampusFilter === cp
+                            ? 'bg-sky-600 text-white shadow-2xs ring-1 ring-sky-400'
+                            : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
+                        }`}
+                      >
+                        {cp}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ADMIN UNIFIED TEACHER FILTER BAR (Dành cho Quản trị viên sử dụng dữ liệu GVCN & GVBM) */}
           {isAdmin && (
