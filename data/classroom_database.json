@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T09:52:43.402Z",
+  "lastSync": "2026-10-08T09:52:51.810Z",
   "users": [
     {
       "id": "user-admin",
@@ -7278,7 +7278,7 @@
     },
     "gvbmdemo": {
       "classes": [],
-      "activeClassId": "",
+      "activeClassId": "class-gvbmdemo-4a1demo",
       "students": [],
       "subjects": [
         {
@@ -7720,7 +7720,195 @@
         "afternoonPeriods": 3,
         "teacherDisplayName": "Nguyễn Gia Phúc"
       },
-      "subjectTimetable": [],
+      "subjectTimetable": [
+        {
+          "id": "sbj-img-2-m3",
+          "day": 2,
+          "note": "Tin học 4A2",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-4a2",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "4A2"
+        },
+        {
+          "id": "sbj-img-2-m4",
+          "day": 2,
+          "note": "Tin học 4A3",
+          "room": "Phòng máy Tin học",
+          "period": 4,
+          "classId": "class-4a3",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "4A3"
+        },
+        {
+          "id": "sbj-img-2-a1",
+          "day": 2,
+          "note": "Tin học 4A4",
+          "room": "Phòng máy Tin học",
+          "period": 1,
+          "classId": "class-4a4",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "4A4"
+        },
+        {
+          "id": "sbj-img-2-a2",
+          "day": 2,
+          "note": "Tin học 4A5",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-4a5",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "4A5"
+        },
+        {
+          "id": "sbj-img-2-a3",
+          "day": 2,
+          "note": "Tin học 4A6",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-4a6",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "4A6"
+        },
+        {
+          "id": "sbj-img-3-m1",
+          "day": 3,
+          "note": "Tin học 3A1",
+          "room": "Phòng máy Tin học",
+          "period": 1,
+          "classId": "class-3a1",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A1"
+        },
+        {
+          "id": "sbj-img-3-m2",
+          "day": 3,
+          "note": "Tin học 3A2",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-3a2",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A2"
+        },
+        {
+          "id": "sbj-img-3-m3",
+          "day": 3,
+          "note": "Tin học 3A3",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-3a3",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A3"
+        },
+        {
+          "id": "sbj-img-3-m4",
+          "day": 3,
+          "note": "Tin học 3A4",
+          "room": "Phòng máy Tin học",
+          "period": 4,
+          "classId": "class-3a4",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "3A4"
+        },
+        {
+          "id": "sbj-img-3-a1",
+          "day": 3,
+          "note": "Tin học 3A5",
+          "room": "Phòng máy Tin học",
+          "period": 1,
+          "classId": "class-3a5",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "3A5"
+        },
+        {
+          "id": "sbj-img-3-a2",
+          "day": 3,
+          "note": "Tin học 3A6",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-3a6",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "3A6"
+        },
+        {
+          "id": "sbj-img-3-a3",
+          "day": 3,
+          "note": "Tin học 3A7",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-3a7",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "3A7"
+        },
+        {
+          "id": "sbj-img-4-m2",
+          "day": 4,
+          "note": "Tin học 5A1",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-5a1",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A1"
+        },
+        {
+          "id": "sbj-img-4-m3",
+          "day": 4,
+          "note": "Tin học 5A2",
+          "room": "Phòng máy Tin học",
+          "period": 3,
+          "classId": "class-5a2",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A2"
+        },
+        {
+          "id": "sbj-img-4-m4",
+          "day": 4,
+          "note": "Tin học 5A3",
+          "room": "Phòng máy Tin học",
+          "period": 4,
+          "classId": "class-5a3",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A3"
+        },
+        {
+          "id": "sbj-img-4-a2",
+          "day": 4,
+          "note": "Tin học 5A4",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-5a4",
+          "session": "afternoon",
+          "subject": "Tin học",
+          "className": "5A4"
+        },
+        {
+          "id": "sbj-img-6-m2",
+          "day": 6,
+          "note": "Tin học 5A5",
+          "room": "Phòng máy Tin học",
+          "period": 2,
+          "classId": "class-5a5",
+          "session": "morning",
+          "subject": "Tin học",
+          "className": "5A5"
+        }
+      ],
       "quickLinks": [
         {
           "id": "link-1",
@@ -7754,11 +7942,11 @@
         }
       ],
       "teacherProfile": {
-        "name": "Mai Trấn Hưng",
+        "name": "Nguyễn Gia Phúc",
         "role": "GIÁO VIÊN BỘ MÔN",
         "zalo": "0888358363",
         "phone": "0888358363",
-        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4",
+        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenGiaPhuc&backgroundColor=b6e3f4",
         "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
         "academicYear": "2026–2027",
         "teachingSubject": "Mĩ thuật"
@@ -8225,7 +8413,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791453163402
+      "updatedAt": 1791453171810
     },
     "adminquantri": {
       "classes": [
@@ -21767,9 +21955,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791453139968
+    "lastGithubPushAt": 1791453170870
   },
   "auditLogs": [
+    {
+      "id": "log-1791453169228-9y60hs",
+      "timestamp": 1791453169228,
+      "username": "gvbmdemo",
+      "userFullName": "Nguyễn Gia Phúc",
+      "role": "subject",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Nguyễn Gia Phúc)"
+    },
     {
       "id": "log-1791453159335-nvywhx",
       "timestamp": 1791453159335,
