@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T13:57:54.165Z",
+  "lastSync": "2026-10-08T13:59:55.746Z",
   "users": [
     {
       "id": "user-admin",
@@ -5644,6 +5644,25 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-gvcn4a1-9",
+          "stt": 9,
+          "name": "Đỗ Gia Huy",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Cuc4A1_HS_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 27,
+          "classId": "class-4a1",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
         }
       ],
       "subjects": [
@@ -6520,7 +6539,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "gvcndemo": {
       "classes": [
@@ -7933,10 +7952,29 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-gvcn4a1-9",
+          "stt": 9,
+          "name": "Đỗ Gia Huy",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Cuc4A1_HS_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 27,
+          "classId": "class-4a1",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "gvbmdemo": {
       "classes": [
@@ -14400,6 +14438,25 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-gvcn4a1-9",
+          "stt": 9,
+          "name": "Đỗ Gia Huy",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Cuc4A1_HS_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 27,
+          "classId": "class-4a1",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
         }
       ],
       "subjects": [
@@ -15471,7 +15528,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "quantricanhan": {
       "classes": [
@@ -17851,7 +17908,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "bghdemo": {
       "classes": [
@@ -19208,7 +19265,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "gvcn1a1demo": {
       "classes": [
@@ -20621,6 +20678,25 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-gvcn4a1-9",
+          "stt": 9,
+          "name": "Đỗ Gia Huy",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Cuc4A1_HS_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 27,
+          "classId": "class-4a1",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
         }
       ],
       "subjects": [
@@ -21692,7 +21768,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "gvbmdemo2": {
       "classes": [
@@ -25442,6 +25518,25 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-gvcn4a1-9",
+          "stt": 9,
+          "name": "Đỗ Gia Huy",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Cuc4A1_HS_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 27,
+          "classId": "class-4a1",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
         }
       ],
       "teacherRole": "homeroom",
@@ -25455,7 +25550,7 @@
         "zalo": "0888358363",
         "teachingSubject": "Giáo viên chủ nhiệm"
       },
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "nguyenviethien": {
       "classes": [
@@ -27186,7 +27281,7 @@
         }
       ],
       "teacherRole": "homeroom",
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "gv_canhan01": {
       "classes": [
@@ -28886,7 +28981,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791467874164
+      "updatedAt": 1791467995744
     },
     "admintruongdemo": {
       "classes": [],
@@ -29961,7 +30056,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791467693841
+    "lastGithubPushAt": 1791467883375
   },
   "auditLogs": [
     {
