@@ -1,12 +1,12 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-08T03:47:49.440Z",
+  "lastSync": "2026-10-08T04:06:52.390Z",
   "users": [
     {
       "id": "user-adminquantri",
       "username": "adminquantri",
-      "password": "Tanuyen22026",
+      "password": "Tanuyen@2026",
       "fullName": "Quản trị viên Hệ thống Cấp cao",
       "role": "admin",
       "tenantType": "school",
@@ -16,7 +16,7 @@
       "schoolName": "Hệ thống Quản trị Lớp học Hạnh phúc",
       "createdAt": 1790834208376,
       "status": "active",
-      "lastLoginAt": 1791431248723
+      "lastLoginAt": 1791432412390
     }
   ],
   "systemSettings": {

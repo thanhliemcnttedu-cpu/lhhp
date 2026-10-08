@@ -2,7 +2,7 @@
   {
     "id": "user-adminquantri",
     "username": "adminquantri",
-    "password": "Tanuyen22026",
+    "password": "Tanuyen@2026",
     "fullName": "Quản trị viên Hệ thống Cấp cao",
     "role": "admin",
     "tenantType": "school",
@@ -12,6 +12,6 @@
     "schoolName": "Hệ thống Quản trị Lớp học Hạnh phúc",
     "createdAt": 1790834208376,
     "status": "active",
-    "lastLoginAt": 1791431248723
+    "lastLoginAt": 1791432412390
   }
 ]

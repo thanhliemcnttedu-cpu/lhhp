@@ -604,10 +604,10 @@ export const databaseService = {
         if (!uErr && userRow) {
           const isSuperAdminUser = userRow.username === 'adminquantri';
           const isGuestAdminUser = userRow.username === 'admin' || userRow.username === 'quantricanhan';
-          const defaultExpected = isSuperAdminUser ? 'Tanuyen22026' : (isGuestAdminUser ? '123456' : (userRow.password || '123456'));
+          const defaultExpected = isSuperAdminUser ? 'Tanuyen@2026' : (isGuestAdminUser ? '123456' : (userRow.password || '123456'));
           const isPwdMatch = (userRow.password === password) ||
             (password === defaultExpected) ||
-            (isSuperAdminUser && (password === 'Tanuyen22026' || password === 'Tanuyen@2026')) ||
+            (isSuperAdminUser && (password === 'Tanuyen@2026' || password === 'Tanuyen22026')) ||
             (isGuestAdminUser && (password === '123456' || password === 'Tanuyen@2026'));
           if (isPwdMatch) {
             // Check latest teacherProfile name in user_classroom_data

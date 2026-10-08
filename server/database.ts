@@ -119,7 +119,7 @@ export const DEFAULT_USERS: UserAccountServer[] = [
   {
     id: 'user-adminquantri',
     username: 'adminquantri',
-    password: 'Tanuyen22026',
+    password: 'Tanuyen@2026',
     fullName: 'Quản trị viên Hệ thống Cấp cao',
     role: 'admin',
     tenantType: 'school',
