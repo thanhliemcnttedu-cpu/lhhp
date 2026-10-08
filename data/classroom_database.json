@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T09:55:59.582Z",
+  "lastSync": "2026-10-08T09:56:03.140Z",
   "users": [
     {
       "id": "user-admin",
@@ -19964,7 +19964,7 @@
     },
     "nguyenthitrangtu1": {
       "classes": [],
-      "activeClassId": "",
+      "activeClassId": "class-trang-2a1",
       "students": [],
       "subjects": [
         {
@@ -20911,7 +20911,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791453359581
+      "updatedAt": 1791453363140
     },
     "gv_canhan01": {
       "classes": [
