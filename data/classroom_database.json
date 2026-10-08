@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T09:55:24.220Z",
+  "lastSync": "2026-10-08T09:55:27.673Z",
   "users": [
     {
       "id": "user-admin",
@@ -13315,7 +13315,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791453324219
+      "updatedAt": 1791453327673
     },
     "bghdemo": {
       "classes": [
@@ -22385,6 +22385,15 @@
     "lastGithubPushAt": 1791453310922
   },
   "auditLogs": [
+    {
+      "id": "log-1791453327485-gk44wy",
+      "timestamp": 1791453327485,
+      "username": "quantricanhan",
+      "userFullName": "Quản trị Tài khoản Cá Nhân",
+      "role": "guest_admin",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: Nguyễn Văn An khỏi lớp Lớp Tự Do 4"
+    },
     {
       "id": "log-1791453321964-7dy38h",
       "timestamp": 1791453321964,
