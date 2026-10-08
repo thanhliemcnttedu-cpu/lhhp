@@ -66,39 +66,5 @@
     "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
     "createdAt": 1791446825046,
     "status": "active"
-  },
-  {
-    "id": "user-gvcn1a1demo",
-    "username": "gvcn1a1demo",
-    "password": "123456",
-    "fullName": "Nguyễn Phương Anh",
-    "role": "homeroom",
-    "isDemo": true,
-    "maxStudentsAllowed": 11,
-    "tenantType": "school",
-    "assignedClassName": "1A1",
-    "email": "gvcn1a1demo@lophoc.edu.vn",
-    "phone": "0888358363",
-    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenPhuongAnh_1A1&backgroundColor=ffd5dc",
-    "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
-    "createdAt": 1791449525326,
-    "status": "active"
-  },
-  {
-    "id": "user-gvbmdemo2",
-    "username": "gvbmdemo2",
-    "password": "123456",
-    "fullName": "Mai Trấn Hưng",
-    "role": "subject",
-    "isDemo": true,
-    "maxStudentsAllowed": 72,
-    "tenantType": "school",
-    "subjectName": "Mĩ thuật",
-    "email": "gvbmdemo2@lophoc.edu.vn",
-    "phone": "0888358363",
-    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4",
-    "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
-    "createdAt": 1791449525326,
-    "status": "active"
   }
 ]

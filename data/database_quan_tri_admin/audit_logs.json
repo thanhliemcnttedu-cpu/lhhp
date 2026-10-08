@@ -1,5 +1,23 @@
 [
   {
+    "id": "log-1791450483702-dcbb5s",
+    "timestamp": 1791450483702,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "DELETE_STUDENT",
+    "description": "Xóa học sinh: gfhghg khỏi lớp 4A1"
+  },
+  {
+    "id": "log-1791450466725-abdblh",
+    "timestamp": 1791450466725,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "AUTO_ASSIGN_AVATARS",
+    "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 11 học sinh, Ghi đè: Có)"
+  },
+  {
     "id": "log-1791448241859-amla6z",
     "timestamp": 1791448241859,
     "username": "adminquantri",

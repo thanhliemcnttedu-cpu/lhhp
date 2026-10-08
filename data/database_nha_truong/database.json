@@ -1,7 +1,7 @@
 {
   "partition": "nha_truong",
   "title": "Cơ Sở Dữ Liệu Tổ Chức Nhà Trường (TIỂU HỌC SỐ 1 TÂN UYÊN & Các Trường)",
-  "lastSync": "2026-10-08T08:52:05.388Z",
+  "lastSync": "2026-10-08T09:08:13.065Z",
   "schools": [],
   "users": [
     {
@@ -128,6 +128,126 @@
           "teacherRole": "homeroom",
           "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=ClassLớp Tự Do 4&backgroundColor=3b82f6",
           "slogan": "Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng"
+        },
+        {
+          "id": "class-gvbmdemo-4a1demo",
+          "name": "4A1DEMO",
+          "color": "#3B82F6",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Gvbmdemo_4A1DEMO&backgroundColor=3B82F6",
+          "slogan": "Lớp 4A1DEMO • Tin học, Đạo đức, Công nghệ • TRƯỜNG HỌC HẠNH PHÚC DEMO",
+          "teacherName": "Nguyễn Gia Phúc",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo"
+        },
+        {
+          "id": "class-gvbmdemo-4a2demo",
+          "name": "4A2DEMO",
+          "color": "#10B981",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Gvbmdemo_4A2DEMO&backgroundColor=10B981",
+          "slogan": "Lớp 4A2DEMO • Tin học, Đạo đức, Công nghệ • TRƯỜNG HỌC HẠNH PHÚC DEMO",
+          "teacherName": "Nguyễn Gia Phúc",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo"
+        },
+        {
+          "id": "class-gvbmdemo-4a3demo",
+          "name": "4A3DEMO",
+          "color": "#F59E0B",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Gvbmdemo_4A3DEMO&backgroundColor=F59E0B",
+          "slogan": "Lớp 4A3DEMO • Tin học, Đạo đức, Công nghệ • TRƯỜNG HỌC HẠNH PHÚC DEMO",
+          "teacherName": "Nguyễn Gia Phúc",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo"
+        },
+        {
+          "id": "class-gvbmdemo-4a4demo",
+          "name": "4A4DEMO",
+          "color": "#8B5CF6",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Gvbmdemo_4A4DEMO&backgroundColor=8B5CF6",
+          "slogan": "Lớp 4A4DEMO • Tin học, Đạo đức, Công nghệ • TRƯỜNG HỌC HẠNH PHÚC DEMO",
+          "teacherName": "Nguyễn Gia Phúc",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo"
+        },
+        {
+          "id": "class-demo2-4a1",
+          "name": "4A1",
+          "color": "#3B82F6",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=ArtDemo2_4A1&backgroundColor=3B82F6",
+          "slogan": "Lớp 4A1 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Môn Mĩ thuật",
+          "teacherName": "Mai Trấn Hưng",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo2"
+        },
+        {
+          "id": "class-demo2-4a2",
+          "name": "4A2",
+          "color": "#10B981",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=ArtDemo2_4A2&backgroundColor=10B981",
+          "slogan": "Lớp 4A2 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Môn Mĩ thuật",
+          "teacherName": "Mai Trấn Hưng",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo2"
+        },
+        {
+          "id": "class-demo2-4a3",
+          "name": "4A3",
+          "color": "#F59E0B",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=ArtDemo2_4A3&backgroundColor=F59E0B",
+          "slogan": "Lớp 4A3 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Môn Mĩ thuật",
+          "teacherName": "Mai Trấn Hưng",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo2"
+        },
+        {
+          "id": "class-demo2-4a4",
+          "name": "4A4",
+          "color": "#EF4444",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=ArtDemo2_4A4&backgroundColor=EF4444",
+          "slogan": "Lớp 4A4 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Môn Mĩ thuật",
+          "teacherName": "Mai Trấn Hưng",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo2"
+        },
+        {
+          "id": "class-demo2-4a5",
+          "name": "4A5",
+          "color": "#8B5CF6",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=ArtDemo2_4A5&backgroundColor=8B5CF6",
+          "slogan": "Lớp 4A5 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Môn Mĩ thuật",
+          "teacherName": "Mai Trấn Hưng",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo2"
+        },
+        {
+          "id": "class-demo2-4a6",
+          "name": "4A6",
+          "color": "#EC4899",
+          "grade": "Khối 4",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=ArtDemo2_4A6&backgroundColor=EC4899",
+          "slogan": "Lớp 4A6 • TRƯỜNG HỌC HẠNH PHÚC DEMO • Môn Mĩ thuật",
+          "teacherName": "Mai Trấn Hưng",
+          "teacherRole": "subject",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvbmdemo2"
         }
       ],
       "activeClassId": "class-4a1",
@@ -933,7 +1053,7 @@
           "name": "Trần Bảo Anh",
           "role": "LỚP PHÓ HỌC TẬP",
           "group": "Tổ 1",
-          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Gvcndemo4A1_1&backgroundColor=ffd5dc",
+          "avatar": "/avatars/demo/student-avatar-17.jpg",
           "gender": "Nữ",
           "points": 38,
           "classId": "class-gvcndemo-4a1",
@@ -945,7 +1065,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-03.webp"
         },
         {
           "id": "hs-gvcndemo-4a1-3",
@@ -964,7 +1085,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-13.webp"
         },
         {
           "id": "hs-gvcndemo-4a1-4",
@@ -983,7 +1105,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-07.webp"
         },
         {
           "id": "hs-gvcndemo-4a1-5",
@@ -1002,7 +1125,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-19.jpg"
         },
         {
           "id": "hs-gvcndemo-4a1-6",
@@ -1021,7 +1145,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-10.webp"
         },
         {
           "id": "hs-gvcndemo-4a1-7",
@@ -1040,7 +1165,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-22.jpg"
         },
         {
           "id": "hs-gvcndemo-4a1-8",
@@ -1059,7 +1185,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-24.jpg"
         },
         {
           "id": "hs-gvcndemo-4a1-9",
@@ -1079,7 +1206,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/boys/student-avatar-34.jpg"
         },
         {
           "id": "hs-gvcndemo-4a1-10",
@@ -1098,7 +1226,8 @@
           "avatarPosition": {
             "x": 0,
             "y": 0
-          }
+          },
+          "originalAvatar": "/avatars/real_demo/girls/student-avatar-27.jpg"
         },
         {
           "id": "hs-gvcn3a1-1",
@@ -1288,24 +1417,6 @@
           "subjectPoints": {
             "GHI CHUNG / NỀ NẾP": 34
           },
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          }
-        },
-        {
-          "id": "hs-1790918203976-6tkd",
-          "stt": 10,
-          "name": "gfhghg",
-          "role": "",
-          "group": "Tổ 1",
-          "roles": [],
-          "avatar": "/avatars/demo/student-avatar-25.jpg",
-          "gender": "Nam",
-          "points": 0,
-          "classId": "class-gvcndemo-4a1",
-          "birthDate": "",
-          "avatarScale": 1,
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -1949,6 +2060,2224 @@
           },
           "group": "Tổ 2",
           "roles": []
+        },
+        {
+          "id": "hs-gvbmdemo-1-1",
+          "stt": 1,
+          "name": "Nguyễn Đức Anh (4A1DEMO)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 18,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 18,
+            "CÔNG NGHỆ": 19,
+            "ĐẠO ĐỨC": 20
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-2",
+          "stt": 2,
+          "name": "Trần Thảo Ly (4A1DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 24,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 24,
+            "CÔNG NGHỆ": 25,
+            "ĐẠO ĐỨC": 26
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-3",
+          "stt": 3,
+          "name": "Lê Hữu Đạt (4A1DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 30,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 30,
+            "CÔNG NGHỆ": 31,
+            "ĐẠO ĐỨC": 32
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-4",
+          "stt": 4,
+          "name": "Phạm Minh Tuệ (4A1DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 36,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 36,
+            "CÔNG NGHỆ": 37,
+            "ĐẠO ĐỨC": 38
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-5",
+          "stt": 5,
+          "name": "Hoàng Nhật Minh (4A1DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 42,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 42,
+            "CÔNG NGHỆ": 43,
+            "ĐẠO ĐỨC": 44
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-6",
+          "stt": 6,
+          "name": "Vũ Khánh Linh (4A1DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 48,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 48,
+            "CÔNG NGHỆ": 49,
+            "ĐẠO ĐỨC": 50
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-7",
+          "stt": 7,
+          "name": "Đặng Thành Nam (4A1DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 19,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 19,
+            "CÔNG NGHỆ": 20,
+            "ĐẠO ĐỨC": 21
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-8",
+          "stt": 8,
+          "name": "Bùi Ngọc Ánh (4A1DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 25,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 25,
+            "CÔNG NGHỆ": 26,
+            "ĐẠO ĐỨC": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-9",
+          "stt": 9,
+          "name": "Đỗ Minh Trí (4A1DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 31,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 31,
+            "CÔNG NGHỆ": 32,
+            "ĐẠO ĐỨC": 33
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-1-10",
+          "stt": 10,
+          "name": "Ngô Thu Trang (4A1DEMO)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_0_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 37,
+          "classId": "class-gvbmdemo-4a1demo",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 37,
+            "CÔNG NGHỆ": 38,
+            "ĐẠO ĐỨC": 39
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-1",
+          "stt": 1,
+          "name": "Nguyễn Đức Anh (4A2DEMO)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 23,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 23,
+            "CÔNG NGHỆ": 24,
+            "ĐẠO ĐỨC": 25
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-2",
+          "stt": 2,
+          "name": "Trần Thảo Ly (4A2DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 29,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 29,
+            "CÔNG NGHỆ": 30,
+            "ĐẠO ĐỨC": 31
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-3",
+          "stt": 3,
+          "name": "Lê Hữu Đạt (4A2DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 35,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 35,
+            "CÔNG NGHỆ": 36,
+            "ĐẠO ĐỨC": 37
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-4",
+          "stt": 4,
+          "name": "Phạm Minh Tuệ (4A2DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 41,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 41,
+            "CÔNG NGHỆ": 42,
+            "ĐẠO ĐỨC": 43
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-5",
+          "stt": 5,
+          "name": "Hoàng Nhật Minh (4A2DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 47,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 47,
+            "CÔNG NGHỆ": 48,
+            "ĐẠO ĐỨC": 49
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-6",
+          "stt": 6,
+          "name": "Vũ Khánh Linh (4A2DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 18,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 18,
+            "CÔNG NGHỆ": 19,
+            "ĐẠO ĐỨC": 20
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-7",
+          "stt": 7,
+          "name": "Đặng Thành Nam (4A2DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 24,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 24,
+            "CÔNG NGHỆ": 25,
+            "ĐẠO ĐỨC": 26
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-8",
+          "stt": 8,
+          "name": "Bùi Ngọc Ánh (4A2DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 30,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 30,
+            "CÔNG NGHỆ": 31,
+            "ĐẠO ĐỨC": 32
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-9",
+          "stt": 9,
+          "name": "Đỗ Minh Trí (4A2DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 36,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 36,
+            "CÔNG NGHỆ": 37,
+            "ĐẠO ĐỨC": 38
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-2-10",
+          "stt": 10,
+          "name": "Ngô Thu Trang (4A2DEMO)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_1_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 42,
+          "classId": "class-gvbmdemo-4a2demo",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 42,
+            "CÔNG NGHỆ": 43,
+            "ĐẠO ĐỨC": 44
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-1",
+          "stt": 1,
+          "name": "Nguyễn Đức Anh (4A3DEMO)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 28,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 28,
+            "CÔNG NGHỆ": 29,
+            "ĐẠO ĐỨC": 30
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-2",
+          "stt": 2,
+          "name": "Trần Thảo Ly (4A3DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 34,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 34,
+            "CÔNG NGHỆ": 35,
+            "ĐẠO ĐỨC": 36
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-3",
+          "stt": 3,
+          "name": "Lê Hữu Đạt (4A3DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 40,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 40,
+            "CÔNG NGHỆ": 41,
+            "ĐẠO ĐỨC": 42
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-4",
+          "stt": 4,
+          "name": "Phạm Minh Tuệ (4A3DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 46,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 46,
+            "CÔNG NGHỆ": 47,
+            "ĐẠO ĐỨC": 48
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-5",
+          "stt": 5,
+          "name": "Hoàng Nhật Minh (4A3DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 52,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 52,
+            "CÔNG NGHỆ": 53,
+            "ĐẠO ĐỨC": 54
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-6",
+          "stt": 6,
+          "name": "Vũ Khánh Linh (4A3DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 23,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 23,
+            "CÔNG NGHỆ": 24,
+            "ĐẠO ĐỨC": 25
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-7",
+          "stt": 7,
+          "name": "Đặng Thành Nam (4A3DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 29,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 29,
+            "CÔNG NGHỆ": 30,
+            "ĐẠO ĐỨC": 31
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-8",
+          "stt": 8,
+          "name": "Bùi Ngọc Ánh (4A3DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 35,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 35,
+            "CÔNG NGHỆ": 36,
+            "ĐẠO ĐỨC": 37
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-9",
+          "stt": 9,
+          "name": "Đỗ Minh Trí (4A3DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 41,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 41,
+            "CÔNG NGHỆ": 42,
+            "ĐẠO ĐỨC": 43
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-3-10",
+          "stt": 10,
+          "name": "Ngô Thu Trang (4A3DEMO)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_2_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 47,
+          "classId": "class-gvbmdemo-4a3demo",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 47,
+            "CÔNG NGHỆ": 48,
+            "ĐẠO ĐỨC": 49
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-1",
+          "stt": 1,
+          "name": "Nguyễn Đức Anh (4A4DEMO)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 33,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 33,
+            "CÔNG NGHỆ": 34,
+            "ĐẠO ĐỨC": 35
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-2",
+          "stt": 2,
+          "name": "Trần Thảo Ly (4A4DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 39,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 39,
+            "CÔNG NGHỆ": 40,
+            "ĐẠO ĐỨC": 41
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-3",
+          "stt": 3,
+          "name": "Lê Hữu Đạt (4A4DEMO)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 45,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 45,
+            "CÔNG NGHỆ": 46,
+            "ĐẠO ĐỨC": 47
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-4",
+          "stt": 4,
+          "name": "Phạm Minh Tuệ (4A4DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 51,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 51,
+            "CÔNG NGHỆ": 52,
+            "ĐẠO ĐỨC": 53
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-5",
+          "stt": 5,
+          "name": "Hoàng Nhật Minh (4A4DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 22,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 22,
+            "CÔNG NGHỆ": 23,
+            "ĐẠO ĐỨC": 24
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-6",
+          "stt": 6,
+          "name": "Vũ Khánh Linh (4A4DEMO)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 28,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 28,
+            "CÔNG NGHỆ": 29,
+            "ĐẠO ĐỨC": 30
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-7",
+          "stt": 7,
+          "name": "Đặng Thành Nam (4A4DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 34,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 34,
+            "CÔNG NGHỆ": 35,
+            "ĐẠO ĐỨC": 36
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-8",
+          "stt": 8,
+          "name": "Bùi Ngọc Ánh (4A4DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 40,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 40,
+            "CÔNG NGHỆ": 41,
+            "ĐẠO ĐỨC": 42
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-9",
+          "stt": 9,
+          "name": "Đỗ Minh Trí (4A4DEMO)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 46,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 46,
+            "CÔNG NGHỆ": 47,
+            "ĐẠO ĐỨC": 48
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo-4-10",
+          "stt": 10,
+          "name": "Ngô Thu Trang (4A4DEMO)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=SubDemoGvbm_3_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 52,
+          "classId": "class-gvbmdemo-4a4demo",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "TIN HỌC": 52,
+            "CÔNG NGHỆ": 53,
+            "ĐẠO ĐỨC": 54
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-1",
+          "stt": 1,
+          "name": "Nguyễn Mỹ Linh (4A1)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 22,
+          "classId": "class-demo2-4a1",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 22
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-2",
+          "stt": 2,
+          "name": "Trần Quang Dũng (4A1)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 25,
+          "classId": "class-demo2-4a1",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 25
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-3",
+          "stt": 3,
+          "name": "Lê Thục Trinh (4A1)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 28,
+          "classId": "class-demo2-4a1",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 28
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-4",
+          "stt": 4,
+          "name": "Phạm Trí Dũng (4A1)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 31,
+          "classId": "class-demo2-4a1",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 31
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-5",
+          "stt": 5,
+          "name": "Hoàng Bảo Châu (4A1)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 34,
+          "classId": "class-demo2-4a1",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 34
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-6",
+          "stt": 6,
+          "name": "Vũ Tường Vy (4A1)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 37,
+          "classId": "class-demo2-4a1",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 37
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-7",
+          "stt": 7,
+          "name": "Đặng Xuân Phúc (4A1)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 40,
+          "classId": "class-demo2-4a1",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 40
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-8",
+          "stt": 8,
+          "name": "Bùi Thúy Kiều (4A1)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 43,
+          "classId": "class-demo2-4a1",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 43
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-9",
+          "stt": 9,
+          "name": "Đỗ Quang Sáng (4A1)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 46,
+          "classId": "class-demo2-4a1",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 46
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-10",
+          "stt": 10,
+          "name": "Ngô Ngọc Diệp (4A1)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 49,
+          "classId": "class-demo2-4a1",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 49
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-11",
+          "stt": 11,
+          "name": "Dương Tuấn Khang (4A1)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_10&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 22,
+          "classId": "class-demo2-4a1",
+          "birthDate": "20/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 22
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-1-12",
+          "stt": 12,
+          "name": "Lý Diễm My (4A1)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_0_11&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 25,
+          "classId": "class-demo2-4a1",
+          "birthDate": "21/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 25
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-1",
+          "stt": 1,
+          "name": "Nguyễn Mỹ Linh (4A2)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 26,
+          "classId": "class-demo2-4a2",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 26
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-2",
+          "stt": 2,
+          "name": "Trần Quang Dũng (4A2)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 29,
+          "classId": "class-demo2-4a2",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-3",
+          "stt": 3,
+          "name": "Lê Thục Trinh (4A2)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 32,
+          "classId": "class-demo2-4a2",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 32
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-4",
+          "stt": 4,
+          "name": "Phạm Trí Dũng (4A2)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 35,
+          "classId": "class-demo2-4a2",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 35
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-5",
+          "stt": 5,
+          "name": "Hoàng Bảo Châu (4A2)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 38,
+          "classId": "class-demo2-4a2",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 38
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-6",
+          "stt": 6,
+          "name": "Vũ Tường Vy (4A2)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 41,
+          "classId": "class-demo2-4a2",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 41
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-7",
+          "stt": 7,
+          "name": "Đặng Xuân Phúc (4A2)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 44,
+          "classId": "class-demo2-4a2",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 44
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-8",
+          "stt": 8,
+          "name": "Bùi Thúy Kiều (4A2)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 47,
+          "classId": "class-demo2-4a2",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 47
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-9",
+          "stt": 9,
+          "name": "Đỗ Quang Sáng (4A2)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 50,
+          "classId": "class-demo2-4a2",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 50
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-10",
+          "stt": 10,
+          "name": "Ngô Ngọc Diệp (4A2)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 23,
+          "classId": "class-demo2-4a2",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 23
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-11",
+          "stt": 11,
+          "name": "Dương Tuấn Khang (4A2)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_10&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 26,
+          "classId": "class-demo2-4a2",
+          "birthDate": "20/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 26
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-2-12",
+          "stt": 12,
+          "name": "Lý Diễm My (4A2)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_1_11&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 29,
+          "classId": "class-demo2-4a2",
+          "birthDate": "21/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-1",
+          "stt": 1,
+          "name": "Nguyễn Mỹ Linh (4A3)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 30,
+          "classId": "class-demo2-4a3",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 30
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-2",
+          "stt": 2,
+          "name": "Trần Quang Dũng (4A3)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 33,
+          "classId": "class-demo2-4a3",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 33
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-3",
+          "stt": 3,
+          "name": "Lê Thục Trinh (4A3)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 36,
+          "classId": "class-demo2-4a3",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 36
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-4",
+          "stt": 4,
+          "name": "Phạm Trí Dũng (4A3)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 39,
+          "classId": "class-demo2-4a3",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 39
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-5",
+          "stt": 5,
+          "name": "Hoàng Bảo Châu (4A3)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 42,
+          "classId": "class-demo2-4a3",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 42
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-6",
+          "stt": 6,
+          "name": "Vũ Tường Vy (4A3)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 45,
+          "classId": "class-demo2-4a3",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 45
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-7",
+          "stt": 7,
+          "name": "Đặng Xuân Phúc (4A3)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 48,
+          "classId": "class-demo2-4a3",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 48
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-8",
+          "stt": 8,
+          "name": "Bùi Thúy Kiều (4A3)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 51,
+          "classId": "class-demo2-4a3",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 51
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-9",
+          "stt": 9,
+          "name": "Đỗ Quang Sáng (4A3)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 24,
+          "classId": "class-demo2-4a3",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 24
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-10",
+          "stt": 10,
+          "name": "Ngô Ngọc Diệp (4A3)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 27,
+          "classId": "class-demo2-4a3",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-11",
+          "stt": 11,
+          "name": "Dương Tuấn Khang (4A3)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_10&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 30,
+          "classId": "class-demo2-4a3",
+          "birthDate": "20/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 30
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-3-12",
+          "stt": 12,
+          "name": "Lý Diễm My (4A3)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_2_11&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 33,
+          "classId": "class-demo2-4a3",
+          "birthDate": "21/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 33
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-1",
+          "stt": 1,
+          "name": "Nguyễn Mỹ Linh (4A4)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 34,
+          "classId": "class-demo2-4a4",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 34
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-2",
+          "stt": 2,
+          "name": "Trần Quang Dũng (4A4)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 37,
+          "classId": "class-demo2-4a4",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 37
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-3",
+          "stt": 3,
+          "name": "Lê Thục Trinh (4A4)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 40,
+          "classId": "class-demo2-4a4",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 40
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-4",
+          "stt": 4,
+          "name": "Phạm Trí Dũng (4A4)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 43,
+          "classId": "class-demo2-4a4",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 43
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-5",
+          "stt": 5,
+          "name": "Hoàng Bảo Châu (4A4)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 46,
+          "classId": "class-demo2-4a4",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 46
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-6",
+          "stt": 6,
+          "name": "Vũ Tường Vy (4A4)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 49,
+          "classId": "class-demo2-4a4",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 49
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-7",
+          "stt": 7,
+          "name": "Đặng Xuân Phúc (4A4)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 22,
+          "classId": "class-demo2-4a4",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 22
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-8",
+          "stt": 8,
+          "name": "Bùi Thúy Kiều (4A4)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 25,
+          "classId": "class-demo2-4a4",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 25
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-9",
+          "stt": 9,
+          "name": "Đỗ Quang Sáng (4A4)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 28,
+          "classId": "class-demo2-4a4",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 28
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-10",
+          "stt": 10,
+          "name": "Ngô Ngọc Diệp (4A4)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 31,
+          "classId": "class-demo2-4a4",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 31
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-11",
+          "stt": 11,
+          "name": "Dương Tuấn Khang (4A4)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_10&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 34,
+          "classId": "class-demo2-4a4",
+          "birthDate": "20/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 34
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-4-12",
+          "stt": 12,
+          "name": "Lý Diễm My (4A4)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_3_11&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 37,
+          "classId": "class-demo2-4a4",
+          "birthDate": "21/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 37
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-1",
+          "stt": 1,
+          "name": "Nguyễn Mỹ Linh (4A5)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 38,
+          "classId": "class-demo2-4a5",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 38
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-2",
+          "stt": 2,
+          "name": "Trần Quang Dũng (4A5)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 41,
+          "classId": "class-demo2-4a5",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 41
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-3",
+          "stt": 3,
+          "name": "Lê Thục Trinh (4A5)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 44,
+          "classId": "class-demo2-4a5",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 44
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-4",
+          "stt": 4,
+          "name": "Phạm Trí Dũng (4A5)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 47,
+          "classId": "class-demo2-4a5",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 47
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-5",
+          "stt": 5,
+          "name": "Hoàng Bảo Châu (4A5)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 50,
+          "classId": "class-demo2-4a5",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 50
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-6",
+          "stt": 6,
+          "name": "Vũ Tường Vy (4A5)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 23,
+          "classId": "class-demo2-4a5",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 23
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-7",
+          "stt": 7,
+          "name": "Đặng Xuân Phúc (4A5)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 26,
+          "classId": "class-demo2-4a5",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 26
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-8",
+          "stt": 8,
+          "name": "Bùi Thúy Kiều (4A5)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 29,
+          "classId": "class-demo2-4a5",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 29
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-9",
+          "stt": 9,
+          "name": "Đỗ Quang Sáng (4A5)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 32,
+          "classId": "class-demo2-4a5",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 32
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-10",
+          "stt": 10,
+          "name": "Ngô Ngọc Diệp (4A5)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 35,
+          "classId": "class-demo2-4a5",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 35
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-11",
+          "stt": 11,
+          "name": "Dương Tuấn Khang (4A5)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_10&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 38,
+          "classId": "class-demo2-4a5",
+          "birthDate": "20/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 38
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-5-12",
+          "stt": 12,
+          "name": "Lý Diễm My (4A5)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_4_11&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 41,
+          "classId": "class-demo2-4a5",
+          "birthDate": "21/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 41
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-1",
+          "stt": 1,
+          "name": "Nguyễn Mỹ Linh (4A6)",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_0&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 42,
+          "classId": "class-demo2-4a6",
+          "birthDate": "10/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 42
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-2",
+          "stt": 2,
+          "name": "Trần Quang Dũng (4A6)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_1&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 45,
+          "classId": "class-demo2-4a6",
+          "birthDate": "11/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 45
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-3",
+          "stt": 3,
+          "name": "Lê Thục Trinh (4A6)",
+          "group": "Tổ 1",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_2&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 48,
+          "classId": "class-demo2-4a6",
+          "birthDate": "12/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 48
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-4",
+          "stt": 4,
+          "name": "Phạm Trí Dũng (4A6)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_3&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 51,
+          "classId": "class-demo2-4a6",
+          "birthDate": "13/04/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 51
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-5",
+          "stt": 5,
+          "name": "Hoàng Bảo Châu (4A6)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_4&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 24,
+          "classId": "class-demo2-4a6",
+          "birthDate": "14/05/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 24
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-6",
+          "stt": 6,
+          "name": "Vũ Tường Vy (4A6)",
+          "group": "Tổ 2",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_5&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 27,
+          "classId": "class-demo2-4a6",
+          "birthDate": "15/06/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 27
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-7",
+          "stt": 7,
+          "name": "Đặng Xuân Phúc (4A6)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_6&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 30,
+          "classId": "class-demo2-4a6",
+          "birthDate": "16/07/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 30
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-8",
+          "stt": 8,
+          "name": "Bùi Thúy Kiều (4A6)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_7&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 33,
+          "classId": "class-demo2-4a6",
+          "birthDate": "17/08/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 33
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-9",
+          "stt": 9,
+          "name": "Đỗ Quang Sáng (4A6)",
+          "group": "Tổ 3",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_8&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 36,
+          "classId": "class-demo2-4a6",
+          "birthDate": "18/09/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 36
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-10",
+          "stt": 10,
+          "name": "Ngô Ngọc Diệp (4A6)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_9&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 39,
+          "classId": "class-demo2-4a6",
+          "birthDate": "19/01/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 39
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-11",
+          "stt": 11,
+          "name": "Dương Tuấn Khang (4A6)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_10&backgroundColor=b6e3f4",
+          "gender": "Nam",
+          "points": 42,
+          "classId": "class-demo2-4a6",
+          "birthDate": "20/02/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 42
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-gvbmdemo2-6-12",
+          "stt": 12,
+          "name": "Lý Diễm My (4A6)",
+          "group": "Tổ 4",
+          "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=ArtHS_5_11&backgroundColor=ffd5dc",
+          "gender": "Nữ",
+          "points": 45,
+          "classId": "class-demo2-4a6",
+          "birthDate": "21/03/2016",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "MĨ THUẬT": 45
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
         }
       ],
       "subjects": [
@@ -2825,7 +5154,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791448257405
+      "updatedAt": 1791450493064
     }
   }
 }

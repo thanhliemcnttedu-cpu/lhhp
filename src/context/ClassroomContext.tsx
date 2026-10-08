@@ -20,7 +20,7 @@ import {
 } from '../data/initialData';
 import { playCoinSound, playDeductSound } from '../utils/audio';
 import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank, smartMergeQuizBank } from '../utils/quizParser';
-import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX } from '../services/databaseService';
+import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX, LOCAL_SESSION_KEY } from '../services/databaseService';
 import { AvatarSourceType, getStudentAvatarAssignment } from '../utils/avatarConfig';
 
 interface ClassroomContextType {
@@ -829,6 +829,21 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     isRemoteDataLoadedRef.current = false;
 
+    // 🚀 Tự động làm sạch cache cũ khi nâng cấp lên v4.0 GO-LIVE (Auto Cache Busting)
+    try {
+      const cacheVer = localStorage.getItem('lophoc_app_cache_version');
+      if (cacheVer !== 'v4.0.0-golive-clean') {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith(LOCAL_DB_PREFIX) || k.startsWith('lophoc_') || k.startsWith('lop_hoc_')) {
+            if (k !== LOCAL_AUTH_KEY && k !== LOCAL_SESSION_KEY) {
+              localStorage.removeItem(k);
+            }
+          }
+        });
+        localStorage.setItem('lophoc_app_cache_version', 'v4.0.0-golive-clean');
+      }
+    } catch (_) {}
+
     const initUserData = async () => {
       setDbSyncStatus('syncing');
       try {
@@ -843,11 +858,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         );
 
         if (isExecutive) {
-          // Xóa bỏ dữ liệu rác cũ nếu có lưu nhầm trong browser cho tài khoản BGH/Quản trị
+          // Xóa bỏ dữ liệu rác cũ trong browser cho tài khoản BGH/Quản trị
           try {
-            if (currentUser.role !== 'admin') {
-              localStorage.removeItem(LOCAL_DB_PREFIX + currentUser.username.toLowerCase());
-            }
+            localStorage.removeItem(LOCAL_DB_PREFIX + currentUser.username.toLowerCase());
+            localStorage.removeItem('lophoc_classes');
+            localStorage.removeItem('lophoc_students');
           } catch (_) {}
 
           // 🌟 Ban Giám Hiệu & Quản trị: Tự động kết nối và tổng hợp toàn bộ lớp, học sinh, chuyên cần, bán trú từ các giáo viên trong trường
@@ -863,6 +878,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               const exists = scoped.classes.some(c => c.id === prev);
               return exists ? prev : scoped.classes[0].id;
             });
+          } else {
+            setActiveClassId('');
           }
         } else {
           const savedData = await databaseService.loadUserData(currentUser.username);

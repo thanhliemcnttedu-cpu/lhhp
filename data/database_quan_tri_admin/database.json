@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-08T08:52:05.388Z",
+  "lastSync": "2026-10-08T09:08:13.065Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -27,9 +27,27 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791448264949
+    "lastGithubPushAt": 1791450490768
   },
   "auditLogs": [
+    {
+      "id": "log-1791450483702-dcbb5s",
+      "timestamp": 1791450483702,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_STUDENT",
+      "description": "Xóa học sinh: gfhghg khỏi lớp 4A1"
+    },
+    {
+      "id": "log-1791450466725-abdblh",
+      "timestamp": 1791450466725,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "AUTO_ASSIGN_AVATARS",
+      "description": "Tự động gán Avatar Ảnh thật demo cho lớp 4A1 (Cập nhật: 11 học sinh, Ghi đè: Có)"
+    },
     {
       "id": "log-1791448241859-amla6z",
       "timestamp": 1791448241859,
@@ -1637,7 +1655,7 @@
     }
   ],
   "masterSummary": {
-    "totalUsers": 12,
+    "totalUsers": 8,
     "totalSchools": 1,
     "totalClassesConfigured": 14
   }

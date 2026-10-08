@@ -246,11 +246,11 @@ export const FALLBACK_USERS: UserAccount[] = [
     status: 'active'
   },
 
-  // B. Khối Giáo viên Cá nhân / Vãng lai
+  // B. Khối Quản trị Khách / Cá nhân
   {
     id: 'user-admin',
     username: 'admin',
-    fullName: 'Quản trị Khách / Cá nhân (Các Tỉnh)',
+    fullName: 'Quản trị Khách / Cá nhân',
     role: 'guest_admin',
     isGuestAdmin: true,
     tenantType: 'guest',
@@ -258,62 +258,6 @@ export const FALLBACK_USERS: UserAccount[] = [
     email: 'admin@lophoc.edu.vn',
     phone: '0888358363',
     avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-quantricanhan',
-    username: 'quantricanhan',
-    fullName: 'Quản trị Tài khoản Cá Nhân',
-    role: 'guest_admin',
-    isGuestAdmin: true,
-    tenantType: 'guest',
-    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
-    email: 'quantricanhan@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=QuanTriCaNhan&backgroundColor=fbcfe8',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-admin-canhan',
-    username: 'admin_canhan',
-    fullName: 'Quản trị Tài khoản Cá Nhân (Phụ)',
-    role: 'guest_admin',
-    isGuestAdmin: true,
-    tenantType: 'guest',
-    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
-    email: 'admin.canhan@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-nguyenthitrangtu1',
-    username: 'nguyenthitrangtu1',
-    fullName: 'Nguyễn Thị Trang',
-    role: 'homeroom',
-    tenantType: 'guest',
-    assignedClassName: '2A1',
-    schoolName: 'Giáo viên Tự do / Cá nhân',
-    email: 'nguyenthitrangtu1@lophoc.edu.vn',
-    phone: '0987654321',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiTrang1991&backgroundColor=fde047',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-gv-canhan01',
-    username: 'gv_canhan01',
-    fullName: 'Lê Hoàng Yến',
-    role: 'homeroom',
-    tenantType: 'guest',
-    assignedClassName: 'Lớp Tự Do',
-    schoolName: 'Tự do / Vãng lai',
-    email: 'gv.canhan@lophoc.edu.vn',
-    phone: '0912345678',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=CoLeHoangYen&backgroundColor=fed7aa',
     createdAt: Date.now(),
     status: 'active'
   },
@@ -1526,11 +1470,11 @@ export const databaseService = {
           } catch (_) {}
         }
 
-        // 🌟 Nếu chưa có dữ liệu hoặc danh sách lớp rỗng, tự động khởi tạo dữ liệu mẫu chuẩn của giáo viên chủ nhiệm
-        if (!uData || !Array.isArray(uData.classes) || uData.classes.length === 0) {
+        // 🌟 Chỉ tự động khởi tạo dữ liệu mẫu cho tài khoản Trải nghiệm (isDemo) nếu chưa có dữ liệu
+        if ((!uData || !Array.isArray(uData.classes) || uData.classes.length === 0) && teacher.isDemo) {
           const className = teacher.assignedClassName || '4A1';
           const classId = `class-${className.toLowerCase().replace(/\s+/g, '')}`;
-          const stdCount = teacher.username === 'gvcndemo' ? 10 : (teacher.username === 'gvcn3a1' ? 10 : (teacher.username === 'nguyenthitrangtu1' ? 35 : (teacher.maxStudentsAllowed || 30)));
+          const stdCount = teacher.maxStudentsAllowed || 10;
           const defaultClass: Classroom = {
             id: classId,
             name: className,
@@ -1587,9 +1531,17 @@ export const databaseService = {
           } catch (_) {}
         }
 
+        const safeUserData: UserClassroomData = uData || {
+          classes: [],
+          students: [],
+          attendanceRecords: [],
+          boardingRecords: [],
+          transactions: []
+        } as any;
+
         // Tổng hợp lớp học
-        if (Array.isArray(uData.classes)) {
-          uData.classes.forEach((c: Classroom) => {
+        if (Array.isArray(safeUserData.classes)) {
+          safeUserData.classes.forEach((c: Classroom) => {
             if (c && c.id) {
               const cleanTeacherName = (c.teacherName && !c.teacherName.toLowerCase().includes('ban giám hiệu') && !c.teacherName.toLowerCase().includes('quản trị'))
                 ? c.teacherName
@@ -1605,8 +1557,8 @@ export const databaseService = {
         }
 
         // Tổng hợp học sinh
-        if (Array.isArray(uData.students)) {
-          uData.students.forEach((s: Student) => {
+        if (Array.isArray(safeUserData.students)) {
+          safeUserData.students.forEach((s: Student) => {
             if (s && s.id) {
               allStudentsMap.set(s.id, s);
             }
@@ -1614,8 +1566,8 @@ export const databaseService = {
         }
 
         // Tổng hợp chuyên cần / điểm danh
-        if (Array.isArray(uData.attendanceRecords)) {
-          uData.attendanceRecords.forEach((att: DailyAttendance) => {
+        if (Array.isArray(safeUserData.attendanceRecords)) {
+          safeUserData.attendanceRecords.forEach((att: DailyAttendance) => {
             if (att && att.date && att.classId) {
               const attKey = `${att.date}_${att.classId}`;
               allAttendanceMap.set(attKey, att);
@@ -1624,8 +1576,8 @@ export const databaseService = {
         }
 
         // Tổng hợp bán trú
-        if (Array.isArray(uData.boardingRecords)) {
-          uData.boardingRecords.forEach((b: DailyBoardingMeal) => {
+        if (Array.isArray(safeUserData.boardingRecords)) {
+          safeUserData.boardingRecords.forEach((b: DailyBoardingMeal) => {
             if (b && b.date && b.classId) {
               const bKey = `${b.date}_${b.classId}`;
               allBoardingMap.set(bKey, b);
@@ -1634,8 +1586,8 @@ export const databaseService = {
         }
 
         // Tổng hợp giao dịch điểm thi đua
-        if (Array.isArray(uData.transactions)) {
-          allTransactions.push(...uData.transactions);
+        if (Array.isArray(safeUserData.transactions)) {
+          allTransactions.push(...safeUserData.transactions);
         }
       })
     );

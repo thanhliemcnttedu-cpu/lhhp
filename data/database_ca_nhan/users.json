@@ -16,6 +16,22 @@
     "isGuestAdmin": true
   },
   {
+    "id": "user-quantricanhan",
+    "username": "quantricanhan",
+    "password": "Tanuyen@2026",
+    "fullName": "Quản trị Tài khoản Cá Nhân",
+    "role": "guest_admin",
+    "isGuestAdmin": true,
+    "tenantType": "guest",
+    "schoolName": "Khu vực Giáo viên Cá nhân / Vãng lai",
+    "email": "quantricanhan@lophoc.edu.vn",
+    "phone": "0888358363",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=QuanTriCaNhan&backgroundColor=fbcfe8",
+    "createdAt": 1790834208376,
+    "status": "active",
+    "lastLoginAt": 1790834268969
+  },
+  {
     "id": "user-admin-canhan",
     "username": "admin_canhan",
     "password": "123456",
