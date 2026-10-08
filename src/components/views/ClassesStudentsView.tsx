@@ -134,9 +134,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         schoolSet.add(c.schoolName.trim());
       }
     });
-    if (schoolSet.size === 0) {
-      schoolSet.add('TRƯỜNG HỌC HẠNH PHÚC DEMO');
-    }
+    // Không tự động chèn trường giả lập 'TRƯỜNG HỌC HẠNH PHÚC DEMO' khi hệ thống chưa có trường nào
     return Array.from(schoolSet).sort();
   }, [allUsers, classes]);
 
@@ -1132,8 +1130,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
           </div>
 
-          {/* 🏫 BỘ LỌC DÀNH CHO ADMIN QUẢN TRỊ CẤP CAO: LỌC XEM CÁC LỚP THEO TRƯỜNG */}
-          {isSuperAdmin && (
+          {/* 🏫 BỘ LỌC DÀNH CHO ADMIN QUẢN TRỊ CẤP CAO: LỌC XEM CÁC LỚP THEO TRƯỜNG (CHỈ HIỆN KHI ĐÃ CÓ TRƯỜNG/LỚP) */}
+          {isSuperAdmin && availableSchools.length > 0 && (
             <div className="p-4 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl border-2 border-indigo-300/90 shadow-xs space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -1303,8 +1301,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
           )}
 
-          {/* ADMIN UNIFIED TEACHER FILTER BAR (Dành cho Quản trị viên sử dụng dữ liệu GVCN & GVBM) */}
-          {isAdmin && (
+          {/* ADMIN UNIFIED TEACHER FILTER BAR (Dành cho Quản trị viên sử dụng dữ liệu GVCN & GVBM) - Chỉ hiện khi có giáo viên hoặc lớp */}
+          {isAdmin && (relevantTeachers.length > 0 || classes.length > 0) && (
             <div className="p-4 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 rounded-3xl border-2 border-indigo-200/90 shadow-xs space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
