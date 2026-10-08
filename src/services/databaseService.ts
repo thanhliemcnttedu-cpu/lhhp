@@ -235,7 +235,7 @@ export const FALLBACK_USERS: UserAccount[] = [
   {
     id: 'user-adminquantri',
     username: 'adminquantri',
-    fullName: 'Quản trị viên Hệ thống Cấp cao',
+    fullName: 'Tài khoản quản trị Cao nhất',
     role: 'admin',
     tenantType: 'school',
     email: 'adminquantri@lophoc.edu.vn',
@@ -525,38 +525,49 @@ export const databaseService = {
       }
     }
 
-    // 2. Local Node/Express Server Login Fallback
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, selectedRoleScope, selectedSchoolName })
-      });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
-        const authedUser: UserAccount = {
-          ...data.user
-        };
+    // 2. Local Node/Express Server Login Fallback (chỉ gọi khi chạy local dev, bỏ qua trên Vercel/Static để tránh lag)
+    const isVercelHost = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') || 
+      window.location.hostname.includes('github.io')
+    );
 
-        const roleCheck = validateRole(authedUser);
-        if (!roleCheck.valid) {
-          return { success: false, message: roleCheck.message };
+    if (!isVercelHost) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, selectedRoleScope, selectedSchoolName }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+        if (res.ok && data.success && data.user) {
+          const authedUser: UserAccount = {
+            ...data.user
+          };
+
+          const roleCheck = validateRole(authedUser);
+          if (!roleCheck.valid) {
+            return { success: false, message: roleCheck.message };
+          }
+
+          const schoolCheck = validateSchool(authedUser);
+          if (!schoolCheck.valid) {
+            return { success: false, message: schoolCheck.message };
+          }
+
+          localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(authedUser));
+          localStorage.setItem(LOCAL_SESSION_KEY, Date.now().toString());
+          initSupabaseRealtime();
+          return { success: true, user: authedUser, message: data.message };
         }
-
-        const schoolCheck = validateSchool(authedUser);
-        if (!schoolCheck.valid) {
-          return { success: false, message: schoolCheck.message };
+        if (data && data.message) {
+          return { success: false, message: data.message };
         }
-
-        localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(authedUser));
-        localStorage.setItem(LOCAL_SESSION_KEY, Date.now().toString());
-        initSupabaseRealtime();
-        return { success: true, user: authedUser, message: data.message };
-      }
-      if (data && data.message) {
-        return { success: false, message: data.message };
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     // 3. Offline fallback
     const match = FALLBACK_USERS.find(u => u.username.toLowerCase() === cleanU);
@@ -665,21 +676,62 @@ export const databaseService = {
       });
     };
 
-    // 1. Server API (Primary Source of Truth, contains all fallback & synced users)
-    try {
-      const res = await fetch('/api/users');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.users)) {
-          return filterLegacyUsers(data.users);
+    // 1. Kiểm tra môi trường Static/Vercel hoặc khi Supabase client sẵn sàng
+    const isVercelOrStatic = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') || 
+      window.location.hostname.includes('github.io') ||
+      window.location.port === '' ||
+      window.location.protocol === 'https:'
+    );
+
+    const supabase = getBrowserSupabase();
+
+    // Nếu chạy trên Vercel/Cloud host và có kết nối Supabase, ưu tiên lấy trực tiếp từ Supabase ngay lập tức (<200ms)
+    if (isVercelOrStatic && supabase) {
+      try {
+        const { data: users, error } = await supabase.from('users').select('*');
+        if (!error && Array.isArray(users) && users.length > 0) {
+          const mapped = users.map(u => ({
+            id: u.id,
+            username: u.username,
+            password: u.password,
+            fullName: u.full_name || u.fullName,
+            role: u.role,
+            email: u.email,
+            phone: u.phone,
+            avatar: u.avatar,
+            schoolName: u.school_name || u.schoolName,
+            assignedClassName: u.assigned_class_name || u.assignedClassName,
+            subjectName: u.subject_name || u.subjectName,
+            createdAt: Number(u.created_at) || Date.now(),
+            status: u.status || 'active'
+          }));
+          return filterLegacyUsers(mapped);
         }
+      } catch (err) {
+        console.warn('Supabase getUsers direct error:', err);
       }
-    } catch (err) {
-      console.warn('Error fetching users from server:', err);
     }
 
-    // 2. Direct Supabase Cloud (Fallback if local server is down)
-    const supabase = getBrowserSupabase();
+    // 2. Server API nội bộ (chỉ khi chạy local dev có backend Express)
+    if (!isVercelOrStatic) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const res = await fetch('/api/users', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.users)) {
+            return filterLegacyUsers(data.users);
+          }
+        }
+      } catch (err) {
+        console.warn('Error fetching users from local server:', err);
+      }
+    }
+
+    // 3. Direct Supabase Cloud (Fallback nếu bước trên chưa lấy được)
     if (supabase) {
       try {
         const { data: users, error } = await supabase.from('users').select('*');
@@ -1359,14 +1411,22 @@ export const databaseService = {
               status: u.status || 'active'
             }));
 
+          const validTeacherUsernames = new Set(teachers.map(t => t.username.toLowerCase()));
+
           const allClassesMap = new Map<string, Classroom>();
           const allStudentsMap = new Map<string, Student>();
           const userDataMap: Record<string, any> = {};
 
           for (const row of classroomRows) {
-            const u = row.username.toLowerCase();
+            const u = (row.username || '').toLowerCase();
             const uData = row.data || {};
             userDataMap[u] = uData;
+
+            // 🌟 CHỈ tổng hợp lớp & học sinh của các giáo viên chủ nhiệm THỰC TẾ CÒN TỒN TẠI trong bảng users
+            // Tuyệt đối không nhặt dữ liệu mồ côi từ tài khoản cũ đã xóa hoặc từ tài khoản admin
+            if (!validTeacherUsernames.has(u)) {
+              continue;
+            }
 
             if (Array.isArray(uData.classes)) {
               for (const cls of uData.classes) {
@@ -1459,6 +1519,18 @@ export const databaseService = {
     const allBoardingMap = new Map<string, DailyBoardingMeal>();
     const allTransactions: PointTransaction[] = [];
 
+    // Nếu hiện tại chưa có giáo viên chủ nhiệm nào (ví dụ CSDL trắng vừa dọn dẹp xong), hoàn tất ngay lập tức trong 0ms
+    if (scopedTeachers.length === 0) {
+      return {
+        classes: [],
+        students: [],
+        attendanceRecords: [],
+        boardingRecords: [],
+        transactions: [],
+        teachers: []
+      };
+    }
+
     // 3. Tải và tổng hợp dữ liệu từ từng giáo viên thuộc nhóm
     await Promise.all(
       scopedTeachers.map(async (teacher) => {
@@ -1470,67 +1542,8 @@ export const databaseService = {
           } catch (_) {}
         }
 
-        // 🌟 Chỉ tự động khởi tạo dữ liệu mẫu cho tài khoản Trải nghiệm (isDemo) nếu chưa có dữ liệu
-        if ((!uData || !Array.isArray(uData.classes) || uData.classes.length === 0) && teacher.isDemo) {
-          const className = teacher.assignedClassName || '4A1';
-          const classId = `class-${className.toLowerCase().replace(/\s+/g, '')}`;
-          const stdCount = teacher.maxStudentsAllowed || 10;
-          const defaultClass: Classroom = {
-            id: classId,
-            name: className,
-            grade: className.startsWith('1') ? 'Khối 1' : className.startsWith('2') ? 'Khối 2' : className.startsWith('3') ? 'Khối 3' : className.startsWith('5') ? 'Khối 5' : 'Khối 4',
-            color: '#3B82F6',
-            academicYear: '2026–2027',
-            teacherName: teacher.fullName,
-            teacherUsername: teacher.username,
-            teacherRole: 'homeroom',
-            avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=Class${className}&backgroundColor=3b82f6`,
-            slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng'
-          };
-          const stds = generateStudentsForClass(classId, className, stdCount, defaultClass.grade, 'GHI CHUNG / NỀ NẾP');
-          uData = {
-            classes: [defaultClass],
-            activeClassId: classId,
-            students: stds,
-            subjects: [],
-            criteria: [],
-            transactions: [],
-            rewards: [],
-            redemptions: [],
-            seatingColumns: 4,
-            deskCountsPerColumn: [4, 4, 4, 4],
-            deskNumberingOrder: 'vertical',
-            teacherDeskPos: 'left',
-            doorPos: 'right',
-            blackboardPos: 'center',
-            seatingAssignments: {},
-            attendanceRecords: [],
-            boardingRecords: [],
-            timetable: [],
-            timetableConfig: { morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false },
-            teacherRole: 'homeroom',
-            subjectTeacherConfig: {} as any,
-            subjectTimetable: [],
-            quickLinks: [],
-            teacherProfile: {
-              name: teacher.fullName,
-              role: 'GIÁO VIÊN CHỦ NHIỆM',
-              schoolName: teacher.schoolName || '',
-              academicYear: '2026–2027',
-              avatar: teacher.avatar || '',
-              phone: teacher.phone || '',
-              zalo: teacher.phone || '',
-              teachingSubject: 'Giáo viên chủ nhiệm'
-            },
-            quizBank: [],
-            infographicConfig: null,
-            updatedAt: Date.now()
-          };
-          try {
-            localStorage.setItem(LOCAL_DB_PREFIX + teacher.username.toLowerCase(), JSON.stringify(uData));
-          } catch (_) {}
-        }
-
+        // Tuyệt đối không tự động sinh lớp học hoặc học sinh giả lập khi chưa có dữ liệu
+        // Trả về dữ liệu trống thực tế của giáo viên để bảo toàn tính trung thực và chính xác của số liệu báo cáo
         const safeUserData: UserClassroomData = uData || {
           classes: [],
           students: [],

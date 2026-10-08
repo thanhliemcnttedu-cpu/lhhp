@@ -1893,38 +1893,7 @@ export function getAdminAllData(): {
     }
   }
 
-  // 2. Also incorporate any classes created under admin and adminquantri
-  const adminData = db.userData['admin'] || {};
-  if (Array.isArray(adminData.classes)) {
-    for (const c of adminData.classes) {
-      if (!allClassesMap.has(c.id)) {
-        allClassesMap.set(c.id, c);
-      }
-    }
-  }
-  if (Array.isArray(adminData.students)) {
-    for (const s of adminData.students) {
-      if (!allStudentsMap.has(s.id)) {
-        allStudentsMap.set(s.id, s);
-      }
-    }
-  }
-
-  const superAdminData = db.userData['adminquantri'] || {};
-  if (Array.isArray(superAdminData.classes)) {
-    for (const c of superAdminData.classes) {
-      if (!allClassesMap.has(c.id)) {
-        allClassesMap.set(c.id, c);
-      }
-    }
-  }
-  if (Array.isArray(superAdminData.students)) {
-    for (const s of superAdminData.students) {
-      if (!allStudentsMap.has(s.id)) {
-        allStudentsMap.set(s.id, s);
-      }
-    }
-  }
+  // 2. Do NOT pull classes from admin accounts. Admin does not own classrooms, only manages.
 
   // Calculate the highest updatedAt timestamp across all teachers to prevent polling false-positives
   const maxTeacherUpdatedAt = Math.max(

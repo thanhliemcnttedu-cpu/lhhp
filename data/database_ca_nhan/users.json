@@ -44,5 +44,35 @@
     "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8",
     "createdAt": 1791454095257,
     "status": "active"
+  },
+  {
+    "id": "user-nguyenthitrangtu1",
+    "username": "nguyenthitrangtu1",
+    "password": "123456",
+    "fullName": "Nguyễn Thị Trang",
+    "role": "homeroom",
+    "tenantType": "guest",
+    "assignedClassName": "2A1",
+    "schoolName": "Giáo viên Tự do / Cá nhân",
+    "email": "nguyenthitrangtu1@lophoc.edu.vn",
+    "phone": "0987654321",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiTrang1991&backgroundColor=fde047",
+    "createdAt": 1791473758375,
+    "status": "active"
+  },
+  {
+    "id": "user-gv-canhan01",
+    "username": "gv_canhan01",
+    "password": "123456",
+    "fullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+    "role": "homeroom",
+    "tenantType": "guest",
+    "assignedClassName": "Lớp Tự Do 4",
+    "schoolName": "Tự do / Vãng lai",
+    "email": "gv.canhan@lophoc.edu.vn",
+    "phone": "0912345678",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=CoLeHoangYen&backgroundColor=fed7aa",
+    "createdAt": 1791473758375,
+    "status": "active"
   }
 ]

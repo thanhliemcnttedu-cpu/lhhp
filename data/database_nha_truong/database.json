@@ -1,7 +1,7 @@
 {
   "partition": "nha_truong",
   "title": "Cơ Sở Dữ Liệu Tổ Chức Nhà Trường (TIỂU HỌC SỐ 1 TÂN UYÊN & Các Trường)",
-  "lastSync": "2026-10-08T14:14:30.430Z",
+  "lastSync": "2026-10-08T15:35:58.610Z",
   "schools": [],
   "users": [
     {
@@ -6463,7 +6463,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791468862697
+      "updatedAt": 1791469111344
     }
   }
 }

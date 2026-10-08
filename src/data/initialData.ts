@@ -42,6 +42,21 @@ export const DEFAULT_TEACHER: TeacherProfile = {
   academicYear: '2026–2027'
 };
 
+// Thông tin hồ sơ chuẩn cho Tài khoản Quản trị Cao nhất (adminquantri)
+export const ADMIN_QUANTRI_PROFILE: TeacherProfile = {
+  name: 'Tài khoản quản trị Cao nhất',
+  birthDate: '',
+  role: 'TÀI KHOẢN QUẢN TRỊ CAO NHẤT',
+  teachingSubject: 'Quản trị viên Hệ thống Cấp cao',
+  schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
+  avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9',
+  phone: '0888358363',
+  zalo: '0888358363',
+  facebook: 'https://www.facebook.com/nguyenthanhliemautotech/',
+  socialLink: 'https://zalo.me/0888358363',
+  academicYear: '2026–2027'
+};
+
 // Mặc định ban đầu: Chỉ có 1 lớp là 4A1 (GVCN: Cô Trịnh Thị Hương)
 export const INITIAL_CLASSES: Classroom[] = [
   {

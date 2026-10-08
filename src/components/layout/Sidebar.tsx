@@ -391,7 +391,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                   <div className="text-[8.5px] font-bold text-slate-400 truncate leading-tight">
                     {currentUser?.role === 'admin' 
-                      ? 'Quản trị Tối cao' 
+                      ? 'Tài khoản quản trị Cao nhất' 
                       : (currentUser?.role === 'bgh' || currentUser?.isBgh)
                       ? 'Ban Giám Hiệu'
                       : (currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin)

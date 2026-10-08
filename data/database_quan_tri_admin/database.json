@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-08T14:14:30.430Z",
+  "lastSync": "2026-10-08T15:35:58.610Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -27,7 +27,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791468870429
+    "lastGithubPushAt": 1791469120000
   },
   "auditLogs": [
     {
@@ -2794,7 +2794,7 @@
     }
   ],
   "masterSummary": {
-    "totalUsers": 6,
+    "totalUsers": 12,
     "totalSchools": 1,
     "totalClassesConfigured": 15
   }

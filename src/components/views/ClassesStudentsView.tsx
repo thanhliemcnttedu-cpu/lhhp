@@ -1531,26 +1531,28 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={() => {
-                    if (isDemoAccount) {
-                      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học và 10 học sinh. Vui lòng liên hệ Quản trị viên để nâng cấp!');
-                      return;
-                    }
-                    resetToDefaultData();
-                    playFanfareSound();
-                    confetti({ particleCount: 60, spread: 70 });
-                  }}
-                  className={`px-5 py-2.5 rounded-2xl font-black text-xs transition-all inline-flex items-center gap-2 uppercase ${
-                    isDemoAccount
-                      ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/25 hover-zoom-btn'
-                  }`}
-                  title={isDemoAccount ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học và 10 học sinh. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khôi phục lớp mẫu 4A1'}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>KHÔI PHỤC LỚP MẪU 4A1 (30 HỌC SINH)</span>
-                </button>
+                {!isSuperAdmin && !isAdmin && !isSchoolScopeAccount && (
+                  <button
+                    onClick={() => {
+                      if (isDemoAccount) {
+                        alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học và 10 học sinh. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                        return;
+                      }
+                      resetToDefaultData();
+                      playFanfareSound();
+                      confetti({ particleCount: 60, spread: 70 });
+                    }}
+                    className={`px-5 py-2.5 rounded-2xl font-black text-xs transition-all inline-flex items-center gap-2 uppercase ${
+                      isDemoAccount
+                        ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/25 hover-zoom-btn'
+                    }`}
+                    title={isDemoAccount ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học và 10 học sinh. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khôi phục lớp mẫu 4A1'}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>KHÔI PHỤC LỚP MẪU 4A1 (30 HỌC SINH)</span>
+                  </button>
+                )}
                 <button
                   disabled={isClassLimitReached}
                   onClick={() => {
@@ -2188,26 +2190,28 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 Bấm "Nhập Từ File Excel" để nạp nhanh danh sách hoặc "Tải File Mẫu (.xlsx)" để chuẩn bị danh sách học sinh.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <button
-                  onClick={() => {
-                    if (isDemoAccount) {
-                      alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Không thể khôi phục 30 học sinh mẫu. Vui lòng liên hệ Quản trị viên để nâng cấp!');
-                      return;
-                    }
-                    resetToDefaultData();
-                    playFanfareSound();
-                    confetti({ particleCount: 60, spread: 70 });
-                  }}
-                  className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 uppercase ${
-                    isDemoAccount
-                      ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
-                      : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover-zoom-btn'
-                  }`}
-                  title={isDemoAccount ? 'Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khôi phục danh sách mẫu'}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>KHÔI PHỤC 30 HỌC SINH MẪU LỚP 4A1</span>
-                </button>
+                {!isSuperAdmin && !isAdmin && !isSchoolScopeAccount && (
+                  <button
+                    onClick={() => {
+                      if (isDemoAccount) {
+                        alert('Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Không thể khôi phục 30 học sinh mẫu. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                        return;
+                      }
+                      resetToDefaultData();
+                      playFanfareSound();
+                      confetti({ particleCount: 60, spread: 70 });
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 uppercase ${
+                      isDemoAccount
+                        ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
+                        : 'bg-indigo-50 text-indigo-700 border border-indigo-200 hover-zoom-btn'
+                    }`}
+                    title={isDemoAccount ? 'Tài khoản trải nghiệm (DEMO) chỉ được thêm tối đa 10 học sinh mỗi lớp. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khôi phục danh sách mẫu'}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>KHÔI PHỤC 30 HỌC SINH MẪU LỚP 4A1</span>
+                  </button>
+                )}
                 <button
                   onClick={handleDownloadExcelTemplate}
                   className="px-4 py-2 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-black hover-zoom-btn uppercase"

@@ -14,7 +14,7 @@ import { generateStudentsForClass, getStudentRealAvatar } from '../utils/student
 import { 
   INITIAL_CLASSES, INITIAL_STUDENTS_CLASS_4A1, INITIAL_SUBJECTS, 
   INITIAL_CRITERIA, INITIAL_REWARDS, INITIAL_TIMETABLE, 
-  INITIAL_QUICK_LINKS, DEFAULT_TEACHER, DEFAULT_CORE_SUBJECTS,
+  INITIAL_QUICK_LINKS, DEFAULT_TEACHER, ADMIN_QUANTRI_PROFILE, DEFAULT_CORE_SUBJECTS,
   DEFAULT_SUBJECT_TEACHER_CONFIG, INITIAL_SUBJECT_TIMETABLE, PRESET_SUBJECT_CLASS_NAMES,
   SAMPLE_SUBJECT_TIMETABLE_BY_IMAGE, SAMPLE_SUBJECT_CLASSES_BY_IMAGE
 } from '../data/initialData';
@@ -254,12 +254,28 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   // 1. Initial In-Memory State (Authoritative data is fetched directly from Server)
-  const [classes, setClasses] = useState<Classroom[]>(INITIAL_CLASSES);
-  const [activeClassId, setActiveClassId] = useState<string>('class-4a1');
-  const [students, setStudents] = useState<Student[]>(() => INITIAL_STUDENTS_CLASS_4A1.map(s => ({
-    ...s,
-    subjectPoints: { 'GHI CHUNG / NỀ NẾP': s.points }
-  })));
+  const isInitialExecutive = Boolean(
+    currentUser && (
+      currentUser.role === 'admin' || 
+      currentUser.username?.toLowerCase() === 'adminquantri' ||
+      currentUser.role === 'school_admin' || 
+      currentUser.role === 'bgh' || 
+      currentUser.isBgh || 
+      currentUser.isSchoolAdmin || 
+      currentUser.role === 'guest_admin' || 
+      currentUser.isGuestAdmin
+    )
+  );
+
+  const [classes, setClasses] = useState<Classroom[]>(() => isInitialExecutive ? [] : INITIAL_CLASSES);
+  const [activeClassId, setActiveClassId] = useState<string>(() => isInitialExecutive ? '' : 'class-4a1');
+  const [students, setStudents] = useState<Student[]>(() => {
+    if (isInitialExecutive) return [];
+    return INITIAL_STUDENTS_CLASS_4A1.map(s => ({
+      ...s,
+      subjectPoints: { 'GHI CHUNG / NỀ NẾP': s.points }
+    }));
+  });
 
   // Always retain the latest synchronous references to avoid stale closure updates
   const studentsRef = useRef<Student[]>(students);
@@ -351,7 +367,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [timetableConfig, setTimetableConfig] = useState<TimetableConfig>({ morningPeriods: 4, afternoonPeriods: 3, hasSaturday: false });
   const [timetable, setTimetable] = useState<TimetableSlot[]>(INITIAL_TIMETABLE);
   const [quickLinks, setQuickLinks] = useState<QuickLink[]>(INITIAL_QUICK_LINKS);
-  const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEFAULT_TEACHER);
+  const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(() => {
+    if (currentUser?.username?.toLowerCase() === 'adminquantri' || currentUser?.role === 'admin') {
+      return {
+        ...ADMIN_QUANTRI_PROFILE,
+        name: currentUser?.fullName || ADMIN_QUANTRI_PROFILE.name
+      };
+    }
+    return DEFAULT_TEACHER;
+  });
 
   // Vai trò giáo viên (homeroom = Chủ nhiệm, subject = Bộ môn)
   const [teacherRole, setTeacherRoleState] = useState<TeacherRole>(() => {
@@ -580,8 +604,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (isExecutive) {
       // 🌟 Ban Giám Hiệu và Quản trị KHÔNG CÓ LỚP HỌC & HỌC SINH RIÊNG
-      // Dữ liệu sẽ được kết nối và tổng hợp từ tất cả giáo viên trong trường
-      const profile: TeacherProfile = {
+      const isSuperAdmin = user.username?.toLowerCase() === 'adminquantri' || user.role === 'admin';
+      const profile: TeacherProfile = isSuperAdmin ? {
+        ...ADMIN_QUANTRI_PROFILE,
+        name: user.fullName || 'Tài khoản quản trị Cao nhất',
+        role: 'TÀI KHOẢN QUẢN TRỊ CAO NHẤT',
+        teachingSubject: 'Quản trị viên Hệ thống Cấp cao',
+        avatar: user.avatar || ADMIN_QUANTRI_PROFILE.avatar,
+        schoolName: user.schoolName || ADMIN_QUANTRI_PROFILE.schoolName
+      } : {
         ...DEFAULT_TEACHER,
         name: user.fullName || 'BAN GIÁM HIỆU / QUẢN TRỊ VIÊN',
         role: (user.role === 'bgh' || user.isBgh) ? 'BAN GIÁM HIỆU' : ((user.role === 'school_admin' || user.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
@@ -866,6 +897,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           } catch (_) {}
 
           // 🌟 Ban Giám Hiệu & Quản trị: Tự động kết nối và tổng hợp toàn bộ lớp, học sinh, chuyên cần, bán trú từ các giáo viên trong trường
+          const isSuperAdmin = currentUser.username.toLowerCase() === 'adminquantri' || currentUser.role === 'admin';
+          if (isSuperAdmin) {
+            setTeacherProfile({
+              ...ADMIN_QUANTRI_PROFILE,
+              name: currentUser.fullName || ADMIN_QUANTRI_PROFILE.name,
+              avatar: currentUser.avatar || ADMIN_QUANTRI_PROFILE.avatar,
+              schoolName: currentUser.schoolName || ADMIN_QUANTRI_PROFILE.schoolName
+            });
+          } else {
+            setTeacherProfile({
+              ...DEFAULT_TEACHER,
+              name: currentUser.fullName || 'BAN GIÁM HIỆU / QUẢN TRỊ VIÊN',
+              role: (currentUser.role === 'bgh' || currentUser.isBgh) ? 'BAN GIÁM HIỆU' : ((currentUser.role === 'school_admin' || currentUser.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
+              teachingSubject: 'Quản trị & Giám sát',
+              schoolName: currentUser.schoolName || DEFAULT_TEACHER.schoolName,
+              avatar: currentUser.avatar || DEFAULT_TEACHER.avatar
+            });
+          }
+
           const scoped = await databaseService.getExecutiveScopedData(currentUser);
           markRemoteUpdateActive(1200);
           setClasses(scoped.classes);
@@ -1007,7 +1057,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } else if (isExecutive) {
           // BGH & Quản trị trường: tự động tổng hợp số liệu mới nhất từ giáo viên chủ nhiệm
           const scoped = await databaseService.getExecutiveScopedData(currentUser);
-          if (scoped && scoped.classes.length > 0) {
+          if (scoped) {
             setClasses(scoped.classes);
             setStudents(scoped.students);
             setAttendanceRecords(scoped.attendanceRecords);
@@ -1192,6 +1242,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           }
         } catch (_) {}
 
+        const isSuperAdmin = newUser.username.toLowerCase() === 'adminquantri' || newUser.role === 'admin';
+        if (isSuperAdmin) {
+          setTeacherProfile({
+            ...ADMIN_QUANTRI_PROFILE,
+            name: newUser.fullName || ADMIN_QUANTRI_PROFILE.name,
+            avatar: newUser.avatar || ADMIN_QUANTRI_PROFILE.avatar,
+            schoolName: newUser.schoolName || ADMIN_QUANTRI_PROFILE.schoolName
+          });
+        } else {
+          setTeacherProfile({
+            ...DEFAULT_TEACHER,
+            name: newUser.fullName || 'BAN GIÁM HIỆU / QUẢN TRỊ VIÊN',
+            role: (newUser.role === 'bgh' || newUser.isBgh) ? 'BAN GIÁM HIỆU' : ((newUser.role === 'school_admin' || newUser.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
+            teachingSubject: 'Quản trị & Giám sát',
+            schoolName: newUser.schoolName || DEFAULT_TEACHER.schoolName,
+            avatar: newUser.avatar || DEFAULT_TEACHER.avatar
+          });
+        }
+
         const scoped = await databaseService.getExecutiveScopedData(newUser);
         markRemoteUpdateActive(1200);
         setClasses(scoped.classes);
@@ -1307,6 +1376,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     );
 
     if (isTargetExecutive) {
+      const isSuperAdmin = targetUser.username.toLowerCase() === 'adminquantri' || targetUser.role === 'admin';
+      if (isSuperAdmin) {
+        setTeacherProfile({
+          ...ADMIN_QUANTRI_PROFILE,
+          name: targetUser.fullName || ADMIN_QUANTRI_PROFILE.name,
+          avatar: targetUser.avatar || ADMIN_QUANTRI_PROFILE.avatar,
+          schoolName: targetUser.schoolName || ADMIN_QUANTRI_PROFILE.schoolName
+        });
+      } else {
+        setTeacherProfile({
+          ...DEFAULT_TEACHER,
+          name: targetUser.fullName || 'BAN GIÁM HIỆU / QUẢN TRỊ VIÊN',
+          role: (targetUser.role === 'bgh' || targetUser.isBgh) ? 'BAN GIÁM HIỆU' : ((targetUser.role === 'school_admin' || targetUser.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
+          teachingSubject: 'Quản trị & Giám sát',
+          schoolName: targetUser.schoolName || DEFAULT_TEACHER.schoolName,
+          avatar: targetUser.avatar || DEFAULT_TEACHER.avatar
+        });
+      }
+
       const scoped = await databaseService.getExecutiveScopedData(targetUser);
       markRemoteUpdateActive(1200);
       setClasses(scoped.classes);

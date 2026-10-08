@@ -489,7 +489,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               </div>
               <div className="text-[9.5px] text-slate-400 leading-none truncate max-w-[120px]">
                 {currentUser?.role === 'admin' 
-                  ? 'Quản trị Tối cao' 
+                  ? 'Tài khoản quản trị Cao nhất' 
                   : (currentUser?.role === 'bgh' || currentUser?.isBgh)
                   ? 'Ban Giám Hiệu'
                   : (currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin)
@@ -537,7 +537,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                         : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                     }`}>
                       {currentUser?.role === 'admin' 
-                        ? 'Quản trị tối cao' 
+                        ? 'Tài khoản quản trị Cao nhất' 
                         : (currentUser?.role === 'bgh' || currentUser?.isBgh)
                         ? 'Ban Giám Hiệu'
                         : (currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin)

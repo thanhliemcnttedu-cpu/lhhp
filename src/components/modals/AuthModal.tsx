@@ -145,8 +145,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     },
     {
       id: 'admin',
-      title: 'Vai Trò Admin (Quản trị Tối cao)',
-      sub: 'Quyền tối cao nhất: quản trị cây thư mục CSDL trường & mọi tài khoản',
+      title: 'Tài khoản quản trị Cao nhất (adminquantri)',
+      sub: 'Quyền quản trị tối cao nhất: quản lý cây thư mục CSDL trường & toàn bộ tài khoản',
       icon: <Crown className="w-5 h-5" />,
       color: 'text-rose-700',
       activeBorder: 'border-rose-400',

@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-08T14:18:31.345Z",
+  "lastSync": "2026-10-08T15:35:58.610Z",
   "users": [
     {
       "id": "user-admin",
@@ -94,6 +94,104 @@
       "phone": "0888358363",
       "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a",
       "createdAt": 1791454095257,
+      "status": "active"
+    },
+    {
+      "id": "user-nguyenthitrangtu1",
+      "username": "nguyenthitrangtu1",
+      "password": "123456",
+      "fullName": "Nguyễn Thị Trang",
+      "role": "homeroom",
+      "tenantType": "guest",
+      "assignedClassName": "2A1",
+      "schoolName": "Giáo viên Tự do / Cá nhân",
+      "email": "nguyenthitrangtu1@lophoc.edu.vn",
+      "phone": "0987654321",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenThiTrang1991&backgroundColor=fde047",
+      "createdAt": 1791473758375,
+      "status": "active"
+    },
+    {
+      "id": "user-gv-canhan01",
+      "username": "gv_canhan01",
+      "password": "123456",
+      "fullName": "Cô Lê Hoàng Yến (GV Cá Nhân)",
+      "role": "homeroom",
+      "tenantType": "guest",
+      "assignedClassName": "Lớp Tự Do 4",
+      "schoolName": "Tự do / Vãng lai",
+      "email": "gv.canhan@lophoc.edu.vn",
+      "phone": "0912345678",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=CoLeHoangYen&backgroundColor=fed7aa",
+      "createdAt": 1791473758375,
+      "status": "active"
+    },
+    {
+      "id": "user-gvcndemo",
+      "username": "gvcndemo",
+      "password": "123456",
+      "fullName": "Trịnh Thị Hương",
+      "role": "homeroom",
+      "isDemo": true,
+      "maxStudentsAllowed": 10,
+      "tenantType": "school",
+      "assignedClassName": "4A1",
+      "email": "gvcndemo@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiHuong&backgroundColor=ffd5dc",
+      "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
+      "createdAt": 1791473758375,
+      "status": "active"
+    },
+    {
+      "id": "user-gvcn1a1demo",
+      "username": "gvcn1a1demo",
+      "password": "123456",
+      "fullName": "Nguyễn Phương Anh",
+      "role": "homeroom",
+      "isDemo": true,
+      "maxStudentsAllowed": 11,
+      "tenantType": "school",
+      "assignedClassName": "1A1",
+      "email": "gvcn1a1demo@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenPhuongAnh_1A1&backgroundColor=ffd5dc",
+      "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
+      "createdAt": 1791473758375,
+      "status": "active"
+    },
+    {
+      "id": "user-gvbmdemo",
+      "username": "gvbmdemo",
+      "password": "123456",
+      "fullName": "Nguyễn Gia Phúc",
+      "role": "subject",
+      "isDemo": true,
+      "maxStudentsAllowed": 10,
+      "tenantType": "school",
+      "subjectName": "Tin học, Đạo đức, Công nghệ",
+      "email": "gvbmdemo@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=NguyenGiaPhuc&backgroundColor=b6e3f4",
+      "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
+      "createdAt": 1791473758375,
+      "status": "active"
+    },
+    {
+      "id": "user-gvbmdemo2",
+      "username": "gvbmdemo2",
+      "password": "123456",
+      "fullName": "Mai Trấn Hưng",
+      "role": "subject",
+      "isDemo": true,
+      "maxStudentsAllowed": 72,
+      "tenantType": "school",
+      "subjectName": "Mĩ thuật",
+      "email": "gvbmdemo2@lophoc.edu.vn",
+      "phone": "0888358363",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4",
+      "schoolName": "TRƯỜNG HỌC HẠNH PHÚC DEMO",
+      "createdAt": 1791473758375,
       "status": "active"
     }
   ],
@@ -30056,7 +30154,7 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791469095850
+    "lastGithubPushAt": 1791469120000
   },
   "auditLogs": [
     {

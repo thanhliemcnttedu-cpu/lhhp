@@ -148,8 +148,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
-      {/* Empty State Banner if no classes exist */}
-      {classes.length === 0 && (
+      {/* Empty State Banner if no classes exist (Chỉ hiện cho giáo viên cần lớp mẫu, không hiện cho Quản trị viên) */}
+      {classes.length === 0 && !isAdmin && !isBgh && !isSchoolAdmin && (
         <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-sm shadow-amber-500/20">

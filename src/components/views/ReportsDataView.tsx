@@ -75,20 +75,25 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
 
   // Teacher Profile form state (Yêu cầu 1)
-  const [profileName, setProfileName] = useState(teacherProfile.name || 'Trịnh Thị Hương');
-  const [profileBirthDate, setProfileBirthDate] = useState(teacherProfile.birthDate || '15/08/1988');
-  const [profileRole, setProfileRole] = useState(teacherProfile.role || 'GIÁO VIÊN CHỦ NHIỆM');
-  const [profileSchool, setProfileSchool] = useState(teacherProfile.schoolName || 'Trường Tiểu học số 1 Tân Uyên');
+  const isCurrentUserSuperAdmin = currentUser?.username?.toLowerCase() === 'adminquantri' || currentUser?.role === 'admin';
+  const defaultInitialName = teacherProfile.name || (isCurrentUserSuperAdmin ? 'Tài khoản quản trị Cao nhất' : 'Trịnh Thị Hương');
+  const defaultInitialRole = teacherProfile.role || (isCurrentUserSuperAdmin ? 'TÀI KHOẢN QUẢN TRỊ CAO NHẤT' : 'GIÁO VIÊN CHỦ NHIỆM');
+  const defaultInitialSchool = teacherProfile.schoolName || (isCurrentUserSuperAdmin ? 'Hệ thống Quản trị Lớp học Hạnh phúc' : 'Trường Tiểu học số 1 Tân Uyên');
+
+  const [profileName, setProfileName] = useState(defaultInitialName);
+  const [profileBirthDate, setProfileBirthDate] = useState(teacherProfile.birthDate || (isCurrentUserSuperAdmin ? '' : '15/08/1988'));
+  const [profileRole, setProfileRole] = useState(defaultInitialRole);
+  const [profileSchool, setProfileSchool] = useState(defaultInitialSchool);
   const [profileAvatar, setProfileAvatar] = useState(teacherProfile.avatar);
   const [profileOriginalAvatar, setProfileOriginalAvatar] = useState(teacherProfile.originalAvatar || teacherProfile.avatar);
   const [profileAvatarScale, setProfileAvatarScale] = useState(teacherProfile.avatarScale || 1);
   const [profileAvatarPosition, setProfileAvatarPosition] = useState(teacherProfile.avatarPosition || { x: 0, y: 0 });
   const [pendingOriginalAvatar, setPendingOriginalAvatar] = useState<string | null>(null);
   const [profileAcademicYear, setProfileAcademicYear] = useState(teacherProfile.academicYear || '2026–2027');
-  const [profilePhone, setProfilePhone] = useState(teacherProfile.phone || '0977058363');
-  const [profileZalo, setProfileZalo] = useState(teacherProfile.zalo || '0977058363');
-  const [profileFacebook, setProfileFacebook] = useState(teacherProfile.facebook || 'https://www.facebook.com/tieuhocso1tanuyen/');
-  const [profileSocialLink, setProfileSocialLink] = useState(teacherProfile.socialLink || 'https://zalo.me/0977058363');
+  const [profilePhone, setProfilePhone] = useState(teacherProfile.phone || '0888358363');
+  const [profileZalo, setProfileZalo] = useState(teacherProfile.zalo || '0888358363');
+  const [profileFacebook, setProfileFacebook] = useState(teacherProfile.facebook || (isCurrentUserSuperAdmin ? 'https://www.facebook.com/nguyenthanhliemautotech/' : 'https://www.facebook.com/tieuhocso1tanuyen/'));
+  const [profileSocialLink, setProfileSocialLink] = useState(teacherProfile.socialLink || 'https://zalo.me/0888358363');
   const [profileSavedToast, setProfileSavedToast] = useState(false);
   const [isTeacherAvatarEditorOpen, setIsTeacherAvatarEditorOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -131,34 +136,35 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
       setParentMember2Name(currentSettingsClass.parentCommittee?.member2?.name || '');
       setParentMember2Phone(currentSettingsClass.parentCommittee?.member2?.phone || '');
 
-      // Tự động đồng bộ tên giáo viên và năm học nếu lớp học có thông tin mới
-      if (currentSettingsClass.teacherName && !isSubjectTeacher && currentSettingsClass.teacherName !== profileName) {
+      // Tự động đồng bộ tên giáo viên và năm học nếu lớp học có thông tin mới (CHỈ DÀNH CHO GIÁO VIÊN, KHÔNG ĐÈ TÊN ADMIN)
+      if (!isCurrentUserSuperAdmin && currentSettingsClass.teacherName && !isSubjectTeacher && currentSettingsClass.teacherName !== profileName) {
         setProfileName(currentSettingsClass.teacherName);
       }
-      if (currentSettingsClass.academicYear && currentSettingsClass.academicYear !== profileAcademicYear) {
+      if (!isCurrentUserSuperAdmin && currentSettingsClass.academicYear && currentSettingsClass.academicYear !== profileAcademicYear) {
         setProfileAcademicYear(currentSettingsClass.academicYear);
       }
     }
-  }, [selectedSettingsClassId, currentSettingsClass, classes]);
+  }, [selectedSettingsClassId, currentSettingsClass, classes, isCurrentUserSuperAdmin]);
 
   // Keep profile inputs in sync if teacherProfile from context changes
   React.useEffect(() => {
     if (teacherProfile) {
-      setProfileName(teacherProfile.name || 'Trịnh Thị Hương');
-      setProfileBirthDate(teacherProfile.birthDate || '15/08/1988');
-      setProfileRole(teacherProfile.role || 'GIÁO VIÊN CHỦ NHIỆM');
-      setProfileSchool(teacherProfile.schoolName || 'Trường Tiểu học số 1 Tân Uyên');
+      const isSuper = currentUser?.username?.toLowerCase() === 'adminquantri' || currentUser?.role === 'admin';
+      setProfileName(teacherProfile.name || (isSuper ? 'Tài khoản quản trị Cao nhất' : 'Trịnh Thị Hương'));
+      setProfileBirthDate(teacherProfile.birthDate || (isSuper ? '' : '15/08/1988'));
+      setProfileRole(teacherProfile.role || (isSuper ? 'TÀI KHOẢN QUẢN TRỊ CAO NHẤT' : 'GIÁO VIÊN CHỦ NHIỆM'));
+      setProfileSchool(teacherProfile.schoolName || (isSuper ? 'Hệ thống Quản trị Lớp học Hạnh phúc' : 'Trường Tiểu học số 1 Tân Uyên'));
       setProfileAvatar(teacherProfile.avatar);
       setProfileOriginalAvatar(teacherProfile.originalAvatar || teacherProfile.avatar);
       setProfileAvatarScale(teacherProfile.avatarScale || 1);
       setProfileAvatarPosition(teacherProfile.avatarPosition || { x: 0, y: 0 });
       setProfileAcademicYear(teacherProfile.academicYear || '2026–2027');
-      setProfilePhone(teacherProfile.phone || '0977058363');
-      setProfileZalo(teacherProfile.zalo || '0977058363');
-      setProfileFacebook(teacherProfile.facebook || 'https://www.facebook.com/tieuhocso1tanuyen/');
-      setProfileSocialLink(teacherProfile.socialLink || 'https://zalo.me/0977058363');
+      setProfilePhone(teacherProfile.phone || '0888358363');
+      setProfileZalo(teacherProfile.zalo || '0888358363');
+      setProfileFacebook(teacherProfile.facebook || (isSuper ? 'https://www.facebook.com/nguyenthanhliemautotech/' : 'https://www.facebook.com/tieuhocso1tanuyen/'));
+      setProfileSocialLink(teacherProfile.socialLink || 'https://zalo.me/0888358363');
     }
-  }, [teacherProfile]);
+  }, [teacherProfile, currentUser]);
 
   // Save 1: Chỉ lưu Hồ sơ giáo viên
   const handleSaveProfile = (e?: React.FormEvent) => {
@@ -264,6 +270,24 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
 
   // Nạp lại dữ liệu mẫu ban đầu theo yêu cầu người dùng
   const handleLoadDefaultSampleData = () => {
+    if (isCurrentUserSuperAdmin) {
+      setProfileName('Tài khoản quản trị Cao nhất');
+      setProfileBirthDate('');
+      setProfileRole('TÀI KHOẢN QUẢN TRỊ CAO NHẤT');
+      setProfileSchool('Hệ thống Quản trị Lớp học Hạnh phúc');
+      setProfileAvatar('https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9');
+      setProfileOriginalAvatar('https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9');
+      setProfileAvatarScale(1);
+      setProfileAvatarPosition({ x: 0, y: 0 });
+      setProfileAcademicYear('2026–2027');
+      setProfilePhone('0888358363');
+      setProfileZalo('0888358363');
+      setProfileFacebook('https://www.facebook.com/nguyenthanhliemautotech/');
+      setProfileSocialLink('https://zalo.me/0888358363');
+      confetti({ particleCount: 20, spread: 40 });
+      return;
+    }
+
     // 1. Dữ liệu mẫu giáo viên
     setProfileName('Trịnh Thị Hương');
     setProfileBirthDate('15/08/1988');
@@ -279,16 +303,18 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
     setProfileFacebook('https://www.facebook.com/tieuhocso1tanuyen/');
     setProfileSocialLink('https://zalo.me/0977058363');
 
-    // 2. Dữ liệu mẫu lớp học & ban phụ huynh
-    setClassSlogan('Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng');
-    setParentHeadName('Trần Văn Mạnh');
-    setParentHeadPhone('0988 123 456');
-    setParentDeputyName('Nguyễn Thị Mai');
-    setParentDeputyPhone('0977 654 321');
-    setParentMember1Name('Lê Hoàng Nam');
-    setParentMember1Phone('0912 345 678');
-    setParentMember2Name('Phạm Thị Lan');
-    setParentMember2Phone('0903 890 123');
+    // 2. Dữ liệu mẫu lớp học & ban phụ huynh (nếu có lớp)
+    if (classes.length > 0) {
+      setClassSlogan('Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng');
+      setParentHeadName('Trần Văn Mạnh');
+      setParentHeadPhone('0988 123 456');
+      setParentDeputyName('Nguyễn Thị Mai');
+      setParentDeputyPhone('0977 654 321');
+      setParentMember1Name('Lê Hoàng Nam');
+      setParentMember1Phone('0912 345 678');
+      setParentMember2Name('Phạm Thị Lan');
+      setParentMember2Phone('0903 890 123');
+    }
 
     confetti({ particleCount: 30, spread: 50 });
   };
@@ -1345,11 +1371,15 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
                     <User className="w-4 h-4" />
                   </div>
                   <h3 className="text-base font-black text-slate-900 uppercase">
-                    1. CÀI ĐẶT HỒ SƠ GIÁO VIÊN & ẢNH ĐẠI DIỆN
+                    {isCurrentUserSuperAdmin 
+                      ? '1. CÀI ĐẶT HỒ SƠ QUẢN TRỊ VIÊN & THÔNG TIN HỆ THỐNG' 
+                      : '1. CÀI ĐẶT HỒ SƠ GIÁO VIÊN & ẢNH ĐẠI DIỆN'}
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500 font-medium">
-                  Quản lý ảnh đại diện sư phạm (chọn ảnh, thu phóng, căn chỉnh góc nhìn trực tiếp) và 9 mục thông tin cá nhân.
+                  {isCurrentUserSuperAdmin
+                    ? 'Quản lý thông tin đại diện tài khoản Quản trị Cao nhất, ảnh đại diện và thông tin liên hệ hệ thống.'
+                    : 'Quản lý ảnh đại diện sư phạm (chọn ảnh, thu phóng, căn chỉnh góc nhìn trực tiếp) và 9 mục thông tin cá nhân.'}
                 </p>
               </div>
 
@@ -1366,7 +1396,7 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
                   className="px-5 py-2.5 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn flex items-center gap-1.5 uppercase"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>LƯU HỒ SƠ GIÁO VIÊN</span>
+                  <span>{isCurrentUserSuperAdmin ? 'LƯU HỒ SƠ QUẢN TRỊ' : 'LƯU HỒ SƠ GIÁO VIÊN'}</span>
                 </button>
               </div>
             </div>
@@ -1483,17 +1513,17 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
 
               {/* 9 Personal Information Fields in 2-Column Responsive Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 1. Họ và tên giáo viên */}
+                {/* 1. Họ và tên người dùng / quản trị viên */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1 flex items-center gap-1.5 uppercase">
                     <User className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>HỌ VÀ TÊN GIÁO VIÊN:</span>
+                    <span>{isCurrentUserSuperAdmin ? 'HỌ VÀ TÊN / DANH XƯNG QUẢN TRỊ VIÊN:' : 'HỌ VÀ TÊN GIÁO VIÊN:'}</span>
                   </label>
                   <input
                     type="text"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    placeholder="Ví dụ: Cô Trịnh Thị Hương"
+                    placeholder={isCurrentUserSuperAdmin ? 'Tài khoản quản trị Cao nhất' : 'Ví dụ: Cô Trịnh Thị Hương'}
                     className="w-full px-3.5 py-2.5 border border-slate-200 rounded-2xl text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-bold text-slate-900"
                     required
                   />
@@ -1664,20 +1694,34 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
                 <button
                   type="button"
                   onClick={() => {
-                    setProfileName('Trịnh Thị Hương');
-                    setProfileBirthDate('15/08/1988');
-                    setProfileRole('GIÁO VIÊN CHỦ NHIỆM');
-                    setProfileSchool('TRƯỜNG HỌC HẠNH PHÚC DEMO');
-                    setProfileAcademicYear('2026–2027');
-                    setProfilePhone('0977058363');
-                    setProfileZalo('0977058363');
-                    setProfileFacebook('https://www.facebook.com/tieuhocso1tanuyen/');
-                    setProfileSocialLink('https://zalo.me/0977058363');
+                    if (isCurrentUserSuperAdmin) {
+                      setProfileName('Tài khoản quản trị Cao nhất');
+                      setProfileBirthDate('');
+                      setProfileRole('TÀI KHOẢN QUẢN TRỊ CAO NHẤT');
+                      setProfileSchool('Hệ thống Quản trị Lớp học Hạnh phúc');
+                      setProfileAvatar('https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9');
+                      setProfileOriginalAvatar('https://api.dicebear.com/7.x/bottts/svg?seed=AdminQuanTriBoss&backgroundColor=d1d4f9');
+                      setProfileAcademicYear('2026–2027');
+                      setProfilePhone('0888358363');
+                      setProfileZalo('0888358363');
+                      setProfileFacebook('https://www.facebook.com/nguyenthanhliemautotech/');
+                      setProfileSocialLink('https://zalo.me/0888358363');
+                    } else {
+                      setProfileName('Trịnh Thị Hương');
+                      setProfileBirthDate('15/08/1988');
+                      setProfileRole('GIÁO VIÊN CHỦ NHIỆM');
+                      setProfileSchool('TRƯỜNG HỌC HẠNH PHÚC DEMO');
+                      setProfileAcademicYear('2026–2027');
+                      setProfilePhone('0977058363');
+                      setProfileZalo('0977058363');
+                      setProfileFacebook('https://www.facebook.com/tieuhocso1tanuyen/');
+                      setProfileSocialLink('https://zalo.me/0977058363');
+                    }
                     confetti({ particleCount: 20, spread: 40 });
                   }}
                   className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-2xl transition-colors uppercase"
                 >
-                  ↺ Khôi phục mẫu giáo viên
+                  ↺ {isCurrentUserSuperAdmin ? 'Khôi phục mẫu quản trị' : 'Khôi phục mẫu giáo viên'}
                 </button>
 
                 <button
@@ -1685,7 +1729,7 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
                   className="px-6 py-3 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn flex items-center gap-2 uppercase"
                 >
                   <Check className="w-4 h-4" />
-                  <span>LƯU CÀI ĐẶT HỒ SƠ GIÁO VIÊN</span>
+                  <span>{isCurrentUserSuperAdmin ? 'LƯU HỒ SƠ QUẢN TRỊ VIÊN' : 'LƯU CÀI ĐẶT HỒ SƠ GIÁO VIÊN'}</span>
                 </button>
               </div>
             </form>
@@ -1693,9 +1737,9 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
 
           {/* ========================================================================= */}
           {/* PHẦN 2: CÀI ĐẶT KHẨU HIỆU & BAN ĐẠI DIỆN CHA MẸ HỌC SINH (LỚP HỌC) */}
-          {/* CHỈ DÀNH CHO GIÁO VIÊN CHỦ NHIỆM - KHÔNG HIỂN THỊ VỚI GIÁO VIÊN BỘ MÔN */}
+          {/* CHỈ DÀNH CHO GIÁO VIÊN CHỦ NHIỆM HOẶC KHI CÓ LỚP HỌC CỤ THỂ */}
           {/* ========================================================================= */}
-          {!isSubjectTeacher && (
+          {!isSubjectTeacher && (!isCurrentUserSuperAdmin || classes.length > 0) && (
             <div className="bg-white rounded-3xl border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-6 hover-zoom-card">
               {/* Header of Section 2 with Class Selector */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
