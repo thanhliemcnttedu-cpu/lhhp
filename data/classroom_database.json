@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-09T17:24:48.041Z",
+  "lastSync": "2026-10-09T17:47:18.266Z",
   "schools": [],
   "users": [
     {
@@ -1101,10 +1101,24 @@
         "fullName": "Quản trị viên Hệ thống Cấp cao",
         "role": "admin"
       },
-      "updatedAt": 1791539856104
+      "updatedAt": 1791568038266
+    },
+    "admin": {
+      "classes": [],
+      "students": [],
+      "updatedAt": 1791568038266
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791568033718-f78tvl",
+      "timestamp": 1791568033718,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa toàn bộ danh sách lớp học"
+    },
     {
       "id": "log-1791566688041-45ochg",
       "timestamp": 1791566688041,
@@ -1161,22 +1175,5 @@
     "autoPushGithub": true,
     "autoPullGithub": true,
     "lastGithubPushAt": 1791539872326
-  },
-  "classes": [],
-  "students": [],
-  "transactions": [],
-  "attendanceRecords": [],
-  "boardingRecords": [],
-  "redemptions": [],
-  "seatingAssignments": {},
-  "teacherProfile": {
-    "name": "Giáo viên",
-    "role": "GIÁO VIÊN CHỦ NHIỆM",
-    "teachingSubject": "Giáo viên chủ nhiệm",
-    "schoolName": "",
-    "phone": "",
-    "zalo": "",
-    "avatar": "",
-    "academicYear": ""
   }
 }
