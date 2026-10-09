@@ -3535,10 +3535,12 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       initialMap[`${col}-${rowInCol}-${sub}`] = s.id;
     });
 
-    // 2. Update React states
+    // 2. Update React states & refs
     setClasses(freshClasses);
+    classesRef.current = freshClasses;
     setActiveClassId('class-4a1');
     setStudents(freshStudents);
+    studentsRef.current = freshStudents;
     setSubjects([...INITIAL_SUBJECTS]);
     setCriteria([...INITIAL_CRITERIA]);
     setRewards([...INITIAL_REWARDS]);
@@ -3551,19 +3553,83 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setBoardingRecords([]);
     setSeatingColumns(2);
     setSeatingAssignments(initialMap);
+
+    if (currentUser) {
+      const payload: UserClassroomData = {
+        ...getCurrentUserData(),
+        classes: freshClasses,
+        students: freshStudents,
+        subjects: [...INITIAL_SUBJECTS],
+        criteria: [...INITIAL_CRITERIA],
+        rewards: [...INITIAL_REWARDS],
+        timetable: freshTimetable,
+        quickLinks: [...INITIAL_QUICK_LINKS],
+        teacherProfile: { ...DEFAULT_TEACHER },
+        transactions: [],
+        redemptions: [],
+        attendanceRecords: [],
+        boardingRecords: [],
+        seatingAssignments: initialMap,
+        seatingColumns: 2,
+        updatedAt: Date.now()
+      };
+      databaseService.saveUserData(currentUser.username, payload).catch(() => {});
+    }
   };
 
   const clearAllData = () => {
-    setClasses([]);
-    setActiveClassId('');
+    // Khởi tạo khung lớp học cơ bản cho năm học mới
+    const defaultClass: Classroom = {
+      id: 'class-4a1',
+      name: '4A1',
+      grade: 'Khối 4',
+      color: '#3B82F6',
+      academicYear: teacherProfile.academicYear || '2026–2027',
+      teacherName: teacherProfile.name || (currentUser?.fullName || ''),
+      teacherUsername: currentUser?.username || 'gvcndemo',
+      teacherRole: 'homeroom',
+      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
+      slogan: '',
+      parentCommittee: {
+        head: { name: '', phone: '', roleTitle: 'Trưởng ban phụ huynh' },
+        deputy: { name: '', phone: '', roleTitle: 'Phó ban phụ huynh' },
+        member1: { name: '', phone: '', roleTitle: 'Ủy viên ban phụ huynh 1' },
+        member2: { name: '', phone: '', roleTitle: 'Ủy viên ban phụ huynh 2' }
+      }
+    };
+    const freshClasses = [defaultClass];
+
+    setClasses(freshClasses);
+    classesRef.current = freshClasses;
+    setActiveClassId('class-4a1');
     setStudents([]);
+    studentsRef.current = [];
     setTimetable([]);
     setTransactions([]);
-    setRewards([]);
+    setRewards([...INITIAL_REWARDS]);
     setRedemptions([]);
     setAttendanceRecords([]);
     setBoardingRecords([]);
     setSeatingAssignments({});
+    setSubjects([...INITIAL_SUBJECTS]);
+    setCriteria([...INITIAL_CRITERIA]);
+
+    if (currentUser) {
+      const payload: UserClassroomData = {
+        ...getCurrentUserData(),
+        classes: freshClasses,
+        students: [],
+        timetable: [],
+        transactions: [],
+        rewards: [...INITIAL_REWARDS],
+        redemptions: [],
+        attendanceRecords: [],
+        boardingRecords: [],
+        seatingAssignments: {},
+        updatedAt: Date.now()
+      };
+      databaseService.saveUserData(currentUser.username, payload).catch(() => {});
+    }
   };
 
   return (

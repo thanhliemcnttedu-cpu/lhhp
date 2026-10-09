@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-09T18:14:13.605Z",
+  "lastSync": "2026-10-09T19:13:30.752Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -30,29 +30,6 @@
     "lastGithubPushAt": 1791568043638
   },
   "auditLogs": [
-    {
-      "id": "log-1791569653603-fbjb0d",
-      "timestamp": 1791569653603,
-      "username": "admin",
-      "userFullName": "Quản trị viên Hệ thống",
-      "role": "admin",
-      "actionType": "OTHER",
-      "description": "Xóa CSDL trường học (Cascade): TIỂU HỌC ĐOÀN KẾT (TH_DK) - Đã xóa 1 tài khoản và xóa trắng toàn bộ mô hình lớp học liên đới",
-      "details": {
-        "school": {
-          "id": "school_1791569638067_a8by",
-          "name": "TIỂU HỌC ĐOÀN KẾT",
-          "code": "TH_DK",
-          "address": "xã Tân Uyên, tỉnh Lai Châu",
-          "phone": "",
-          "adminUsername": "bgh_thdk",
-          "createdAt": 1791569638067
-        },
-        "deletedAccounts": [
-          "bgh_thdk"
-        ]
-      }
-    },
     {
       "id": "log-1791569638141-7ls9ct",
       "timestamp": 1791569638142,
@@ -144,6 +121,6 @@
   "masterSummary": {
     "totalUsers": 1,
     "totalSchools": 0,
-    "totalClassesConfigured": 2
+    "totalClassesConfigured": 1
   }
 }
