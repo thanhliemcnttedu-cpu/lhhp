@@ -137,7 +137,7 @@ interface ClassroomContextType {
   importBackupJson: (file: File) => Promise<boolean>;
   exportBackupZip: () => Promise<void>;
   importBackupZip: (file: File) => Promise<boolean>;
-  resetToDefaultData: () => void;
+
   clearAllData: () => void;
 
   // Quản lý người dùng, phân quyền & Cơ sở dữ liệu đồng bộ
@@ -3521,87 +3521,6 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const resetToDefaultData = () => {
-    // 1. Fresh independent copies of Class 4A1 and 30 students
-    const freshClass: Classroom = {
-      id: 'class-4a1',
-      name: '4A1',
-      grade: 'Khối 4',
-      color: '#3B82F6',
-      academicYear: '2026–2027',
-      teacherName: currentUser?.fullName || 'Giáo viên',
-      teacherUsername: currentUser?.username || 'gvcndemo',
-      teacherRole: 'homeroom',
-      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
-      slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng',
-      parentCommittee: {
-        head: { name: 'Trần Văn Mạnh', phone: '0988 123 456', roleTitle: 'Trưởng ban phụ huynh' },
-        deputy: { name: 'Nguyễn Thị Mai', phone: '0977 654 321', roleTitle: 'Phó ban phụ huynh' },
-        member1: { name: 'Lê Hoàng Nam', phone: '0912 345 678', roleTitle: 'Ủy viên ban phụ huynh 1' },
-        member2: { name: 'Phạm Thị Lan', phone: '0903 890 123', roleTitle: 'Ủy viên ban phụ huynh 2' }
-      }
-    };
-    const freshClasses = [freshClass];
-
-    const freshStudents: Student[] = INITIAL_STUDENTS_CLASS_4A1.map(s => ({
-      ...s,
-      classId: 'class-4a1'
-    }));
-
-    const freshTimetable: TimetableSlot[] = INITIAL_TIMETABLE.map(t => ({
-      ...t,
-      classId: 'class-4a1'
-    }));
-
-    const initialMap: Record<string, string> = {};
-    freshStudents.slice(0, 16).forEach((s, idx) => {
-      const col = Math.floor(idx / 8);
-      const rowInCol = Math.floor((idx % 8) / 2);
-      const sub = idx % 2;
-      initialMap[`${col}-${rowInCol}-${sub}`] = s.id;
-    });
-
-    // 2. Update React states & refs
-    setClasses(freshClasses);
-    classesRef.current = freshClasses;
-    setActiveClassId('class-4a1');
-    setStudents(freshStudents);
-    studentsRef.current = freshStudents;
-    setSubjects([...INITIAL_SUBJECTS]);
-    setCriteria([...INITIAL_CRITERIA]);
-    setRewards([...INITIAL_REWARDS]);
-    setTimetable(freshTimetable);
-    setQuickLinks([...INITIAL_QUICK_LINKS]);
-    setTeacherProfile({ ...DEFAULT_TEACHER });
-    setTransactions([]);
-    setRedemptions([]);
-    setAttendanceRecords([]);
-    setBoardingRecords([]);
-    setSeatingColumns(2);
-    setSeatingAssignments(initialMap);
-
-    if (currentUser) {
-      const payload: UserClassroomData = {
-        ...getCurrentUserData(),
-        classes: freshClasses,
-        students: freshStudents,
-        subjects: [...INITIAL_SUBJECTS],
-        criteria: [...INITIAL_CRITERIA],
-        rewards: [...INITIAL_REWARDS],
-        timetable: freshTimetable,
-        quickLinks: [...INITIAL_QUICK_LINKS],
-        teacherProfile: { ...DEFAULT_TEACHER },
-        transactions: [],
-        redemptions: [],
-        attendanceRecords: [],
-        boardingRecords: [],
-        seatingAssignments: initialMap,
-        seatingColumns: 2,
-        updatedAt: Date.now()
-      };
-      databaseService.saveUserData(currentUser.username, payload).catch(() => {});
-    }
-  };
 
   const clearAllData = () => {
     // Khởi tạo khung lớp học cơ bản cho năm học mới
@@ -3771,7 +3690,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       importBackupJson,
       exportBackupZip,
       importBackupZip,
-      resetToDefaultData,
+
       clearAllData,
 
       // Quản lý người dùng, phân quyền & Cơ sở dữ liệu đồng bộ

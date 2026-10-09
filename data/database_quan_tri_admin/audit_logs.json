@@ -1,5 +1,18 @@
 [
   {
+    "id": "log-1791576482165-hboplt",
+    "timestamp": 1791576482165,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "DELETE_CLASS",
+    "description": "Xóa lớp học: 4A1",
+    "details": {
+      "classId": "class-4a1",
+      "name": "4A1"
+    }
+  },
+  {
     "id": "log-1791569638141-7ls9ct",
     "timestamp": 1791569638142,
     "username": "adminquantri",

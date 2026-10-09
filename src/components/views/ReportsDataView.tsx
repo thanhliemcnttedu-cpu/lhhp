@@ -40,7 +40,7 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
     currentClassStudents, transactions, subjects,
     activeClassId, classes, updateClass, exportBackupJson, importBackupJson,
     exportBackupZip, importBackupZip,
-    resetToDefaultData, clearAllData, teacherProfile, updateTeacherProfile,
+     clearAllData, teacherProfile, updateTeacherProfile,
     teacherRole, setTeacherRole, subjectTeacherConfig, updateSubjectTeacherConfig,
     currentUser
   } = useClassroom();
@@ -71,7 +71,7 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
   const [isImportLoading, setIsImportLoading] = useState(false);
 
   // In-app Modals for Reset and Clear Data (Replaces window.confirm)
-  const [isResetDefaultModalOpen, setIsResetDefaultModalOpen] = useState(false);
+
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
 
   // Teacher Profile form state
@@ -1188,30 +1188,6 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
                 </div>
               </div>
 
-              {/* Card 3: Khôi Phục Mẫu Ban Đầu */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-6 shadow-xs flex flex-col justify-between space-y-4 sm:space-y-5 hover-zoom-card">
-                <div className="space-y-2">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-2xs">
-                    <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </div>
-                  <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase">
-                    KHÔI PHỤC DỮ LIỆU MẪU BAN ĐẦU
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Tải lại toàn bộ dữ liệu mẫu lớp học, học sinh, điểm số và thời khóa biểu để trải nghiệm thử nghiệm tính năng.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsResetDefaultModalOpen(true)}
-                  className="w-full py-2.5 sm:py-3 px-4 rounded-2xl text-xs font-black text-white bg-amber-600 hover:bg-amber-700 shadow-md shadow-amber-600/20 transition-all hover-zoom-btn flex items-center justify-center gap-2 uppercase"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>KHÔI PHỤC DỮ LIỆU MẪU</span>
-                </button>
-              </div>
-
               {/* Card 4: Làm Mới Năm Học / Xóa Sạch */}
               <div className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-6 shadow-xs flex flex-col justify-between space-y-4 sm:space-y-5 hover-zoom-card">
                 <div className="space-y-2">
@@ -2094,90 +2070,7 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
             </div>
       )}
 
-            {/* Modal 1: XÁC NHẬN KHÔI PHỤC DỮ LIỆU MẪU BAN ĐẦU */}
-            {isResetDefaultModalOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-                <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                  <div className="p-6 bg-gradient-to-br from-indigo-50 via-sky-50 to-blue-50 border-b border-indigo-100 flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/30">
-                        <RotateCcw className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-black text-slate-900">
-                          Khôi Phục Dữ Liệu Mẫu Ban Đầu
-                        </h3>
-                        <p className="text-xs text-indigo-700 font-semibold mt-0.5">
-                          Tải lại dữ liệu mẫu lớp học, học sinh & thời khóa biểu
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setIsResetDefaultModalOpen(false)}
-                      className="w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors shadow-2xs"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
 
-                  <div className="p-6 space-y-4">
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                      <div className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span>Dữ liệu sẽ được thiết lập gồm có:</span>
-                      </div>
-                      <div className="space-y-2 text-xs text-slate-600">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Lớp học mặc định: <strong className="text-slate-900 font-bold">{activeClass?.name ? `Lớp ${activeClass.name}` : 'Lớp học mẫu'}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Giáo viên chủ nhiệm: <strong className="text-slate-900 font-bold">{profileName || 'Giáo viên'}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Danh sách học sinh mẫu (đầy đủ thông tin, điểm xu minh họa)</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Thời khóa biểu mẫu chuẩn các ngày trong tuần</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Danh mục phần thưởng & tiêu chí thi đua mẫu phong phú</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsResetDefaultModalOpen(false)}
-                        className="px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
-                      >
-                        Hủy Bỏ
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          resetToDefaultData();
-                          playFanfareSound();
-                          confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
-                          setImportStatus('🎉 Khôi phục thành công dữ liệu mẫu lớp học và học sinh!');
-                          setIsResetDefaultModalOpen(false);
-                          setTimeout(() => setImportStatus(null), 5000);
-                        }}
-                        className="px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/30 transition-all hover-zoom-btn flex items-center gap-2"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        <span>Xác Nhận Khôi Phục Ngay</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Modal 2: XÁC NHẬN XÓA SẠCH DỮ LIỆU ĐỂ LÀM MỚI */}
             {isClearDataModalOpen && (
