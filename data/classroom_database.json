@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-09T22:47:19.724Z",
+  "lastSync": "2026-10-09T22:49:09.291Z",
   "schools": [],
   "users": [
     {
@@ -29,6 +29,8 @@
           "color": "#3B82F6",
           "grade": "Khối 4",
           "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6",
+          "branch": null,
+          "campus": null,
           "slogan": "Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng",
           "teacherName": "Trịnh Thị Hương",
           "teacherRole": "homeroom",
@@ -55,9 +57,7 @@
               "roleTitle": "Ủy viên ban phụ huynh 2"
             }
           },
-          "teacherUsername": "gvcndemo",
-          "branch": null,
-          "campus": null
+          "teacherUsername": "gvcndemo"
         },
         {
           "id": "class-1791576830842",
@@ -146,7 +146,7 @@
           "teacherUsername": "gvcn_1a1"
         }
       ],
-      "activeClassId": "",
+      "activeClassId": "class-4a1",
       "students": [
         {
           "id": "hs-1",
@@ -1148,8 +1148,8 @@
           "date": "2026-10-10",
           "classId": "class-1791576701407",
           "records": {
-            "hs-1791577105589-0-vry3": "excused",
             "hs-1791576729968-7vno": "present",
+            "hs-1791577105589-0-vry3": "excused",
             "hs-1791577105589-2-u5tq": "present",
             "hs-1791577105589-4-6812": "present"
           }
@@ -1809,7 +1809,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791586039724
+      "updatedAt": 1791586149291
     }
   },
   "auditLogs": [
@@ -1923,6 +1923,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791576491034
+    "lastGithubPushAt": 1791586045670
   }
 }
