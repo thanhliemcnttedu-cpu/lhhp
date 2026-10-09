@@ -2032,8 +2032,8 @@ export const databaseService = {
   // 🏫 QUẢN LÝ DANH MỤC TRƯỜNG HỌC (ADMIN)
   async getSchools(): Promise<SchoolEntity[]> {
     const purgeRemovedSchools = (list: SchoolEntity[]): SchoolEntity[] => {
-      const REMOVED_IDS = new Set(['school-thucnghiem-02', 'school-tanuyen-main']);
-      const REMOVED_CODES = new Set(['TH_TN', 'TH1_TU', 'TH1_TU_MAIN']);
+      const REMOVED_IDS = new Set(['school-thucnghiem-02']);
+      const REMOVED_CODES = new Set(['TH_TN']);
       return (list || []).filter(s => {
         if (!s) return false;
         if (REMOVED_IDS.has(s.id)) return false;
@@ -2041,7 +2041,6 @@ export const databaseService = {
         const norm = (s.name || '').trim().toLowerCase();
         if (norm.includes('(th_tn)')) return false;
         if (norm.includes('thực nghiệm')) return false;
-        if (norm.includes('tân uyên') || norm.includes('tan uyen')) return false;
         return true;
       });
     };
@@ -2072,8 +2071,9 @@ export const databaseService = {
             code: s.code || '',
             address: s.address || '',
             phone: s.phone || '',
-            adminUsername: s.admin_username || '',
-            createdAt: s.created_at || Date.now()
+            adminUsername: s.admin_username || (s.code ? `bgh_${s.code.toLowerCase().replace(/[^a-z0-9]/g, '')}` : ''),
+            adminFullName: s.principal_name || `Ban Giám Hiệu ${s.name}`,
+            createdAt: s.created_at ? new Date(s.created_at).getTime() : Date.now()
           }));
           const clean = purgeRemovedSchools(mapped);
           localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(clean));
@@ -2166,8 +2166,9 @@ export const databaseService = {
             code: newSchool.code,
             address: newSchool.address,
             phone: newSchool.phone,
-            admin_username: newSchool.adminUsername,
-            created_at: newSchool.createdAt
+            principal_name: bghFullName,
+            tenant_type: 'formal',
+            status: 'active'
           }, { onConflict: 'id' });
         } catch (sErr) {
           console.warn('[Supabase Create School Table]', sErr);
