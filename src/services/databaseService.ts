@@ -2120,9 +2120,49 @@ export const databaseService = {
       const cached = localStorage.getItem(LOCAL_SCHOOLS_KEY);
       if (cached) {
         const list = JSON.parse(cached);
-        if (Array.isArray(list)) {
+        if (Array.isArray(list) && list.length > 0) {
           const cleanList = purgeRemovedSchools(list);
-          return cleanList;
+          if (cleanList.length > 0) return cleanList;
+        }
+      }
+    } catch (_) {}
+
+    // 4. Fallback thông minh: Tự động trích xuất danh sách trường từ bảng Users trên Supabase hoặc LocalStorage
+    try {
+      const users = await this.getUsers();
+      if (Array.isArray(users) && users.length > 0) {
+        const schoolMap = new Map<string, SchoolEntity>();
+        users.forEach(u => {
+          const sName = (u.schoolName || '').trim();
+          if (
+            sName && 
+            !sName.toLowerCase().includes('cá nhân') && 
+            !sName.toLowerCase().includes('tự do') && 
+            !sName.toLowerCase().includes('vãng lai') &&
+            !sName.toLowerCase().includes('quản trị lớp học')
+          ) {
+            if (!schoolMap.has(sName)) {
+              const codeSlug = sName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase() || 'TRUONG';
+              schoolMap.set(sName, {
+                id: `school-auto-${codeSlug.toLowerCase()}`,
+                name: sName,
+                code: codeSlug,
+                address: '',
+                phone: u.phone || '',
+                adminUsername: u.role === 'school_admin' || u.role === 'bgh' ? u.username : `bgh_${codeSlug.toLowerCase()}`,
+                adminFullName: u.role === 'school_admin' || u.role === 'bgh' ? u.fullName : `Ban Giám Hiệu ${sName}`,
+                createdAt: Date.now()
+              });
+            }
+          }
+        });
+        const extracted = Array.from(schoolMap.values());
+        const cleanExtracted = purgeRemovedSchools(extracted);
+        if (cleanExtracted.length > 0) {
+          try {
+            localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(cleanExtracted));
+          } catch (_) {}
+          return cleanExtracted;
         }
       }
     } catch (_) {}

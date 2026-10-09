@@ -43,11 +43,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         if (Array.isArray(list) && list.length > 0) {
           setSchools(list);
           const isLegacy = selectedSchoolName.toLowerCase().includes('(th1_tu)') || 
-                           selectedSchoolName.toLowerCase().includes('(th_tn)') || 
-                           selectedSchoolName === 'Trường Tiểu học số 1 Tân Uyên';
+                           selectedSchoolName.toLowerCase().includes('(th_tn)');
           if (!selectedSchoolName || isLegacy || !list.some(s => s.name === selectedSchoolName)) {
             setSelectedSchoolName(list[0].name);
           }
+        } else {
+          // Dự phòng: Lấy từ danh sách users
+          databaseService.getUsers().then((uList) => {
+            const foundSchools = new Set<string>();
+            uList.forEach(u => {
+              const sn = (u.schoolName || '').trim();
+              if (sn && !sn.toLowerCase().includes('cá nhân') && !sn.toLowerCase().includes('vãng lai') && !sn.toLowerCase().includes('quản trị lớp học')) {
+                foundSchools.add(sn);
+              }
+            });
+            if (foundSchools.size > 0) {
+              const mapped: SchoolEntity[] = Array.from(foundSchools).map((name, idx) => ({
+                id: `school-fallback-${idx}`,
+                name,
+                code: `TH_${idx + 1}`,
+                createdAt: Date.now()
+              }));
+              setSchools(mapped);
+              setSelectedSchoolName(mapped[0].name);
+            }
+          }).catch(() => {});
         }
       });
     }
@@ -338,7 +358,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <select
                         value={selectedSchoolName}
                         onChange={(e) => setSelectedSchoolName(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-3 py-2 rounded-lg border text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-xs"
                         style={{ borderColor: 'rgba(59, 130, 246, 0.3)' }}
                       >
                         {schools.map((s) => (
@@ -348,8 +368,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         ))}
                       </select>
                     ) : (
-                      <div className="p-2.5 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-medium">
-                        Hệ thống chưa có CSDL Trường học nào. Hãy đăng nhập bằng tài khoản <strong className="text-white">@adminquantri</strong> để khởi tạo trường đầu tiên!
+                      <div className="space-y-1.5">
+                        <input
+                          type="text"
+                          value={selectedSchoolName}
+                          onChange={(e) => setSelectedSchoolName(e.target.value)}
+                          placeholder="Nhập tên trường học của bạn..."
+                          className="w-full px-3 py-2 rounded-lg border text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-xs"
+                          style={{ borderColor: 'rgba(59, 130, 246, 0.3)' }}
+                        />
+                        <div className="text-[11px] text-blue-200 font-medium">
+                          💡 Nhập tên trường của bạn (hoặc tạo trường trong tài khoản <strong className="text-white">@adminquantri</strong>)
+                        </div>
                       </div>
                     )}
                   </div>
