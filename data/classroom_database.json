@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-09T09:57:36.104Z",
+  "lastSync": "2026-10-09T09:57:52.326Z",
   "schools": [],
   "users": [
     {
@@ -1155,6 +1155,7 @@
     "githubRepoUrl": "https://github.com/thanhliemcnttedu-cpu/lhhp.git",
     "githubBranch": "main",
     "autoPushGithub": true,
-    "autoPullGithub": true
+    "autoPullGithub": true,
+    "lastGithubPushAt": 1791539872326
   }
 }

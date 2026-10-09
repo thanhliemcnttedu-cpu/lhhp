@@ -8,7 +8,8 @@ import {
   SeatingColumnsCount, TeacherDeskPosition, DoorPosition, BlackboardPosition,
   DeskNumberingOrder, BoardingStatus, DailyBoardingMeal,
   TeacherRole, SubjectTimetableSlot, SubjectTeacherConfig, InitSubjectClassItem,
-  UserAccount, UserRole, UserClassroomData, QuestionItem, LoginRoleScope
+  UserAccount, UserRole, UserClassroomData, QuestionItem, LoginRoleScope,
+  SchoolBranch
 } from '../types';
 import { generateStudentsForClass, getStudentRealAvatar } from '../utils/studentGenerator';
 import { 
@@ -28,6 +29,7 @@ interface ClassroomContextType {
   activeClassId: string;
   setActiveClassId: (id: string) => void;
   addClass: (cls: Omit<Classroom, 'id'>) => void;
+  bulkAddClasses: (newClasses: Array<Omit<Classroom, 'id'>>) => void;
   updateClass: (id: string, cls: Partial<Classroom>) => void;
   deleteClass: (id: string) => void;
   bulkDeleteClasses: (ids: string[]) => void;
@@ -168,6 +170,10 @@ interface ClassroomContextType {
   setIsRegistrationModalOpen: (open: boolean) => void;
   demoWarningMessage: string | null;
   setDemoWarningMessage: (msg: string | null) => void;
+  // Cấu hình Phân hiệu & Điểm trường trực thuộc (School Branches & Campuses)
+  schoolBranches: SchoolBranch[];
+  saveSchoolBranches: (branches: SchoolBranch[]) => Promise<boolean>;
+  reloadSchoolBranches: (schoolName?: string) => Promise<void>;
 }
 
 const ClassroomContext = createContext<ClassroomContextType | undefined>(undefined);
@@ -309,6 +315,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } else if (msg && msg.type === 'STUDENTS_BULK_UPDATED' && Array.isArray(msg.students)) {
           setStudents(msg.students);
           studentsRef.current = msg.students;
+        } else if (msg && msg.type === 'SCHOOL_BRANCHES_UPDATED' && Array.isArray(msg.branches)) {
+          setSchoolBranches(msg.branches);
         }
       };
       return () => {
@@ -316,6 +324,35 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
     } catch (_) {}
   }, []);
+
+  // 🏛️ Cấu hình Phân hiệu & Điểm trường trực thuộc cho từng Trường học
+  const [schoolBranches, setSchoolBranches] = useState<SchoolBranch[]>([]);
+
+  const reloadSchoolBranches = async (schoolName?: string) => {
+    const targetSchool = (schoolName || currentUser?.schoolName || '').trim();
+    if (!targetSchool) {
+      setSchoolBranches([]);
+      return;
+    }
+    const list = await databaseService.getSchoolBranches(targetSchool);
+    setSchoolBranches(list);
+  };
+
+  const saveSchoolBranches = async (branches: SchoolBranch[]): Promise<boolean> => {
+    const targetSchool = (currentUser?.schoolName || '').trim();
+    if (!targetSchool) return false;
+    setSchoolBranches(branches);
+    return await databaseService.saveSchoolBranches(targetSchool, branches);
+  };
+
+  // Tự động tải danh mục phân hiệu & điểm trường khi đổi tài khoản / đổi trường
+  useEffect(() => {
+    if (currentUser?.schoolName) {
+      reloadSchoolBranches(currentUser.schoolName);
+    } else {
+      setSchoolBranches([]);
+    }
+  }, [currentUser?.schoolName]);
 
   const [subjects, setSubjects] = useState<Subject[]>(INITIAL_SUBJECTS);
   const [criteria, setCriteria] = useState<PointCriterion[]>(INITIAL_CRITERIA);
@@ -980,8 +1017,16 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const unsubscribe = databaseService.subscribeRealtimeUpdates(currentUser.username, async (event) => {
       try {
+        if (event.type === 'school_branches_updated' || (event as any).event === 'school_branches_updated') {
+          const evSchool = (event as any).payload?.schoolName || (event as any).schoolName;
+          if (!evSchool || evSchool.toLowerCase() === (currentUser.schoolName || '').toLowerCase()) {
+            reloadSchoolBranches(currentUser.schoolName);
+          }
+          return;
+        }
+
+        const isSuper = currentUser.role === 'admin' || currentUser.username?.toLowerCase() === 'adminquantri';
         const isExecutive = Boolean(
-          currentUser.role === 'admin' || 
           currentUser.role === 'school_admin' || 
           currentUser.role === 'bgh' || 
           currentUser.isBgh || 
@@ -990,7 +1035,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           currentUser.isGuestAdmin
         );
 
-        if (isExecutive) {
+        if (isSuper) {
+          // Quản trị tối cao (adminquantri): Đồng bộ tức thì toàn bộ lớp học và học sinh của tất cả giáo viên
+          const adminAll = await databaseService.getAdminAllData();
+          if (adminAll) {
+            markRemoteUpdateActive(1200);
+            setClasses(adminAll.classes);
+            setStudents(adminAll.students);
+            setDbSyncStatus('synced');
+            const now = new Date();
+            setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+          }
+        } else if (isExecutive) {
+          // Quản trị nhà trường (BGH): Tự động tổng hợp số liệu mới nhất từ các giáo viên trong trường
           const scoped = await databaseService.getExecutiveScopedData(currentUser);
           markRemoteUpdateActive(1200);
           setClasses(scoped.classes);
@@ -1022,7 +1079,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
 
     return () => unsubscribe();
-  }, [currentUser?.username, currentUser?.role]);
+  }, [currentUser?.username, currentUser?.role, currentUser?.schoolName]);
 
   // Real-time Multi-browser & Multi-tab sync polling (Fallback layer)
   useEffect(() => {
@@ -1519,8 +1576,21 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const nowTs = Date.now();
+      const isExecutive = Boolean(
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+
+      // 1. Luôn cập nhật liên thông sang giáo viên chủ nhiệm được phân công (hoặc chính user) và Supabase Cloud
+      const targetTeacher = (newCls.teacherUsername || (isExecutive ? '' : currentUser.username)).trim().toLowerCase();
+      databaseService.updateAdminClass(newCls, targetTeacher).catch(() => {});
+
       if (isSuperAdmin) {
-        databaseService.updateAdminClass(newCls).catch(() => {});
         databaseService.syncAdminAllData(nextClasses, studentsRef.current.length > 0 ? studentsRef.current : students).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();
@@ -1532,7 +1602,78 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         const payload: UserClassroomData = {
           ...getCurrentUserData(),
           classes: nextClasses,
-          updatedAt: Date.now()
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
+  };
+
+  // 🌟 TẠO LỚP HỌC HÀNG LOẠT (BULK ADD CLASSES TỪ EXCEL / DANH SÁCH MẪU)
+  const bulkAddClasses = async (newClassesList: Array<Omit<Classroom, 'id'>>) => {
+    if (!checkBghPermission()) return;
+    if (!newClassesList || newClassesList.length === 0) return;
+
+    if (isDemo && (classes.length + newClassesList.length) > 1) {
+      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+      setIsRegistrationModalOpen(true);
+      return;
+    }
+
+    const createdClasses: Classroom[] = newClassesList.map((item, idx) => ({
+      ...item,
+      id: `class-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`
+    }));
+
+    const nextClasses = [...classes, ...createdClasses];
+    setClasses(nextClasses);
+    classesRef.current = nextClasses;
+    if (!activeClassId && createdClasses.length > 0) {
+      setActiveClassId(createdClasses[0].id);
+    }
+
+    logUserActivity('CREATE_CLASS', `Tạo hàng loạt ${createdClasses.length} lớp học mới: ${createdClasses.map(c => c.name).join(', ')}`, {
+      count: createdClasses.length,
+      classes: createdClasses.map(c => ({ id: c.id, name: c.name }))
+    });
+
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      const nowTs = Date.now();
+      const isExecutive = Boolean(
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+
+      // Đồng bộ từng lớp cho từng giáo viên phụ trách & Supabase Cloud
+      for (const cls of createdClasses) {
+        const targetTeacher = (cls.teacherUsername || (isExecutive ? '' : currentUser.username)).trim().toLowerCase();
+        databaseService.updateAdminClass(cls, targetTeacher).catch(() => {});
+      }
+
+      if (isSuperAdmin) {
+        databaseService.syncAdminAllData(nextClasses, studentsRef.current.length > 0 ? studentsRef.current : students).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          classes: nextClasses,
+          updatedAt: nowTs
         };
         databaseService.saveUserData(currentUser.username, payload).then(() => {
           setDbSyncStatus('synced');
@@ -1565,8 +1706,20 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Immediate database synchronization
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const isExecutive = Boolean(
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+
+      // Cập nhật lớp học cho giáo viên được phân công & toàn hệ thống
+      const targetTeacher = (target.teacherUsername || (isExecutive ? '' : currentUser.username)).trim().toLowerCase();
+      databaseService.updateAdminClass(target, targetTeacher).catch(() => {});
+
       if (isSuperAdmin) {
-        databaseService.updateAdminClass(target).catch(() => {});
         databaseService.syncAdminAllData(nextClasses, studentsRef.current.length > 0 ? studentsRef.current : students).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();
@@ -1633,12 +1786,23 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const isExecutive = Boolean(
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+
+      // Xóa lớp khỏi giáo viên phụ trách và quản trị toàn hệ thống
+      databaseService.deleteClass(id, {
+        isSuperAdmin: isSuperAdmin || isExecutive,
+        teacherUsername: target?.teacherUsername,
+        currentUserId: currentUser.id
+      }).catch(() => {});
+
       if (isSuperAdmin) {
-        databaseService.deleteClass(id, {
-          isSuperAdmin: true,
-          teacherUsername: target?.teacherUsername,
-          currentUserId: currentUser.id
-        }).catch(() => {});
         databaseService.syncAdminAllData(remaining, remainingStudents).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();
@@ -1711,15 +1875,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const isExecutive = Boolean(
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin
+      );
+
+      ids.forEach(classId => {
+        const clsObj = targetClasses.find(c => c.id === classId);
+        databaseService.deleteClass(classId, {
+          isSuperAdmin: isSuperAdmin || isExecutive,
+          teacherUsername: clsObj?.teacherUsername,
+          currentUserId: currentUser.id
+        }).catch(() => {});
+      });
+
       if (isSuperAdmin) {
-        ids.forEach(classId => {
-          const clsObj = targetClasses.find(c => c.id === classId);
-          databaseService.deleteClass(classId, {
-            isSuperAdmin: true,
-            teacherUsername: clsObj?.teacherUsername,
-            currentUserId: currentUser.id
-          }).catch(() => {});
-        });
         databaseService.syncAdminAllData(remaining, remainingStudents).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();
@@ -1827,8 +2001,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const userSchool = currentUser.schoolName || '';
+      // 🌟 LIÊN THÔNG 3 CHIỀU TỨC THÌ: Giáo viên ↔ Quản trị trường ↔ Quản trị tối cao (adminquantri)
+      databaseService.updateAdminStudent(newStudent, currentUser.username, false, userSchool).catch(() => {});
+
       if (isSuperAdmin) {
-        databaseService.updateAdminStudent(newStudent).catch(() => {});
         databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();
@@ -1873,6 +2050,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Immediate database synchronization to Server & Supabase Cloud
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const userSchool = currentUser.schoolName || '';
+      // 🌟 LIÊN THÔNG 3 CHIỀU TỨC THÌ: Cập nhật đồng bộ tức thì cho Giáo viên, BGH và Quản trị tối cao
+      databaseService.updateAdminStudent(targetStudent, currentUser.username, false, userSchool).catch(() => {});
+
       if (isSuperAdmin) {
         const payload: UserClassroomData = {
           ...getCurrentUserData(),
@@ -1880,7 +2061,6 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           updatedAt: nowTs
         };
         databaseService.saveUserData(currentUser.username, payload).catch(() => {});
-        databaseService.updateAdminStudent(targetStudent).catch(() => {});
         databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();
@@ -1933,6 +2113,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const userSchool = currentUser.schoolName || '';
+      // 🌟 LIÊN THÔNG 3 CHIỀU TỨC THÌ: Xóa học sinh đồng bộ ở cả Quản trị trường và Quản trị tối cao
+      databaseService.updateAdminStudent({ id }, currentUser.username, true, userSchool).catch(() => {});
+
       if (isSuperAdmin) {
         databaseService.deleteStudent(id, {
           isSuperAdmin: true,
@@ -1984,6 +2168,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
     if (currentUser) {
       setDbSyncStatus('syncing');
+      const userSchool = currentUser.schoolName || '';
+      studentIds.forEach(id => {
+        databaseService.updateAdminStudent({ id }, currentUser.username, true, userSchool).catch(() => {});
+      });
+
       if (isSuperAdmin) {
         studentIds.forEach(id => {
           const st = students.find(s => s.id === id);
@@ -2125,9 +2314,43 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
     });
 
-    setStudents(prev => [...prev, ...newItems]);
+    const nextStudents = [...students, ...newItems];
+    setStudents(nextStudents);
+    studentsRef.current = nextStudents;
     const currentClass = classes.find(c => c.id === activeClassId);
     logUserActivity('BATCH_STUDENTS', `Thêm mới danh sách ${newItems.length} học sinh vào lớp ${currentClass?.name || ''}`);
+
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      const userSchool = currentUser.schoolName || '';
+      // 🌟 LIÊN THÔNG 3 CHIỀU TỨC THÌ: Cập nhật từng học sinh mới lên Quản trị trường và Quản trị tối cao
+      newItems.forEach(item => {
+        databaseService.updateAdminStudent(item, currentUser.username, false, userSchool).catch(() => {});
+      });
+
+      if (isSuperAdmin) {
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
   };
 
   // Tự động gán ảnh đại diện (mặc định hoạt hình hoặc ảnh thật demo) phân chia theo giới tính Nam/Nữ
@@ -2365,6 +2588,13 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
         databaseService.saveUserData(user.username, payload).catch(() => {});
       }
+
+      // 🌟 LIÊN THÔNG ĐIỂM SỐ 3 CHIỀU: Cập nhật học sinh có điểm thi đua thay đổi sang Quản trị trường và Quản trị tối cao
+      const userSchool = user.schoolName || '';
+      const affected = nextStudents.filter(s => studentIds.includes(s.id));
+      affected.forEach(st => {
+        databaseService.updateAdminStudent(st, user.username, false, userSchool).catch(() => {});
+      });
     }
   };
 
@@ -2431,6 +2661,13 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         };
         databaseService.saveUserData(user.username, payload).catch(() => {});
       }
+
+      // 🌟 LIÊN THÔNG ĐIỂM SỐ 3 CHIỀU: Cập nhật học sinh có điểm thi đua thay đổi sang Quản trị trường và Quản trị tối cao
+      const userSchool = user.schoolName || '';
+      const affected = nextStudents.filter(s => studentIds.includes(s.id));
+      affected.forEach(st => {
+        databaseService.updateAdminStudent(st, user.username, false, userSchool).catch(() => {});
+      });
     }
   };
 
@@ -3188,6 +3425,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       activeClassId,
       setActiveClassId,
       addClass,
+      bulkAddClasses,
       updateClass,
       deleteClass,
       bulkDeleteClasses,
@@ -3326,7 +3564,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isRegistrationModalOpen,
       setIsRegistrationModalOpen,
       demoWarningMessage,
-      setDemoWarningMessage
+      setDemoWarningMessage,
+      schoolBranches,
+      saveSchoolBranches,
+      reloadSchoolBranches
     }}>
       {children}
       {permissionAlert && (

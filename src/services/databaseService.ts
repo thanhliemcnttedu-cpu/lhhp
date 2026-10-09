@@ -1,11 +1,12 @@
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
-import { UserAccount, UserClassroomData, Classroom, Student, UserRole, SchoolEntity, LoginRoleScope, DailyAttendance, DailyBoardingMeal, PointTransaction } from '../types';
+import { UserAccount, UserClassroomData, Classroom, Student, UserRole, SchoolEntity, LoginRoleScope, DailyAttendance, DailyBoardingMeal, PointTransaction, SchoolBranch, SchoolCampus } from '../types';
 import { generateStudentsForClass } from '../utils/studentGenerator';
 
 export const LOCAL_AUTH_KEY = 'lop_hoc_current_user_v2';
 export const LOCAL_SESSION_KEY = 'lop_hoc_session_time_v2';
 export const LOCAL_DB_PREFIX = 'lop_hoc_user_db_';
 export const LOCAL_SCHOOLS_KEY = 'lop_hoc_schools_list_v1';
+export const LOCAL_BRANCHES_PREFIX = 'lop_hoc_school_branches_';
 export const SESSION_TIMEOUT_MS = 300 * 60 * 1000; // 300 minutes = 5 hours
 
 // Unique Client ID per tab/browser instance to prevent echo loops
@@ -1642,6 +1643,100 @@ export const databaseService = {
   },
 
   async updateAdminClass(classData: any, targetUsername?: string, isDelete = false): Promise<boolean> {
+    const username = (targetUsername || classData?.teacherUsername || '').trim().toLowerCase();
+    const nowTs = Date.now();
+    let isSuccess = false;
+
+    // 1. Direct Supabase Cloud Dual-Write (Đặc biệt quan trọng trên Vercel / Cloud)
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        // A. Cập nhật cho giáo viên được gán lớp (nếu có username)
+        if (username) {
+          const { data: userRow } = await supabase.from('user_classroom_data').select('data').eq('username', username).maybeSingle();
+          const curData = userRow?.data || { classes: [], students: [] };
+          let curClasses: Classroom[] = Array.isArray(curData.classes) ? curData.classes : [];
+          if (isDelete) {
+            curClasses = curClasses.filter((c: any) => c.id !== classData.id);
+          } else {
+            const idx = curClasses.findIndex((c: any) => c.id === classData.id);
+            if (idx >= 0) {
+              curClasses[idx] = { ...curClasses[idx], ...classData, teacherUsername: username };
+            } else {
+              curClasses.push({ ...classData, teacherUsername: username });
+            }
+          }
+          await supabase.from('user_classroom_data').upsert({
+            username,
+            data: { ...curData, classes: curClasses, updatedAt: nowTs },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'username' });
+
+          // Cập nhật LocalStorage cho teacher
+          try {
+            const localKey = LOCAL_DB_PREFIX + username;
+            const cached = localStorage.getItem(localKey);
+            const cachedData = cached ? JSON.parse(cached) : curData;
+            cachedData.classes = curClasses;
+            cachedData.updatedAt = nowTs;
+            localStorage.setItem(localKey, JSON.stringify(cachedData));
+          } catch (_) {}
+        }
+
+        // B. Cập nhật cho admin & adminquantri (Toàn hệ thống và quản trị tối cao)
+        for (const adminU of ['admin', 'adminquantri']) {
+          const { data: aRow } = await supabase.from('user_classroom_data').select('data').eq('username', adminU).maybeSingle();
+          const aData = aRow?.data || { classes: [], students: [] };
+          let aClasses: Classroom[] = Array.isArray(aData.classes) ? aData.classes : [];
+          if (isDelete) {
+            aClasses = aClasses.filter((c: any) => c.id !== classData.id);
+          } else {
+            const aIdx = aClasses.findIndex((c: any) => c.id === classData.id);
+            if (aIdx >= 0) {
+              aClasses[aIdx] = { ...aClasses[aIdx], ...classData, teacherUsername: username || aClasses[aIdx].teacherUsername };
+            } else {
+              aClasses.push({ ...classData, teacherUsername: username || classData.teacherUsername });
+            }
+          }
+          await supabase.from('user_classroom_data').upsert({
+            username: adminU,
+            data: { ...aData, classes: aClasses, updatedAt: nowTs },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'username' });
+
+          try {
+            const localKey = LOCAL_DB_PREFIX + adminU;
+            const cached = localStorage.getItem(localKey);
+            const cachedData = cached ? JSON.parse(cached) : aData;
+            cachedData.classes = aClasses;
+            cachedData.updatedAt = nowTs;
+            localStorage.setItem(localKey, JSON.stringify(cachedData));
+          } catch (_) {}
+        }
+
+        // Broadcast realtime change
+        initSupabaseRealtime();
+        if (realtimeChannel) {
+          realtimeChannel.send({
+            type: 'broadcast',
+            event: 'user_data_updated',
+            payload: {
+              username: username || 'all',
+              targetUsername: username || 'all',
+              originClientId: CLIENT_ID,
+              timestamp: nowTs,
+              message: isDelete ? `Đã xóa lớp học: ${classData.name || classData.id}` : `Đã tạo/cập nhật lớp học: ${classData.name}`
+            }
+          }).catch(() => {});
+        }
+
+        isSuccess = true;
+      } catch (sbErr) {
+        console.warn('Supabase updateAdminClass error:', sbErr);
+      }
+    }
+
+    // 2. Server API fallback (cho môi trường local server)
     try {
       const res = await fetch('/api/admin/update-class', {
         method: 'POST',
@@ -1649,19 +1744,132 @@ export const databaseService = {
           'Content-Type': 'application/json',
           'X-Client-Id': CLIENT_ID
         },
-        body: JSON.stringify({ classData, targetUsername, isDelete })
+        body: JSON.stringify({ classData, targetUsername: username, isDelete })
       });
       if (res.ok) {
         const data = await res.json();
-        return data.success;
+        if (data.success) isSuccess = true;
       }
     } catch (err) {
-      console.warn('Lỗi cập nhật lớp học từ admin:', err);
+      // Bỏ qua lỗi kết nối backend express khi chạy thuần tĩnh trên Vercel
     }
-    return false;
+
+    // Multi-tab BroadcastChannel
+    try {
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage({
+          type: 'DATA_CHANGED',
+          username: username || 'all',
+          originClientId: CLIENT_ID,
+          timestamp: nowTs
+        });
+      }
+      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        username: username || 'all',
+        originClientId: CLIENT_ID,
+        timestamp: nowTs,
+        r: Math.random()
+      }));
+    } catch (_) {}
+
+    return isSuccess;
   },
 
-  async updateAdminStudent(studentData: any, targetUsername?: string, isDelete = false): Promise<boolean> {
+  async updateAdminStudent(studentData: any, targetUsername?: string, isDelete = false, schoolName?: string): Promise<boolean> {
+    const username = (targetUsername || '').trim().toLowerCase();
+    const nowTs = Date.now();
+    let isSuccess = false;
+
+    // 1. Direct Supabase Cloud Dual-Write
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        if (username) {
+          const { data: userRow } = await supabase.from('user_classroom_data').select('data').eq('username', username).maybeSingle();
+          const curData = userRow?.data || { classes: [], students: [] };
+          let curStudents: Student[] = Array.isArray(curData.students) ? curData.students : [];
+          if (isDelete) {
+            curStudents = curStudents.filter((s: any) => s.id !== studentData.id);
+          } else {
+            const idx = curStudents.findIndex((s: any) => s.id === studentData.id);
+            if (idx >= 0) {
+              curStudents[idx] = { ...curStudents[idx], ...studentData };
+            } else {
+              curStudents.push(studentData);
+            }
+          }
+          await supabase.from('user_classroom_data').upsert({
+            username,
+            data: { ...curData, students: curStudents, updatedAt: nowTs },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'username' });
+
+          try {
+            const localKey = LOCAL_DB_PREFIX + username;
+            const cached = localStorage.getItem(localKey);
+            const cachedData = cached ? JSON.parse(cached) : curData;
+            cachedData.students = curStudents;
+            cachedData.updatedAt = nowTs;
+            localStorage.setItem(localKey, JSON.stringify(cachedData));
+          } catch (_) {}
+        }
+
+        // Cập nhật cho admin & adminquantri (Toàn hệ thống và Quản trị tối cao)
+        for (const adminU of ['admin', 'adminquantri']) {
+          const { data: aRow } = await supabase.from('user_classroom_data').select('data').eq('username', adminU).maybeSingle();
+          const aData = aRow?.data || { classes: [], students: [] };
+          let aStudents: Student[] = Array.isArray(aData.students) ? aData.students : [];
+          if (isDelete) {
+            aStudents = aStudents.filter((s: any) => s.id !== studentData.id);
+          } else {
+            const aIdx = aStudents.findIndex((s: any) => s.id === studentData.id);
+            if (aIdx >= 0) {
+              aStudents[aIdx] = { ...aStudents[aIdx], ...studentData };
+            } else {
+              aStudents.push(studentData);
+            }
+          }
+          await supabase.from('user_classroom_data').upsert({
+            username: adminU,
+            data: { ...aData, students: aStudents, updatedAt: nowTs },
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'username' });
+
+          try {
+            const localKey = LOCAL_DB_PREFIX + adminU;
+            const cached = localStorage.getItem(localKey);
+            const cachedData = cached ? JSON.parse(cached) : aData;
+            cachedData.students = aStudents;
+            cachedData.updatedAt = nowTs;
+            localStorage.setItem(localKey, JSON.stringify(cachedData));
+          } catch (_) {}
+        }
+
+        // Phát Supabase Realtime broadcast liên thông 3 chiều tức thì (Giáo viên ↔ Quản trị trường ↔ Quản trị tối cao)
+        initSupabaseRealtime();
+        if (realtimeChannel) {
+          realtimeChannel.send({
+            type: 'broadcast',
+            event: 'user_data_updated',
+            payload: {
+              username: username || 'all',
+              targetUsername: username || 'all',
+              schoolName: schoolName || '',
+              studentId: studentData.id,
+              originClientId: CLIENT_ID,
+              timestamp: nowTs,
+              message: isDelete ? `Đã xóa học sinh: ${studentData.name || studentData.id}` : `Đã cập nhật học sinh: ${studentData.name}`
+            }
+          }).catch(() => {});
+        }
+
+        isSuccess = true;
+      } catch (sbErr) {
+        console.warn('Supabase updateAdminStudent error:', sbErr);
+      }
+    }
+
+    // 2. Server API fallback
     try {
       const res = await fetch('/api/admin/update-student', {
         method: 'POST',
@@ -1669,16 +1877,152 @@ export const databaseService = {
           'Content-Type': 'application/json',
           'X-Client-Id': CLIENT_ID
         },
-        body: JSON.stringify({ studentData, targetUsername, isDelete })
+        body: JSON.stringify({ studentData, targetUsername: username, isDelete, schoolName })
       });
       if (res.ok) {
         const data = await res.json();
-        return data.success;
+        if (data.success) isSuccess = true;
       }
     } catch (err) {
-      console.warn('Lỗi cập nhật học sinh từ admin:', err);
+      // Bỏ qua lỗi kết nối backend express khi chạy thuần tĩnh trên Vercel
     }
-    return false;
+
+    // 3. Local Broadcast Channel & ping
+    try {
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage({
+          type: 'STUDENT_CHANGED',
+          username: username || 'all',
+          studentData,
+          schoolName: schoolName || '',
+          originClientId: CLIENT_ID,
+          timestamp: nowTs
+        });
+      }
+      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        username: username || 'all',
+        schoolName: schoolName || '',
+        originClientId: CLIENT_ID,
+        timestamp: nowTs,
+        r: Math.random()
+      }));
+    } catch (_) {}
+
+    return isSuccess;
+  },
+
+  /**
+   * 🌟 CẤU HÌNH PHÂN HIỆU & ĐIỂM TRƯỜNG THUỘC PHÂN HIỆU CHO TỪNG TRƯỜNG HỌC
+   * Đảm bảo tính đồng nhất 100% dữ liệu từ GVCN lên Quản trị trường & Quản trị tối cao
+   */
+  async getSchoolBranches(schoolName: string): Promise<SchoolBranch[]> {
+    const cleanSchool = (schoolName || '').trim();
+    if (!cleanSchool) return [];
+
+    const cacheKey = LOCAL_BRANCHES_PREFIX + cleanSchool.toLowerCase();
+
+    // 1. Direct Supabase Cloud (ưu tiên tải realtime từ đám mây)
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        const configKey = 'school_branches:' + cleanSchool.toLowerCase();
+        const { data: row } = await supabase
+          .from('user_classroom_data')
+          .select('data')
+          .eq('username', configKey)
+          .maybeSingle();
+
+        if (row?.data?.branches && Array.isArray(row.data.branches) && row.data.branches.length > 0) {
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(row.data.branches));
+          } catch (_) {}
+          return row.data.branches;
+        }
+      } catch (err) {
+        console.warn('Supabase getSchoolBranches error:', err);
+      }
+    }
+
+    // 2. LocalStorage Fallback
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (_) {}
+
+    return [];
+  },
+
+  async saveSchoolBranches(schoolName: string, branches: SchoolBranch[]): Promise<boolean> {
+    const cleanSchool = (schoolName || '').trim();
+    if (!cleanSchool) return false;
+
+    const cacheKey = LOCAL_BRANCHES_PREFIX + cleanSchool.toLowerCase();
+    const nowTs = Date.now();
+    let isSuccess = false;
+
+    // 1. LocalStorage First
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(branches));
+      isSuccess = true;
+    } catch (_) {}
+
+    // 2. Supabase Cloud Database Upsert
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        const configKey = 'school_branches:' + cleanSchool.toLowerCase();
+        const { error } = await supabase.from('user_classroom_data').upsert({
+          username: configKey,
+          data: {
+            schoolName: cleanSchool,
+            branches,
+            updatedAt: nowTs
+          },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'username' });
+
+        if (!error) {
+          isSuccess = true;
+        }
+      } catch (err) {
+        console.warn('Supabase saveSchoolBranches error:', err);
+      }
+    }
+
+    // 3. Realtime Broadcast tới toàn bộ Giáo viên & BGH trong trường
+    try {
+      initSupabaseRealtime();
+      if (realtimeChannel) {
+        realtimeChannel.send({
+          type: 'broadcast',
+          event: 'school_branches_updated',
+          payload: {
+            schoolName: cleanSchool,
+            branches,
+            originClientId: CLIENT_ID,
+            timestamp: nowTs,
+            message: `Cập nhật phân hiệu & điểm trường: ${cleanSchool}`
+          }
+        }).catch(() => {});
+      }
+    } catch (_) {}
+
+    try {
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage({
+          type: 'SCHOOL_BRANCHES_UPDATED',
+          schoolName: cleanSchool,
+          branches,
+          originClientId: CLIENT_ID,
+          timestamp: nowTs
+        });
+      }
+    } catch (_) {}
+
+    return isSuccess;
   },
 
   /**

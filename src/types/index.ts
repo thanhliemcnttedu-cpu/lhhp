@@ -198,6 +198,24 @@ export interface Classroom {
   parentCommittee?: ParentCommittee; // Ban đại diện phụ huynh học sinh
 }
 
+export interface SchoolCampus {
+  id: string;
+  name: string; // Tên điểm trường (VD: "Điểm Trung tâm", "Điểm Suối Cát"...)
+  address?: string; // Địa chỉ nếu có
+}
+
+export interface SchoolBranch {
+  id: string;
+  name: string; // Tên phân hiệu (VD: "Điểm chính", "Phân hiệu 1", "Phân hiệu Bản Cát"...)
+  campuses: SchoolCampus[]; // Danh sách các điểm trường trực thuộc phân hiệu này
+}
+
+export interface SchoolBranchConfig {
+  schoolName: string;
+  branches: SchoolBranch[];
+  updatedAt: number;
+}
+
 export interface Subject {
   id: string;
   name: string;

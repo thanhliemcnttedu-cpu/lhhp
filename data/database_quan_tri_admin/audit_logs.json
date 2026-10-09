@@ -1,5 +1,23 @@
 [
   {
+    "id": "log-1791539855566-0seoob",
+    "timestamp": 1791539855566,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "RESTORE_DATA",
+    "description": "Khôi phục độc lập dữ liệu từ file JSON Sao_Luu_Lop_Hoc_Hanh_Phuc_adminquantri_admin_2026-10-09.json"
+  },
+  {
+    "id": "log-1791539726584-qab66r",
+    "timestamp": 1791539726584,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "OTHER",
+    "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+  },
+  {
     "id": "log-1791534308741-huhoee",
     "timestamp": 1791534308741,
     "username": "adminquantri",

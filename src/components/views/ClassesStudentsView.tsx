@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { useClassroom } from '../../context/ClassroomContext';
-import { Student, Classroom, Subject, getStudentRoleInfo, CLASS_OFFICER_ROLES, getStudentRolesList } from '../../types';
+import { Student, Classroom, Subject, getStudentRoleInfo, CLASS_OFFICER_ROLES, getStudentRolesList, SchoolBranch, SchoolCampus } from '../../types';
 import { parseBulkStudentInput } from '../../utils/genderGuesser';
 import { compressImage } from '../../utils/imageCompressor';
 import { AvatarEditorModal } from '../modals/AvatarEditorModal';
@@ -70,7 +70,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   onNavigate 
 }) => {
   const { 
-    classes, activeClassId, setActiveClassId, addClass, updateClass, deleteClass,
+    classes, activeClassId, setActiveClassId, addClass, bulkAddClasses, updateClass, deleteClass,
     bulkDeleteClasses, bulkUpdateClasses, deleteAllClasses,
     students, currentClassStudents, addStudent, updateStudent, deleteStudent, 
     bulkAddStudents, autoAssignRealAvatarsToClass, autoAssignAvatarsToClass, clearClassStudents, resetStudentsCoins,
@@ -78,7 +78,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     toggleSubjectApplied, setAppliedSubjects, resetDefaultSubjects,
     criteria, teacherProfile, updateTeacherProfile, resetToDefaultData,
     teacherRole, subjectTeacherConfig, seedSample20SubjectClasses,
-    isAdmin, allTeachers, allUsers, currentUser, syncDatabaseNow
+    isAdmin, allTeachers, allUsers, currentUser, syncDatabaseNow,
+    schoolBranches, saveSchoolBranches, reloadSchoolBranches
   } = useClassroom();
 
   const [activeTabMode, setActiveTabMode] = useState<'classes' | 'students'>(mode);
@@ -341,6 +342,25 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [newParentMember2Name, setNewParentMember2Name] = useState('Phạm Thị Lan');
   const [newParentMember2Phone, setNewParentMember2Phone] = useState('0903 890 123');
 
+  // 🌟 MODAL & FORM IMPORT DANH SÁCH LỚP HỌC HÀNG LOẠT (User Request: Bulk Class Import)
+  const [isImportClassesModalOpen, setIsImportClassesModalOpen] = useState(false);
+  const [excelParsedClasses, setExcelParsedClasses] = useState<Array<Omit<Classroom, 'id'>>>([]);
+  const [isClassesPreviewOpen, setIsClassesPreviewOpen] = useState(false);
+  const importClassesFileInputRef = useRef<HTMLInputElement>(null);
+
+  // 🏛️ CẤU HÌNH DANH MỤC PHÂN HIỆU & ĐIỂM TRƯỜNG TOÀN TRƯỜNG (User Request)
+  const [isSchoolBranchModalOpen, setIsSchoolBranchModalOpen] = useState(false);
+  const [tempBranches, setTempBranches] = useState<SchoolBranch[]>([]);
+  const [newBranchInputName, setNewBranchInputName] = useState('');
+  const [newCampusInputs, setNewCampusInputs] = useState<{ [branchId: string]: string }>({});
+  const [isSavingBranches, setIsSavingBranches] = useState(false);
+
+  // Cờ chuyển đổi giữa chọn từ danh mục trường và nhập tự do
+  const [isCustomNewBranch, setIsCustomNewBranch] = useState(false);
+  const [isCustomNewCampus, setIsCustomNewCampus] = useState(false);
+  const [isCustomEditBranch, setIsCustomEditBranch] = useState(false);
+  const [isCustomEditCampus, setIsCustomEditCampus] = useState(false);
+
   const newClassAvatarInputRef = useRef<HTMLInputElement>(null);
   const editClassAvatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -546,6 +566,179 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     confetti({ particleCount: 40, spread: 60 });
   };
 
+  // 🌟 TẢI FILE MẪU EXCEL KHỞI TẠO LỚP HỌC HÀNG LOẠT
+  const handleDownloadClassExcelTemplate = () => {
+    const templateRows = [
+      {
+        'STT': 1,
+        'Tên lớp': '1A1',
+        'Khối lớp': 'Khối 1',
+        'Năm học': '2026–2027',
+        'Tên giáo viên chủ nhiệm': 'Lê Thị Việt Hà',
+        'Tài khoản GVCN': 'lethivietha',
+        'Phân hiệu': 'Trung tâm',
+        'Điểm trường': 'Điểm Trung tâm',
+        'Slogan': 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng'
+      },
+      {
+        'STT': 2,
+        'Tên lớp': '1A2',
+        'Khối lớp': 'Khối 1',
+        'Năm học': '2026–2027',
+        'Tên giáo viên chủ nhiệm': 'Hoàng Thị Lợi',
+        'Tài khoản GVCN': 'hoangthiloi',
+        'Phân hiệu': 'Trung tâm',
+        'Điểm trường': 'Điểm Trung tâm',
+        'Slogan': 'Mỗi ngày đến trường là một ngày vui'
+      },
+      {
+        'STT': 3,
+        'Tên lớp': '2A1',
+        'Khối lớp': 'Khối 2',
+        'Năm học': '2026–2027',
+        'Tên giáo viên chủ nhiệm': 'Lò Văn Nghiêm',
+        'Tài khoản GVCN': 'lovanghiem',
+        'Phân hiệu': 'Trung tâm',
+        'Điểm trường': 'Điểm Trung tâm',
+        'Slogan': 'Đoàn kết, kỷ luật, yêu thương'
+      },
+      {
+        'STT': 4,
+        'Tên lớp': '3A1',
+        'Khối lớp': 'Khối 3',
+        'Năm học': '2026–2027',
+        'Tên giáo viên chủ nhiệm': 'Nguyễn Thị Loan',
+        'Tài khoản GVCN': 'nguyenthiloan',
+        'Phân hiệu': 'Phân hiệu 2',
+        'Điểm trường': 'Điểm Suối Cát',
+        'Slogan': 'Chăm chỉ học tập, rèn đức luyện tài'
+      },
+      {
+        'STT': 5,
+        'Tên lớp': '4A1',
+        'Khối lớp': 'Khối 4',
+        'Năm học': '2026–2027',
+        'Tên giáo viên chủ nhiệm': 'Trần Thị Luận',
+        'Tài khoản GVCN': 'tranthiluan',
+        'Phân hiệu': 'Trung tâm',
+        'Điểm trường': 'Điểm Trung tâm',
+        'Slogan': 'Tự tin tỏa sáng, vươn tầm ước mơ'
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateRows);
+    ws['!cols'] = [
+      { wch: 6 },  // STT
+      { wch: 12 }, // Tên lớp
+      { wch: 12 }, // Khối lớp
+      { wch: 14 }, // Năm học
+      { wch: 26 }, // Tên giáo viên chủ nhiệm
+      { wch: 20 }, // Tài khoản GVCN
+      { wch: 18 }, // Phân hiệu
+      { wch: 20 }, // Điểm trường
+      { wch: 45 }  // Slogan
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Danh_Sach_Lop_Hoc");
+    const schoolNameSlug = (currentUser?.schoolName || 'Nha_Truong').replace(/[^a-zA-Z0-9]/g, '_');
+    XLSX.writeFile(wb, `Mau_Danh_Sach_Lop_Hoc_${schoolNameSlug}.xlsx`);
+  };
+
+  // 🌟 ĐỌC FILE EXCEL KHỞI TẠO HÀNG LOẠT LỚP HỌC
+  const handleUploadClassExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const rawData: any[] = XLSX.utils.sheet_to_json(ws);
+
+        const parsed: Array<Omit<Classroom, 'id'>> = [];
+
+        rawData.forEach((row, idx) => {
+          const classNameVal = row['Tên lớp'] || row['Tên Lớp'] || row['Lớp'] || row['ClassName'] || row['Class'] || row['name'];
+          if (!classNameVal || typeof classNameVal !== 'string' || !classNameVal.trim()) return;
+
+          const gradeVal = row['Khối lớp'] || row['Khối'] || row['Khoi'] || row['grade'] || 'Khối 1';
+          const yearVal = row['Năm học'] || row['Năm Học'] || row['Nam hoc'] || row['academicYear'] || '2026–2027';
+          const teacherNameVal = row['Tên giáo viên chủ nhiệm'] || row['Tên GVCN'] || row['Giáo viên'] || row['teacherName'] || '';
+          let teacherUsernameVal = (row['Tài khoản GVCN'] || row['Tài khoản'] || row['Username'] || row['teacherUsername'] || '').trim().toLowerCase();
+
+          // Tự động đối chiếu tài khoản nếu người dùng chỉ nhập họ tên
+          if (!teacherUsernameVal && teacherNameVal) {
+            const matchedTeacher = allTeachers.find(t => 
+              t.fullName.toLowerCase().trim() === teacherNameVal.toLowerCase().trim() ||
+              t.fullName.toLowerCase().includes(teacherNameVal.toLowerCase().trim())
+            );
+            if (matchedTeacher) {
+              teacherUsernameVal = matchedTeacher.username.toLowerCase();
+            }
+          }
+
+          const branchVal = row['Phân hiệu'] || row['Phan hieu'] || row['branch'] || '';
+          const campusVal = row['Điểm trường'] || row['Diem truong'] || row['campus'] || '';
+          const sloganVal = row['Slogan'] || row['Khẩu hiệu'] || row['slogan'] || 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng';
+
+          const colorPick = CLASS_COLORS[idx % CLASS_COLORS.length];
+          const avatarPick = CLASS_AVATARS[idx % CLASS_AVATARS.length].url;
+
+          parsed.push({
+            name: String(classNameVal).trim(),
+            grade: String(gradeVal).trim(),
+            academicYear: String(yearVal).trim(),
+            teacherName: String(teacherNameVal).trim() || 'Giáo viên Chủ nhiệm',
+            teacherUsername: teacherUsernameVal || (currentUser?.username || ''),
+            teacherRole: 'homeroom',
+            isHomeroom: true,
+            schoolName: currentUser?.schoolName || undefined,
+            branch: String(branchVal).trim() || undefined,
+            campus: String(campusVal).trim() || undefined,
+            slogan: String(sloganVal).trim(),
+            color: colorPick,
+            avatar: avatarPick,
+            originalAvatar: avatarPick,
+            avatarScale: 1,
+            avatarPosition: { x: 0, y: 0 }
+          });
+        });
+
+        if (parsed.length > 0) {
+          setExcelParsedClasses(parsed);
+          setIsClassesPreviewOpen(true);
+        } else {
+          alert('Không tìm thấy dữ liệu lớp học trong file Excel. Vui lòng kiểm tra các tiêu đề cột: "Tên lớp", "Khối lớp", "Tên giáo viên chủ nhiệm", "Tài khoản GVCN".');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi đọc file Excel. Vui lòng đảm bảo file có định dạng .xlsx, .xls hoặc .csv hợp lệ.');
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  // 🌟 XÁC NHẬN TẠO HÀNG LOẠT LỚP HỌC TỪ BẢNG XEM TRƯỚC
+  const handleConfirmBulkAddClasses = () => {
+    if (excelParsedClasses.length === 0) return;
+    if (isDemoAccount && (classes.length + excelParsedClasses.length) > 1) {
+      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+      return;
+    }
+
+    bulkAddClasses(excelParsedClasses);
+    setIsClassesPreviewOpen(false);
+    setIsImportClassesModalOpen(false);
+    setExcelParsedClasses([]);
+    confetti({ particleCount: 60, spread: 80 });
+  };
+
   const handleSaveEditClass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingClass || !editingClass.name.trim()) return;
@@ -585,6 +778,98 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     }
 
     setEditingClass(null);
+  };
+
+  // 🏛️ CÁC HÀM XỬ LÝ CẤU HÌNH PHÂN HIỆU & ĐIỂM TRƯỜNG
+  const handleOpenSchoolBranchModal = () => {
+    if (schoolBranches && schoolBranches.length > 0) {
+      setTempBranches(JSON.parse(JSON.stringify(schoolBranches)));
+    } else {
+      // Khởi tạo mẫu thông minh nếu trường chưa từng khai báo
+      setTempBranches([
+        {
+          id: `branch-${Date.now()}-1`,
+          name: 'Điểm chính (Khu trung tâm)',
+          campuses: [
+            { id: `campus-${Date.now()}-1`, name: 'Điểm Trung tâm' }
+          ]
+        }
+      ]);
+    }
+    setNewBranchInputName('');
+    setNewCampusInputs({});
+    setIsSchoolBranchModalOpen(true);
+  };
+
+  const handleAddTempBranch = () => {
+    const trimmed = newBranchInputName.trim();
+    if (!trimmed) return;
+    const newBranch: SchoolBranch = {
+      id: `branch-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      name: trimmed,
+      campuses: []
+    };
+    setTempBranches(prev => [...prev, newBranch]);
+    setNewBranchInputName('');
+  };
+
+  const handleRemoveTempBranch = (branchId: string) => {
+    setTempBranches(prev => prev.filter(b => b.id !== branchId));
+  };
+
+  const handleUpdateTempBranchName = (branchId: string, name: string) => {
+    setTempBranches(prev => prev.map(b => b.id === branchId ? { ...b, name } : b));
+  };
+
+  const handleAddTempCampus = (branchId: string) => {
+    const val = (newCampusInputs[branchId] || '').trim();
+    if (!val) return;
+    setTempBranches(prev => prev.map(b => {
+      if (b.id !== branchId) return b;
+      const newCampus: SchoolCampus = {
+        id: `campus-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        name: val
+      };
+      return {
+        ...b,
+        campuses: [...(b.campuses || []), newCampus]
+      };
+    }));
+    setNewCampusInputs(prev => ({ ...prev, [branchId]: '' }));
+  };
+
+  const handleRemoveTempCampus = (branchId: string, campusId: string) => {
+    setTempBranches(prev => prev.map(b => {
+      if (b.id !== branchId) return b;
+      return {
+        ...b,
+        campuses: (b.campuses || []).filter(c => c.id !== campusId)
+      };
+    }));
+  };
+
+  const handleSaveAllSchoolBranches = async () => {
+    const targetSchool = currentUser?.schoolName || '';
+    if (!targetSchool) {
+      alert('Vui lòng kiểm tra lại thông tin nhà trường trước khi lưu cấu hình.');
+      return;
+    }
+    setIsSavingBranches(true);
+    try {
+      const ok = await saveSchoolBranches(tempBranches);
+      if (ok) {
+        confetti({ particleCount: 50, spread: 70 });
+        setIsSchoolBranchModalOpen(false);
+      } else {
+        alert('Đã lưu cấu hình phân hiệu và điểm trường thành công!');
+        setIsSchoolBranchModalOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Không thể lưu cấu hình. Vui lòng thử lại.');
+    } finally {
+      setIsSavingBranches(false);
+    }
   };
 
   const handleConfirmDeleteClass = () => {
@@ -1600,6 +1885,59 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </button>
               )}
 
+              {/* Input file ẩn cho upload excel lớp học */}
+              <input
+                type="file"
+                ref={importClassesFileInputRef}
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={handleUploadClassExcel}
+              />
+
+              {/* 🏛️ Nút Cấu hình Phân hiệu & Điểm trường: Dành cho Quản trị nhà trường & Quản trị tối cao (User Request) */}
+              {(isSchoolScopeAccount || isSuperAdmin || isAdmin) && (
+                <button
+                  type="button"
+                  onClick={handleOpenSchoolBranchModal}
+                  className="px-3.5 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white border-2 border-purple-400 rounded-2xl font-black text-xs md:text-sm flex items-center gap-1.5 transition-all hover-zoom-btn shadow-md shadow-purple-600/25 uppercase shrink-0"
+                  title="Khai báo và quản lý danh mục Phân hiệu, Điểm trường trực thuộc nhà trường"
+                >
+                  <Building2 className="w-4 h-4 text-amber-300" />
+                  <span>PHÂN HIỆU & ĐIỂM TRƯỜNG</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleDownloadClassExcelTemplate}
+                className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-2 border-emerald-300 rounded-2xl font-black text-xs md:text-sm flex items-center gap-1.5 transition-all hover-zoom-btn shadow-xs uppercase"
+                title="Tải file Excel mẫu danh sách lớp học để điền thông tin và tạo hàng loạt"
+              >
+                <Download className="w-4 h-4 text-emerald-700" />
+                <span>MẪU EXCEL LỚP</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isClassLimitReached}
+                onClick={() => {
+                  if (isClassLimitReached) {
+                    alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                    return;
+                  }
+                  importClassesFileInputRef.current?.click();
+                }}
+                className={`px-3.5 py-2.5 rounded-2xl font-black text-xs md:text-sm flex items-center gap-1.5 transition-all uppercase border-2 ${
+                  isClassLimitReached
+                    ? 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60 shadow-none'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 hover-zoom-btn shadow-sm shadow-emerald-600/25'
+                }`}
+                title={isClassLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Tải lên file Excel để tạo hàng loạt lớp học'}
+              >
+                <Upload className="w-4 h-4" />
+                <span>NHẬP LỚP TỪ EXCEL</span>
+              </button>
+
               <button
                 type="button"
                 disabled={isClassLimitReached}
@@ -1741,6 +2079,35 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     <span>Khôi phục lớp mẫu 4A1 (30 HS)</span>
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={handleDownloadClassExcelTemplate}
+                  className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl font-black text-xs inline-flex items-center gap-1.5 uppercase transition-all hover-zoom-btn shadow-xs"
+                  title="Tải file Excel mẫu danh sách lớp học để điền thông tin và tạo hàng loạt"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>MẪU EXCEL LỚP</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isClassLimitReached}
+                  onClick={() => {
+                    if (isClassLimitReached) {
+                      alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
+                      return;
+                    }
+                    importClassesFileInputRef.current?.click();
+                  }}
+                  className={`px-3.5 py-2 rounded-xl font-black text-xs inline-flex items-center gap-1.5 uppercase transition-all ${
+                    isClassLimitReached
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover-zoom-btn'
+                  }`}
+                  title={isClassLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Tải lên file Excel để tạo hàng loạt lớp học'}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>NHẬP TỪ EXCEL</span>
+                </button>
                 <button
                   disabled={isClassLimitReached}
                   onClick={() => {
@@ -3384,14 +3751,56 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tên giáo viên chủ nhiệm</label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Cô Trịnh Thị Hương"
-                  value={newClassTeacher}
-                  onChange={(e) => setNewClassTeacher(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">Tên giáo viên chủ nhiệm *</label>
+                  {isAdmin && relevantTeachers.length > 0 && (
+                    <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                      {relevantTeachers.length} GV trong trường
+                    </span>
+                  )}
+                </div>
+
+                {isAdmin && relevantTeachers.length > 0 ? (
+                  <div className="space-y-2">
+                    <select
+                      value={newClassAssignedUsername}
+                      onChange={(e) => {
+                        const uVal = e.target.value;
+                        setNewClassAssignedUsername(uVal);
+                        const foundTeacher = allTeachers.find(t => t.username.toLowerCase() === uVal.toLowerCase());
+                        if (foundTeacher) {
+                          setNewClassTeacher(foundTeacher.fullName);
+                        }
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">-- Chọn tài khoản giáo viên nhận lớp --</option>
+                      {relevantTeachers.map(t => (
+                        <option key={t.username} value={t.username}>
+                          {t.fullName} ({t.username}) - {t.schoolName || 'Nhà trường'}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      placeholder="Hoặc gõ tên giáo viên hiển thị trên lớp..."
+                      value={newClassTeacher}
+                      onChange={(e) => setNewClassTeacher(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="Ví dụ: Cô Trịnh Thị Hương"
+                    value={newClassTeacher}
+                    onChange={(e) => setNewClassTeacher(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -3420,31 +3829,103 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
               </div>
 
-              {/* Phân hiệu & Điểm trường (Tương thích ngược / Quản lý đa tầng) */}
+              {/* Phân hiệu & Điểm trường (Đồng nhất dữ liệu chuẩn từ Quản trị nhà trường) */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    🏛️ Phân hiệu
-                  </label>
-                  <input
-                    type="text"
-                    value={newClassBranch}
-                    onChange={(e) => setNewClassBranch(e.target.value)}
-                    placeholder="Ví dụ: Phân hiệu 1, Cơ sở A..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      🏛️ Phân hiệu
+                    </label>
+                    {schoolBranches.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomNewBranch(!isCustomNewBranch)}
+                        className="text-[10px] text-indigo-600 hover:underline font-bold"
+                      >
+                        {isCustomNewBranch ? '📋 Chọn từ danh mục' : '✏️ Nhập tự do'}
+                      </button>
+                    )}
+                  </div>
+                  {schoolBranches.length > 0 && !isCustomNewBranch ? (
+                    <select
+                      value={newClassBranch}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewClassBranch(val);
+                        const found = schoolBranches.find(b => b.name === val);
+                        if (found && found.campuses && found.campuses.length > 0) {
+                          setNewClassCampus(found.campuses[0].name);
+                        } else {
+                          setNewClassCampus('');
+                        }
+                      }}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">-- Chọn Phân hiệu nhà trường --</option>
+                      {schoolBranches.map(b => (
+                        <option key={b.id || b.name} value={b.name}>
+                          🏛️ {b.name} ({b.campuses?.length || 0} điểm trường)
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={newClassBranch}
+                      onChange={(e) => setNewClassBranch(e.target.value)}
+                      placeholder="Ví dụ: Phân hiệu 1, Cơ sở A..."
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                    />
+                  )}
                 </div>
+
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    📍 Điểm trường
-                  </label>
-                  <input
-                    type="text"
-                    value={newClassCampus}
-                    onChange={(e) => setNewClassCampus(e.target.value)}
-                    placeholder="Ví dụ: Điểm Trung tâm, Điểm Suối Cát..."
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      📍 Điểm trường
+                    </label>
+                    {(() => {
+                      const matchedBranch = schoolBranches.find(b => b.name === newClassBranch);
+                      return matchedBranch && matchedBranch.campuses && matchedBranch.campuses.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomNewCampus(!isCustomNewCampus)}
+                          className="text-[10px] text-indigo-600 hover:underline font-bold"
+                        >
+                          {isCustomNewCampus ? '📋 Chọn từ danh mục' : '✏️ Nhập tự do'}
+                        </button>
+                      ) : null;
+                    })()}
+                  </div>
+                  {(() => {
+                    const matchedBranch = schoolBranches.find(b => b.name === newClassBranch);
+                    const campusesList = matchedBranch?.campuses || [];
+                    if (campusesList.length > 0 && !isCustomNewCampus) {
+                      return (
+                        <select
+                          value={newClassCampus}
+                          onChange={(e) => setNewClassCampus(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="">-- Chọn Điểm trường trực thuộc --</option>
+                          {campusesList.map(c => (
+                            <option key={c.id || c.name} value={c.name}>
+                              📍 {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    }
+                    return (
+                      <input
+                        type="text"
+                        value={newClassCampus}
+                        onChange={(e) => setNewClassCampus(e.target.value)}
+                        placeholder="Ví dụ: Điểm Trung tâm, Điểm Suối Cát..."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                      />
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -3583,6 +4064,308 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: XEM TRƯỚC VÀ XÁC NHẬN IMPORT HÀNG LOẠT LỚP HỌC TỪ EXCEL (User Request) */}
+      {/* ========================================================================= */}
+      {isClassesPreviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3 sm:p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-4xl w-full p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-xs">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 uppercase">
+                    Xác nhận nhập {excelParsedClasses.length} lớp học từ file Excel
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Hệ thống sẽ tự động gán lớp cho giáo viên chủ nhiệm tương ứng và liên thông toàn diện CSDL
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsClassesPreviewOpen(false);
+                  setExcelParsedClasses([]);
+                }}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Bảng xem trước danh sách lớp học */}
+            <div className="flex-1 overflow-y-auto border border-slate-200 rounded-2xl bg-slate-50/50">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-indigo-50/80 text-indigo-950 font-black uppercase text-[11px] sticky top-0 border-b border-indigo-100 z-10">
+                  <tr>
+                    <th className="px-3 py-2.5 w-12 text-center">STT</th>
+                    <th className="px-3 py-2.5">Tên lớp</th>
+                    <th className="px-3 py-2.5">Khối</th>
+                    <th className="px-3 py-2.5">Năm học</th>
+                    <th className="px-3 py-2.5">Giáo viên chủ nhiệm</th>
+                    <th className="px-3 py-2.5">Tài khoản GVCN</th>
+                    <th className="px-3 py-2.5">Phân hiệu / Điểm trường</th>
+                    <th className="px-3 py-2.5">Khẩu hiệu / Slogan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {excelParsedClasses.map((item, idx) => {
+                    const matchedTeacher = allTeachers.find(t => 
+                      t.username.toLowerCase() === item.teacherUsername?.toLowerCase()
+                    );
+                    return (
+                      <tr key={idx} className="hover:bg-indigo-50/30 transition-colors">
+                        <td className="px-3 py-2 text-center font-bold text-slate-500">{idx + 1}</td>
+                        <td className="px-3 py-2 font-black text-indigo-900">{item.name}</td>
+                        <td className="px-3 py-2 font-bold text-slate-700">{item.grade}</td>
+                        <td className="px-3 py-2 font-mono text-slate-600">{item.academicYear}</td>
+                        <td className="px-3 py-2 font-bold text-slate-800">{item.teacherName}</td>
+                        <td className="px-3 py-2 font-mono text-xs">
+                          {item.teacherUsername ? (
+                            <span className={`px-2 py-0.5 rounded-md font-bold ${matchedTeacher ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}`}>
+                              {item.teacherUsername} {matchedTeacher ? '✓' : '(tự do)'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 italic">Chưa gán</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-slate-600">
+                          {item.branch || item.campus ? `${item.branch || ''} ${item.campus ? `(${item.campus})` : ''}` : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 italic max-w-xs truncate" title={item.slogan}>
+                          {item.slogan || '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 shrink-0">
+              <div className="text-xs text-slate-500 font-bold">
+                Tổng cộng: <span className="text-indigo-600 font-black">{excelParsedClasses.length} lớp học</span> sẵn sàng tạo.
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsClassesPreviewOpen(false);
+                    setExcelParsedClasses([]);
+                  }}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmBulkAddClasses}
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black rounded-xl shadow-md shadow-emerald-600/20 hover-zoom-btn uppercase flex items-center gap-1.5"
+                >
+                  <CheckSquare className="w-4 h-4" />
+                  <span>Xác nhận tạo hàng loạt ngay</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: CẤU HÌNH PHÂN HIỆU & ĐIỂM TRƯỜNG THUỘC PHÂN HIỆU (User Request) */}
+      {/* ========================================================================= */}
+      {isSchoolBranchModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-3xl w-full p-5 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col">
+            {/* Header Modal */}
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center border border-purple-200 shadow-xs">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 uppercase flex items-center gap-2">
+                    <span>Cấu hình Phân hiệu & Điểm trường</span>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                      {currentUser?.schoolName || 'Nhà trường'}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Khai báo danh mục chuẩn để giáo viên chủ nhiệm lựa chọn khi tạo lớp, đảm bảo thống nhất dữ liệu 100%
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSchoolBranchModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Ô thêm phân hiệu mới */}
+            <div className="p-3 bg-gradient-to-r from-purple-50 via-indigo-50 to-sky-50 rounded-2xl border border-purple-200/80 flex items-center gap-2 shrink-0">
+              <input
+                type="text"
+                value={newBranchInputName}
+                onChange={(e) => setNewBranchInputName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTempBranch();
+                  }
+                }}
+                placeholder="Nhập tên phân hiệu mới (Ví dụ: Phân hiệu 1, Cơ sở A, Điểm Trung tâm...)"
+                className="flex-1 px-3.5 py-2 bg-white border border-purple-300 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-purple-500"
+              />
+              <button
+                type="button"
+                onClick={handleAddTempBranch}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black shadow-sm shadow-purple-600/20 hover-zoom-btn flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Thêm Phân Hiệu</span>
+              </button>
+            </div>
+
+            {/* Danh sách các Phân hiệu và Điểm trường */}
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {tempBranches.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl space-y-2">
+                  <Building2 className="w-8 h-8 mx-auto opacity-50" />
+                  <p className="text-xs font-medium">Chưa có phân hiệu nào được khai báo. Hãy nhập tên và bấm "Thêm Phân Hiệu".</p>
+                </div>
+              ) : (
+                tempBranches.map((branch, bIdx) => (
+                  <div
+                    key={branch.id || bIdx}
+                    className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200 hover:border-purple-300 transition-all space-y-3"
+                  >
+                    {/* Header Phân hiệu */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="w-6 h-6 rounded-lg bg-purple-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">
+                          {bIdx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          value={branch.name}
+                          onChange={(e) => handleUpdateTempBranchName(branch.id, e.target.value)}
+                          placeholder="Tên phân hiệu..."
+                          className="font-black text-sm text-purple-950 bg-white px-2.5 py-1 rounded-lg border border-slate-200 focus:border-purple-500 flex-1 max-w-sm"
+                        />
+                        <span className="text-[11px] text-slate-500 font-bold">
+                          ({branch.campuses?.length || 0} điểm trường)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTempBranch(branch.id)}
+                        className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Xóa phân hiệu này"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Danh sách Điểm trường trực thuộc phân hiệu này */}
+                    <div className="pl-8 space-y-2">
+                      <div className="text-[11px] font-bold text-slate-600 uppercase flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-sky-600" />
+                        <span>Các điểm trường thuộc phân hiệu này:</span>
+                      </div>
+
+                      {/* Chips điểm trường */}
+                      <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+                        {(!branch.campuses || branch.campuses.length === 0) ? (
+                          <span className="text-xs text-slate-400 italic">Chưa có điểm trường trực thuộc</span>
+                        ) : (
+                          branch.campuses.map(cp => (
+                            <span
+                              key={cp.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-100 text-sky-900 border border-sky-300 text-xs font-bold shadow-2xs"
+                            >
+                              <span>📍 {cp.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTempCampus(branch.id, cp.id)}
+                                className="text-sky-700 hover:text-rose-600 ml-0.5 rounded-full"
+                                title="Xóa điểm trường này"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Ô thêm điểm trường mới vào phân hiệu */}
+                      <div className="flex items-center gap-2 pt-1 max-w-md">
+                        <input
+                          type="text"
+                          value={newCampusInputs[branch.id] || ''}
+                          onChange={(e) => setNewCampusInputs({ ...newCampusInputs, [branch.id]: e.target.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddTempCampus(branch.id);
+                            }
+                          }}
+                          placeholder="Thêm điểm trường (Ví dụ: Điểm Suối Cát, Điểm Bản Vền...)"
+                          className="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-sky-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddTempCampus(branch.id)}
+                          className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-black shadow-2xs hover-zoom-btn flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Thêm Điểm</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer Modal */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0">
+              <div className="text-xs text-slate-500 font-bold">
+                Tổng cộng: <strong className="text-purple-700 font-black">{tempBranches.length} phân hiệu</strong>,{' '}
+                <strong className="text-sky-700 font-black">
+                  {tempBranches.reduce((acc, b) => acc + (b.campuses?.length || 0), 0)} điểm trường
+                </strong>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSchoolBranchModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Đóng
+                </button>
+                <button
+                  type="button"
+                  disabled={isSavingBranches}
+                  onClick={handleSaveAllSchoolBranches}
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-purple-600/25 hover-zoom-btn flex items-center gap-1.5 uppercase"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{isSavingBranches ? 'Đang lưu...' : 'Lưu Cấu Hình & Liên Thông'}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -3741,27 +4524,98 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Khối 2.1: Phân hiệu & Điểm trường */}
+                  {/* Khối 2.1: Phân hiệu & Điểm trường (Đồng nhất dữ liệu chuẩn từ Quản trị nhà trường) */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">🏛️ Phân hiệu</label>
-                      <input
-                        type="text"
-                        value={editingClass.branch || ''}
-                        onChange={(e) => setEditingClass({ ...editingClass, branch: e.target.value })}
-                        placeholder="VD: Phân hiệu 1, Cơ sở A"
-                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-bold text-slate-700">🏛️ Phân hiệu</label>
+                        {schoolBranches.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setIsCustomEditBranch(!isCustomEditBranch)}
+                            className="text-[9.5px] text-indigo-600 hover:underline font-bold"
+                          >
+                            {isCustomEditBranch ? '📋 Danh mục' : '✏️ Tự nhập'}
+                          </button>
+                        )}
+                      </div>
+                      {schoolBranches.length > 0 && !isCustomEditBranch ? (
+                        <select
+                          value={editingClass.branch || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const found = schoolBranches.find(b => b.name === val);
+                            setEditingClass({
+                              ...editingClass,
+                              branch: val,
+                              campus: (found && found.campuses && found.campuses.length > 0) ? found.campuses[0].name : (editingClass.campus || '')
+                            });
+                          }}
+                          className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="">-- Chọn Phân hiệu của trường --</option>
+                          {schoolBranches.map(b => (
+                            <option key={b.id || b.name} value={b.name}>
+                              🏛️ {b.name} ({b.campuses?.length || 0} điểm)
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={editingClass.branch || ''}
+                          onChange={(e) => setEditingClass({ ...editingClass, branch: e.target.value })}
+                          placeholder="VD: Phân hiệu 1, Cơ sở A"
+                          className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                        />
+                      )}
                     </div>
+
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">📍 Điểm trường</label>
-                      <input
-                        type="text"
-                        value={editingClass.campus || ''}
-                        onChange={(e) => setEditingClass({ ...editingClass, campus: e.target.value })}
-                        placeholder="VD: Điểm Trung tâm, Suối Cát"
-                        className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-bold text-slate-700">📍 Điểm trường</label>
+                        {(() => {
+                          const matchedBranch = schoolBranches.find(b => b.name === (editingClass.branch || ''));
+                          return matchedBranch && matchedBranch.campuses && matchedBranch.campuses.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => setIsCustomEditCampus(!isCustomEditCampus)}
+                              className="text-[9.5px] text-indigo-600 hover:underline font-bold"
+                            >
+                              {isCustomEditCampus ? '📋 Danh mục' : '✏️ Tự nhập'}
+                            </button>
+                          ) : null;
+                        })()}
+                      </div>
+                      {(() => {
+                        const matchedBranch = schoolBranches.find(b => b.name === (editingClass.branch || ''));
+                        const campusesList = matchedBranch?.campuses || [];
+                        if (campusesList.length > 0 && !isCustomEditCampus) {
+                          return (
+                            <select
+                              value={editingClass.campus || ''}
+                              onChange={(e) => setEditingClass({ ...editingClass, campus: e.target.value })}
+                              className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                            >
+                              <option value="">-- Chọn Điểm trường --</option>
+                              {campusesList.map(c => (
+                                <option key={c.id || c.name} value={c.name}>
+                                  📍 {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        }
+                        return (
+                          <input
+                            type="text"
+                            value={editingClass.campus || ''}
+                            onChange={(e) => setEditingClass({ ...editingClass, campus: e.target.value })}
+                            placeholder="VD: Điểm Trung tâm, Suối Cát"
+                            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
 
