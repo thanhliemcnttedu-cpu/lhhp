@@ -1161,5 +1161,22 @@
     "autoPushGithub": true,
     "autoPullGithub": true,
     "lastGithubPushAt": 1791539872326
+  },
+  "classes": [],
+  "students": [],
+  "transactions": [],
+  "attendanceRecords": [],
+  "boardingRecords": [],
+  "redemptions": [],
+  "seatingAssignments": {},
+  "teacherProfile": {
+    "name": "Giáo viên",
+    "role": "GIÁO VIÊN CHỦ NHIỆM",
+    "teachingSubject": "Giáo viên chủ nhiệm",
+    "schoolName": "",
+    "phone": "",
+    "zalo": "",
+    "avatar": "",
+    "academicYear": ""
   }
 }
