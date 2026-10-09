@@ -10,19 +10,7 @@ let isBgmPlaying = false;
 let isMuted = false;
 
 function getContext(): AudioContext | null {
-  try {
-    if (!audioCtx) {
-      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      audioCtx = new AudioContextClass();
-    }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-    return audioCtx;
-  } catch (e) {
-    console.warn('Web Audio API not supported or blocked:', e);
-    return null;
-  }
+  return null;
 }
 
 export function setEnergizerMuted(muted: boolean) {

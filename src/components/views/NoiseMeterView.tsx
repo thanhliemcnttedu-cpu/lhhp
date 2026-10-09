@@ -224,7 +224,7 @@ export const NoiseMeterView: React.FC = () => {
       streamRef.current = stream;
 
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const audioCtx = new AudioCtx();
+      const audioCtx = null; if (true) return;
       if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
       }

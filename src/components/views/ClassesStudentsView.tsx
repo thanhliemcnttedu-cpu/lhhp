@@ -3059,7 +3059,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
                         <button
                           onClick={() => {
-                            const canEditOrDeleteStudent = isSuperAdmin || ((student as any).teacher_id ? (student as any).teacher_id === currentUser?.id : true);
+                            const canEditOrDeleteStudent = isSuperAdmin || ((student as any).teacher_id === currentUser?.id) || ((student as any).teacherUsername === currentUser?.username) || (!isAdmin && !isSuperAdmin); // GVCN luôn sửa được data trong context của mình
                             if (!canEditOrDeleteStudent) {
                               alert("Bạn không có quyền thao tác trên học sinh này!");
                               return;

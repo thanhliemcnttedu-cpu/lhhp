@@ -2414,6 +2414,23 @@ export const databaseService = {
     return success;
   },
 
+  async deleteStudentsByClassId(classId: string, options?: { teacherUsername?: string; currentUserId?: string; isSuperAdmin?: boolean }): Promise<boolean> {
+    const isSuperAdmin = Boolean(options?.isSuperAdmin);
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        if (isSuperAdmin) {
+          await supabase.from('students').delete().eq('class_id', classId);
+        } else if (options?.currentUserId) {
+          await supabase.from('students').delete().eq('class_id', classId).eq('teacher_id', options.currentUserId);
+        }
+      } catch (err) {
+        console.warn('Supabase direct deleteStudentsByClassId exception:', err);
+      }
+    }
+    return true;
+  },
+
   /**
    * 🌟 SUPREME PRIVILEGES: Cập nhật lớp học trên toàn hệ thống
    */

@@ -2368,15 +2368,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // SUPREME PRIVILEGES & PERSISTENCE SYNCHRONIZATION
     if (currentUser) {
       setDbSyncStatus('syncing');
+      
+      // Batch Delete trên Supabase Cloud
+      databaseService.deleteStudentsByClassId(classId, {
+        isSuperAdmin,
+        teacherUsername: targetClass?.teacherUsername,
+        currentUserId: currentUser.id
+      }).catch(err => console.warn('Lỗi khi xóa batch học sinh trên DB:', err));
+
       if (isSuperAdmin) {
-        targetIds.forEach(id => {
-          databaseService.deleteStudent(id, {
-            isSuperAdmin: true,
-            classId,
-            teacherUsername: targetClass?.teacherUsername,
-            currentUserId: currentUser.id
-          }).catch(() => {});
-        });
         databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, remainingStudents).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();

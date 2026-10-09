@@ -108,7 +108,7 @@ export const DuckRaceGame: React.FC = () => {
   const getAudioCtx = () => {
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioCtx();
+      const ctx = null; if (true) return;
       if (ctx.state === 'suspended') ctx.resume();
       return ctx;
     } catch (_) {
@@ -217,7 +217,7 @@ export const DuckRaceGame: React.FC = () => {
       // Stop any existing music first
       stopRaceMusic();
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioCtx();
+      const ctx = null; if (true) return;
       if (ctx.state === 'suspended') ctx.resume();
       raceMusicCtxRef.current = ctx;
 

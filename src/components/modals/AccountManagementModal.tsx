@@ -101,6 +101,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   const [editRegNote, setEditRegNote] = useState<string>('');
 
   // Real data state
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [userSummaries, setUserSummaries] = useState<UserSummaryItem[]>([]);
   const [loadingSummaries, setLoadingSummaries] = useState(false);
 
@@ -764,6 +765,47 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       }
     } catch (err: any) {
       showNotify('error', err?.message || 'Lỗi khi xóa tài khoản.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelectUser = (id: string) => {
+    setSelectedUserIds(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllUsers = () => {
+    const selectableUsers = filteredUsers.filter(u => !(u.role === 'admin' || u.username.toLowerCase() === 'adminquantri'));
+    if (selectedUserIds.length === selectableUsers.length) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(selectableUsers.map(u => u.id));
+    }
+  };
+
+  const handleBulkDeleteUsers = async () => {
+    if (selectedUserIds.length === 0) return;
+    const confirmed = window.confirm(
+      `Bạn có chắc chắn muốn xóa ${selectedUserIds.length} tài khoản giáo viên đã chọn khỏi hệ thống? Dữ liệu của các tài khoản này sẽ bị mất.`
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    let successCount = 0;
+    try {
+      for (const id of selectedUserIds) {
+        const res = await databaseService.deleteUser(id);
+        if (res && res.success) successCount++;
+      }
+      showNotify('success', `Đã xóa thành công ${successCount}/${selectedUserIds.length} tài khoản.`);
+      setSelectedUserIds([]);
+      await onRefreshUsers();
+      await loadStats();
+      await loadSummaries();
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi khi xóa hàng loạt tài khoản.');
     } finally {
       setLoading(false);
     }
@@ -1609,6 +1651,17 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+                {selectedUserIds.length > 0 && (
+                  <button
+                    onClick={handleBulkDeleteUsers}
+                    disabled={loading}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-black uppercase shadow-xs transition-all hover-zoom-btn shrink-0"
+                    title={`Xóa ${selectedUserIds.length} tài khoản đang chọn`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">XÓA {selectedUserIds.length} TÀI KHOẢN</span>
+                  </button>
+                )}
               </div>
 
               {/* Action Buttons: Export to Excel & Import Template (User requirements) */}
@@ -1752,6 +1805,15 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
                     <tr>
+                      <th className="py-2 px-2 text-center w-10 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          checked={selectedUserIds.length > 0 && selectedUserIds.length === filteredUsers.filter(u => !(u.role === 'admin' || u.username.toLowerCase() === 'adminquantri')).length}
+                          onChange={handleSelectAllUsers}
+                          title="Chọn tất cả"
+                        />
+                      </th>
                       <th className="py-2 px-2 text-center w-10 whitespace-nowrap">STT</th>
                       <th className="py-2 px-2 whitespace-nowrap">Họ & Tên Giáo Viên</th>
                       <th className="py-2 px-2 whitespace-nowrap">Tên Đăng Nhập</th>
@@ -1788,6 +1850,16 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
                       return (
                         <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-2 px-2 text-center">
+                            {!(u.role === 'admin' || u.username.toLowerCase() === 'adminquantri') ? (
+                              <input
+                                type="checkbox"
+                                className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                checked={selectedUserIds.includes(u.id)}
+                                onChange={() => toggleSelectUser(u.id)}
+                              />
+                            ) : null}
+                          </td>
                           <td className="py-2 px-2 text-center font-bold text-slate-400">
                             {idx + 1}
                           </td>

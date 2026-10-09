@@ -1,5 +1,14 @@
 [
   {
+    "id": "log-1791587479374-m0uvcm",
+    "timestamp": 1791587479374,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "OTHER",
+    "description": "Đăng xuất khỏi hệ thống (Quản trị viên Hệ thống Cấp cao)"
+  },
+  {
     "id": "log-1791576482165-hboplt",
     "timestamp": 1791576482165,
     "username": "adminquantri",
