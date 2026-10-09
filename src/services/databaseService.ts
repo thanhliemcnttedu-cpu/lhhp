@@ -693,7 +693,7 @@ export const databaseService = {
     const supabase = getBrowserSupabase();
     if (supabase) {
       try {
-        const { error } = await supabase.from('users').insert({
+        const { error } = await supabase.from('users').upsert({
           id: newId,
           username: cleanU,
           password: payload.password || '123456',
@@ -708,15 +708,46 @@ export const databaseService = {
           assigned_class_name: newUser.assignedClassName,
           subject_name: newUser.subjectName,
           status: newUser.status,
-          created_at: nowTs
-        });
+          created_at: new Date().toISOString()
+        }, { onConflict: 'username' });
         if (!error) {
+          // Lưu vào bộ nhớ cục bộ
+          try {
+            const rawStored = localStorage.getItem('LHHP_USERS');
+            const uList = rawStored ? JSON.parse(rawStored) : [];
+            const updated = [...uList.filter((u: any) => u.username !== cleanU), newUser];
+            localStorage.setItem('LHHP_USERS', JSON.stringify(updated));
+          } catch (_) {}
           return { success: true, user: newUser, message: 'Tạo tài khoản thành công qua Supabase Cloud!' };
+        } else {
+          console.warn('[Supabase createUser error]', error);
         }
-      } catch (_) {}
+      } catch (sbErr) {
+        console.warn('[Supabase createUser exception]', sbErr);
+      }
     }
 
-    // 2. Server API fallback
+    const isVercelOrStatic = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') ||
+      window.location.hostname.includes('github.io') ||
+      window.location.port === '' ||
+      window.location.protocol === 'https:'
+    );
+
+    // Nếu chạy trên Vercel hoặc static, không gọi /api/users để tránh Unexpected end of JSON
+    if (isVercelOrStatic) {
+      try {
+        const rawStored = localStorage.getItem('LHHP_USERS');
+        const uList = rawStored ? JSON.parse(rawStored) : [];
+        const updated = [...uList.filter((u: any) => u.username !== cleanU), newUser];
+        localStorage.setItem('LHHP_USERS', JSON.stringify(updated));
+        return { success: true, user: newUser, message: 'Đã lưu tài khoản thành công!' };
+      } catch (err: any) {
+        return { success: false, message: err?.message || 'Lỗi khi lưu tài khoản.' };
+      }
+    }
+
+    // 2. Server API fallback (Local dev)
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
@@ -760,7 +791,7 @@ export const databaseService = {
             subject_name: item.subjectName?.trim() || (item.role === 'subject' ? 'Tin học' : undefined),
             school_name: item.schoolName?.trim() || 'Trường Tiểu học',
             status: 'active',
-            created_at: Date.now()
+            created_at: new Date().toISOString()
           };
         });
         const { error } = await supabase.from('users').upsert(rows, { onConflict: 'username' });
