@@ -18,7 +18,7 @@ import {
   FileSpreadsheet, Download, Upload, Calendar, AlertTriangle, CheckSquare,
   Settings, BookOpen, Calculator, Globe, Atom, Map, Monitor, Palette, Music, Activity, Heart,
   Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins, Wand2,
-  Building2, MapPin
+  Building2, MapPin, ChevronDown, ChevronUp, Filter
 } from 'lucide-react';
 import { playCoinSound, playDeductSound, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -91,6 +91,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
   const [adminTeacherFilter, setAdminTeacherFilter] = useState<string>('all');
+  const [teacherSearchQuery, setTeacherSearchQuery] = useState<string>('');
+  const [isTeacherFilterExpanded, setIsTeacherFilterExpanded] = useState<boolean>(false);
   const [newClassAssignedUsername, setNewClassAssignedUsername] = useState<string>('');
 
   // 🎯 PHÂN CẤP TÀI KHOẢN & LOGIC GIỚI HẠN TÀI NGUYÊN BẢN DEMO
@@ -1132,38 +1134,39 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
           {/* 🏫 BỘ LỌC DÀNH CHO ADMIN QUẢN TRỊ CẤP CAO: LỌC XEM CÁC LỚP THEO TRƯỜNG (CHỈ HIỆN KHI ĐÃ CÓ TRƯỜNG/LỚP) */}
           {isSuperAdmin && availableSchools.length > 0 && (
-            <div className="p-4 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 rounded-3xl border-2 border-indigo-300/90 shadow-xs space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="p-3 bg-gradient-to-r from-indigo-50/80 via-purple-50/80 to-pink-50/80 rounded-2xl border border-indigo-200 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="p-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-xs">
-                    <Building2 className="w-4 h-4" />
+                  <span className="p-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-2xs">
+                    <Building2 className="w-3.5 h-3.5" />
                   </span>
                   <div>
-                    <span className="text-xs md:text-sm font-black text-indigo-950 uppercase block">
-                      QUẢN TRỊ TỐI CAO • LỌC KHÔNG GIAN LỚP HỌC THEO TRƯỜNG HỌC:
+                    <span className="text-xs font-black text-indigo-950 uppercase tracking-tight">
+                      QUẢN TRỊ TỐI CAO • LỌC THEO TRƯỜNG HỌC
                     </span>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      Cho phép lọc nhanh và phân bổ danh sách lớp học của từng đơn vị trường học trên toàn hệ thống
+                    <span className="text-[10px] text-slate-500 font-medium ml-2 hidden sm:inline">
+                      (Phân bổ không gian lớp học theo từng đơn vị trường)
                     </span>
                   </div>
                 </div>
-                <div className="text-[11px] text-indigo-900 font-bold uppercase bg-white/80 px-2.5 py-1 rounded-xl border border-indigo-200">
-                  Hiển thị: <strong className="text-indigo-700">{displayedClasses.length} lớp</strong> / tổng số <strong className="text-slate-700">{classes.length} lớp</strong>
+                <div className="text-[11px] text-indigo-900 font-bold uppercase bg-white/90 px-2.5 py-0.5 rounded-lg border border-indigo-200 shadow-2xs">
+                  Hiển thị: <strong className="text-indigo-700">{displayedClasses.length}</strong> / <strong className="text-slate-600">{classes.length} lớp</strong>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 pt-1">
+              {/* Danh sách nút trường: cuộn ngang mượt mà khi có nhiều trường, không choán chỗ */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
                 <button
                   type="button"
                   onClick={() => setSelectedSchoolFilter('all')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 hover-zoom-btn ${
+                  className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                     selectedSchoolFilter === 'all'
                       ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs'
                       : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
                   }`}
                 >
                   <span>🌐</span>
-                  <span>TẤT CẢ CÁC TRƯỜNG ({classes.length})</span>
+                  <span>Tất cả các trường ({classes.length})</span>
                 </button>
 
                 {availableSchools.map(schName => {
@@ -1183,7 +1186,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       key={schName}
                       type="button"
                       onClick={() => setSelectedSchoolFilter(schName)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 hover-zoom-btn ${
+                      className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                         selectedSchoolFilter === schName
                           ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xs ring-2 ring-purple-300'
                           : 'bg-white text-slate-700 hover:bg-purple-50 border border-slate-200'
@@ -1200,18 +1203,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
           {/* 🏛️ BỘ LỌC DÀNH CHO TÀI KHOẢN TRƯỜNG & BAN GIÁM HIỆU: LỌC THEO PHÂN HIỆU HOẶC ĐIỂM TRƯỜNG */}
           {(isSchoolScopeAccount || isSuperAdmin) && (availableBranches.length > 0 || availableCampuses.length > 0) && (
-            <div className="p-3.5 bg-gradient-to-r from-sky-500/10 via-teal-500/10 to-emerald-500/10 rounded-3xl border-2 border-teal-200/90 shadow-xs space-y-2">
+            <div className="p-3 bg-gradient-to-r from-sky-50/80 via-teal-50/80 to-emerald-50/80 rounded-2xl border border-teal-200 shadow-2xs space-y-1.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="p-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl shadow-xs">
-                    <MapPin className="w-4 h-4" />
+                  <span className="p-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-lg shadow-2xs">
+                    <MapPin className="w-3.5 h-3.5" />
                   </span>
                   <div>
-                    <span className="text-xs md:text-sm font-black text-teal-950 uppercase block">
-                      QUẢN TRỊ TRƯỜNG • LỌC XEM THEO PHÂN HIỆU HOẶC ĐIỂM TRƯỜNG:
-                    </span>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      Phân chia không gian lớp học theo Phân hiệu (Cơ sở) hoặc theo Điểm trường trực thuộc
+                    <span className="text-xs font-black text-teal-950 uppercase tracking-tight">
+                      QUẢN TRỊ TRƯỜNG • LỌC THEO PHÂN HIỆU / ĐIỂM TRƯỜNG
                     </span>
                   </div>
                 </div>
@@ -1222,24 +1222,24 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       setSelectedBranchFilter('all');
                       setSelectedCampusFilter('all');
                     }}
-                    className="text-[11px] font-bold text-teal-700 hover:text-teal-900 bg-white px-2 py-0.5 rounded-lg border border-teal-200 hover-zoom-btn"
+                    className="text-[10px] font-bold text-teal-700 hover:text-teal-900 bg-white px-2 py-0.5 rounded-lg border border-teal-200 shadow-2xs"
                   >
-                    🔄 Đặt lại tất cả điểm/phân hiệu
+                    🔄 Đặt lại bộ lọc
                   </button>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 pt-1">
+              <div className="flex flex-wrap items-center gap-3 pt-0.5">
                 {/* Cấp 1: Phân hiệu */}
                 {availableBranches.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-black text-teal-900 uppercase flex items-center gap-1">
-                      <span>🏛️ Phân hiệu:</span>
+                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
+                    <span className="text-[11px] font-bold text-teal-900 uppercase whitespace-nowrap">
+                      🏛️ Phân hiệu:
                     </span>
                     <button
                       type="button"
                       onClick={() => setSelectedBranchFilter('all')}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                         selectedBranchFilter === 'all'
                           ? 'bg-teal-600 text-white shadow-2xs'
                           : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
@@ -1252,7 +1252,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         key={br}
                         type="button"
                         onClick={() => setSelectedBranchFilter(br)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                           selectedBranchFilter === br
                             ? 'bg-teal-600 text-white shadow-2xs ring-1 ring-teal-400'
                             : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
@@ -1266,14 +1266,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
                 {/* Cấp 2: Điểm trường */}
                 {availableCampuses.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-black text-sky-900 uppercase flex items-center gap-1">
-                      <span>📍 Điểm trường:</span>
+                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
+                    <span className="text-[11px] font-bold text-sky-900 uppercase whitespace-nowrap">
+                      📍 Điểm:
                     </span>
                     <button
                       type="button"
                       onClick={() => setSelectedCampusFilter('all')}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                         selectedCampusFilter === 'all'
                           ? 'bg-sky-600 text-white shadow-2xs'
                           : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
@@ -1286,7 +1286,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         key={cp}
                         type="button"
                         onClick={() => setSelectedCampusFilter(cp)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                           selectedCampusFilter === cp
                             ? 'bg-sky-600 text-white shadow-2xs ring-1 ring-sky-400'
                             : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
@@ -1301,76 +1301,193 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
           )}
 
-          {/* ADMIN UNIFIED TEACHER FILTER BAR (Dành cho Quản trị viên sử dụng dữ liệu GVCN & GVBM) - Chỉ hiện khi có giáo viên hoặc lớp */}
-          {isAdmin && (relevantTeachers.length > 0 || classes.length > 0) && (
-            <div className="p-4 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 rounded-3xl border-2 border-indigo-200/90 shadow-xs space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="p-1.5 bg-indigo-600 text-white rounded-xl shadow-xs">
-                    <ShieldCheck className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <span className="text-xs md:text-sm font-black text-indigo-950 uppercase block">
-                      QUẢN TRỊ VIÊN TOÀN TRƯỜNG • ĐỒNG BỘ DỮ LIỆU CÁC TÀI KHOẢN GIÁO VIÊN:
+          {/* 🛡️ ADMIN UNIFIED TEACHER FILTER BAR - MẶC ĐỊNH THU GỌN HOÀN TOÀN, CHỈ KHI BẤM "XEM CHI TIẾT" MỚI MỞ DANH SÁCH GIÁO VIÊN */}
+          {isAdmin && (relevantTeachers.length > 0 || classes.length > 0) && (() => {
+            // Lọc danh sách giáo viên theo từ khóa tìm kiếm khi mở chi tiết
+            const filteredTeachers = relevantTeachers.filter(t => {
+              if (!teacherSearchQuery.trim()) return true;
+              const q = teacherSearchQuery.toLowerCase();
+              return (t.fullName && t.fullName.toLowerCase().includes(q)) ||
+                     (t.username && t.username.toLowerCase().includes(q));
+            });
+
+            // Giáo viên đang được chọn (nếu có)
+            const activeTeacherObj = relevantTeachers.find(t => t.username === adminTeacherFilter);
+
+            return (
+              <div className="p-2.5 sm:p-3 bg-gradient-to-r from-amber-50/80 via-indigo-50/70 to-purple-50/80 rounded-2xl border border-indigo-200/90 shadow-2xs space-y-2">
+                {/* Thanh điều khiển chính: Cực kỳ gọn gàng */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 bg-indigo-600 text-white rounded-lg shadow-2xs">
+                      <ShieldCheck className="w-3.5 h-3.5" />
                     </span>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      Xem và quản lý tất cả các lớp học, học sinh của các tài khoản GV Chủ nhiệm và GV Bộ môn
-                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-indigo-950 uppercase tracking-tight">
+                          QUẢN TRỊ VIÊN TOÀN TRƯỜNG • ĐỒNG BỘ DỮ LIỆU GIÁO VIÊN
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                          {relevantTeachers.length} GV
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-medium">
+                        Tổng số: <strong className="text-indigo-700">{classes.length} lớp</strong> • <strong className="text-emerald-700">{students.length} học sinh</strong>
+                        {activeTeacherObj && (
+                          <span className="ml-2 font-bold text-indigo-900 bg-white/90 px-2 py-0.5 rounded-md border border-indigo-200">
+                            Đang lọc: {activeTeacherObj.fullName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="text-[11px] text-slate-600 font-bold uppercase">
-                  Tổng số: <strong className="text-indigo-700">{classes.length} lớp</strong> • <strong className="text-emerald-700">{students.length} học sinh</strong>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setAdminTeacherFilter('all')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
-                    adminTeacherFilter === 'all'
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
-                  }`}
-                >
-                  <span>🌟</span>
-                  <span>TẤT CẢ LỚP HỌC ({classes.length})</span>
-                </button>
+                  {/* Cụm tương tác: Nút chọn Tất cả + Nút Xem chi tiết giáo viên */}
+                  <div className="flex items-center gap-2">
+                    {/* Nút Xem tất cả lớp học */}
+                    {adminTeacherFilter !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => setAdminTeacherFilter('all')}
+                        className="px-2.5 py-1 text-xs font-bold text-slate-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-xl shadow-2xs transition-all flex items-center gap-1"
+                      >
+                        <span>🌐</span>
+                        <span>Xem tất cả lớp ({classes.length})</span>
+                      </button>
+                    )}
 
-                {relevantTeachers.map(t => {
-                  const tClasses = classes.filter(c => 
-                    (c.teacherUsername && c.teacherUsername.toLowerCase() === t.username.toLowerCase()) ||
-                    (c.teacherName && c.teacherName.toLowerCase() === t.fullName.toLowerCase())
-                  );
-                  const isHomeroom = t.role === 'homeroom';
-                  return (
+                    {/* Nút Xem chi tiết danh sách giáo viên (Bật/Tắt) */}
                     <button
-                      key={t.id || t.username}
                       type="button"
-                      onClick={() => setAdminTeacherFilter(t.username)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
-                        adminTeacherFilter === t.username
-                          ? isHomeroom ? 'bg-indigo-600 text-white shadow-xs' : 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      onClick={() => setIsTeacherFilterExpanded(!isTeacherFilterExpanded)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-xl shadow-2xs flex items-center gap-1.5 transition-all ${
+                        isTeacherFilterExpanded
+                          ? 'bg-indigo-600 text-white ring-2 ring-indigo-300'
+                          : 'bg-white text-indigo-900 hover:bg-indigo-50 border border-indigo-300'
                       }`}
                     >
-                      <span>{isHomeroom ? '🏫' : '💻'}</span>
-                      <span>{t.fullName} ({tClasses.length} lớp)</span>
+                      {isTeacherFilterExpanded ? (
+                        <>
+                          <ChevronUp className="w-3.5 h-3.5" />
+                          <span>Thu gọn danh sách</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>Xem chi tiết giáo viên ({relevantTeachers.length})</span>
+                        </>
+                      )}
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  </div>
+                </div>
 
-          {/* Class List Action Header (Cho phép xóa hết tất cả các lớp hoặc thêm lớp mới) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-indigo-50 via-sky-50 to-purple-50 p-4 rounded-3xl border border-indigo-200/80">
-            <div>
-              <h3 className="text-base md:text-lg font-black text-indigo-900 uppercase">
-                DANH SÁCH KHÔNG GIAN LỚP HỌC ({displayedClasses.length} LỚP {isAdmin && adminTeacherFilter !== 'all' ? '• ĐANG LỌC' : ''})
-              </h3>
-              <p className="text-xs text-indigo-700 font-bold mt-0.5 uppercase">
-                MỖI LỚP CÓ ẢNH ĐẠI DIỆN, NĂM HỌC 2026–2027, GIÁO VIÊN VÀ THỜI KHÓA BIỂU RIÊNG CỐ ĐỊNH.
+                {/* KHU VỰC CHI TIẾT: CHỈ HIỂN THỊ KHI NGƯỜI DÙNG BẤM "XEM CHI TIẾT GIÁO VIÊN" */}
+                {isTeacherFilterExpanded && (
+                  <div className="pt-2 border-t border-indigo-200/60 space-y-2 animate-fadeIn">
+                    {/* Hàng tìm kiếm nhanh giáo viên */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-white/80 p-2 rounded-xl border border-indigo-100">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-950">
+                        <Filter className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Danh sách giáo viên trong nhà trường:</span>
+                      </div>
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={teacherSearchQuery}
+                          onChange={(e) => setTeacherSearchQuery(e.target.value)}
+                          placeholder="Tìm nhanh theo tên GV..."
+                          className="pl-7 pr-7 py-1 text-xs bg-white rounded-xl border border-indigo-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-400 w-48 sm:w-56 placeholder:text-slate-400 font-medium shadow-2xs"
+                        />
+                        {teacherSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setTeacherSearchQuery('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Vùng hiển thị toàn bộ giáo viên: khung cuộn trang nhã không làm dài màn hình */}
+                    <div className="max-h-56 overflow-y-auto p-2 bg-white/90 rounded-xl border border-indigo-100 flex flex-wrap gap-1.5 scrollbar-thin">
+                      {/* Nút Tất cả lớp học */}
+                      <button
+                        type="button"
+                        onClick={() => setAdminTeacherFilter('all')}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs ${
+                          adminTeacherFilter === 'all'
+                            ? 'bg-indigo-600 text-white ring-2 ring-indigo-300'
+                            : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
+                        }`}
+                      >
+                        <span>🌟</span>
+                        <span>Tất cả ({classes.length} lớp)</span>
+                      </button>
+
+                      {/* Danh sách các giáo viên */}
+                      {filteredTeachers.map(t => {
+                        const tClasses = classes.filter(c => 
+                          (c.teacherUsername && c.teacherUsername.toLowerCase() === t.username.toLowerCase()) ||
+                          (c.teacherName && c.teacherName.toLowerCase() === t.fullName.toLowerCase())
+                        );
+                        const isSelected = adminTeacherFilter === t.username;
+
+                        return (
+                          <button
+                            key={t.id || t.username}
+                            type="button"
+                            onClick={() => setAdminTeacherFilter(isSelected ? 'all' : t.username)}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 shadow-2xs ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white ring-2 ring-indigo-300 scale-102'
+                                : tClasses.length > 0
+                                  ? 'bg-indigo-50/70 text-indigo-950 hover:bg-indigo-100 border border-indigo-200 font-extrabold'
+                                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                            }`}
+                            title={`Tài khoản: ${t.username} • Số lớp: ${tClasses.length}`}
+                          >
+                            <span className="text-[11px]">{isSelected ? '✓' : '👤'}</span>
+                            <span>{t.fullName}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                              {tClasses.length} lớp
+                            </span>
+                          </button>
+                        );
+                      })}
+
+                      {filteredTeachers.length === 0 && (
+                        <div className="text-xs text-slate-500 italic py-2 px-3">
+                          Không tìm thấy giáo viên nào khớp với "{teacherSearchQuery}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Class List Action Header (Thiết kế thanh thoát, gọn gàng, nút bấm trực quan) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-indigo-50/90 via-sky-50/90 to-purple-50/90 p-3.5 rounded-2xl border border-indigo-200 shadow-2xs">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-black text-indigo-950 uppercase tracking-tight">
+                  DANH SÁCH KHÔNG GIAN LỚP HỌC
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-600 text-white shadow-2xs">
+                  {displayedClasses.length} LỚP
+                </span>
+                {isAdmin && adminTeacherFilter !== 'all' && (
+                  <span className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200">
+                    Đang lọc theo giáo viên
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-indigo-700 font-semibold">
+                Năm học 2026–2027 • Mỗi lớp có ảnh đại diện, giáo viên và thời khóa biểu riêng cố định
               </p>
             </div>
 
@@ -1514,21 +1631,21 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
           {/* Grid Thẻ Lớp Học LỚN, RÕ NÉT kèm Ảnh Đại Diện To Rõ */}
           {displayedClasses.length === 0 ? (
-            <div className="bg-gradient-to-b from-white via-indigo-50/40 to-sky-50/40 rounded-3xl border-2 border-dashed border-indigo-200 p-12 text-center space-y-4 shadow-xs">
-              <div className="w-16 h-16 rounded-3xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto shadow-2xs">
-                <School className="w-8 h-8" />
+            <div className="bg-gradient-to-b from-white via-indigo-50/30 to-sky-50/30 rounded-2xl border-2 border-dashed border-indigo-200/90 p-8 text-center space-y-3.5 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center mx-auto shadow-2xs">
+                <School className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-black text-indigo-950 uppercase">
+                <h3 className="text-base font-black text-indigo-950 uppercase tracking-tight">
                   {isAdmin && adminTeacherFilter !== 'all' ? 'GIÁO VIÊN NÀY CHƯA CÓ LỚP HỌC NÀO' : 'CHƯA CÓ LỚP HỌC NÀO TRONG HỆ THỐNG'}
                 </h3>
-                <p className="text-xs text-indigo-700 max-w-md mx-auto leading-relaxed font-semibold uppercase">
+                <p className="text-xs text-indigo-700 max-w-md mx-auto leading-relaxed font-semibold">
                   {isAdmin && adminTeacherFilter !== 'all'
-                    ? 'BẠN CÓ THỂ BẤM NÚT "TẠO LỚP HỌC MỚI" VÀ PHÂN CÔNG CHO GIÁO VIÊN NÀY PHỤ TRÁCH.'
-                    : 'TẤT CẢ CÁC LỚP HỌC ĐÃ ĐƯỢC XÓA HOẶC CHƯA ĐƯỢC TẠO. HÃY BẤM NÚT BÊN DƯỚI ĐỂ TẠO LỚP HỌC BẮT ĐẦU NĂM HỌC MỚI.'}
+                    ? 'Bạn có thể bấm nút "Tạo lớp học mới" và phân công cho giáo viên này phụ trách.'
+                    : 'Tất cả các lớp học đã được xóa hoặc chưa được tạo. Hãy bấm nút bên dưới để tạo lớp học bắt đầu năm học mới.'}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
                 {!isSuperAdmin && !isAdmin && !isSchoolScopeAccount && (
                   <button
                     onClick={() => {
@@ -1540,15 +1657,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       playFanfareSound();
                       confetti({ particleCount: 60, spread: 70 });
                     }}
-                    className={`px-5 py-2.5 rounded-2xl font-black text-xs transition-all inline-flex items-center gap-2 uppercase ${
+                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all inline-flex items-center gap-1.5 uppercase ${
                       isDemoAccount
                         ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed opacity-60'
-                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/25 hover-zoom-btn'
+                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover-zoom-btn'
                     }`}
                     title={isDemoAccount ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học và 10 học sinh. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Khôi phục lớp mẫu 4A1'}
                   >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>KHÔI PHỤC LỚP MẪU 4A1 (30 HỌC SINH)</span>
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Khôi phục lớp mẫu 4A1 (30 HS)</span>
                   </button>
                 )}
                 <button
@@ -1560,14 +1677,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     }
                     setIsCreateClassOpen(true);
                   }}
-                  className={`px-5 py-2.5 rounded-2xl font-black text-xs inline-flex items-center gap-2 uppercase transition-all ${
+                  className={`px-4 py-2 rounded-xl font-black text-xs inline-flex items-center gap-1.5 uppercase transition-all ${
                     isClassLimitReached
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/25 hover-zoom-btn'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover-zoom-btn'
                   }`}
                   title={isClassLimitReached ? 'Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!' : 'Tạo lớp học mới'}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>TẠO LỚP HỌC MỚI</span>
                 </button>
               </div>
