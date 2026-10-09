@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-09T17:24:48.041Z",
+  "lastSync": "2026-10-09T17:47:23.638Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -27,9 +27,18 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791539872326
+    "lastGithubPushAt": 1791568043638
   },
   "auditLogs": [
+    {
+      "id": "log-1791568033718-f78tvl",
+      "timestamp": 1791568033718,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "DELETE_CLASS",
+      "description": "Xóa toàn bộ danh sách lớp học"
+    },
     {
       "id": "log-1791566688041-45ochg",
       "timestamp": 1791566688041,
@@ -79,6 +88,6 @@
   "masterSummary": {
     "totalUsers": 1,
     "totalSchools": 0,
-    "totalClassesConfigured": 1
+    "totalClassesConfigured": 2
   }
 }

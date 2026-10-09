@@ -1,5 +1,14 @@
 [
   {
+    "id": "log-1791568033718-f78tvl",
+    "timestamp": 1791568033718,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "DELETE_CLASS",
+    "description": "Xóa toàn bộ danh sách lớp học"
+  },
+  {
     "id": "log-1791566688041-45ochg",
     "timestamp": 1791566688041,
     "username": "adminquantri",
