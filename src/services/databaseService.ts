@@ -3011,7 +3011,7 @@ export const databaseService = {
         try {
           let cQuery = supabase.from('classes').select('id');
           if (schoolName) {
-            cQuery = cQuery.or(`school_id.eq.${id},school_name.eq.${schoolName}`);
+            cQuery = cQuery.or(`school_id.eq."${id}",school_name.eq."${schoolName}"`);
           } else {
             cQuery = cQuery.eq('school_id', id);
           }
@@ -3032,7 +3032,7 @@ export const databaseService = {
             if (stErr) console.warn('[Cascade Step 2] Lỗi xóa students theo class_id:', stErr.message);
           }
           if (schoolName) {
-            await supabase.from('students').delete().or(`school_id.eq.${id},school_name.eq.${schoolName}`);
+            await supabase.from('students').delete().or(`school_id.eq."${id}",school_name.eq."${schoolName}"`);
           } else {
             await supabase.from('students').delete().eq('school_id', id);
           }
@@ -3044,7 +3044,7 @@ export const databaseService = {
         try {
           let delClsQuery = supabase.from('classes').delete();
           if (schoolName) {
-            delClsQuery = delClsQuery.or(`school_id.eq.${id},school_name.eq.${schoolName}`);
+            delClsQuery = delClsQuery.or(`school_id.eq."${id}",school_name.eq."${schoolName}"`);
           } else {
             delClsQuery = delClsQuery.eq('school_id', id);
           }
@@ -3058,7 +3058,7 @@ export const databaseService = {
         try {
           let uQuery = supabase.from('users').select('id, username').neq('role', 'admin').neq('username', 'adminquantri');
           if (schoolName) {
-            uQuery = uQuery.or(`school_id.eq.${id},school_name.eq.${schoolName}`);
+            uQuery = uQuery.or(`school_id.eq."${id}",school_name.eq."${schoolName}"`);
           } else {
             uQuery = uQuery.eq('school_id', id);
           }
@@ -3068,7 +3068,7 @@ export const databaseService = {
             await supabase.from('user_classroom_data').delete().in('username', usernames);
             let delUQuery = supabase.from('users').delete().neq('role', 'admin').neq('username', 'adminquantri');
             if (schoolName) {
-              delUQuery = delUQuery.or(`school_id.eq.${id},school_name.eq.${schoolName}`);
+              delUQuery = delUQuery.or(`school_id.eq."${id}",school_name.eq."${schoolName}"`);
             } else {
               delUQuery = delUQuery.eq('school_id', id);
             }
@@ -3091,7 +3091,7 @@ export const databaseService = {
         try {
           let delSchQuery = supabase.from('schools').delete();
           if (schoolName) {
-            delSchQuery = delSchQuery.or(`id.eq.${id},name.eq.${schoolName}`);
+            delSchQuery = delSchQuery.or(`id.eq."${id}",name.eq."${schoolName}"`);
           } else {
             delSchQuery = delSchQuery.eq('id', id);
           }
