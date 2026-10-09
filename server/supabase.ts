@@ -386,8 +386,7 @@ export async function migrateLocalDatabaseToSupabase(localDb: DatabaseSchema): P
         subject_name: u.subjectName || null,
         school_name: u.schoolName || null,
         status: u.status || 'active',
-        created_at: u.createdAt || Date.now(),
-        last_login_at: u.lastLoginAt || null
+        created_at: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString()
       }));
 
       const { error: userErr } = await client.from('users').upsert(userPayloads, { onConflict: 'username' });
