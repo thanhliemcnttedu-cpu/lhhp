@@ -576,7 +576,7 @@ export const databaseService = {
     if (isVercelOrStatic && supabase) {
       try {
         const { data: users, error } = await supabase.from('users').select('*');
-        if (!error && Array.isArray(users) && users.length > 0) {
+        if (!error && Array.isArray(users)) {
           const mapped = users.map(u => ({
             id: u.id,
             username: u.username,
@@ -622,7 +622,7 @@ export const databaseService = {
     if (supabase) {
       try {
         const { data: users, error } = await supabase.from('users').select('*');
-        if (!error && Array.isArray(users) && users.length > 0) {
+        if (!error && Array.isArray(users)) {
           const mapped = users.map(u => ({
             id: u.id,
             username: u.username,
@@ -2770,7 +2770,7 @@ export const databaseService = {
     if (supabase) {
       try {
         const { data: sbSchools, error } = await supabase.from('schools').select('*');
-        if (!error && Array.isArray(sbSchools) && sbSchools.length > 0) {
+        if (!error && Array.isArray(sbSchools)) {
           const mapped: SchoolEntity[] = sbSchools.map((s: any) => ({
             id: s.id,
             name: s.name,
