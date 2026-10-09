@@ -1,5 +1,14 @@
 [
   {
+    "id": "log-1791534308741-huhoee",
+    "timestamp": 1791534308741,
+    "username": "adminquantri",
+    "userFullName": "Tài khoản quản trị Cao nhất",
+    "role": "admin",
+    "actionType": "OTHER",
+    "description": "Đăng xuất khỏi hệ thống (Tài khoản quản trị Cao nhất)"
+  },
+  {
     "id": "log-1791518001501",
     "timestamp": 1791518001501,
     "username": "adminquantri",

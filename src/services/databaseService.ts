@@ -580,6 +580,7 @@ export const databaseService = {
             schoolName: u.school_name || u.schoolName,
             assignedClassName: u.assigned_class_name || u.assignedClassName,
             subjectName: u.subject_name || u.subjectName,
+            tenantType: u.tenant_type || (u.school_name?.toLowerCase().includes('cá nhân') ? 'guest' : 'school'),
             createdAt: Number(u.created_at) || Date.now(),
             status: u.status || 'active'
           }));
@@ -625,6 +626,7 @@ export const databaseService = {
             schoolName: u.school_name || u.schoolName,
             assignedClassName: u.assigned_class_name || u.assignedClassName,
             subjectName: u.subject_name || u.subjectName,
+            tenantType: u.tenant_type || (u.school_name?.toLowerCase().includes('cá nhân') ? 'guest' : 'school'),
             createdAt: Number(u.created_at) || Date.now(),
             status: u.status || 'active'
           }));

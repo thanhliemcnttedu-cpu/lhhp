@@ -1169,7 +1169,10 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       return (!!u.isDemo || !!u.schoolName?.toUpperCase().includes('DEMO')) && u.role !== 'admin';
     }
     if (tenantFilter === 'guest') {
-      return (u.tenantType === 'guest' || (!u.schoolName && !u.isDemo)) && !u.isDemo && u.role !== 'admin';
+      const isGuest = u.tenantType === 'guest' || 
+        (!u.schoolName && !u.isDemo) || 
+        (u.schoolName && (u.schoolName.toLowerCase().includes('cá nhân') || u.schoolName.toLowerCase().includes('vãng lai')));
+      return isGuest && !u.isDemo && u.role !== 'admin' && u.username.toLowerCase() !== 'adminquantri';
     }
     return true;
   }).sort((a, b) => {
@@ -1719,7 +1722,12 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                   }`}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  <span>Khối Giáo viên Cá nhân / Vãng lai ({allUsers.filter(u => (u.tenantType === 'guest' || (!u.schoolName && !u.isDemo)) && !u.isDemo && u.role !== 'admin').length})</span>
+                  <span>Khối Giáo viên Cá nhân / Vãng lai ({allUsers.filter(u => {
+                    const isGuest = u.tenantType === 'guest' || 
+                      (!u.schoolName && !u.isDemo) || 
+                      (u.schoolName && (u.schoolName.toLowerCase().includes('cá nhân') || u.schoolName.toLowerCase().includes('vãng lai')));
+                    return isGuest && !u.isDemo && u.role !== 'admin' && u.username.toLowerCase() !== 'adminquantri';
+                  }).length})</span>
                 </button>
               </div>
             )}

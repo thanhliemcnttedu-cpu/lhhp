@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-09T07:06:12.826Z",
+  "lastSync": "2026-10-09T08:25:08.741Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -28,6 +28,15 @@
     "autoPullGithub": true
   },
   "auditLogs": [
+    {
+      "id": "log-1791534308741-huhoee",
+      "timestamp": 1791534308741,
+      "username": "adminquantri",
+      "userFullName": "Tài khoản quản trị Cao nhất",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Tài khoản quản trị Cao nhất)"
+    },
     {
       "id": "log-1791518001501",
       "timestamp": 1791518001501,
