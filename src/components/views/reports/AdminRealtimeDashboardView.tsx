@@ -87,6 +87,10 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     return Array.from(set).sort();
   }, [homeroomClasses]);
 
+  const hasUnassignedBranch = useMemo(() => {
+    return homeroomClasses.some(c => !c.branch || !c.branch.trim());
+  }, [homeroomClasses]);
+
   // Danh sách Điểm trường chỉ thuộc Phân hiệu đã chọn (Nếu chọn 'all' thì lấy tất cả điểm trường GVCN)
   const availableCampuses = useMemo(() => {
     const set = new Set<string>();
@@ -101,9 +105,16 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     return Array.from(set).sort();
   }, [homeroomClasses, selectedBranch]);
 
+  const hasUnassignedCampus = useMemo(() => {
+    return homeroomClasses.some(c => {
+      if (selectedBranch !== 'all' && (c.branch || '').trim() !== selectedBranch) return false;
+      return !c.campus || !c.campus.trim();
+    });
+  }, [homeroomClasses, selectedBranch]);
+
   // Tự động reset Điểm trường về 'all' khi đổi Phân hiệu nếu điểm trường đó không thuộc phân hiệu mới
   useEffect(() => {
-    if (selectedCampus !== 'all' && !availableCampuses.includes(selectedCampus)) {
+    if (selectedCampus !== 'all' && selectedCampus !== '__unassigned__' && !availableCampuses.includes(selectedCampus)) {
       setSelectedCampus('all');
     }
   }, [selectedBranch, availableCampuses, selectedCampus]);
@@ -117,10 +128,15 @@ export const AdminRealtimeDashboardView: React.FC = () => {
   // =========================================================================
   const filteredClasses = useMemo(() => {
     let list = homeroomClasses; // Đã cô lập hoàn toàn GVBM từ Bước 1
-    if (selectedBranch !== 'all') {
+    if (selectedBranch === '__unassigned__') {
+      list = list.filter(c => !c.branch || !c.branch.trim());
+    } else if (selectedBranch !== 'all') {
       list = list.filter(c => (c.branch || '').trim() === selectedBranch);
     }
-    if (selectedCampus !== 'all') {
+
+    if (selectedCampus === '__unassigned__') {
+      list = list.filter(c => !c.campus || !c.campus.trim());
+    } else if (selectedCampus !== 'all') {
       list = list.filter(c => (c.campus || '').trim() === selectedCampus);
     }
     return list;
@@ -301,8 +317,8 @@ export const AdminRealtimeDashboardView: React.FC = () => {
       'STT': idx + 1,
       'Lớp': cls.name,
       'Khối': cls.grade,
-      'Phân hiệu': cls.branch || 'Khu chính',
-      'Điểm trường': cls.campus || 'Điểm Trung tâm',
+      'Phân hiệu': cls.branch || 'Chưa cấu hình (Null)',
+      'Điểm trường': cls.campus || 'Chưa cấu hình (Null)',
       'Giáo viên chủ nhiệm': cls.teacherName || 'Chưa cập nhật',
       'Sĩ số': cls.studentCount,
       'Có mặt': cls.present,
@@ -476,6 +492,9 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                   🏛️ {branch}
                 </option>
               ))}
+              {hasUnassignedBranch && (
+                <option value="__unassigned__">⚠️ Chưa cấu hình phân hiệu (Null)</option>
+              )}
             </select>
           </div>
 
@@ -496,6 +515,9 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                   📍 {campus}
                 </option>
               ))}
+              {hasUnassignedCampus && (
+                <option value="__unassigned__">⚠️ Chưa cấu hình điểm trường (Null)</option>
+              )}
             </select>
           </div>
 
@@ -864,9 +886,15 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                     {/* Phân hiệu / Điểm trường */}
                     <td className="py-2.5 px-3">
                       <div className="space-y-0.5">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
-                          🏛️ {cls.branch || 'Khu chính'}
-                        </span>
+                        {cls.branch ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                            🏛️ {cls.branch}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            Chưa cấu hình (Null)
+                          </span>
+                        )}
                         {cls.campus && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200 block w-fit">
                             📍 {cls.campus}

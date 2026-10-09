@@ -105,6 +105,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     currentUser?.role === 'bgh' || 
     currentUser?.isBgh
   );
+  // 🔐 CHỈ Quản trị nhà trường và Quản trị cao nhất (adminquantri) mới có quyền quản lý Phân hiệu & Điểm trường
+  const canManageSchoolBranches = isSuperAdmin || isSchoolScopeAccount;
 
   // 🌟 BỘ LỌC ĐA TẦNG THEO YÊU CẦU NGƯỜI DÙNG:
   // - Trên Admin Quản trị: Lọc xem các lớp theo Trường (School)
@@ -153,6 +155,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     return Array.from(branchSet).sort();
   }, [classes]);
 
+  const hasUnassignedBranch = React.useMemo(() => {
+    return classes.some(c => !c.branch || !c.branch.trim());
+  }, [classes]);
+
   // 🌟 Danh sách Điểm trường thuộc Phân hiệu đã chọn (hoặc tất cả nếu chọn 'all')
   const availableCampuses = React.useMemo(() => {
     const campusSet = new Set<string>();
@@ -167,9 +173,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     return Array.from(campusSet).sort();
   }, [classes, selectedBranchFilter]);
 
+  const hasUnassignedCampus = React.useMemo(() => {
+    return classes.some(c => {
+      if (selectedBranchFilter !== 'all' && (c.branch || '').trim() !== selectedBranchFilter) return false;
+      return !c.campus || !c.campus.trim();
+    });
+  }, [classes, selectedBranchFilter]);
+
   // Tự động reset Điểm trường khi đổi Phân hiệu nếu điểm trường không khớp
   React.useEffect(() => {
-    if (selectedCampusFilter !== 'all' && !availableCampuses.includes(selectedCampusFilter)) {
+    if (selectedCampusFilter !== 'all' && selectedCampusFilter !== '__unassigned__' && !availableCampuses.includes(selectedCampusFilter)) {
       setSelectedCampusFilter('all');
     }
   }, [selectedBranchFilter, availableCampuses, selectedCampusFilter]);
@@ -236,7 +249,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       }
 
       // 3. Lọc theo PHÂN HIỆU (Dành cho Quản trị Trường & BGH)
-      if (selectedBranchFilter !== 'all') {
+      if (selectedBranchFilter === '__unassigned__') {
+        if (c.branch && c.branch.trim()) return false;
+      } else if (selectedBranchFilter !== 'all') {
         const cBranch = (c.branch || '').trim().toLowerCase();
         if (cBranch !== selectedBranchFilter.trim().toLowerCase()) {
           return false;
@@ -244,7 +259,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       }
 
       // 4. Lọc theo ĐIỂM TRƯỜNG (Dành cho Quản trị Trường & BGH)
-      if (selectedCampusFilter !== 'all') {
+      if (selectedCampusFilter === '__unassigned__') {
+        if (c.campus && c.campus.trim()) return false;
+      } else if (selectedCampusFilter !== 'all') {
         const cCampus = (c.campus || '').trim().toLowerCase();
         if (cCampus !== selectedCampusFilter.trim().toLowerCase()) {
           return false;
@@ -537,8 +554,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     addClass({
       name: newClassName.trim(),
       grade: newClassGrade,
-      branch: newClassBranch.trim() || undefined,
-      campus: newClassCampus.trim() || undefined,
+      branch: newClassBranch.trim() ? newClassBranch.trim() : null,
+      campus: (newClassBranch.trim() && newClassCampus.trim()) ? newClassCampus.trim() : null,
       teacherUsername: isAdmin ? newClassAssignedUsername : (currentUser?.username || ''),
       teacherRole: effectiveRole,
       isHomeroom: effectiveRole === 'homeroom',
@@ -752,8 +769,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     updateClass(editingClass.id, {
       name: editingClass.name.trim(),
       grade: editingClass.grade,
-      branch: editingClass.branch?.trim() || undefined,
-      campus: editingClass.campus?.trim() || undefined,
+      branch: (editingClass.branch || '').trim() ? (editingClass.branch || '').trim() : null,
+      campus: ((editingClass.branch || '').trim() && (editingClass.campus || '').trim()) ? (editingClass.campus || '').trim() : null,
       teacherUsername: editingClass.teacherUsername,
       teacherRole: editingClass.teacherRole,
       isHomeroom: isHome,
@@ -782,19 +799,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
   // 🏛️ CÁC HÀM XỬ LÝ CẤU HÌNH PHÂN HIỆU & ĐIỂM TRƯỜNG
   const handleOpenSchoolBranchModal = () => {
+    if (!canManageSchoolBranches) {
+      alert('Chỉ tài khoản Quản trị nhà trường và Quản trị cao nhất (adminquantri) mới có quyền thêm mới, chỉnh sửa hoặc xóa danh mục phân hiệu và điểm trường.');
+      return;
+    }
     if (schoolBranches && schoolBranches.length > 0) {
       setTempBranches(JSON.parse(JSON.stringify(schoolBranches)));
     } else {
-      // Khởi tạo mẫu thông minh nếu trường chưa từng khai báo
-      setTempBranches([
-        {
-          id: `branch-${Date.now()}-1`,
-          name: 'Điểm chính (Khu trung tâm)',
-          campuses: [
-            { id: `campus-${Date.now()}-1`, name: 'Điểm Trung tâm' }
-          ]
-        }
-      ]);
+      // Bắt đầu với danh mục rỗng, không tự tạo điểm mặc định 'Khu chính' hay 'Khu trung tâm'
+      setTempBranches([]);
     }
     setNewBranchInputName('');
     setNewCampusInputs({});
@@ -849,6 +862,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   };
 
   const handleSaveAllSchoolBranches = async () => {
+    if (!canManageSchoolBranches) {
+      alert('Chỉ tài khoản Quản trị nhà trường và Quản trị cao nhất (adminquantri) mới có quyền lưu cấu hình phân hiệu và điểm trường.');
+      return;
+    }
     const targetSchool = currentUser?.schoolName || '';
     if (!targetSchool) {
       alert('Vui lòng kiểm tra lại thông tin nhà trường trước khi lưu cấu hình.');
@@ -1517,7 +1534,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
               <div className="flex flex-wrap items-center gap-3 pt-0.5">
                 {/* Cấp 1: Phân hiệu */}
-                {availableBranches.length > 0 && (
+                {(availableBranches.length > 0 || hasUnassignedBranch) && (
                   <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
                     <span className="text-[11px] font-bold text-teal-900 uppercase whitespace-nowrap">
                       🏛️ Phân hiệu:
@@ -1547,11 +1564,24 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         {br}
                       </button>
                     ))}
+                    {hasUnassignedBranch && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBranchFilter('__unassigned__')}
+                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                          selectedBranchFilter === '__unassigned__'
+                            ? 'bg-amber-600 text-white shadow-2xs ring-1 ring-amber-400'
+                            : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+                        }`}
+                      >
+                        ⚠️ Chưa gán (Null)
+                      </button>
+                    )}
                   </div>
                 )}
 
                 {/* Cấp 2: Điểm trường */}
-                {availableCampuses.length > 0 && (
+                {(availableCampuses.length > 0 || hasUnassignedCampus) && (
                   <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
                     <span className="text-[11px] font-bold text-sky-900 uppercase whitespace-nowrap">
                       📍 Điểm:
@@ -1581,6 +1611,19 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         {cp}
                       </button>
                     ))}
+                    {hasUnassignedCampus && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCampusFilter('__unassigned__')}
+                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                          selectedCampusFilter === '__unassigned__'
+                            ? 'bg-amber-600 text-white shadow-2xs ring-1 ring-amber-400'
+                            : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+                        }`}
+                      >
+                        ⚠️ Chưa gán (Null)
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1894,8 +1937,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 onChange={handleUploadClassExcel}
               />
 
-              {/* 🏛️ Nút Cấu hình Phân hiệu & Điểm trường: Dành cho Quản trị nhà trường & Quản trị tối cao (User Request) */}
-              {(isSchoolScopeAccount || isSuperAdmin || isAdmin) && (
+              {/* 🏛️ Nút Cấu hình Phân hiệu & Điểm trường: CHỈ Quản trị nhà trường & Quản trị cao nhất (adminquantri) mới có quyền */}
+              {canManageSchoolBranches && (
                 <button
                   type="button"
                   onClick={handleOpenSchoolBranchModal}
@@ -2262,7 +2305,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                           <span>📅</span>
                           <span>NĂM HỌC: <strong className="text-amber-950 font-black">{cls.academicYear || '2026–2027'}</strong></span>
                         </div>
-                        {(cls.branch || cls.campus) && (
+                        {(cls.branch || cls.campus) ? (
                           <div className="flex flex-wrap items-center gap-1 mt-1">
                             {cls.branch && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-[9.5px] font-black text-purple-800 border border-purple-200 shadow-2xs uppercase">
@@ -2274,6 +2317,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                                 📍 {cls.campus}
                               </span>
                             )}
+                          </div>
+                        ) : (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 text-[9px] font-bold text-slate-400 border border-slate-200">
+                              🏛️ Chưa gán phân hiệu (Null)
+                            </span>
                           </div>
                         )}
                       </div>
@@ -3829,85 +3878,106 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
               </div>
 
-              {/* Phân hiệu & Điểm trường (Đồng nhất dữ liệu chuẩn từ Quản trị nhà trường) */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700">
-                      🏛️ Phân hiệu
-                    </label>
-                    {schoolBranches.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setIsCustomNewBranch(!isCustomNewBranch)}
-                        className="text-[10px] text-indigo-600 hover:underline font-bold"
+              {/* Phân hiệu & Điểm trường (Đồng nhất dữ liệu chuẩn từ Quản trị nhà trường - Không mặc định Khu chính, Null nếu chưa cấu hình) */}
+              <div className="space-y-2">
+                {schoolBranches.length === 0 && !canManageSchoolBranches && (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-medium flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Nhà trường chưa khai báo danh mục Phân hiệu & Điểm trường. Lớp sẽ được lưu trạng thái chưa cấu hình (Null). Vui lòng báo Ban giám hiệu khai báo.</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Phân hiệu */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-700">
+                        🏛️ Phân hiệu
+                      </label>
+                      {canManageSchoolBranches && schoolBranches.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomNewBranch(!isCustomNewBranch)}
+                          className="text-[10px] text-indigo-600 hover:underline font-bold"
+                        >
+                          {isCustomNewBranch ? '📋 Danh mục' : '✏️ Tự nhập'}
+                        </button>
+                      )}
+                    </div>
+                    {canManageSchoolBranches && isCustomNewBranch ? (
+                      <input
+                        type="text"
+                        value={newClassBranch}
+                        onChange={(e) => setNewClassBranch(e.target.value)}
+                        placeholder="Ví dụ: Phân hiệu 1, Cơ sở A..."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                      />
+                    ) : (
+                      <select
+                        value={newClassBranch}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewClassBranch(val);
+                          // 🛡️ BẢO TOÀN DỮ LIỆU: Reset điểm trường về rỗng, TUYỆT ĐỐI KHÔNG tự động gán điểm trường đầu tiên!
+                          setNewClassCampus('');
+                        }}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
                       >
-                        {isCustomNewBranch ? '📋 Chọn từ danh mục' : '✏️ Nhập tự do'}
-                      </button>
+                        <option value="">-- Chưa cấu hình phân hiệu (Null) --</option>
+                        {schoolBranches.map(b => (
+                          <option key={b.id || b.name} value={b.name}>
+                            🏛️ {b.name} ({b.campuses?.length || 0} điểm trường)
+                          </option>
+                        ))}
+                      </select>
                     )}
                   </div>
-                  {schoolBranches.length > 0 && !isCustomNewBranch ? (
-                    <select
-                      value={newClassBranch}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNewClassBranch(val);
-                        const found = schoolBranches.find(b => b.name === val);
-                        if (found && found.campuses && found.campuses.length > 0) {
-                          setNewClassCampus(found.campuses[0].name);
-                        } else {
-                          setNewClassCampus('');
-                        }
-                      }}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="">-- Chọn Phân hiệu nhà trường --</option>
-                      {schoolBranches.map(b => (
-                        <option key={b.id || b.name} value={b.name}>
-                          🏛️ {b.name} ({b.campuses?.length || 0} điểm trường)
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={newClassBranch}
-                      onChange={(e) => setNewClassBranch(e.target.value)}
-                      placeholder="Ví dụ: Phân hiệu 1, Cơ sở A..."
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
-                    />
-                  )}
-                </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700">
-                      📍 Điểm trường
-                    </label>
-                    {(() => {
-                      const matchedBranch = schoolBranches.find(b => b.name === newClassBranch);
-                      return matchedBranch && matchedBranch.campuses && matchedBranch.campuses.length > 0 ? (
+                  {/* Điểm trường */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-slate-700">
+                        📍 Điểm trường
+                      </label>
+                      {canManageSchoolBranches && (
                         <button
                           type="button"
                           onClick={() => setIsCustomNewCampus(!isCustomNewCampus)}
                           className="text-[10px] text-indigo-600 hover:underline font-bold"
                         >
-                          {isCustomNewCampus ? '📋 Chọn từ danh mục' : '✏️ Nhập tự do'}
+                          {isCustomNewCampus ? '📋 Danh mục' : '✏️ Tự nhập'}
                         </button>
-                      ) : null;
-                    })()}
-                  </div>
-                  {(() => {
-                    const matchedBranch = schoolBranches.find(b => b.name === newClassBranch);
-                    const campusesList = matchedBranch?.campuses || [];
-                    if (campusesList.length > 0 && !isCustomNewCampus) {
+                      )}
+                    </div>
+                    {canManageSchoolBranches && isCustomNewCampus ? (
+                      <input
+                        type="text"
+                        value={newClassCampus}
+                        onChange={(e) => setNewClassCampus(e.target.value)}
+                        placeholder="Ví dụ: Điểm Trung tâm, Suối Cát..."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                      />
+                    ) : (() => {
+                      const matchedBranch = schoolBranches.find(b => b.name === newClassBranch);
+                      const campusesList = matchedBranch?.campuses || [];
+                      if (!newClassBranch) {
+                        return (
+                          <select
+                            disabled
+                            value=""
+                            className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-400 cursor-not-allowed"
+                          >
+                            <option value="">-- Chọn Phân hiệu trước --</option>
+                          </select>
+                        );
+                      }
                       return (
                         <select
                           value={newClassCampus}
                           onChange={(e) => setNewClassCampus(e.target.value)}
                           className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
                         >
-                          <option value="">-- Chọn Điểm trường trực thuộc --</option>
+                          <option value="">-- Chưa cấu hình điểm trường (Null) --</option>
                           {campusesList.map(c => (
                             <option key={c.id || c.name} value={c.name}>
                               📍 {c.name}
@@ -3915,17 +3985,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                           ))}
                         </select>
                       );
-                    }
-                    return (
-                      <input
-                        type="text"
-                        value={newClassCampus}
-                        onChange={(e) => setNewClassCampus(e.target.value)}
-                        placeholder="Ví dụ: Điểm Trung tâm, Điểm Suối Cát..."
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
-                      />
-                    );
-                  })()}
+                    })()}
+                  </div>
                 </div>
               </div>
 
@@ -4524,59 +4585,67 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Khối 2.1: Phân hiệu & Điểm trường (Đồng nhất dữ liệu chuẩn từ Quản trị nhà trường) */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[11px] font-bold text-slate-700">🏛️ Phân hiệu</label>
-                        {schoolBranches.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setIsCustomEditBranch(!isCustomEditBranch)}
-                            className="text-[9.5px] text-indigo-600 hover:underline font-bold"
+                  {/* Khối 2.1: Phân hiệu & Điểm trường (Đồng nhất dữ liệu chuẩn - Không mặc định Khu chính, Null nếu chưa cấu hình) */}
+                  <div className="space-y-1.5">
+                    {schoolBranches.length === 0 && !canManageSchoolBranches && (
+                      <div className="p-2 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] font-medium flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Nhà trường chưa cấu hình danh mục Phân hiệu & Điểm trường. Lớp sẽ được lưu trạng thái chưa cấu hình (Null).</span>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Phân hiệu */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-slate-700">🏛️ Phân hiệu</label>
+                          {canManageSchoolBranches && schoolBranches.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setIsCustomEditBranch(!isCustomEditBranch)}
+                              className="text-[9.5px] text-indigo-600 hover:underline font-bold"
+                            >
+                              {isCustomEditBranch ? '📋 Danh mục' : '✏️ Tự nhập'}
+                            </button>
+                          )}
+                        </div>
+                        {canManageSchoolBranches && isCustomEditBranch ? (
+                          <input
+                            type="text"
+                            value={editingClass.branch || ''}
+                            onChange={(e) => setEditingClass({ ...editingClass, branch: e.target.value })}
+                            placeholder="VD: Phân hiệu 1, Cơ sở A"
+                            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                          />
+                        ) : (
+                          <select
+                            value={editingClass.branch || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditingClass({
+                                ...editingClass,
+                                branch: val || null,
+                                // 🛡️ BẢO TOÀN DỮ LIỆU: Reset điểm trường về null/rỗng khi đổi phân hiệu, KHÔNG gán điểm trường đầu tiên!
+                                campus: null
+                              });
+                            }}
+                            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
                           >
-                            {isCustomEditBranch ? '📋 Danh mục' : '✏️ Tự nhập'}
-                          </button>
+                            <option value="">-- Chưa cấu hình phân hiệu (Null) --</option>
+                            {schoolBranches.map(b => (
+                              <option key={b.id || b.name} value={b.name}>
+                                🏛️ {b.name} ({b.campuses?.length || 0} điểm)
+                              </option>
+                            ))}
+                          </select>
                         )}
                       </div>
-                      {schoolBranches.length > 0 && !isCustomEditBranch ? (
-                        <select
-                          value={editingClass.branch || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const found = schoolBranches.find(b => b.name === val);
-                            setEditingClass({
-                              ...editingClass,
-                              branch: val,
-                              campus: (found && found.campuses && found.campuses.length > 0) ? found.campuses[0].name : (editingClass.campus || '')
-                            });
-                          }}
-                          className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="">-- Chọn Phân hiệu của trường --</option>
-                          {schoolBranches.map(b => (
-                            <option key={b.id || b.name} value={b.name}>
-                              🏛️ {b.name} ({b.campuses?.length || 0} điểm)
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          value={editingClass.branch || ''}
-                          onChange={(e) => setEditingClass({ ...editingClass, branch: e.target.value })}
-                          placeholder="VD: Phân hiệu 1, Cơ sở A"
-                          className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                        />
-                      )}
-                    </div>
 
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[11px] font-bold text-slate-700">📍 Điểm trường</label>
-                        {(() => {
-                          const matchedBranch = schoolBranches.find(b => b.name === (editingClass.branch || ''));
-                          return matchedBranch && matchedBranch.campuses && matchedBranch.campuses.length > 0 ? (
+                      {/* Điểm trường */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-slate-700">📍 Điểm trường</label>
+                          {canManageSchoolBranches && (
                             <button
                               type="button"
                               onClick={() => setIsCustomEditCampus(!isCustomEditCampus)}
@@ -4584,29 +4653,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             >
                               {isCustomEditCampus ? '📋 Danh mục' : '✏️ Tự nhập'}
                             </button>
-                          ) : null;
-                        })()}
-                      </div>
-                      {(() => {
-                        const matchedBranch = schoolBranches.find(b => b.name === (editingClass.branch || ''));
-                        const campusesList = matchedBranch?.campuses || [];
-                        if (campusesList.length > 0 && !isCustomEditCampus) {
-                          return (
-                            <select
-                              value={editingClass.campus || ''}
-                              onChange={(e) => setEditingClass({ ...editingClass, campus: e.target.value })}
-                              className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
-                            >
-                              <option value="">-- Chọn Điểm trường --</option>
-                              {campusesList.map(c => (
-                                <option key={c.id || c.name} value={c.name}>
-                                  📍 {c.name}
-                                </option>
-                              ))}
-                            </select>
-                          );
-                        }
-                        return (
+                          )}
+                        </div>
+                        {canManageSchoolBranches && isCustomEditCampus ? (
                           <input
                             type="text"
                             value={editingClass.campus || ''}
@@ -4614,8 +4663,36 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             placeholder="VD: Điểm Trung tâm, Suối Cát"
                             className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
                           />
-                        );
-                      })()}
+                        ) : (() => {
+                          const matchedBranch = schoolBranches.find(b => b.name === (editingClass.branch || ''));
+                          const campusesList = matchedBranch?.campuses || [];
+                          if (!editingClass.branch) {
+                            return (
+                              <select
+                                disabled
+                                value=""
+                                className="w-full px-2.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-400 cursor-not-allowed"
+                              >
+                                <option value="">-- Chọn Phân hiệu trước --</option>
+                              </select>
+                            );
+                          }
+                          return (
+                            <select
+                              value={editingClass.campus || ''}
+                              onChange={(e) => setEditingClass({ ...editingClass, campus: e.target.value || null })}
+                              className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
+                            >
+                              <option value="">-- Chưa cấu hình điểm trường (Null) --</option>
+                              {campusesList.map(c => (
+                                <option key={c.id || c.name} value={c.name}>
+                                  📍 {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
 

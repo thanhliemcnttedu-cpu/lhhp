@@ -192,8 +192,8 @@ export interface Classroom {
   avatarScale?: number; // Tỉ lệ zoom ảnh đại diện (0.5 - 3)
   avatarPosition?: { x: number; y: number }; // Vị trí căn chỉnh ảnh (x, y)
   slogan?: string; // Slogan lớp học
-  branch?: string; // Phân hiệu (ví dụ: 'Phân hiệu 1', 'Cơ sở A'...)
-  campus?: string; // Điểm trường (ví dụ: 'Điểm trường Trung tâm', 'Điểm Suối Cát'...)
+  branch?: string | null; // Phân hiệu (ví dụ: 'Phân hiệu 1', 'Cơ sở A'...) hoặc null nếu chưa cấu hình
+  campus?: string | null; // Điểm trường (ví dụ: 'Điểm trường Trung tâm', 'Điểm Suối Cát'...) hoặc null nếu chưa cấu hình
   schoolName?: string; // Tên trường học sở thuộc (ví dụ: 'TRƯỜNG HỌC HẠNH PHÚC DEMO'...)
   parentCommittee?: ParentCommittee; // Ban đại diện phụ huynh học sinh
 }
