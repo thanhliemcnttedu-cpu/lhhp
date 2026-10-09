@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-09T23:02:06.501Z",
+  "lastSync": "2026-10-09T23:03:11.091Z",
   "schools": [],
   "users": [
     {
@@ -144,20 +144,6 @@
             }
           },
           "teacherUsername": "gvcn_1a1"
-        },
-        {
-          "id": "class-1a5",
-          "name": "1A5",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Class1A5&backgroundColor=3b82f6",
-          "slogan": "Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng",
-          "teacherName": "Chử Thị Nghĩa",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "teacherUsername": "gvcn_1a5",
-          "branch": null,
-          "campus": null
         }
       ],
       "activeClassId": "class-4a1",
@@ -1823,7 +1809,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791586926500
+      "updatedAt": 1791586991091
     }
   },
   "auditLogs": [
@@ -1937,6 +1923,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791586890478
+    "lastGithubPushAt": 1791586931922
   }
 }
