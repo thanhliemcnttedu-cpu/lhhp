@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-09T17:47:23.638Z",
+  "lastSync": "2026-10-09T18:14:13.605Z",
   "schools": [],
   "users": [
     {
@@ -1110,6 +1110,62 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791569653603-fbjb0d",
+      "timestamp": 1791569653603,
+      "username": "admin",
+      "userFullName": "Quản trị viên Hệ thống",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Xóa CSDL trường học (Cascade): TIỂU HỌC ĐOÀN KẾT (TH_DK) - Đã xóa 1 tài khoản và xóa trắng toàn bộ mô hình lớp học liên đới",
+      "details": {
+        "school": {
+          "id": "school_1791569638067_a8by",
+          "name": "TIỂU HỌC ĐOÀN KẾT",
+          "code": "TH_DK",
+          "address": "xã Tân Uyên, tỉnh Lai Châu",
+          "phone": "",
+          "adminUsername": "bgh_thdk",
+          "createdAt": 1791569638067
+        },
+        "deletedAccounts": [
+          "bgh_thdk"
+        ]
+      }
+    },
+    {
+      "id": "log-1791569638141-7ls9ct",
+      "timestamp": 1791569638142,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Khởi tạo cơ sở dữ liệu trường học mới: TIỂU HỌC ĐOÀN KẾT (TH_DK) và cấp phát tài khoản BGH @bgh_thdk",
+      "details": {
+        "school": {
+          "id": "school_1791569638067_a8by",
+          "name": "TIỂU HỌC ĐOÀN KẾT",
+          "code": "TH_DK",
+          "address": "xã Tân Uyên, tỉnh Lai Châu",
+          "phone": "",
+          "adminUsername": "bgh_thdk",
+          "createdAt": 1791569638067
+        },
+        "adminAccount": {
+          "username": "bgh_thdk",
+          "fullName": "Ban Giám Hiệu"
+        }
+      }
+    },
+    {
+      "id": "log-1791569430055-plo1l0",
+      "timestamp": 1791569430055,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
     {
       "id": "log-1791568033718-f78tvl",
       "timestamp": 1791568033718,
