@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-09T03:53:21.500Z",
+  "lastSync": "2026-10-09T07:06:12.826Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -21,7 +21,11 @@
   "systemSettings": {
     "allowRegistration": true,
     "autoSyncIntervalMs": 15000,
-    "githubRepoName": "lop-hoc-hanh-phuc-database"
+    "githubRepoName": "lop-hoc-hanh-phuc-database",
+    "githubRepoUrl": "https://github.com/thanhliemcnttedu-cpu/lhhp.git",
+    "githubBranch": "main",
+    "autoPushGithub": true,
+    "autoPullGithub": true
   },
   "auditLogs": [
     {
@@ -37,6 +41,6 @@
   "masterSummary": {
     "totalUsers": 1,
     "totalSchools": 0,
-    "totalClassesConfigured": 0
+    "totalClassesConfigured": 1
   }
 }

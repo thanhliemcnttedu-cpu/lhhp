@@ -232,28 +232,12 @@ END $$;
 -- 6. DỌN SẠCH VÀ NẠP DỮ LIỆU KHỞI TẠO CHUẨN GO-LIVE (SEEDS)
 -- ==============================================================================
 -- 6.1. Xóa sạch dữ liệu trường cũ tạm thời (bảo toàn cấu trúc)
-DELETE FROM public.students WHERE school_name NOT ILIKE '%DEMO%';
-DELETE FROM public.classes WHERE school_name NOT ILIKE '%DEMO%';
-DELETE FROM public.users WHERE role NOT IN ('admin', 'guest_admin') AND is_demo = false AND username NOT ILIKE '%demo%';
-DELETE FROM public.schools WHERE tenant_type != 'demo' AND name NOT ILIKE '%DEMO%';
-
--- 6.2. Nạp Trường Học Mẫu DEMO
-INSERT INTO public.schools (id, name, code, tenant_type, academic_year, address, principal_name, phone, status)
-VALUES (
-    'sch-truong-demo',
-    'TRƯỜNG TIỂU HỌC DEMO TRẢI NGHIỆM',
-    'DEMO-TH01',
-    'demo',
-    '2025-2026',
-    'Khu Trải Nghiệm Công Nghệ Giáo Dục',
-    'Thầy Hiệu Trưởng DEMO',
-    '0988000111',
-    'active'
-)
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    tenant_type = EXCLUDED.tenant_type,
-    updated_at = NOW();
+-- 6.1. Dọn dẹp dữ liệu cũ nếu có
+TRUNCATE TABLE public.students CASCADE;
+TRUNCATE TABLE public.classes CASCADE;
+TRUNCATE TABLE public.users CASCADE;
+TRUNCATE TABLE public.schools CASCADE;
+TRUNCATE TABLE public.user_classroom_data CASCADE;
 
 -- 6.3. Nạp Tài khoản Quản trị Cấp cao TỐI CAO (adminquantri - Tanuyen@2026)
 INSERT INTO public.users (

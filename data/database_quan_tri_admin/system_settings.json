@@ -1,5 +1,9 @@
 {
   "allowRegistration": true,
   "autoSyncIntervalMs": 15000,
-  "githubRepoName": "lop-hoc-hanh-phuc-database"
+  "githubRepoName": "lop-hoc-hanh-phuc-database",
+  "githubRepoUrl": "https://github.com/thanhliemcnttedu-cpu/lhhp.git",
+  "githubBranch": "main",
+  "autoPushGithub": true,
+  "autoPullGithub": true
 }

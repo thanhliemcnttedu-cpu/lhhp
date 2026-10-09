@@ -13,10 +13,10 @@ export const CLIENT_ID = 'client_' + Date.now().toString(36) + '_' + Math.random
 
 // Supabase Cloud Configuration with fallback for direct client access
 const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) 
-  || 'https://ipfclwnxkczwsqgcrzns.supabase.co';
+  || 'https://cscsruulmkcenhgrhtrr.supabase.co';
 
 const SUPABASE_ANON_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY)
-  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwZmNsd254a2N6d3NxZ2Nyem5zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MDk3OTIsImV4cCI6MjEwNjI4NTc5Mn0.MThImkRB0bJl_r6bRs90Q3gir2NoDp9z3AihLTiBZSs';
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzY3NydXVsbWtjZW5oZ3JodHJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MjE4MDUsImV4cCI6MjEwNzA5NzgwNX0.WCgcmJA8JvEYF6D40oudW8inVVYQH9jJPryNBL90u78';
 
 let supabaseClient: SupabaseClient | null = null;
 let realtimeChannel: RealtimeChannel | null = null;
@@ -229,13 +229,12 @@ export interface DatabaseStats {
   dbPath?: string;
 }
 
-// Fallback demo users in case network or offline
 export const FALLBACK_USERS: UserAccount[] = [
-  // A. Quản trị Tối cao
+  // Quản trị Tối cao duy nhất
   {
     id: 'user-adminquantri',
     username: 'adminquantri',
-    fullName: 'Tài khoản quản trị Cao nhất',
+    fullName: 'Quản trị viên Hệ thống Cấp cao',
     role: 'admin',
     tenantType: 'school',
     email: 'adminquantri@lophoc.edu.vn',
@@ -244,132 +243,10 @@ export const FALLBACK_USERS: UserAccount[] = [
     schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
     createdAt: Date.now(),
     status: 'active'
-  },
-
-  // B. Khối Quản trị Khách / Cá nhân
-  {
-    id: 'user-admin',
-    username: 'admin',
-    fullName: 'Quản trị Khách / Cá nhân',
-    role: 'guest_admin',
-    isGuestAdmin: true,
-    tenantType: 'guest',
-    schoolName: 'Khu vực Giáo viên Cá nhân / Vãng lai',
-    email: 'admin@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminGuestPersonal&backgroundColor=fbcfe8',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-
-  // D. Khối TRƯỜNG HỌC HẠNH PHÚC DEMO
-  {
-    id: 'user-admintruongdemo',
-    username: 'admintruongdemo',
-    fullName: 'Quản trị Nhà Trường DEMO',
-    role: 'school_admin',
-    isSchoolAdmin: true,
-    isDemo: true,
-    tenantType: 'school',
-    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
-    email: 'admintruongdemo@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminTruongDemo&backgroundColor=a7f3d0',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-bghdemo',
-    username: 'bghdemo',
-    fullName: 'Ban Giám Hiệu DEMO',
-    role: 'bgh',
-    isBgh: true,
-    isDemo: true,
-    tenantType: 'school',
-    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
-    email: 'bghdemo@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=BGHDemoHappy&backgroundColor=fef08a',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-gvcndemo',
-    username: 'gvcndemo',
-    fullName: 'Trịnh Thị Hương',
-    role: 'homeroom',
-    isDemo: true,
-    maxStudentsAllowed: 10,
-    tenantType: 'school',
-    assignedClassName: '4A1',
-    email: 'gvcndemo@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=TrinhThiHuong&backgroundColor=ffd5dc',
-    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-gvcn1a1demo',
-    username: 'gvcn1a1demo',
-    fullName: 'Nguyễn Phương Anh',
-    role: 'homeroom',
-    isDemo: true,
-    maxStudentsAllowed: 11,
-    tenantType: 'school',
-    assignedClassName: '1A1',
-    email: 'gvcn1a1demo@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenPhuongAnh_1A1&backgroundColor=ffd5dc',
-    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-gvbmdemo',
-    username: 'gvbmdemo',
-    fullName: 'Nguyễn Gia Phúc',
-    role: 'subject',
-    isDemo: true,
-    maxStudentsAllowed: 40,
-    tenantType: 'school',
-    subjectName: 'Tin học, Đạo đức, Công nghệ',
-    email: 'gvbmdemo@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=NguyenGiaPhuc&backgroundColor=b6e3f4',
-    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
-    createdAt: Date.now(),
-    status: 'active'
-  },
-  {
-    id: 'user-gvbmdemo2',
-    username: 'gvbmdemo2',
-    fullName: 'Mai Trấn Hưng',
-    role: 'subject',
-    isDemo: true,
-    maxStudentsAllowed: 72,
-    tenantType: 'school',
-    subjectName: 'Mĩ thuật',
-    email: 'gvbmdemo2@lophoc.edu.vn',
-    phone: '0888358363',
-    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=MaiTranHungGVBM&backgroundColor=b6e3f4',
-    schoolName: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
-    createdAt: Date.now(),
-    status: 'active'
   }
 ];
 
-export const FALLBACK_SCHOOLS: SchoolEntity[] = [
-  {
-    id: 'school-demo-hp',
-    name: 'TRƯỜNG HỌC HẠNH PHÚC DEMO',
-    code: 'TH_HP_DEMO',
-    address: 'Hệ thống Trường học Hạnh phúc Demo Toàn quốc',
-    phone: '0888358363',
-    adminUsername: 'admintruongdemo',
-    createdAt: Date.now()
-  }
-];
+export const FALLBACK_SCHOOLS: SchoolEntity[] = [];
 
 export const databaseService = {
   // Authentication
@@ -758,6 +635,17 @@ export const databaseService = {
       }
     }
 
+    // 4. LocalStorage cache cho môi trường Static / Vercel
+    try {
+      const rawStoredUsers = localStorage.getItem('LHHP_USERS');
+      if (rawStoredUsers) {
+        const parsed = JSON.parse(rawStoredUsers);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return filterLegacyUsers(parsed);
+        }
+      }
+    } catch (_) {}
+
     return FALLBACK_USERS;
   },
 
@@ -1001,10 +889,30 @@ export const databaseService = {
       }
     }
     
-    // Clean up local cache
+    // Clean up local cache & users list
     try {
       localStorage.removeItem(LOCAL_DB_PREFIX + id.toLowerCase());
+      const rawStored = localStorage.getItem('LHHP_USERS');
+      if (rawStored) {
+        const uList = JSON.parse(rawStored);
+        if (Array.isArray(uList)) {
+          const filtered = uList.filter((u: any) => u.id !== id && u.username !== id);
+          localStorage.setItem('LHHP_USERS', JSON.stringify(filtered));
+        }
+      }
     } catch (_) {}
+
+    const isVercelOrStatic = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') ||
+      window.location.hostname.includes('github.io') ||
+      window.location.port === '' ||
+      window.location.protocol === 'https:'
+    );
+
+    // Nếu chạy trên Vercel hoặc static host, không có backend Express /api/users
+    if (isVercelOrStatic) {
+      return { success: true, message: 'Đã xóa tài khoản thành công.' };
+    }
 
     try {
       const res = await fetch(`/api/users/${id}`, {
