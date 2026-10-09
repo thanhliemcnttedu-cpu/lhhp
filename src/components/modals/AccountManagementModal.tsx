@@ -3530,7 +3530,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
       {/* Modal Xác Nhận Dọn Dẹp / Xóa Dữ Liệu Năm Học Mới (Yêu cầu 3 & c, d, e) */}
       {schoolResetModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-black shrink-0">
@@ -3691,7 +3691,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
       {/* Modal Thêm Mới / Sửa CSDL Trường Học (Multi-tenant SaaS: Super Admin) */}
       {schoolModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
             {/* Nếu vừa khởi tạo thành công -> Hiển thị Phiếu Bàn Giao Tài Khoản BGH */}
             {provisionedSchoolInfo ? (
@@ -3952,7 +3952,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
       {/* 🚀 MODAL DI CHUYỂN TOÀN BỘ CSDL GIÁO VIÊN VÀO NHÀ TRƯỜNG (SUPER ADMIN) */}
       {transferModalOpen && userToTransfer && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 md:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 md:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-150">
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-blue-900 p-5 text-white flex items-center justify-between">

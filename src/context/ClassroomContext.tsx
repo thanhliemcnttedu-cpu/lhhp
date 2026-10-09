@@ -860,10 +860,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     isRemoteDataLoadedRef.current = false;
 
-    // 🚀 Tự động làm sạch cache cũ khi nâng cấp lên v4.0 GO-LIVE (Auto Cache Busting)
+    // 🚀 Tự động làm sạch cache cũ khi nâng cấp (Auto Cache Busting v4.1.0 Clean)
     try {
       const cacheVer = localStorage.getItem('lophoc_app_cache_version');
-      if (cacheVer !== 'v4.0.0-golive-clean') {
+      if (cacheVer !== 'v4.1.0-clean-all-classes') {
         Object.keys(localStorage).forEach(k => {
           if (k.startsWith(LOCAL_DB_PREFIX) || k.startsWith('lophoc_') || k.startsWith('lop_hoc_')) {
             if (k !== LOCAL_AUTH_KEY && k !== LOCAL_SESSION_KEY) {
@@ -871,7 +871,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             }
           }
         });
-        localStorage.setItem('lophoc_app_cache_version', 'v4.0.0-golive-clean');
+        localStorage.setItem('lophoc_app_cache_version', 'v4.1.0-clean-all-classes');
       }
     } catch (_) {}
 

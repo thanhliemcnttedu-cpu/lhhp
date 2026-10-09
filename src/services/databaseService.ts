@@ -2138,9 +2138,11 @@ export const databaseService = {
       });
     };
 
+    // 1. Thử gọi API backend (Local dev)
     try {
       const res = await fetch('/api/schools');
-      if (res.ok) {
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
         const data = await res.json();
         if (data.success && Array.isArray(data.schools)) {
           const cleanSchools = purgeRemovedSchools(data.schools);
@@ -2150,6 +2152,29 @@ export const databaseService = {
       }
     } catch (_) {}
 
+    // 2. Thử đọc từ Supabase Cloud trực tiếp
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        const { data: sbSchools, error } = await supabase.from('schools').select('*');
+        if (!error && Array.isArray(sbSchools) && sbSchools.length > 0) {
+          const mapped: SchoolEntity[] = sbSchools.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            code: s.code || '',
+            address: s.address || '',
+            phone: s.phone || '',
+            adminUsername: s.admin_username || '',
+            createdAt: s.created_at || Date.now()
+          }));
+          const clean = purgeRemovedSchools(mapped);
+          localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(clean));
+          return clean;
+        }
+      } catch (_) {}
+    }
+
+    // 3. Đọc từ LocalStorage
     try {
       const cached = localStorage.getItem(LOCAL_SCHOOLS_KEY);
       if (cached) {
@@ -2170,36 +2195,139 @@ export const databaseService = {
     adminAccount?: { username: string; password?: string; fullName: string; role: string; schoolName: string };
     message?: string;
   }> {
+    if (!schoolData.name || !schoolData.name.trim()) {
+      return { success: false, message: 'Tên trường học không được để trống.' };
+    }
+
+    const cleanName = schoolData.name.trim();
+    const schoolCode = schoolData.code?.trim().toUpperCase() || `TH_${Date.now().toString().slice(-4)}`;
+    const cleanCodeSlug = schoolCode.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const bghUsername = (schoolData.adminUsername?.trim() || `bgh_${cleanCodeSlug || Date.now().toString().slice(-4)}`).toLowerCase();
+    const bghPassword = schoolData.adminPassword?.trim() || '123456';
+    const bghFullName = schoolData.adminFullName?.trim() || `Ban Giám Hiệu ${cleanName}`;
+
+    const newSchool: SchoolEntity = {
+      id: schoolData.id || `school_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      name: cleanName,
+      code: schoolCode,
+      address: schoolData.address?.trim() || '',
+      phone: schoolData.phone?.trim() || '',
+      adminUsername: bghUsername,
+      createdAt: Date.now()
+    };
+
+    const bghAdminAccount = {
+      username: bghUsername,
+      password: bghPassword,
+      fullName: bghFullName,
+      role: 'school_admin',
+      schoolName: cleanName
+    };
+
+    // 1. Thử gọi qua API backend trước (Local dev)
     try {
       const res = await fetch('/api/schools', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schoolData)
       });
-      const data = await res.json();
-
-      // Đồng bộ trực tiếp Supabase nếu client browser có kết nối Supabase
-      const supabase = getBrowserSupabase();
-      if (supabase && data.success && data.adminAccount) {
-        try {
-          await supabase.from('users').upsert({
-            id: `user-${data.adminAccount.username}`,
-            username: data.adminAccount.username.toLowerCase(),
-            password: data.adminAccount.password || '123456',
-            full_name: data.adminAccount.fullName,
-            role: 'school_admin',
-            school_name: data.school?.name,
-            status: 'active',
-            created_at: Date.now()
-          }, { onConflict: 'username' });
-        } catch (sbErr) {
-          console.warn('[Supabase Sync BGH] Lỗi upsert user trên trình duyệt:', sbErr);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          // Lưu cache client
+          try {
+            const cachedSchools = await this.getSchools();
+            const updated = [...cachedSchools.filter(s => s.id !== (data.school?.id || newSchool.id)), data.school || newSchool];
+            localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(updated));
+          } catch (_) {}
+          return data;
         }
       }
-      return data;
-    } catch (err: any) {
-      return { success: false, message: err?.message || 'Lỗi khi gửi yêu cầu tạo trường mới.' };
+    } catch (_) {}
+
+    // 2. Chế độ Vercel / Cloud Fallback: Lưu trực tiếp vào Supabase (hoặc LocalStorage)
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      try {
+        // A. Lưu thông tin trường vào bảng schools hoặc user_classroom_data metadata
+        try {
+          await supabase.from('schools').upsert({
+            id: newSchool.id,
+            name: newSchool.name,
+            code: newSchool.code,
+            address: newSchool.address,
+            phone: newSchool.phone,
+            admin_username: newSchool.adminUsername,
+            created_at: newSchool.createdAt
+          }, { onConflict: 'id' });
+        } catch (sErr) {
+          console.warn('[Supabase Create School Table]', sErr);
+        }
+
+        // B. Cấp phát tài khoản Ban Giám Hiệu vào bảng users
+        await supabase.from('users').upsert({
+          id: `user-${bghUsername}`,
+          username: bghUsername,
+          password: bghPassword,
+          full_name: bghFullName,
+          role: 'school_admin',
+          school_name: cleanName,
+          status: 'active',
+          created_at: Date.now()
+        }, { onConflict: 'username' });
+
+        // C. Khởi tạo không gian dữ liệu rỗng cho tài khoản BGH trong user_classroom_data
+        await supabase.from('user_classroom_data').upsert({
+          username: bghUsername,
+          data: {
+            classes: [],
+            students: [],
+            subjectClasses: [],
+            schoolName: cleanName
+          },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'username' });
+
+      } catch (sbErr: any) {
+        console.warn('[Supabase Fallback School Creation]', sbErr);
+      }
     }
+
+    // 3. Cập nhật cache cục bộ LocalStorage
+    try {
+      const rawCached = localStorage.getItem(LOCAL_SCHOOLS_KEY);
+      const list: SchoolEntity[] = rawCached ? JSON.parse(rawCached) : [];
+      const updatedList = [...list.filter(s => s.id !== newSchool.id && s.name.toLowerCase() !== cleanName.toLowerCase()), newSchool];
+      localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(updatedList));
+
+      // Thêm tài khoản BGH vào danh sách người dùng cục bộ
+      const rawUsers = localStorage.getItem('LHHP_USERS');
+      const userList: UserAccount[] = rawUsers ? JSON.parse(rawUsers) : [];
+      const updatedUsers = [...userList.filter(u => u.username.toLowerCase() !== bghUsername), {
+        id: `user-${bghUsername}`,
+        username: bghUsername,
+        password: bghPassword,
+        fullName: bghFullName,
+        role: 'school_admin' as const,
+        isSchoolAdmin: true,
+        isBgh: true,
+        tenantType: 'school' as const,
+        schoolName: cleanName,
+        email: `${bghUsername}@lophoc.edu.vn`,
+        phone: newSchool.phone,
+        status: 'active' as const,
+        createdAt: Date.now()
+      }];
+      localStorage.setItem('LHHP_USERS', JSON.stringify(updatedUsers));
+    } catch (_) {}
+
+    return {
+      success: true,
+      school: newSchool,
+      adminAccount: bghAdminAccount,
+      message: 'Khởi tạo cơ sở dữ liệu trường học và cấp tài khoản BGH thành công!'
+    };
   },
 
   async updateSchool(id: string, schoolData: Partial<SchoolEntity>): Promise<{ success: boolean; school?: SchoolEntity; message?: string }> {
