@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-09T22:49:44.489Z",
+  "lastSync": "2026-10-09T22:50:18.907Z",
   "schools": [],
   "users": [
     {
@@ -144,6 +144,20 @@
             }
           },
           "teacherUsername": "gvcn_1a1"
+        },
+        {
+          "id": "class-1a5",
+          "name": "1A5",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=Class1A5&backgroundColor=3b82f6",
+          "slogan": "Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng",
+          "teacherName": "Chử Thị Nghĩa",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "teacherUsername": "gvcn_1a5",
+          "branch": null,
+          "campus": null
         }
       ],
       "activeClassId": "class-4a1",
@@ -940,6 +954,240 @@
           "birthDate": "04/04/2016",
           "avatarScale": 1,
           "subjectPoints": {},
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-1",
+          "stt": 1,
+          "name": "Nguyễn Văn An",
+          "role": "LỚP TRƯỞNG",
+          "group": "Tổ 1",
+          "roles": [
+            "LỚP TRƯỞNG"
+          ],
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "gender": "Nam",
+          "points": 11,
+          "classId": "class-1a5",
+          "birthDate": "01/01/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 11
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-4",
+          "stt": 4,
+          "name": "Đặng Hải Châu",
+          "group": "Tổ 4",
+          "roles": [],
+          "avatar": "/avatars/real_demo/girls/student-avatar-25.jpg",
+          "gender": "Nữ",
+          "points": 15,
+          "classId": "class-1a5",
+          "birthDate": "04/10/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 15
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-9",
+          "stt": 9,
+          "name": "Lưu Quang Hiếu",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-21.jpg",
+          "gender": "Nam",
+          "points": 22,
+          "classId": "class-1a5",
+          "birthDate": "09/01/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 22
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-13",
+          "stt": 13,
+          "name": "Phan Tuấn Khoa",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-34.jpg",
+          "gender": "Nam",
+          "points": 18,
+          "classId": "class-1a5",
+          "birthDate": "13/01/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 18
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-17",
+          "stt": 17,
+          "name": "Lâm Khánh Minh",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-38.jpg",
+          "gender": "Nam",
+          "points": 19,
+          "classId": "class-1a5",
+          "birthDate": "17/01/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 19
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-21",
+          "stt": 21,
+          "name": "Nguyễn Gia Nhân",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-48.jpg",
+          "gender": "Nam",
+          "points": 18,
+          "classId": "class-1a5",
+          "birthDate": "21/01/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 18
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-25",
+          "stt": 25,
+          "name": "Hồ Đình Phúc",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-18.jpg",
+          "gender": "Nam",
+          "points": 25,
+          "classId": "class-1a5",
+          "birthDate": "25/01/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 25
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-29",
+          "stt": 29,
+          "name": "Lưu Minh Tài",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-22.jpg",
+          "gender": "Nam",
+          "points": 28,
+          "classId": "class-1a5",
+          "birthDate": "01/01/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 28
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-34",
+          "stt": 34,
+          "name": "Đặng Diệu Thư",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "/avatars/real_demo/girls/student-avatar-23.jpg",
+          "gender": "Nữ",
+          "points": 15,
+          "classId": "class-1a5",
+          "birthDate": "06/04/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 15
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-38",
+          "stt": 38,
+          "name": "Đào Thảo Tuyết",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "/avatars/real_demo/girls/student-avatar-27.jpg",
+          "gender": "Nữ",
+          "points": 23,
+          "classId": "class-1a5",
+          "birthDate": "10/04/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 23
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        {
+          "id": "hs-class-1a5-42",
+          "stt": 42,
+          "name": "Phạm Thu An",
+          "group": "Tổ 2",
+          "roles": [],
+          "avatar": "/avatars/real_demo/girls/student-avatar-23.jpg",
+          "gender": "Nữ",
+          "points": 12,
+          "classId": "class-1a5",
+          "birthDate": "14/04/2019",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "NỀ NẾP CHUNG": 5,
+            "GHI CHUNG / NỀ NẾP": 12
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -1809,7 +2057,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791586183571
+      "updatedAt": 1791586218907
     }
   },
   "auditLogs": [
@@ -1923,6 +2171,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791586184489
+    "lastGithubPushAt": 1791586189361
   }
 }
