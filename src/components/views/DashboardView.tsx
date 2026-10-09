@@ -3,9 +3,9 @@ import { useClassroom } from '../../context/ClassroomContext';
 import { 
   Users, User, CheckSquare, Gift, Sparkles, Plus, 
   ArrowUpRight, Award, Calendar, BookOpen, ChevronRight,
-  TrendingUp, Brain, School, Trophy, Flame, RotateCcw, ShieldCheck
+  TrendingUp, Brain, School, Trophy, Flame, ShieldCheck
 } from 'lucide-react';
-import { playPointClink, playFanfareSound } from '../../utils/audio';
+import { playPointClink } from '../../utils/audio';
 import confetti from 'canvas-confetti';
 import { callGeminiAi } from '../../services/aiService';
 import { APP_AUTHOR_INFO } from '../../data/initialData';
@@ -23,7 +23,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const { 
     classes, activeClassId, setActiveClassId, students, currentClassStudents, 
     currentDateAttendance, timetable, awardPoints,
-    teacherProfile, resetToDefaultData, teacherRole,
+    teacherProfile, teacherRole,
     currentUser, isBgh, isSchoolAdmin, isAdmin
   } = useClassroom();
 
@@ -148,32 +148,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
-      {/* Empty State Banner if no classes exist (Chỉ hiện cho giáo viên cần lớp mẫu, không hiện cho Quản trị viên) */}
-      {classes.length === 0 && !isAdmin && !isBgh && !isSchoolAdmin && (
-        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-sm shadow-amber-500/20">
-              <School className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs font-black text-amber-950">Chưa có lớp học nào trong hệ thống</h4>
-              <p className="text-[11px] text-amber-800 mt-0.5">Khôi phục ngay dữ liệu mẫu chuẩn: 1 Lớp 4A1, Cô Trịnh Thị Hương và 10 học sinh.</p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              resetToDefaultData();
-              playFanfareSound();
-              confetti({ particleCount: 60, spread: 70 });
-            }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shrink-0 hover-zoom-btn flex items-center gap-1.5 shadow-sm shadow-indigo-600/20"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Khôi phục Lớp 4A1 ngay</span>
-          </button>
-        </div>
-      )}
-
       {/* 1. Main Welcome Banner matching Requirement 5: TÊN GIÁO VIÊN, ĐƠN VỊ CÔNG TÁC, NĂM HỌC */}
       {(() => {
         const isManagementAccount = Boolean(isBgh || isSchoolAdmin || currentUser?.role === 'admin' || currentUser?.role === 'guest_admin');

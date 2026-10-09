@@ -14,6 +14,7 @@ import {
 import confetti from 'canvas-confetti';
 import { AttendanceChartsView } from './attendance/AttendanceChartsView';
 import { AttendanceExportModal } from './attendance/AttendanceExportModal';
+import { handleAvatarImgError } from '../../utils/avatarConfig';
 
 // 4 Trạng thái điểm danh trọng tâm theo yêu cầu của Bộ GD & người dùng
 const STATUS_CONFIG: Record<AttendanceStatus, { label: string; short: string; activeClass: string; inactiveClass: string; badgeClass: string; icon: string }> = {
@@ -1101,6 +1102,7 @@ export const AttendanceView: React.FC = () => {
                         src={student.avatar}
                         alt={student.name}
                         className="w-10 h-10 rounded-xl object-cover bg-white border border-slate-200 shrink-0 shadow-2xs"
+                        onError={(e) => handleAvatarImgError(e, student.gender, student.name)}
                       />
                       <div className="truncate">
                         <div className="text-xs md:text-sm font-black text-slate-900 truncate flex items-center gap-2">
@@ -1440,6 +1442,7 @@ export const AttendanceView: React.FC = () => {
                         src={student.avatar}
                         alt={student.name}
                         className="w-10 h-10 rounded-xl object-cover bg-white border border-slate-200 shrink-0 shadow-2xs"
+                        onError={(e) => handleAvatarImgError(e, student.gender, student.name)}
                       />
                       <div className="truncate">
                         <div className="text-xs md:text-sm font-black text-slate-900 truncate flex items-center gap-2">

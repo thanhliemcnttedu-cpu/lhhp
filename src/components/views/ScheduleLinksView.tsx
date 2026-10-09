@@ -146,7 +146,7 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
     classes, activeClassId, setActiveClassId,
     timetable, timetableConfig, setTimetableConfig, 
     updateTimetableSlot, quickLinks, addQuickLink, deleteQuickLink, updateQuickLink, reorderQuickLinks,
-    teacherProfile, subjects, teacherRole, subjectTeacherConfig
+    teacherProfile, subjects, teacherRole, subjectTeacherConfig, currentUser
   } = useClassroom();
 
   const [activeTab, setActiveTab] = useState<'schedule' | 'links'>(defaultTab);
@@ -181,12 +181,12 @@ export const ScheduleLinksView: React.FC<ScheduleLinksViewProps> = ({ defaultTab
     return {
       title: 'THỜI KHÓA BIỂU',
       schoolName: teacherProfile.schoolName || 'TRƯỜNG TIỂU HỌC',
-      className: selectedClass ? `LỚP ${selectedClass.name.toUpperCase()}` : 'LỚP 4A1',
+      className: selectedClass ? `LỚP ${selectedClass.name.toUpperCase()}` : 'LỚP HỌC',
       academicYear: teacherProfile.academicYear || '2026 – 2027',
       semester: 'Học kỳ I',
       appliedDate: '05/09/2026',
-      teacherName: selectedClass?.teacherName || teacherProfile.name || 'Cô Trịnh Thị Hương',
-      slogan: 'Mỗi ngày đến trường là một ngày vui • Chăm ngoan - Học giỏi',
+      teacherName: selectedClass?.teacherName || teacherProfile.name || (currentUser?.fullName || ''),
+      slogan: selectedClass?.slogan || 'Mỗi ngày đến trường là một ngày vui • Chăm ngoan - Học giỏi',
       showTimeSlots: true,
       showTeacherInfo: true,
       showSlogan: true,

@@ -4,6 +4,7 @@ import {
   Award, PlusCircle, MinusCircle, Check, 
   Search, BookOpen, Clock, Plus, Filter, Sparkles
 } from 'lucide-react';
+import { handleAvatarImgError } from '../../utils/avatarConfig';
 
 export const PointsAwardView: React.FC = () => {
   const { 
@@ -191,6 +192,7 @@ export const PointsAwardView: React.FC = () => {
                       alt={student.name}
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
+                      onError={(e) => handleAvatarImgError(e, student.gender, student.name)}
                     />
                     {isSelected && (
                       <div className="absolute inset-0 bg-blue-600/80 flex items-center justify-center text-white">

@@ -22,7 +22,7 @@ import {
 import { playCoinSound, playDeductSound } from '../utils/audio';
 import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank, smartMergeQuizBank } from '../utils/quizParser';
 import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX, LOCAL_SESSION_KEY } from '../services/databaseService';
-import { AvatarSourceType, getStudentAvatarAssignment } from '../utils/avatarConfig';
+import { AvatarSourceType, getStudentAvatarAssignment, sanitizeStudentAvatar } from '../utils/avatarConfig';
 
 interface ClassroomContextType {
   classes: Classroom[];
@@ -292,6 +292,32 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     classesRef.current = classes;
   }, [classes]);
+
+  // 🛡️ Tự động rà soát & khắc phục các avatar học sinh trỏ đến file ảnh hỏng / không tồn tại
+  useEffect(() => {
+    if (!students || students.length === 0) return;
+    let hasBroken = false;
+    const healed = students.map((s, idx) => {
+      const clean = sanitizeStudentAvatar(s.avatar, (s.gender as any) || 'Nam', idx, s.classId);
+      if (clean !== s.avatar) {
+        hasBroken = true;
+        return { ...s, avatar: clean, originalAvatar: clean };
+      }
+      return s;
+    });
+    if (hasBroken) {
+      studentsRef.current = healed;
+      setStudents(healed);
+      if (currentUserRef.current) {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: healed,
+          updatedAt: Date.now()
+        };
+        databaseService.saveUserData(currentUserRef.current.username, payload).catch(() => {});
+      }
+    }
+  }, [students]);
 
   // ⚡ Instant synchronization across browser tabs and windows via local BroadcastChannel
   useEffect(() => {
@@ -3503,8 +3529,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       grade: 'Khối 4',
       color: '#3B82F6',
       academicYear: '2026–2027',
-      teacherName: 'Trịnh Thị Hương',
-      teacherUsername: 'gvcndemo',
+      teacherName: currentUser?.fullName || 'Giáo viên',
+      teacherUsername: currentUser?.username || 'gvcndemo',
       teacherRole: 'homeroom',
       avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=Class4A1&backgroundColor=3b82f6',
       slogan: 'Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng',

@@ -9,7 +9,7 @@ import { ClassAvatarEditorModal } from '../modals/ClassAvatarEditorModal';
 import { ExportStudentListModal } from '../modals/ExportStudentListModal';
 import { AutoAssignAvatarModal } from '../modals/AutoAssignAvatarModal';
 import { InitSubjectClassesModal } from './classes/InitSubjectClassesModal';
-import { AvatarSourceType } from '../../utils/avatarConfig';
+import { AvatarSourceType, handleAvatarImgError } from '../../utils/avatarConfig';
 import { 
   Users, UserPlus, ClipboardPaste, Camera, 
   Trash2, Edit3, Search, Check, Plus, Minus,
@@ -336,7 +336,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
   const [newClassName, setNewClassName] = useState('');
   const [newClassGrade, setNewClassGrade] = useState('Khối 4');
-  const [newClassTeacher, setNewClassTeacher] = useState(teacherProfile.name || 'Cô Trịnh Thị Hương');
+  const [newClassTeacher, setNewClassTeacher] = useState(teacherProfile.name || currentUser?.fullName || '');
   const [newClassYear, setNewClassYear] = useState(teacherProfile.academicYear || '2026–2027');
   const [newClassColor, setNewClassColor] = useState(CLASS_COLORS[0]);
   const [newClassBranch, setNewClassBranch] = useState('');
@@ -348,16 +348,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [isNewClassAvatarEditorOpen, setIsNewClassAvatarEditorOpen] = useState(false);
   const [avatarEditingClass, setAvatarEditingClass] = useState<Classroom | null>(null);
 
-  // Parent Committee & Slogan states for New Class
-  const [newClassSlogan, setNewClassSlogan] = useState('Lớp học hạnh phúc • Chăm ngoan, sáng tạo, tự tin tỏa sáng');
-  const [newParentHeadName, setNewParentHeadName] = useState('Trần Văn Mạnh');
-  const [newParentHeadPhone, setNewParentHeadPhone] = useState('0988 123 456');
-  const [newParentDeputyName, setNewParentDeputyName] = useState('Nguyễn Thị Mai');
-  const [newParentDeputyPhone, setNewParentDeputyPhone] = useState('0977 654 321');
-  const [newParentMember1Name, setNewParentMember1Name] = useState('Lê Hoàng Nam');
-  const [newParentMember1Phone, setNewParentMember1Phone] = useState('0912 345 678');
-  const [newParentMember2Name, setNewParentMember2Name] = useState('Phạm Thị Lan');
-  const [newParentMember2Phone, setNewParentMember2Phone] = useState('0903 890 123');
+  // Parent Committee & Slogan states for New Class (Bỏ trống mặc định)
+  const [newClassSlogan, setNewClassSlogan] = useState('');
+  const [newParentHeadName, setNewParentHeadName] = useState('');
+  const [newParentHeadPhone, setNewParentHeadPhone] = useState('');
+  const [newParentDeputyName, setNewParentDeputyName] = useState('');
+  const [newParentDeputyPhone, setNewParentDeputyPhone] = useState('');
+  const [newParentMember1Name, setNewParentMember1Name] = useState('');
+  const [newParentMember1Phone, setNewParentMember1Phone] = useState('');
+  const [newParentMember2Name, setNewParentMember2Name] = useState('');
+  const [newParentMember2Phone, setNewParentMember2Phone] = useState('');
 
   // 🌟 MODAL & FORM IMPORT DANH SÁCH LỚP HỌC HÀNG LOẠT (User Request: Bulk Class Import)
   const [isImportClassesModalOpen, setIsImportClassesModalOpen] = useState(false);
@@ -559,7 +559,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       teacherUsername: isAdmin ? newClassAssignedUsername : (currentUser?.username || ''),
       teacherRole: effectiveRole,
       isHomeroom: effectiveRole === 'homeroom',
-      teacherName: isAdmin ? (assignedTeacher?.fullName || newClassTeacher.trim()) : (newClassTeacher.trim() || teacherProfile.name || 'Cô Trịnh Thị Hương'),
+      teacherName: isAdmin ? (assignedTeacher?.fullName || newClassTeacher.trim()) : (newClassTeacher.trim() || teacherProfile.name || currentUser?.fullName || ''),
       academicYear: newClassYear.trim() || teacherProfile.academicYear || '2026–2027',
       color: newClassColor,
       avatar: newClassAvatar,
@@ -760,7 +760,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     e.preventDefault();
     if (!editingClass || !editingClass.name.trim()) return;
 
-    const trimmedTeacherName = editingClass.teacherName?.trim() || teacherProfile.name || 'Cô Trịnh Thị Hương';
+    const trimmedTeacherName = editingClass.teacherName?.trim() || teacherProfile.name || currentUser?.fullName || '';
     const trimmedAcademicYear = editingClass.academicYear?.trim() || teacherProfile.academicYear || '2026–2027';
     const isHome = editingClass.isHomeroom !== undefined 
       ? editingClass.isHomeroom 
@@ -2962,6 +2962,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             alt={student.name}
                             className="w-full h-full object-cover transition-transform group-hover/avatar:scale-105"
                             referrerPolicy="no-referrer"
+                            onError={(e) => handleAvatarImgError(e, student.gender, student.name)}
                           />
 
                           <div className="absolute inset-0 bg-indigo-950/65 text-white text-[9px] font-black flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
@@ -3476,6 +3477,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   src={rewardingStudent.avatar}
                   alt={rewardingStudent.name}
                   className="w-12 h-12 rounded-xl object-cover bg-white ring-2 ring-indigo-200"
+                  onError={(e) => handleAvatarImgError(e, rewardingStudent.gender, rewardingStudent.name)}
                 />
                 <div>
                   <div className="text-sm font-black text-indigo-950">STT {rewardingStudent.stt} · {rewardingStudent.name}</div>
@@ -3843,7 +3845,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 ) : (
                   <input
                     type="text"
-                    placeholder="Ví dụ: Cô Trịnh Thị Hương"
+                    placeholder="Ví dụ: Thầy/Cô Nguyễn Văn A"
                     value={newClassTeacher}
                     onChange={(e) => setNewClassTeacher(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500"
@@ -4710,7 +4712,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       type="text"
                       value={editingClass.teacherName || ''}
                       onChange={(e) => setEditingClass({ ...editingClass, teacherName: e.target.value })}
-                      placeholder="Ví dụ: Cô Trịnh Thị Hương"
+                      placeholder="Ví dụ: Thầy/Cô Nguyễn Văn A"
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
@@ -5631,6 +5633,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         alt={editingStudent.name}
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
+                        onError={(e) => handleAvatarImgError(e, editingStudent.gender, editingStudent.name)}
                       />
                     </div>
                     <div className="flex-1 min-w-0">

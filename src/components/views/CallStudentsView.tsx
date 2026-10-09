@@ -15,6 +15,7 @@ import {
 
 import { LuckyWheelView } from './LuckyWheelView';
 import { FilmReelView } from './FilmReelView';
+import { handleAvatarImgError } from '../../utils/avatarConfig';
 
 export type CallGameType = 'wheel' | 'reel' | 'duck_race';
 
@@ -354,6 +355,7 @@ const DuckRaceGame: React.FC<{ students: Student[]; onAward: (ids: string[], pts
                         alt={racer.student.name}
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
+                        onError={(e) => handleAvatarImgError(e, racer.student.gender, racer.student.name)}
                       />
                     </div>
 
@@ -404,6 +406,7 @@ const DuckRaceGame: React.FC<{ students: Student[]; onAward: (ids: string[], pts
                       alt={winner.name} 
                       className="w-full h-full object-cover rounded-2xl" 
                       referrerPolicy="no-referrer"
+                      onError={(e) => handleAvatarImgError(e, winner.gender, winner.name)}
                     />
                   </div>
                   <span className="absolute -top-3 -right-2 bg-amber-500 text-white text-xs font-black px-2 py-0.5 rounded-full shadow-md">
@@ -425,7 +428,7 @@ const DuckRaceGame: React.FC<{ students: Student[]; onAward: (ids: string[], pts
                   {runnerUp && (
                     <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-2 text-left">
                       <span className="text-lg">🥈</span>
-                      <img src={runnerUp.avatar} alt={runnerUp.name} className="w-8 h-8 rounded-xl object-cover bg-white" />
+                      <img src={runnerUp.avatar} alt={runnerUp.name} className="w-8 h-8 rounded-xl object-cover bg-white" onError={(e) => handleAvatarImgError(e, runnerUp.gender, runnerUp.name)} />
                       <div className="truncate text-xs">
                         <div className="font-black text-slate-800 truncate">{runnerUp.name}</div>
                         <div className="text-[10px] text-slate-400 font-bold">Hạng 2</div>
@@ -436,7 +439,7 @@ const DuckRaceGame: React.FC<{ students: Student[]; onAward: (ids: string[], pts
                   {thirdPlace && (
                     <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-2 text-left">
                       <span className="text-lg">🥉</span>
-                      <img src={thirdPlace.avatar} alt={thirdPlace.name} className="w-8 h-8 rounded-xl object-cover bg-white" />
+                      <img src={thirdPlace.avatar} alt={thirdPlace.name} className="w-8 h-8 rounded-xl object-cover bg-white" onError={(e) => handleAvatarImgError(e, thirdPlace.gender, thirdPlace.name)} />
                       <div className="truncate text-xs">
                         <div className="font-black text-slate-800 truncate">{thirdPlace.name}</div>
                         <div className="text-[10px] text-slate-400 font-bold">Hạng 3</div>
@@ -620,7 +623,7 @@ const PhotoCardsGame: React.FC<{ students: Student[]; onAward: (ids: string[], p
                 /* Card Front (Revealed Student) */
                 <div className="flex flex-col items-center justify-between h-full text-center">
                   <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-indigo-200 bg-white shadow-xs shrink-0">
-                    <img src={st.avatar} alt={st.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img src={st.avatar} alt={st.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => handleAvatarImgError(e, st.gender, st.name)} />
                   </div>
                   <div className="w-full truncate px-1">
                     <div className="text-xs font-black text-slate-900 truncate">{st.name}</div>
@@ -650,7 +653,7 @@ const PhotoCardsGame: React.FC<{ students: Student[]; onAward: (ids: string[], p
       {selectedWinner && (
         <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in zoom-in-95 duration-200">
           <div className="flex items-center gap-3">
-            <img src={selectedWinner.avatar} alt={selectedWinner.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 bg-white shadow-md shrink-0" />
+            <img src={selectedWinner.avatar} alt={selectedWinner.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 bg-white shadow-md shrink-0" onError={(e) => handleAvatarImgError(e, selectedWinner.gender, selectedWinner.name)} />
             <div>
               <span className="text-[10px] font-black uppercase text-amber-700">HỌC SINH ĐƯỢC CHỌN QUA THẺ ẢNH</span>
               <h4 className="text-base font-black text-slate-900">{selectedWinner.name}</h4>
@@ -802,7 +805,7 @@ const LuckyLensGame: React.FC<{ students: Student[]; onAward: (ids: string[], pt
               )}
 
               <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-700 bg-slate-900 mb-2">
-                <img src={st.avatar} alt={st.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src={st.avatar} alt={st.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => handleAvatarImgError(e, st.gender, st.name)} />
               </div>
               <span className="text-xs font-black truncate w-full text-center">{st.name}</span>
               <span className="text-[10px] text-slate-400">#{st.stt}</span>
@@ -816,7 +819,7 @@ const LuckyLensGame: React.FC<{ students: Student[]; onAward: (ids: string[], pt
         <div className="p-5 rounded-3xl bg-white text-slate-900 border-4 border-amber-400 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in zoom-in-95 duration-200">
           <div className="flex items-center gap-4">
             <div className="relative p-2 bg-slate-100 rounded-2xl shadow-inner border border-slate-300">
-              <img src={winner.avatar} alt={winner.name} className="w-20 h-20 rounded-xl object-cover bg-white" />
+              <img src={winner.avatar} alt={winner.name} className="w-20 h-20 rounded-xl object-cover bg-white" onError={(e) => handleAvatarImgError(e, winner.gender, winner.name)} />
               <span className="absolute bottom-1 right-1 bg-amber-400 text-amber-950 text-[10px] font-black px-1 rounded">
                 POLAROID
               </span>

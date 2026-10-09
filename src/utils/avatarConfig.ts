@@ -29,8 +29,6 @@ const STATIC_AVATAR_MANIFEST: AvatarFolderStructure = {
   default: {
     boys: [
       '/avatars/default/boys/boy1.jpg',
-      '/avatars/default/boys/boy2.webp',
-      '/avatars/default/boys/boy3.webp',
       '/avatars/default/boys/boy4.jfif',
       '/avatars/default/boys/boy5.jfif',
       '/avatars/default/boys/boy6.jfif',
@@ -51,20 +49,12 @@ const STATIC_AVATAR_MANIFEST: AvatarFolderStructure = {
   },
   real_demo: {
     boys: [
-      '/avatars/real_demo/boys/student-avatar-01.webp',
       '/avatars/real_demo/boys/student-avatar-04.jpg',
-      '/avatars/real_demo/boys/student-avatar-12.webp',
-      '/avatars/real_demo/boys/student-avatar-13.webp',
-      '/avatars/real_demo/boys/student-avatar-14.webp',
-      '/avatars/real_demo/boys/student-avatar-15.jpg',
-      '/avatars/real_demo/boys/student-avatar-17.jpg',
       '/avatars/real_demo/boys/student-avatar-18.jpg',
       '/avatars/real_demo/boys/student-avatar-19.jpg',
       '/avatars/real_demo/boys/student-avatar-20.jpg',
       '/avatars/real_demo/boys/student-avatar-21.jpg',
       '/avatars/real_demo/boys/student-avatar-22.jpg',
-      '/avatars/real_demo/boys/student-avatar-29.jpg',
-      '/avatars/real_demo/boys/student-avatar-31.jpg',
       '/avatars/real_demo/boys/student-avatar-32.jpg',
       '/avatars/real_demo/boys/student-avatar-33.jpg',
       '/avatars/real_demo/boys/student-avatar-34.jpg',
@@ -74,23 +64,12 @@ const STATIC_AVATAR_MANIFEST: AvatarFolderStructure = {
       '/avatars/real_demo/boys/student-avatar-38.jpg',
       '/avatars/real_demo/boys/student-avatar-39.jpg',
       '/avatars/real_demo/boys/student-avatar-40.jpg',
-      '/avatars/real_demo/boys/student-avatar-43.webp',
-      '/avatars/real_demo/boys/student-avatar-46.webp',
       '/avatars/real_demo/boys/student-avatar-47.jpg',
       '/avatars/real_demo/boys/student-avatar-48.jpg',
       '/avatars/real_demo/boys/student-avatar-49.jpg',
-      '/avatars/real_demo/boys/student-avatar-50.jpg',
-      '/avatars/real_demo/boys/student-avatar-51.webp'
+      '/avatars/real_demo/boys/student-avatar-50.jpg'
     ],
     girls: [
-      '/avatars/real_demo/girls/student-avatar-02.webp',
-      '/avatars/real_demo/girls/student-avatar-03.webp',
-      '/avatars/real_demo/girls/student-avatar-05.webp',
-      '/avatars/real_demo/girls/student-avatar-06.webp',
-      '/avatars/real_demo/girls/student-avatar-07.webp',
-      '/avatars/real_demo/girls/student-avatar-08.webp',
-      '/avatars/real_demo/girls/student-avatar-09.webp',
-      '/avatars/real_demo/girls/student-avatar-10.webp',
       '/avatars/real_demo/girls/student-avatar-16.jpg',
       '/avatars/real_demo/girls/student-avatar-23.jpg',
       '/avatars/real_demo/girls/student-avatar-24.jpg',
@@ -98,9 +77,7 @@ const STATIC_AVATAR_MANIFEST: AvatarFolderStructure = {
       '/avatars/real_demo/girls/student-avatar-26.jpg',
       '/avatars/real_demo/girls/student-avatar-27.jpg',
       '/avatars/real_demo/girls/student-avatar-28.jpg',
-      '/avatars/real_demo/girls/student-avatar-30.jpg',
-      '/avatars/real_demo/girls/student-avatar-41.webp',
-      '/avatars/real_demo/girls/student-avatar-42.webp'
+      '/avatars/real_demo/girls/student-avatar-30.jpg'
     ]
   }
 };
@@ -257,3 +234,66 @@ export function getAvatarPoolSummary() {
     }
   };
 }
+
+const ALL_VALID_STATIC_URLS = new Set([
+  ...STATIC_AVATAR_MANIFEST.default.boys,
+  ...STATIC_AVATAR_MANIFEST.default.girls,
+  ...STATIC_AVATAR_MANIFEST.real_demo.boys,
+  ...STATIC_AVATAR_MANIFEST.real_demo.girls
+]);
+
+/**
+ * Checks if an avatar URL is valid and actually exists
+ */
+export function isValidAvatarUrl(url?: string): boolean {
+  if (!url || typeof url !== 'string' || !url.trim()) return false;
+  if (url.startsWith('data:image/')) return true;
+  if (url.includes('api.dicebear.com/')) return true;
+  if (url.startsWith('/avatars/')) {
+    return ALL_VALID_STATIC_URLS.has(url);
+  }
+  return true;
+}
+
+/**
+ * Automatically sanitizes an avatar: if it points to a deleted or non-existent file,
+ * it returns a valid existing real demo avatar for the student's gender.
+ */
+export function sanitizeStudentAvatar(avatar: string | undefined, gender: Gender = 'Nam', index: number = 0, classId: string = ''): string {
+  if (!avatar || !isValidAvatarUrl(avatar)) {
+    return getStudentAvatarAssignment({ gender, type: 'real_demo', index, classId });
+  }
+  return avatar;
+}
+
+/**
+ * Fallback avatar URL when an avatar fails to load
+ */
+export function getFallbackAvatar(gender?: Gender, name?: string): string {
+  const isFemale = gender === 'Nữ';
+  return isFemale 
+    ? '/avatars/real_demo/girls/student-avatar-16.jpg' 
+    : '/avatars/real_demo/boys/student-avatar-04.jpg';
+}
+
+/**
+ * Graceful error handler for <img> elements displaying student avatars
+ */
+export function handleAvatarImgError(e: React.SyntheticEvent<HTMLImageElement, Event>, gender?: Gender, name?: string) {
+  const target = e.currentTarget;
+  const isFemale = gender === 'Nữ';
+  const primaryFallback = isFemale 
+    ? '/avatars/real_demo/girls/student-avatar-16.jpg' 
+    : '/avatars/real_demo/boys/student-avatar-04.jpg';
+  
+  // Prevent infinite loops if fallback also errors
+  if (target.src.includes(primaryFallback)) {
+    target.src = isFemale
+      ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name || 'Girl')}&backgroundColor=ffd5dc`
+      : `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name || 'Boy')}&backgroundColor=d1d4f9`;
+  } else {
+    target.src = primaryFallback;
+  }
+}
+
+

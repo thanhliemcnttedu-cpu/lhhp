@@ -27,7 +27,7 @@ export const SYSTEM_AVATARS = [
   { id: 'av-pet-2', label: 'Gấu Trúc', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=GauTruc&backgroundColor=b6e3f4', gender: 'Linh vật' }
 ];
 
-// Thông tin giáo viên mặc định trong cài đặt (Khối Demo: Cô Trịnh Thị Hương)
+// Thông tin giáo viên mặc định trong cài đặt
 export const DEFAULT_TEACHER: TeacherProfile = {
   name: 'Giáo viên',
   birthDate: '',
@@ -57,7 +57,7 @@ export const ADMIN_QUANTRI_PROFILE: TeacherProfile = {
   academicYear: '2026–2027'
 };
 
-// Mặc định ban đầu: Chỉ có 1 lớp là 4A1 (GVCN: Cô Trịnh Thị Hương)
+// Mặc định ban đầu
 export const INITIAL_CLASSES: Classroom[] = [];
 
 // 3 Môn mặc định theo yêu cầu hệ thống
