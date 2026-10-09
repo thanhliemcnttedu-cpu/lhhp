@@ -1,5 +1,14 @@
 [
   {
+    "id": "log-1791566688041-45ochg",
+    "timestamp": 1791566688041,
+    "username": "adminquantri",
+    "userFullName": "Quản trị viên Hệ thống Cấp cao",
+    "role": "admin",
+    "actionType": "OTHER",
+    "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+  },
+  {
     "id": "log-1791539855566-0seoob",
     "timestamp": 1791539855566,
     "username": "adminquantri",

@@ -5,16 +5,37 @@ import {
   School, Building2, MapPin, Users, CheckSquare, Utensils, Coins, 
   TrendingUp, RefreshCw, Calendar, Award, Sparkles, Filter, 
   Download, ChevronRight, Wifi, Bell, Volume2, VolumeX, ArrowUpRight,
-  ShieldCheck, AlertCircle, PieChart, BarChart3, CheckCircle2, XCircle, Clock
+  ShieldCheck, AlertCircle, PieChart, BarChart3, CheckCircle2, XCircle, Clock,
+  ChevronLeft, CalendarDays, CalendarRange, Clock3
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { playPointClink } from '../../../utils/audio';
+
+export type ReportTimeframe = 'day' | 'week' | 'month';
+
+// Helper định dạng ngày chuẩn tiếng Việt DD/MM/YYYY
+const formatDateVN = (dateStr: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
+// Helper lấy chuỗi YYYY-MM-DD theo giờ địa phương
+const toLocalDateString = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
 export const AdminRealtimeDashboardView: React.FC = () => {
   const { 
     classes, students, attendanceRecords, boardingRecords, transactions,
     currentUser, isAdmin, isBgh, isSchoolAdmin, syncDatabaseNow, lastDbSyncTime,
-    dbSyncStatus
+    dbSyncStatus, schoolBranches
   } = useClassroom();
 
   // 1. Bộ lọc phân cấp 3 tầng (Multi-level Filter)
@@ -23,15 +44,21 @@ export const AdminRealtimeDashboardView: React.FC = () => {
   // Cấp 2: 'all' (Tất cả điểm trường) | Tên Điểm trường cụ thể
   const [selectedCampus, setSelectedCampus] = useState<string>('all');
 
-  // Ngày thanh tra / giám sát (Mặc định hôm nay YYYY-MM-DD)
-  const todayStr = useMemo(() => {
+  // =========================================================================
+  // 🌟 KHUNG THỜI GIAN BÁO CÁO: THEO NGÀY • THEO TUẦN • THEO THÁNG
+  // =========================================================================
+  const [timeframe, setTimeframe] = useState<ReportTimeframe>('day');
+
+  // Ngày hiện tại (Local)
+  const todayStr = useMemo(() => toLocalDateString(new Date()), []);
+  const currentMonthStr = useMemo(() => {
     const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }, []);
+
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  const [selectedWeekDate, setSelectedWeekDate] = useState<string>(todayStr);
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
 
   // Trạng thái Realtime Engine
   const [lastEventTime, setLastEventTime] = useState<string>('');
@@ -39,8 +66,109 @@ export const AdminRealtimeDashboardView: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [isManualSyncing, setIsManualSyncing] = useState<boolean>(false);
 
+  // Tính toán khoảng thời gian [startDate, endDate] & nhãn mô tả
+  const dateRange = useMemo(() => {
+    if (timeframe === 'day') {
+      return {
+        startDate: selectedDate,
+        endDate: selectedDate,
+        label: `Ngày ${formatDateVN(selectedDate)}`,
+        shortLabel: formatDateVN(selectedDate),
+        isCurrent: selectedDate === todayStr
+      };
+    }
+
+    if (timeframe === 'week') {
+      const parts = selectedWeekDate.split('-');
+      const targetD = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const dayOfWeek = targetD.getDay(); // 0: Chủ nhật, 1: Thứ hai...
+      const diffToMonday = targetD.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      
+      const monDate = new Date(targetD.getFullYear(), targetD.getMonth(), diffToMonday);
+      const sunDate = new Date(monDate.getFullYear(), monDate.getMonth(), monDate.getDate() + 6);
+
+      const monStr = toLocalDateString(monDate);
+      const sunStr = toLocalDateString(sunDate);
+
+      return {
+        startDate: monStr,
+        endDate: sunStr,
+        label: `Tuần từ ${formatDateVN(monStr)} đến ${formatDateVN(sunStr)}`,
+        shortLabel: `${formatDateVN(monStr)} - ${formatDateVN(sunStr)}`,
+        isCurrent: selectedWeekDate === todayStr
+      };
+    }
+
+    // timeframe === 'month'
+    const [yStr, mStr] = selectedMonth.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10);
+    const firstDay = `${yStr}-${mStr}-01`;
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const lastDay = `${yStr}-${mStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
+
+    return {
+      startDate: firstDay,
+      endDate: lastDay,
+      label: `Tháng ${mStr}/${yStr} (${formatDateVN(firstDay)} đến ${formatDateVN(lastDay)})`,
+      shortLabel: `Tháng ${mStr}/${yStr}`,
+      isCurrent: selectedMonth === currentMonthStr
+    };
+  }, [timeframe, selectedDate, selectedWeekDate, selectedMonth, todayStr, currentMonthStr]);
+
+  // Điều hướng nhanh mốc thời gian
+  const handlePrevDay = () => {
+    const parts = selectedDate.split('-');
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(toLocalDateString(d));
+  };
+
+  const handleNextDay = () => {
+    const parts = selectedDate.split('-');
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(toLocalDateString(d));
+  };
+
+  const handlePrevWeek = () => {
+    const parts = selectedWeekDate.split('-');
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    d.setDate(d.getDate() - 7);
+    setSelectedWeekDate(toLocalDateString(d));
+  };
+
+  const handleNextWeek = () => {
+    const parts = selectedWeekDate.split('-');
+    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    d.setDate(d.getDate() + 7);
+    setSelectedWeekDate(toLocalDateString(d));
+  };
+
+  const handlePrevMonth = () => {
+    const [yStr, mStr] = selectedMonth.split('-');
+    let y = parseInt(yStr, 10);
+    let m = parseInt(mStr, 10) - 1;
+    if (m < 1) {
+      m = 12;
+      y -= 1;
+    }
+    setSelectedMonth(`${y}-${String(m).padStart(2, '0')}`);
+  };
+
+  const handleNextMonth = () => {
+    const [yStr, mStr] = selectedMonth.split('-');
+    let y = parseInt(yStr, 10);
+    let m = parseInt(mStr, 10) + 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+    setSelectedMonth(`${y}-${String(m).padStart(2, '0')}`);
+  };
+
   // =========================================================================
-  // 🌟 BƯỚC 1: THUẬT TOÁN LỌC DỮ LIỆU CỐT LÕI (CORE AGGREGATION FILTER)
+  // 🌟 THUẬT TOÁN LỌC DỮ LIỆU CỐT LÕI (CORE AGGREGATION FILTER)
   // Chỉ tổng hợp từ các lớp Giáo Viên Chủ Nhiệm (GVCN).
   // TUYỆT ĐỐI LOẠI TRỪ các lớp Giáo Viên Bộ Môn (GVBM) để chống trùng lặp học sinh toàn trường!
   // =========================================================================
@@ -76,24 +204,41 @@ export const AdminRealtimeDashboardView: React.FC = () => {
 
   const excludedSubjectClassesCount = classes.length - homeroomClasses.length;
 
-  // 2. Tự động trích xuất danh sách Phân hiệu & Điểm trường CHỈ TỪ CÁC LỚP GVCN
+  // Tự động trích xuất danh sách Phân hiệu & Điểm trường (Kết hợp chuẩn từ Cấu hình trường & Thực tế các lớp GVCN)
   const availableBranches = useMemo(() => {
     const set = new Set<string>();
+    if (Array.isArray(schoolBranches)) {
+      schoolBranches.forEach(b => {
+        if (b && b.name && b.name.trim()) set.add(b.name.trim());
+      });
+    }
     homeroomClasses.forEach(c => {
       if (c.branch && c.branch.trim()) {
         set.add(c.branch.trim());
       }
     });
     return Array.from(set).sort();
-  }, [homeroomClasses]);
+  }, [homeroomClasses, schoolBranches]);
 
   const hasUnassignedBranch = useMemo(() => {
     return homeroomClasses.some(c => !c.branch || !c.branch.trim());
   }, [homeroomClasses]);
 
-  // Danh sách Điểm trường chỉ thuộc Phân hiệu đã chọn (Nếu chọn 'all' thì lấy tất cả điểm trường GVCN)
+  // Danh sách Điểm trường chỉ thuộc Phân hiệu đã chọn
   const availableCampuses = useMemo(() => {
     const set = new Set<string>();
+    if (Array.isArray(schoolBranches)) {
+      schoolBranches.forEach(b => {
+        const bName = (b.name || '').trim();
+        if (selectedBranch === 'all' || bName === selectedBranch) {
+          if (Array.isArray(b.campuses)) {
+            b.campuses.forEach(cp => {
+              if (cp && cp.name && cp.name.trim()) set.add(cp.name.trim());
+            });
+          }
+        }
+      });
+    }
     homeroomClasses.forEach(c => {
       const b = (c.branch || '').trim();
       if (selectedBranch === 'all' || b === selectedBranch) {
@@ -103,7 +248,7 @@ export const AdminRealtimeDashboardView: React.FC = () => {
       }
     });
     return Array.from(set).sort();
-  }, [homeroomClasses, selectedBranch]);
+  }, [homeroomClasses, selectedBranch, schoolBranches]);
 
   const hasUnassignedCampus = useMemo(() => {
     return homeroomClasses.some(c => {
@@ -119,15 +264,9 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     }
   }, [selectedBranch, availableCampuses, selectedCampus]);
 
-  // =========================================================================
-  // 3. THUẬT TOÁN AUTO-AGGREGATION CHẶT CHẼ THEO ĐẶC TẢ:
-  // let filtered = allClassrooms.filter(isHomeroom);
-  // if (selectedBranch !== 'all') filtered = filtered.filter(checkBranch);
-  // if (selectedCampus !== 'all') filtered = filtered.filter(checkCampus);
-  // return calculateStats(filtered);
-  // =========================================================================
+  // Lọc danh sách lớp học theo phân cấp Phân hiệu & Điểm trường
   const filteredClasses = useMemo(() => {
-    let list = homeroomClasses; // Đã cô lập hoàn toàn GVBM từ Bước 1
+    let list = homeroomClasses; // Đã cô lập hoàn toàn GVBM
     if (selectedBranch === '__unassigned__') {
       list = list.filter(c => !c.branch || !c.branch.trim());
     } else if (selectedBranch !== 'all') {
@@ -156,25 +295,26 @@ export const AdminRealtimeDashboardView: React.FC = () => {
   const totalBoys = filteredStudents.filter(s => s.gender === 'Nam').length;
   const totalGirls = filteredStudents.filter(s => s.gender === 'Nữ').length;
 
-  // Tổng hợp Điểm danh / Chuyên cần trong ngày selectedDate
-  const dayAttendance = useMemo(() => {
-    const recordsForDay = attendanceRecords.filter(r => 
-      r.date === selectedDate && filteredClassIds.has(r.classId)
+  // =========================================================================
+  // 🌟 TỔNG HỢP CHUYÊN CẦN / ĐIỂM DANH THEO KỲ [startDate, endDate]
+  // =========================================================================
+  const periodAttendance = useMemo(() => {
+    const { startDate, endDate } = dateRange;
+    const recordsInPeriod = attendanceRecords.filter(r => 
+      r.date >= startDate && r.date <= endDate && filteredClassIds.has(r.classId)
     );
 
+    const datesWithData = new Set<string>();
     let present = 0;
     let late = 0;
     let excused = 0;
     let unexcused = 0;
     let sick = 0;
-    const countedStudents = new Set<string>();
 
-    recordsForDay.forEach(record => {
+    recordsInPeriod.forEach(record => {
       if (!record.records) return;
-      Object.entries(record.records).forEach(([studentId, status]) => {
-        if (countedStudents.has(studentId)) return;
-        countedStudents.add(studentId);
-
+      datesWithData.add(record.date);
+      Object.entries(record.records).forEach(([_, status]) => {
         if (status === 'present') present++;
         else if (status === 'late') late++;
         else if (status === 'excused') excused++;
@@ -185,28 +325,48 @@ export const AdminRealtimeDashboardView: React.FC = () => {
 
     const absentTotal = late + excused + unexcused + sick;
     const totalLogged = present + absentTotal;
-    const rate = totalLogged > 0 ? Math.round((present / totalLogged) * 100) : (totalStudents > 0 ? 100 : 0);
+    const daysCount = datesWithData.size;
 
-    return { present, late, excused, unexcused, sick, absentTotal, totalLogged, rate };
-  }, [attendanceRecords, filteredClassIds, selectedDate, totalStudents]);
+    const rate = totalLogged > 0 
+      ? Math.round((present / totalLogged) * 100) 
+      : (totalStudents > 0 && daysCount > 0 ? 100 : 0);
 
-  // Tổng hợp Bán trú (Bữa ăn trưa) trong ngày selectedDate
-  const dayBoarding = useMemo(() => {
-    const recordsForDay = boardingRecords.filter(r => 
-      r.date === selectedDate && filteredClassIds.has(r.classId)
+    const avgPresentPerDay = daysCount > 0 ? Math.round(present / daysCount) : 0;
+    const avgAbsentPerDay = daysCount > 0 ? Math.round(absentTotal / daysCount) : 0;
+
+    return {
+      present,
+      late,
+      excused,
+      unexcused,
+      sick,
+      absentTotal,
+      totalLogged,
+      rate,
+      daysCount,
+      avgPresentPerDay,
+      avgAbsentPerDay
+    };
+  }, [attendanceRecords, filteredClassIds, dateRange, totalStudents]);
+
+  // =========================================================================
+  // 🌟 TỔNG HỢP ĂN BÁN TRÚ THEO KỲ [startDate, endDate]
+  // =========================================================================
+  const periodBoarding = useMemo(() => {
+    const { startDate, endDate } = dateRange;
+    const recordsInPeriod = boardingRecords.filter(r => 
+      r.date >= startDate && r.date <= endDate && filteredClassIds.has(r.classId)
     );
 
+    const datesWithData = new Set<string>();
     let eating = 0;
     let notEating = 0;
     let absentMeal = 0;
-    const countedStudents = new Set<string>();
 
-    recordsForDay.forEach(record => {
+    recordsInPeriod.forEach(record => {
       if (!record.records) return;
-      Object.entries(record.records).forEach(([studentId, status]) => {
-        if (countedStudents.has(studentId)) return;
-        countedStudents.add(studentId);
-
+      datesWithData.add(record.date);
+      Object.entries(record.records).forEach(([_, status]) => {
         if (status === 'eating') eating++;
         else if (status === 'not_eating') notEating++;
         else if (status === 'absent_meal') absentMeal++;
@@ -214,10 +374,24 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     });
 
     const totalLogged = eating + notEating + absentMeal;
-    const rate = totalLogged > 0 ? Math.round((eating / totalLogged) * 100) : (totalStudents > 0 ? 0 : 0);
+    const daysCount = datesWithData.size;
 
-    return { eating, notEating, absentMeal, totalLogged, rate };
-  }, [boardingRecords, filteredClassIds, selectedDate, totalStudents]);
+    const rate = totalLogged > 0 
+      ? Math.round((eating / totalLogged) * 100) 
+      : 0;
+
+    const avgEatingPerDay = daysCount > 0 ? Math.round(eating / daysCount) : 0;
+
+    return {
+      eating,
+      notEating,
+      absentMeal,
+      totalLogged,
+      rate,
+      daysCount,
+      avgEatingPerDay
+    };
+  }, [boardingRecords, filteredClassIds, dateRange]);
 
   // Tổng hợp Xu thi đua & Điểm thưởng
   const totalCoins = useMemo(() => {
@@ -226,35 +400,65 @@ export const AdminRealtimeDashboardView: React.FC = () => {
 
   const avgCoins = totalStudents > 0 ? (totalCoins / totalStudents).toFixed(1) : '0';
 
-  // Thống kê chi tiết theo từng lớp trong phạm vi lọc
+  // =========================================================================
+  // 🌟 THỐNG KÊ CHI TIẾT TỪNG LỚP TRONG KỲ [startDate, endDate]
+  // =========================================================================
   const perClassStatistics = useMemo(() => {
+    const { startDate, endDate } = dateRange;
+
     return filteredClasses.map(cls => {
       const clsStudents = students.filter(s => s.classId === cls.id);
       const clsCoins = clsStudents.reduce((sum, s) => sum + (s.points || 0), 0);
       const clsAvgCoins = clsStudents.length > 0 ? (clsCoins / clsStudents.length).toFixed(1) : '0';
 
-      // Chuyên cần lớp
-      const attRecord = attendanceRecords.find(r => r.classId === cls.id && r.date === selectedDate);
+      // Chuyên cần lớp trong kỳ
+      const clsAttRecords = attendanceRecords.filter(r => 
+        r.classId === cls.id && r.date >= startDate && r.date <= endDate
+      );
+
       let clsPresent = 0;
       let clsAbsent = 0;
-      if (attRecord && attRecord.records) {
-        Object.values(attRecord.records).forEach(st => {
-          if (st === 'present') clsPresent++;
-          else clsAbsent++;
-        });
-      } else {
-        clsPresent = clsStudents.length;
-      }
-      const attRate = clsStudents.length > 0 ? Math.round((clsPresent / clsStudents.length) * 100) : 100;
+      let hasAttendanceData = false;
 
-      // Bán trú lớp
-      const mealRecord = boardingRecords.find(r => r.classId === cls.id && r.date === selectedDate);
+      clsAttRecords.forEach(attRecord => {
+        if (attRecord && attRecord.records && Object.keys(attRecord.records).length > 0) {
+          hasAttendanceData = true;
+          Object.values(attRecord.records).forEach(st => {
+            if (st === 'present') clsPresent++;
+            else clsAbsent++;
+          });
+        }
+      });
+
+      const clsTotalLogged = clsPresent + clsAbsent;
+      const attRate = clsTotalLogged > 0 
+        ? Math.round((clsPresent / clsTotalLogged) * 100) 
+        : (hasAttendanceData ? 100 : 0);
+
+      // Bán trú lớp trong kỳ
+      const clsMealRecords = boardingRecords.filter(r => 
+        r.classId === cls.id && r.date >= startDate && r.date <= endDate
+      );
+
       let clsEating = 0;
-      if (mealRecord && mealRecord.records) {
-        Object.values(mealRecord.records).forEach(st => {
-          if (st === 'eating') clsEating++;
-        });
-      }
+      let clsNotEating = 0;
+      let clsAbsentMeal = 0;
+      let hasMealData = false;
+
+      clsMealRecords.forEach(mealRecord => {
+        if (mealRecord && mealRecord.records && Object.keys(mealRecord.records).length > 0) {
+          hasMealData = true;
+          Object.values(mealRecord.records).forEach(st => {
+            if (st === 'eating') clsEating++;
+            else if (st === 'not_eating') clsNotEating++;
+            else if (st === 'absent_meal') clsAbsentMeal++;
+          });
+        }
+      });
+
+      const avgEatingPerDay = clsMealRecords.length > 0 
+        ? Math.round(clsEating / clsMealRecords.length) 
+        : 0;
 
       return {
         ...cls,
@@ -264,12 +468,19 @@ export const AdminRealtimeDashboardView: React.FC = () => {
         present: clsPresent,
         absent: clsAbsent,
         attendanceRate: attRate,
-        eatingCount: clsEating
+        hasAttendanceData,
+        attendanceDaysCount: clsAttRecords.length,
+        eatingCount: clsEating,
+        notEatingCount: clsNotEating,
+        absentMealCount: clsAbsentMeal,
+        hasMealData,
+        mealDaysCount: clsMealRecords.length,
+        avgEatingPerDay
       };
     }).sort((a, b) => b.coins - a.coins);
-  }, [filteredClasses, students, attendanceRecords, boardingRecords, selectedDate]);
+  }, [filteredClasses, students, attendanceRecords, boardingRecords, dateRange]);
 
-  // 4. ĐỘNG CƠ ĐỒNG BỘ TRỰC TUYẾN 2 CHIỀU (Two-way Realtime Engine)
+  // Động cơ đồng bộ trực tuyến 2 chiều (Two-way Realtime Engine)
   useEffect(() => {
     if (!currentUser) return;
 
@@ -284,7 +495,6 @@ export const AdminRealtimeDashboardView: React.FC = () => {
         try { playPointClink(); } catch (_) {}
       }
 
-      // Tắt vi sóng sau 2.5 giây
       const timer = setTimeout(() => {
         setIsPulseActive(false);
       }, 2500);
@@ -311,7 +521,7 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     }
   };
 
-  // Xuất file Báo cáo Excel cho BGH
+  // Xuất file Báo cáo Excel cho BGH theo đúng Khung Thời Gian đã chọn
   const handleExportExcel = () => {
     const rows = perClassStatistics.map((cls, idx) => ({
       'STT': idx + 1,
@@ -321,22 +531,24 @@ export const AdminRealtimeDashboardView: React.FC = () => {
       'Điểm trường': cls.campus || 'Chưa cấu hình (Null)',
       'Giáo viên chủ nhiệm': cls.teacherName || 'Chưa cập nhật',
       'Sĩ số': cls.studentCount,
-      'Có mặt': cls.present,
-      'Vắng': cls.absent,
-      'Tỷ lệ chuyên cần (%)': `${cls.attendanceRate}%`,
-      'Ăn bán trú': cls.eatingCount,
+      'Chuyên cần': timeframe === 'day' 
+        ? (cls.hasAttendanceData ? `${cls.attendanceRate}% (${cls.present}/${cls.studentCount})` : 'Chưa điểm danh')
+        : (cls.hasAttendanceData ? `${cls.attendanceRate}% (${cls.present} lượt • ${cls.attendanceDaysCount} buổi)` : 'Chưa có dữ liệu'),
+      'Ăn bán trú': timeframe === 'day'
+        ? `${cls.eatingCount} suất`
+        : `${cls.eatingCount} suất (TB ${cls.avgEatingPerDay}/ngày)`,
       'Tổng xu thi đua': cls.coins,
       'Điểm trung bình': cls.avgCoins
     }));
 
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'BaoCao_Realtime');
+    XLSX.utils.book_append_sheet(wb, ws, `BaoCao_${timeframe.toUpperCase()}`);
 
     const scopeTitle = selectedBranch === 'all' 
       ? 'Toan_Truong' 
       : `${selectedBranch}_${selectedCampus === 'all' ? 'Tat_Ca' : selectedCampus}`.replace(/\s+/g, '_');
-    XLSX.writeFile(wb, `Bao_Cao_Ban_Giam_Hieu_${scopeTitle}_${selectedDate}.xlsx`);
+    XLSX.writeFile(wb, `Bao_Cao_${timeframe.toUpperCase()}_${scopeTitle}_${dateRange.startDate}_den_${dateRange.endDate}.xlsx`);
   };
 
   return (
@@ -392,7 +604,7 @@ export const AdminRealtimeDashboardView: React.FC = () => {
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
             </h1>
             <p className="text-xs text-indigo-200/80 mt-0.5">
-              Tự động cộng dồn số liệu Phân hiệu & Điểm trường • Giám sát trực tiếp Sĩ số, Điểm danh, Bán trú và Thi đua
+              Tự động cộng dồn số liệu Phân hiệu & Điểm trường • Tổng hợp Chuyên cần & Bán trú theo Ngày, Tuần, Tháng
             </p>
           </div>
 
@@ -425,53 +637,218 @@ export const AdminRealtimeDashboardView: React.FC = () => {
               className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all hover:scale-102 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Xuất Excel BGH</span>
+              <span>Xuất Excel ({timeframe === 'day' ? 'Ngày' : timeframe === 'week' ? 'Tuần' : 'Tháng'})</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 2. Thanh Công Cụ Bộ Lọc Đa Tầng (Multi-Level Hierarchy Toolbar) */}
-      <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-indigo-100 shadow-sm space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+      {/* 2. Thanh Công Cụ Bộ Lọc Đa Tầng & Khung Thời Gian Báo Cáo */}
+      <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-indigo-100 shadow-sm space-y-3.5">
+        
+        {/* Hàng 1: Tabs chọn chế độ thời gian & Bộ điều hướng mốc thời gian */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-              <Filter className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold shrink-0">
+              <Calendar className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-black text-indigo-950 uppercase tracking-tight">
-                BỘ LỌC ĐA TẦNG PHÂN HIỆU & ĐIỂM TRƯỜNG
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs sm:text-sm font-black text-indigo-950 uppercase tracking-tight">
+                  KHUNG THỜI GIAN BÁO CÁO TỔNG HỢP
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  {dateRange.shortLabel}
+                </span>
+              </div>
               <p className="text-[11px] text-slate-500">
-                Chọn cấp lọc để động cơ toán học tự động quét và cộng dồn số liệu chính xác
+                Lựa chọn xem tổng hợp toàn trường và từng lớp theo Ngày cụ thể, theo Tuần hoặc trọn vẹn cả Tháng
               </p>
             </div>
           </div>
 
-          {/* Ngày thanh tra */}
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-[11px] font-bold text-slate-600 hidden sm:inline">Ngày giám sát:</span>
-            <div className="relative">
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            {selectedDate !== todayStr && (
-              <button
-                onClick={() => setSelectedDate(todayStr)}
-                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10.5px] font-bold"
-              >
-                Hôm nay
-              </button>
-            )}
+          {/* 3 Tabs: [THEO NGÀY] [THEO TUẦN] [THEO THÁNG] */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl self-start lg:self-auto border border-slate-200/80">
+            <button
+              onClick={() => setTimeframe('day')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                timeframe === 'day'
+                  ? 'bg-white text-indigo-950 shadow-xs scale-102 border border-slate-200'
+                  : 'text-slate-600 hover:text-indigo-900'
+              }`}
+            >
+              <CalendarDays className="w-3.5 h-3.5 text-indigo-600" />
+              <span>THEO NGÀY</span>
+            </button>
+
+            <button
+              onClick={() => setTimeframe('week')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                timeframe === 'week'
+                  ? 'bg-white text-indigo-950 shadow-xs scale-102 border border-slate-200'
+                  : 'text-slate-600 hover:text-indigo-900'
+              }`}
+            >
+              <CalendarRange className="w-3.5 h-3.5 text-indigo-600" />
+              <span>THEO TUẦN</span>
+            </button>
+
+            <button
+              onClick={() => setTimeframe('month')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                timeframe === 'month'
+                  ? 'bg-white text-indigo-950 shadow-xs scale-102 border border-slate-200'
+                  : 'text-slate-600 hover:text-indigo-900'
+              }`}
+            >
+              <Clock3 className="w-3.5 h-3.5 text-indigo-600" />
+              <span>THEO THÁNG</span>
+            </button>
           </div>
         </div>
 
-        {/* 3 Cột Bộ lọc: Cấp 1 (Toàn trường), Cấp 2 (Phân hiệu), Cấp 3 (Điểm trường) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Hàng 2: Bộ điều khiển chi tiết theo chế độ đã chọn */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-xl bg-gradient-to-r from-slate-50 via-indigo-50/30 to-blue-50/40 border border-slate-200/80">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {/* Chế độ THEO NGÀY */}
+            {timeframe === 'day' && (
+              <>
+                <span className="text-[11px] font-bold text-slate-700">Ngày giám sát:</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handlePrevDay}
+                    className="p-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg transition-colors cursor-pointer"
+                    title="Ngày hôm trước"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                  <button
+                    onClick={handleNextDay}
+                    className="p-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg transition-colors cursor-pointer"
+                    title="Ngày hôm sau"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1 ml-1">
+                  {selectedDate !== todayStr && (
+                    <button
+                      onClick={() => setSelectedDate(todayStr)}
+                      className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-black shadow-2xs cursor-pointer"
+                    >
+                      Hôm nay
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() - 1);
+                      setSelectedDate(toLocalDateString(d));
+                    }}
+                    className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-[11px] font-bold shadow-2xs cursor-pointer"
+                  >
+                    Hôm qua
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Chế độ THEO TUẦN */}
+            {timeframe === 'week' && (
+              <>
+                <span className="text-[11px] font-bold text-slate-700">Chọn tuần cần xem:</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handlePrevWeek}
+                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Tuần trước</span>
+                  </button>
+                  <input
+                    type="date"
+                    value={selectedWeekDate}
+                    onChange={(e) => setSelectedWeekDate(e.target.value)}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    title="Chọn một ngày bất kỳ trong tuần cần xem"
+                  />
+                  <button
+                    onClick={handleNextWeek}
+                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <span>Tuần sau</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {selectedWeekDate !== todayStr && (
+                  <button
+                    onClick={() => setSelectedWeekDate(todayStr)}
+                    className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-black shadow-2xs cursor-pointer ml-1"
+                  >
+                    Tuần này
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Chế độ THEO THÁNG */}
+            {timeframe === 'month' && (
+              <>
+                <span className="text-[11px] font-bold text-slate-700">Chọn tháng báo cáo:</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handlePrevMonth}
+                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Tháng trước</span>
+                  </button>
+                  <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                  <button
+                    onClick={handleNextMonth}
+                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <span>Tháng sau</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {selectedMonth !== currentMonthStr && (
+                  <button
+                    onClick={() => setSelectedMonth(currentMonthStr)}
+                    className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-black shadow-2xs cursor-pointer ml-1"
+                  >
+                    Tháng này
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Dòng tóm tắt khung thời gian */}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-[11px] text-slate-500 font-medium">Khoảng tính toán:</span>
+            <span className="font-black text-indigo-900 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 font-mono shadow-2xs">
+              {dateRange.label}
+            </span>
+          </div>
+        </div>
+
+        {/* Hàng 3: 3 Cột Bộ lọc Phân hiệu & Điểm trường */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
           {/* Cấp 1: Phân hiệu */}
           <div className="space-y-1">
             <label className="text-[11px] font-black text-slate-700 flex items-center gap-1.5">
@@ -579,10 +956,16 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 2: Chuyên Cần & Điểm Danh Hôm Nay */}
+        {/* Card 2: Chuyên Cần & Điểm Danh (Đổi tên & số liệu động theo timeframe) */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-emerald-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black text-emerald-800 uppercase">CHUYÊN CẦN HÔM NAY</span>
+            <span className="text-[11px] font-black text-emerald-800 uppercase">
+              {timeframe === 'day' 
+                ? (selectedDate === todayStr ? 'CHUYÊN CẦN HÔM NAY' : `CHUYÊN CẦN (${formatDateVN(selectedDate)})`)
+                : timeframe === 'week' 
+                ? 'CHUYÊN CẦN TUẦN NÀY' 
+                : 'CHUYÊN CẦN THÁNG NÀY'}
+            </span>
             <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
               <CheckSquare className="w-4 h-4" />
             </div>
@@ -590,30 +973,48 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           <div className="mt-2">
             <div className="flex items-baseline gap-2">
               <span className="text-2xl sm:text-3xl font-black text-emerald-950 font-mono">
-                {dayAttendance.rate}%
+                {periodAttendance.rate}%
               </span>
               <span className="text-xs font-bold text-emerald-700">
-                ({dayAttendance.present}/{totalStudents || 0})
+                {timeframe === 'day' 
+                  ? `(${periodAttendance.present}/${totalStudents || 0})`
+                  : `(${periodAttendance.present} lượt / ${periodAttendance.daysCount} ngày)`}
               </span>
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-bold text-slate-600">
-              <span className="text-emerald-700">✓ Có mặt: {dayAttendance.present}</span>
-              <span>•</span>
-              <span className="text-rose-600">✕ Vắng: {dayAttendance.absentTotal}</span>
+              {timeframe === 'day' ? (
+                <>
+                  <span className="text-emerald-700">✓ Có mặt: {periodAttendance.present}</span>
+                  <span>•</span>
+                  <span className="text-rose-600">✕ Vắng: {periodAttendance.absentTotal}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-emerald-700">✓ TB: {periodAttendance.avgPresentPerDay}/ngày</span>
+                  <span>•</span>
+                  <span className="text-rose-600">✕ Vắng: {periodAttendance.absentTotal} lượt</span>
+                </>
+              )}
             </div>
           </div>
           <div className="mt-2 pt-2 border-t border-emerald-100 text-[10px] text-slate-500 font-bold flex items-center justify-between">
-            <span>Phép: {dayAttendance.excused} • K.Phép: {dayAttendance.unexcused}</span>
-            <span className={`font-black ${dayAttendance.rate >= 95 ? 'text-emerald-600' : 'text-amber-600'}`}>
-              {dayAttendance.rate >= 95 ? 'Đạt chuẩn' : 'Cần lưu ý'}
+            <span>Phép: {periodAttendance.excused + periodAttendance.sick} • K.Phép: {periodAttendance.unexcused}</span>
+            <span className={`font-black ${periodAttendance.rate >= 95 ? 'text-emerald-600' : 'text-amber-600'}`}>
+              {periodAttendance.rate >= 95 ? 'Đạt chuẩn' : 'Cần lưu ý'}
             </span>
           </div>
         </div>
 
-        {/* Card 3: Ăn Bán Trú */}
+        {/* Card 3: Ăn Bán Trú (Đổi tên & số liệu động theo timeframe) */}
         <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-amber-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black text-amber-800 uppercase">ĂN BÁN TRÚ HÔM NAY</span>
+            <span className="text-[11px] font-black text-amber-800 uppercase">
+              {timeframe === 'day' 
+                ? (selectedDate === todayStr ? 'ĂN BÁN TRÚ HÔM NAY' : `ĂN BÁN TRÚ (${formatDateVN(selectedDate)})`)
+                : timeframe === 'week' 
+                ? 'ĂN BÁN TRÚ TUẦN NÀY' 
+                : 'ĂN BÁN TRÚ THÁNG NÀY'}
+            </span>
             <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
               <Utensils className="w-4 h-4" />
             </div>
@@ -621,20 +1022,30 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           <div className="mt-2">
             <div className="flex items-baseline gap-2">
               <span className="text-2xl sm:text-3xl font-black text-amber-950 font-mono">
-                {dayBoarding.eating}
+                {periodBoarding.eating}
               </span>
               <span className="text-xs font-bold text-amber-700">
-                suất ăn ({dayBoarding.rate}%)
+                suất ăn ({periodBoarding.rate}%)
               </span>
             </div>
             <div className="flex items-center gap-1.5 mt-1 text-[11px] font-bold text-slate-600">
-              <span className="text-amber-700">Ăn trưa: {dayBoarding.eating}</span>
-              <span>•</span>
-              <span className="text-slate-500">Về nhà: {dayBoarding.notEating}</span>
+              {timeframe === 'day' ? (
+                <>
+                  <span className="text-amber-700">Ăn trưa: {periodBoarding.eating}</span>
+                  <span>•</span>
+                  <span className="text-slate-500">Về nhà: {periodBoarding.notEating}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-amber-700">TB: {periodBoarding.avgEatingPerDay} suất/ngày</span>
+                  <span>•</span>
+                  <span className="text-slate-500">Về nhà: {periodBoarding.notEating} lượt</span>
+                </>
+              )}
             </div>
           </div>
           <div className="mt-2 pt-2 border-t border-amber-100 text-[10px] text-slate-500 font-bold flex items-center justify-between">
-            <span>Cắt suất: {dayBoarding.absentMeal}</span>
+            <span>Cắt suất: {periodBoarding.absentMeal} lượt</span>
             <span className="text-amber-700 font-black">Nhà bếp đã chốt</span>
           </div>
         </div>
@@ -670,10 +1081,10 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 className="text-xs sm:text-sm font-black text-indigo-950 uppercase flex items-center gap-2">
               <CheckSquare className="w-4 h-4 text-emerald-600" />
-              <span>CƠ CẤU CHUYÊN CẦN ({selectedDate})</span>
+              <span>CƠ CẤU CHUYÊN CẦN ({dateRange.shortLabel})</span>
             </h4>
             <span className="text-[10.5px] font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-              Tỷ lệ: {dayAttendance.rate}%
+              Tỷ lệ: {periodAttendance.rate}%
             </span>
           </div>
 
@@ -697,14 +1108,14 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                   stroke="#10B981"
                   strokeWidth="12"
                   strokeDasharray={251.2}
-                  strokeDashoffset={251.2 - (251.2 * (dayAttendance.rate || 0)) / 100}
+                  strokeDashoffset={251.2 - (251.2 * (periodAttendance.rate || 0)) / 100}
                   strokeLinecap="round"
                   className="transition-all duration-700 ease-out"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-2xl font-black text-slate-800 font-mono">
-                  {dayAttendance.rate}%
+                  {periodAttendance.rate}%
                 </span>
                 <span className="text-[10px] font-bold text-slate-500 uppercase">Có mặt</span>
               </div>
@@ -717,21 +1128,27 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                   Có mặt đúng giờ:
                 </span>
-                <strong className="text-emerald-950 font-mono">{dayAttendance.present} em</strong>
+                <strong className="text-emerald-950 font-mono">
+                  {periodAttendance.present} {timeframe === 'day' ? 'em' : 'lượt'}
+                </strong>
               </div>
               <div className="flex items-center justify-between gap-4 p-2 rounded-xl bg-amber-50/70 border border-amber-100">
                 <span className="flex items-center gap-1.5 font-bold text-amber-900">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                   Nghỉ có phép / Ốm:
                 </span>
-                <strong className="text-amber-950 font-mono">{dayAttendance.excused + dayAttendance.sick} em</strong>
+                <strong className="text-amber-950 font-mono">
+                  {periodAttendance.excused + periodAttendance.sick} {timeframe === 'day' ? 'em' : 'lượt'}
+                </strong>
               </div>
               <div className="flex items-center justify-between gap-4 p-2 rounded-xl bg-rose-50/70 border border-rose-100">
                 <span className="flex items-center gap-1.5 font-bold text-rose-900">
                   <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
                   Nghỉ không phép:
                 </span>
-                <strong className="text-rose-950 font-mono">{dayAttendance.unexcused} em</strong>
+                <strong className="text-rose-950 font-mono">
+                  {periodAttendance.unexcused} {timeframe === 'day' ? 'em' : 'lượt'}
+                </strong>
               </div>
             </div>
           </div>
@@ -742,10 +1159,10 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 className="text-xs sm:text-sm font-black text-indigo-950 uppercase flex items-center gap-2">
               <Utensils className="w-4 h-4 text-amber-600" />
-              <span>CƠ CẤU BÁN TRÚ ({selectedDate})</span>
+              <span>CƠ CẤU BÁN TRÚ ({dateRange.shortLabel})</span>
             </h4>
             <span className="text-[10.5px] font-bold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
-              {dayBoarding.eating} suất ăn
+              {periodBoarding.eating} suất ăn ({periodBoarding.rate}%)
             </span>
           </div>
 
@@ -769,14 +1186,14 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                   stroke="#F59E0B"
                   strokeWidth="12"
                   strokeDasharray={251.2}
-                  strokeDashoffset={251.2 - (251.2 * (dayBoarding.rate || 0)) / 100}
+                  strokeDashoffset={251.2 - (251.2 * (periodBoarding.rate || 0)) / 100}
                   strokeLinecap="round"
                   className="transition-all duration-700 ease-out"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-2xl font-black text-slate-800 font-mono">
-                  {dayBoarding.eating}
+                  {periodBoarding.eating}
                 </span>
                 <span className="text-[10px] font-bold text-slate-500 uppercase">Suất ăn</span>
               </div>
@@ -789,21 +1206,27 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                   Ăn bán trú tại trường:
                 </span>
-                <strong className="text-amber-950 font-mono">{dayBoarding.eating} em</strong>
+                <strong className="text-amber-950 font-mono">
+                  {periodBoarding.eating} {timeframe === 'day' ? 'em' : 'suất'}
+                </strong>
               </div>
               <div className="flex items-center justify-between gap-4 p-2 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="flex items-center gap-1.5 font-bold text-slate-700">
                   <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                   Về nhà ăn cơm:
                 </span>
-                <strong className="text-slate-900 font-mono">{dayBoarding.notEating} em</strong>
+                <strong className="text-slate-900 font-mono">
+                  {periodBoarding.notEating} {timeframe === 'day' ? 'em' : 'lượt'}
+                </strong>
               </div>
               <div className="flex items-center justify-between gap-4 p-2 rounded-xl bg-rose-50/70 border border-rose-100">
                 <span className="flex items-center gap-1.5 font-bold text-rose-900">
                   <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
                   Báo cắt suất hôm nay:
                 </span>
-                <strong className="text-rose-950 font-mono">{dayBoarding.absentMeal} em</strong>
+                <strong className="text-rose-950 font-mono">
+                  {periodBoarding.absentMeal} {timeframe === 'day' ? 'em' : 'lượt'}
+                </strong>
               </div>
             </div>
           </div>
@@ -816,7 +1239,7 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           <div>
             <h3 className="text-xs sm:text-sm font-black text-indigo-950 uppercase tracking-tight flex items-center gap-2">
               <Award className="w-4 h-4 text-amber-500" />
-              <span>BẢNG XẾP HẠNG & THEO DÕI THỜI GIAN THỰC TỪNG LỚP ({filteredClasses.length} LỚP)</span>
+              <span>BẢNG XẾP HẠNG & THEO DÕI THỜI GIAN THỰC TỪNG LỚP ({filteredClasses.length} LỚP • {dateRange.label.toUpperCase()})</span>
             </h3>
             <p className="text-[11px] text-slate-500">
               Dữ liệu được cập nhật tự động khi bất kỳ GVCN nào điểm danh, báo ăn hoặc cộng điểm
@@ -915,20 +1338,58 @@ export const AdminRealtimeDashboardView: React.FC = () => {
                       {cls.studentCount}
                     </td>
 
-                    {/* Chuyên cần */}
+                    {/* Chuyên cần (Hiển thị chi tiết theo timeframe Ngày / Tuần / Tháng) */}
                     <td className="py-2.5 px-3 text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black font-mono ${
-                        cls.attendanceRate >= 95 
-                          ? 'bg-emerald-100 text-emerald-800' 
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {cls.attendanceRate}% ({cls.present})
-                      </span>
+                      {timeframe === 'day' ? (
+                        cls.hasAttendanceData ? (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black font-mono ${
+                            cls.attendanceRate >= 95 
+                              ? 'bg-emerald-100 text-emerald-800' 
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {cls.attendanceRate}% ({cls.present})
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold text-slate-400 bg-slate-100">
+                            Chưa điểm danh
+                          </span>
+                        )
+                      ) : (
+                        cls.hasAttendanceData ? (
+                          <div className="space-y-0.5">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black font-mono ${
+                              cls.attendanceRate >= 95 
+                                ? 'bg-emerald-100 text-emerald-800' 
+                                : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {cls.attendanceRate}%
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-bold block">
+                              {cls.present} lượt ({cls.attendanceDaysCount} buổi)
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold text-slate-400 bg-slate-100">
+                            Chưa có dữ liệu
+                          </span>
+                        )
+                      )}
                     </td>
 
-                    {/* Bán trú */}
+                    {/* Bán trú (Hiển thị chi tiết theo timeframe Ngày / Tuần / Tháng) */}
                     <td className="py-2.5 px-3 text-center font-mono font-bold text-amber-900">
-                      {cls.eatingCount} suất
+                      {timeframe === 'day' ? (
+                        <span>{cls.eatingCount} suất</span>
+                      ) : (
+                        <div>
+                          <span>{cls.eatingCount} suất</span>
+                          {cls.mealDaysCount > 0 && (
+                            <span className="text-[10px] text-amber-700/80 font-normal block font-sans">
+                              TB {cls.avgEatingPerDay}/ngày ({cls.mealDaysCount} ngày)
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
 
                     {/* Tổng xu */}

@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-09T09:57:52.326Z",
+  "lastSync": "2026-10-09T17:24:48.041Z",
   "schools": [],
   "users": [
     {
@@ -1102,14 +1102,18 @@
         "role": "admin"
       },
       "updatedAt": 1791539856104
-    },
-    "admin": {
-      "classes": [],
-      "students": [],
-      "updatedAt": 1791539856104
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791566688041-45ochg",
+      "timestamp": 1791566688041,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
     {
       "id": "log-1791539855566-0seoob",
       "timestamp": 1791539855566,

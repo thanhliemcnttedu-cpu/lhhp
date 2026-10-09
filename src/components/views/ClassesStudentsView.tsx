@@ -771,7 +771,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       grade: editingClass.grade,
       branch: (editingClass.branch || '').trim() ? (editingClass.branch || '').trim() : null,
       campus: ((editingClass.branch || '').trim() && (editingClass.campus || '').trim()) ? (editingClass.campus || '').trim() : null,
-      teacherUsername: editingClass.teacherUsername,
+      teacherUsername: editingClass.teacherUsername || (isAdmin ? '' : (currentUser?.username || '')),
       teacherRole: editingClass.teacherRole,
       isHomeroom: isHome,
       teacherName: trimmedTeacherName,
@@ -5615,7 +5615,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 });
                 setEditingStudent(null);
                 playCoinSound();
-                syncDatabaseNow();
+                // syncDatabaseNow() removed to avoid saving stale React state
               }}
               className="space-y-3.5"
             >
@@ -6435,7 +6435,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               });
             }
             setAvatarEditingStudent(null);
-            syncDatabaseNow();
+            // syncDatabaseNow() removed to avoid saving stale React state
           }}
         />
       )}

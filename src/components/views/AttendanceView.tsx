@@ -86,7 +86,7 @@ export const AttendanceView: React.FC = () => {
   const { 
     currentClassStudents, students, attendanceRecords, setStudentAttendance, 
     batchSetAttendance, activeClassId, classes, teacherProfile,
-    boardingRecords, setStudentBoarding, batchSetBoarding 
+    boardingRecords, setStudentBoarding, batchSetBoarding, syncDatabaseNow
   } = useClassroom();
   
   const activeClass = classes.find(c => c.id === activeClassId);
@@ -246,6 +246,9 @@ export const AttendanceView: React.FC = () => {
       }
     });
 
+    // Kích hoạt đồng bộ server tức thì để Quản trị trường nhận số liệu ngay
+    // syncDatabaseNow() removed to avoid saving stale React state
+
     // Trigger visual pulse animation on KPI report cards
     setStatsJustUpdated(true);
     setTimeout(() => setStatsJustUpdated(false), 4500);
@@ -276,6 +279,9 @@ export const AttendanceView: React.FC = () => {
         else notEatingCount++;
       }
     });
+
+    // Kích hoạt đồng bộ server tức thì để Quản trị trường nhận số liệu ngay
+    // syncDatabaseNow() removed to avoid saving stale React state
 
     // Kích hoạt hiệu ứng tự động nhảy số liệu trên 4 thẻ báo cáo
     setStatsJustUpdated(true);

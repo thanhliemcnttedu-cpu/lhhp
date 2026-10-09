@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-09T09:57:52.326Z",
+  "lastSync": "2026-10-09T17:24:48.041Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -30,6 +30,15 @@
     "lastGithubPushAt": 1791539872326
   },
   "auditLogs": [
+    {
+      "id": "log-1791566688041-45ochg",
+      "timestamp": 1791566688041,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
     {
       "id": "log-1791539855566-0seoob",
       "timestamp": 1791539855566,
@@ -70,6 +79,6 @@
   "masterSummary": {
     "totalUsers": 1,
     "totalSchools": 0,
-    "totalClassesConfigured": 2
+    "totalClassesConfigured": 1
   }
 }

@@ -1035,13 +1035,100 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           currentUser.isGuestAdmin
         );
 
+        // 🌟 ZERO-LATENCY DIRECT IN-MEMORY REALTIME UPDATES (< 50ms):
+        // 1. Cập nhật / Sửa thông tin lớp học tức thì
+        if (event.classData && (event.type === 'CLASS_UPDATED' || event.action === 'UPDATE_CLASS')) {
+          const updatedCls = event.classData as Classroom;
+          setClasses(prev => {
+            const idx = prev.findIndex(c => c.id === updatedCls.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = { 
+                ...next[idx], 
+                ...updatedCls,
+                branch: updatedCls.branch !== undefined ? updatedCls.branch : next[idx].branch,
+                campus: updatedCls.campus !== undefined ? updatedCls.campus : next[idx].campus
+              };
+              classesRef.current = next;
+              return next;
+            } else {
+              const next = [...prev, updatedCls];
+              classesRef.current = next;
+              return next;
+            }
+          });
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+          return;
+        }
+
+        // 2. Xóa lớp học tức thì
+        if (event.classId && (event.type === 'CLASS_DELETED' || event.action === 'DELETE_CLASS')) {
+          setClasses(prev => {
+            const next = prev.filter(c => c.id !== event.classId);
+            classesRef.current = next;
+            return next;
+          });
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+          return;
+        }
+
+        // 3. Cập nhật Điểm danh / Chuyên cần tức thì (Deep merge)
+        if (event.attendanceRecord && (event.type === 'ATTENDANCE_UPDATED' || event.action === 'UPDATE_ATTENDANCE')) {
+          const rec = event.attendanceRecord as DailyAttendance;
+          if (rec && rec.date && rec.classId) {
+            setAttendanceRecords(prev => {
+              const idx = prev.findIndex(r => r.date === rec.date && r.classId === rec.classId);
+              if (idx >= 0) {
+                const next = [...prev];
+                next[idx] = { 
+                  ...next[idx], 
+                  ...rec,
+                  records: { ...(next[idx].records || {}), ...(rec.records || {}) }
+                };
+                return next;
+              }
+              return [...prev, rec];
+            });
+            return;
+          }
+        }
+
+        // 4. Cập nhật Bán trú tức thì (Deep merge)
+        if (event.boardingRecord && (event.type === 'BOARDING_UPDATED' || event.action === 'UPDATE_BOARDING')) {
+          const rec = event.boardingRecord as DailyBoardingMeal;
+          if (rec && rec.date && rec.classId) {
+            setBoardingRecords(prev => {
+              const idx = prev.findIndex(r => r.date === rec.date && r.classId === rec.classId);
+              if (idx >= 0) {
+                const next = [...prev];
+                next[idx] = { 
+                  ...next[idx], 
+                  ...rec,
+                  records: { ...(next[idx].records || {}), ...(rec.records || {}) }
+                };
+                return next;
+              }
+              return [...prev, rec];
+            });
+            return;
+          }
+        }
+
+        // 5. Fallback làm tươi toàn diện cho Admin / BGH
         if (isSuper) {
-          // Quản trị tối cao (adminquantri): Đồng bộ tức thì toàn bộ lớp học và học sinh của tất cả giáo viên
+          // Quản trị tối cao (adminquantri): Đồng bộ tức thì toàn bộ lớp học, học sinh, chuyên cần, bán trú của tất cả giáo viên
           const adminAll = await databaseService.getAdminAllData();
           if (adminAll) {
             markRemoteUpdateActive(1200);
             setClasses(adminAll.classes);
             setStudents(adminAll.students);
+            if (Array.isArray(adminAll.attendanceRecords)) setAttendanceRecords(adminAll.attendanceRecords);
+            if (Array.isArray(adminAll.boardingRecords)) setBoardingRecords(adminAll.boardingRecords);
+            if (Array.isArray(adminAll.transactions)) setTransactions(adminAll.transactions);
             setDbSyncStatus('synced');
             const now = new Date();
             setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
@@ -1100,13 +1187,16 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           currentUser.isGuestAdmin
         );
 
-        if (currentUser.role === 'admin') {
+        if (currentUser.role === 'admin' || currentUser.username?.toLowerCase() === 'adminquantri') {
           const adminAll = await databaseService.getAdminAllData();
           if (adminAll && adminAll.timestamp && adminAll.timestamp > (lastRemoteTimestampRef.current + 50)) {
             markRemoteUpdateActive(1200);
             lastRemoteTimestampRef.current = adminAll.timestamp;
             setClasses(adminAll.classes);
             setStudents(adminAll.students);
+            if (Array.isArray(adminAll.attendanceRecords)) setAttendanceRecords(adminAll.attendanceRecords);
+            if (Array.isArray(adminAll.boardingRecords)) setBoardingRecords(adminAll.boardingRecords);
+            if (Array.isArray(adminAll.transactions)) setTransactions(adminAll.transactions);
             setDbSyncStatus('synced');
             const now = new Date();
             setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
@@ -1140,8 +1230,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     };
 
-    // Polling every 2.5 seconds
-    const pollInterval = setInterval(checkRemoteChanges, 2500);
+    // Chu kỳ Polling thông minh 12 giây (được bảo vệ bởi WebSocket/Broadcast 0ms tức thì)
+    const pollInterval = setInterval(checkRemoteChanges, 12000);
 
     // Sync immediately when tab gains focus
     const onFocus = () => {
@@ -1501,14 +1591,30 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       currentUser.isGuestAdmin
     );
 
-    if (currentUser.role === 'admin') {
-      const ok = await databaseService.syncAdminAllData(curClasses, curStudents);
-      setDbSyncStatus(ok ? 'synced' : 'offline');
+    if (currentUser.role === 'admin' || currentUser.username?.toLowerCase() === 'adminquantri') {
+      const adminAll = await databaseService.getAdminAllData();
+      if (adminAll) {
+        setClasses(adminAll.classes);
+        setStudents(adminAll.students);
+        if (Array.isArray(adminAll.attendanceRecords)) setAttendanceRecords(adminAll.attendanceRecords);
+        if (Array.isArray(adminAll.boardingRecords)) setBoardingRecords(adminAll.boardingRecords);
+        if (Array.isArray(adminAll.transactions)) setTransactions(adminAll.transactions);
+        setDbSyncStatus('synced');
+      } else {
+        setDbSyncStatus('offline');
+      }
     } else if (isExecutive) {
       const scoped = await databaseService.getExecutiveScopedData(currentUser);
-      setClasses(scoped.classes);
-      setStudents(scoped.students);
-      setDbSyncStatus('synced');
+      if (scoped) {
+        setClasses(scoped.classes);
+        setStudents(scoped.students);
+        if (Array.isArray(scoped.attendanceRecords)) setAttendanceRecords(scoped.attendanceRecords);
+        if (Array.isArray(scoped.boardingRecords)) setBoardingRecords(scoped.boardingRecords);
+        if (Array.isArray(scoped.transactions)) setTransactions(scoped.transactions);
+        setDbSyncStatus('synced');
+      } else {
+        setDbSyncStatus('offline');
+      }
     } else {
       const payload: UserClassroomData = {
         ...getCurrentUserData(),
@@ -1923,8 +2029,17 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!checkBghPermission()) return;
     if (!ids || ids.length === 0) return;
     const targetSet = new Set(ids);
-    setClasses(prev => prev.map(c => targetSet.has(c.id) ? { ...c, ...updates } : c));
+    const next = classes.map(c => targetSet.has(c.id) ? { ...c, ...updates } : c);
+    setClasses(next);
+    classesRef.current = next;
     logUserActivity('UPDATE_CLASS', `Cập nhật thông tin đồng loạt cho ${ids.length} lớp học`, { classIds: ids, updates });
+    
+    ids.forEach(classId => {
+      const cls = next.find(c => c.id === classId);
+      if (cls) {
+        databaseService.updateAdminClass(cls, cls.teacherUsername).catch(() => {});
+      }
+    });
   };
 
   const deleteAllClasses = () => {
@@ -2814,35 +2929,47 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // Attendance
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
   const currentDateRecord = attendanceRecords.find(r => r.date === todayStr && r.classId === activeClassId);
   const currentDateAttendance = currentDateRecord?.records || {};
 
   const setStudentAttendance = (studentId: string, status: AttendanceStatus, date = todayStr) => {
     if (!checkAttendancePermission()) return;
+    let targetRecord: DailyAttendance | null = null;
     setAttendanceRecords(prev => {
       const existingIdx = prev.findIndex(r => r.date === date && r.classId === activeClassId);
       if (existingIdx >= 0) {
         const updated = [...prev];
-        updated[existingIdx] = {
+        targetRecord = {
           ...updated[existingIdx],
           records: {
             ...updated[existingIdx].records,
             [studentId]: status
           }
         };
+        updated[existingIdx] = targetRecord;
         return updated;
       } else {
-        const newRecord: DailyAttendance = {
+        targetRecord = {
           date,
           classId: activeClassId,
           records: {
             [studentId]: status
           }
         };
-        return [...prev, newRecord];
+        return [...prev, targetRecord];
       }
     });
+
+    if (targetRecord) {
+      databaseService.broadcastAttendance(targetRecord, currentUser?.username);
+    }
 
     // Nếu học sinh vắng mặt (Nghỉ ốm, Có phép, Không phép, Khác) -> tự động chuyển sang Không ăn/Về nhà
     const isAbsent = status === 'sick' || status === 'excused' || status === 'unexcused' || status === 'other';
@@ -2857,19 +2984,26 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       map[s.id] = status;
     });
 
+    let targetRecord: DailyAttendance | null = null;
     setAttendanceRecords(prev => {
       const existingIdx = prev.findIndex(r => r.date === date && r.classId === activeClassId);
       if (existingIdx >= 0) {
         const updated = [...prev];
-        updated[existingIdx] = {
+        targetRecord = {
           ...updated[existingIdx],
           records: map
         };
+        updated[existingIdx] = targetRecord;
         return updated;
       } else {
-        return [...prev, { date, classId: activeClassId, records: map }];
+        targetRecord = { date, classId: activeClassId, records: map };
+        return [...prev, targetRecord];
       }
     });
+
+    if (targetRecord) {
+      databaseService.broadcastAttendance(targetRecord, currentUser?.username);
+    }
   };
 
   // Boarding Meals (Ăn bán trú)
@@ -2878,29 +3012,35 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const setStudentBoarding = (studentId: string, status: BoardingStatus, date = todayStr) => {
     if (!checkAttendancePermission()) return;
+    let targetRecord: DailyBoardingMeal | null = null;
     setBoardingRecords(prev => {
       const existingIdx = prev.findIndex(r => r.date === date && r.classId === activeClassId);
       if (existingIdx >= 0) {
         const updated = [...prev];
-        updated[existingIdx] = {
+        targetRecord = {
           ...updated[existingIdx],
           records: {
             ...updated[existingIdx].records,
             [studentId]: status
           }
         };
+        updated[existingIdx] = targetRecord;
         return updated;
       } else {
-        const newRecord: DailyBoardingMeal = {
+        targetRecord = {
           date,
           classId: activeClassId,
           records: {
             [studentId]: status
           }
         };
-        return [...prev, newRecord];
+        return [...prev, targetRecord];
       }
     });
+
+    if (targetRecord) {
+      databaseService.broadcastBoarding(targetRecord, currentUser?.username);
+    }
   };
 
   const batchSetBoarding = (status: BoardingStatus, date = todayStr) => {
@@ -2909,19 +3049,26 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       map[s.id] = status;
     });
 
+    let targetRecord: DailyBoardingMeal | null = null;
     setBoardingRecords(prev => {
       const existingIdx = prev.findIndex(r => r.date === date && r.classId === activeClassId);
       if (existingIdx >= 0) {
         const updated = [...prev];
-        updated[existingIdx] = {
+        targetRecord = {
           ...updated[existingIdx],
           records: map
         };
+        updated[existingIdx] = targetRecord;
         return updated;
       } else {
-        return [...prev, { date, classId: activeClassId, records: map }];
+        targetRecord = { date, classId: activeClassId, records: map };
+        return [...prev, targetRecord];
       }
     });
+
+    if (targetRecord) {
+      databaseService.broadcastBoarding(targetRecord, currentUser?.username);
+    }
   };
 
   // Timetable

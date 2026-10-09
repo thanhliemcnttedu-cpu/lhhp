@@ -110,13 +110,21 @@ function initSupabaseRealtime(): void {
           realtimeListeners.forEach(listener => {
             try {
               listener({
-                type: 'DATA_CHANGED',
+                type: payload.type || 'DATA_CHANGED',
+                action: payload.action,
+                classData: payload.classData,
+                classId: payload.classId,
+                attendanceRecord: payload.attendanceRecord,
+                boardingRecord: payload.boardingRecord,
+                transaction: payload.transaction,
+                points: payload.points,
+                studentId: payload.studentId,
                 username: payload.username,
                 targetUsername: payload.targetUsername,
                 originClientId: payload.originClientId,
                 timestamp: payload.timestamp || Date.now(),
                 message: payload.message
-              });
+              } as any);
             } catch (_) {}
           });
         }
@@ -1266,7 +1274,23 @@ export const databaseService = {
   // Real-time Event listener across computers and browsers
   subscribeRealtimeUpdates(
     username: string,
-    onUpdate: (event: { type: string; username?: string; targetUsername?: string; timestamp: number; originClientId?: string; message?: string }) => void
+    onUpdate: (event: { 
+      type: string; 
+      action?: string;
+      classData?: any;
+      classId?: string;
+      attendanceRecord?: any;
+      boardingRecord?: any;
+      transaction?: any;
+      points?: number;
+      studentId?: string;
+      username?: string; 
+      targetUsername?: string; 
+      timestamp: number; 
+      originClientId?: string; 
+      message?: string;
+      schoolName?: string;
+    }) => void
   ): () => void {
     const cleanUser = username.trim().toLowerCase();
 
@@ -1317,12 +1341,15 @@ export const databaseService = {
     };
   },
 
-  // Admin Unified Data Sync: Fetch classes and students across all teachers
+  // Admin Unified Data Sync: Fetch classes, students, attendance, boarding, and points across all teachers
   async getAdminAllData(): Promise<{
     success: boolean;
     teachers: UserAccount[];
     classes: Classroom[];
     students: Student[];
+    attendanceRecords: DailyAttendance[];
+    boardingRecords: DailyBoardingMeal[];
+    transactions: PointTransaction[];
     userData: Record<string, any>;
     timestamp: number;
   } | null> {
@@ -1357,6 +1384,9 @@ export const databaseService = {
 
           const allClassesMap = new Map<string, Classroom>();
           const allStudentsMap = new Map<string, Student>();
+          const allAttendanceMap = new Map<string, DailyAttendance>();
+          const allBoardingMap = new Map<string, DailyBoardingMeal>();
+          const allTransactions: PointTransaction[] = [];
           const userDataMap: Record<string, any> = {};
 
           for (const row of classroomRows) {
@@ -1372,12 +1402,87 @@ export const databaseService = {
 
             if (Array.isArray(uData.classes)) {
               for (const cls of uData.classes) {
-                if (cls && cls.id) allClassesMap.set(cls.id, cls);
+                if (!cls || !cls.id) continue;
+                const existing = allClassesMap.get(cls.id);
+                const finalBranch = (cls.branch && String(cls.branch).trim())
+                  ? String(cls.branch).trim()
+                  : (existing?.branch && String(existing.branch).trim() ? String(existing.branch).trim() : null);
+                const finalCampus = (cls.campus && String(cls.campus).trim())
+                  ? String(cls.campus).trim()
+                  : (existing?.campus && String(existing.campus).trim() ? String(existing.campus).trim() : null);
+
+                allClassesMap.set(cls.id, {
+                  ...(existing || {}),
+                  ...cls,
+                  branch: finalBranch,
+                  campus: finalCampus,
+                  teacherUsername: cls.teacherUsername || existing?.teacherUsername || u,
+                  teacherName: cls.teacherName || existing?.teacherName,
+                  teacherRole: 'homeroom'
+                });
               }
             }
             if (Array.isArray(uData.students)) {
               for (const st of uData.students) {
                 if (st && st.id) allStudentsMap.set(st.id, st);
+              }
+            }
+            if (Array.isArray(uData.attendanceRecords)) {
+              for (const att of uData.attendanceRecords) {
+                if (att && att.date && att.classId) {
+                  const attKey = `${att.date}_${att.classId}`;
+                  const existing = allAttendanceMap.get(attKey);
+                  if (existing) {
+                    allAttendanceMap.set(attKey, {
+                      ...existing,
+                      ...att,
+                      records: { ...(existing.records || {}), ...(att.records || {}) }
+                    });
+                  } else {
+                    allAttendanceMap.set(attKey, att);
+                  }
+                }
+              }
+            }
+            if (Array.isArray(uData.boardingRecords)) {
+              for (const b of uData.boardingRecords) {
+                if (b && b.date && b.classId) {
+                  const bKey = `${b.date}_${b.classId}`;
+                  const existing = allBoardingMap.get(bKey);
+                  if (existing) {
+                    allBoardingMap.set(bKey, {
+                      ...existing,
+                      ...b,
+                      records: { ...(existing.records || {}), ...(b.records || {}) }
+                    });
+                  } else {
+                    allBoardingMap.set(bKey, b);
+                  }
+                }
+              }
+            }
+            if (Array.isArray(uData.transactions)) {
+              allTransactions.push(...uData.transactions);
+            }
+          }
+
+          // 🛡️ BẢO TOÀN DỮ LIỆU: Bổ sung thông tin branch & campus từ hàng admin/adminquantri nếu các giáo viên bị thiếu
+          for (const adminRow of classroomRows) {
+            const u = (adminRow.username || '').toLowerCase();
+            if (u === 'admin' || u === 'adminquantri') {
+              const aData = adminRow.data || {};
+              if (Array.isArray(aData.classes)) {
+                for (const cls of aData.classes) {
+                  if (cls && cls.id && allClassesMap.has(cls.id)) {
+                    const existing = allClassesMap.get(cls.id)!;
+                    if (!existing.campus && cls.campus && String(cls.campus).trim()) {
+                      existing.campus = String(cls.campus).trim();
+                    }
+                    if (!existing.branch && cls.branch && String(cls.branch).trim()) {
+                      existing.branch = String(cls.branch).trim();
+                    }
+                  }
+                }
               }
             }
           }
@@ -1387,6 +1492,9 @@ export const databaseService = {
             teachers,
             classes: Array.from(allClassesMap.values()),
             students: Array.from(allStudentsMap.values()),
+            attendanceRecords: Array.from(allAttendanceMap.values()),
+            boardingRecords: Array.from(allBoardingMap.values()),
+            transactions: allTransactions,
             userData: userDataMap,
             timestamp: Date.now()
           };
@@ -1494,16 +1602,27 @@ export const databaseService = {
           transactions: []
         } as any;
 
-        // Tổng hợp lớp học
+        // Tổng hợp lớp học (Non-Destructive Smart Merge)
         if (Array.isArray(safeUserData.classes)) {
           safeUserData.classes.forEach((c: Classroom) => {
             if (c && c.id) {
               const cleanTeacherName = (c.teacherName && !c.teacherName.toLowerCase().includes('ban giám hiệu') && !c.teacherName.toLowerCase().includes('quản trị'))
                 ? c.teacherName
                 : teacher.fullName;
+              const existing = allClassesMap.get(c.id);
+              const finalBranch = (c.branch && String(c.branch).trim())
+                ? String(c.branch).trim()
+                : (existing?.branch && String(existing.branch).trim() ? String(existing.branch).trim() : null);
+              const finalCampus = (c.campus && String(c.campus).trim())
+                ? String(c.campus).trim()
+                : (existing?.campus && String(existing.campus).trim() ? String(existing.campus).trim() : null);
+
               allClassesMap.set(c.id, {
+                ...(existing || {}),
                 ...c,
-                teacherUsername: c.teacherUsername || teacher.username,
+                branch: finalBranch,
+                campus: finalCampus,
+                teacherUsername: c.teacherUsername || existing?.teacherUsername || teacher.username,
                 teacherName: cleanTeacherName,
                 teacherRole: 'homeroom'
               });
@@ -1520,22 +1639,40 @@ export const databaseService = {
           });
         }
 
-        // Tổng hợp chuyên cần / điểm danh
+        // Tổng hợp chuyên cần / điểm danh (Smart Deep Merge)
         if (Array.isArray(safeUserData.attendanceRecords)) {
           safeUserData.attendanceRecords.forEach((att: DailyAttendance) => {
             if (att && att.date && att.classId) {
               const attKey = `${att.date}_${att.classId}`;
-              allAttendanceMap.set(attKey, att);
+              const existingAtt = allAttendanceMap.get(attKey);
+              if (existingAtt) {
+                allAttendanceMap.set(attKey, {
+                  ...existingAtt,
+                  ...att,
+                  records: { ...(existingAtt.records || {}), ...(att.records || {}) }
+                });
+              } else {
+                allAttendanceMap.set(attKey, att);
+              }
             }
           });
         }
 
-        // Tổng hợp bán trú
+        // Tổng hợp bán trú (Smart Deep Merge)
         if (Array.isArray(safeUserData.boardingRecords)) {
           safeUserData.boardingRecords.forEach((b: DailyBoardingMeal) => {
             if (b && b.date && b.classId) {
               const bKey = `${b.date}_${b.classId}`;
-              allBoardingMap.set(bKey, b);
+              const existingB = allBoardingMap.get(bKey);
+              if (existingB) {
+                allBoardingMap.set(bKey, {
+                  ...existingB,
+                  ...b,
+                  records: { ...(existingB.records || {}), ...(b.records || {}) }
+                });
+              } else {
+                allBoardingMap.set(bKey, b);
+              }
             }
           });
         }
@@ -1547,6 +1684,80 @@ export const databaseService = {
       })
     );
 
+    // 🛡️ BẢO TOÀN DỮ LIỆU: Bổ sung thông tin branch/campus và records từ row của admin/adminquantri hoặc chính currentUser
+    try {
+      const supabase = getBrowserSupabase();
+      if (supabase) {
+        const checkUsers = ['admin', 'adminquantri'];
+        if (currentUser.username) checkUsers.push(currentUser.username.toLowerCase());
+        const { data: adminRows } = await supabase.from('user_classroom_data').select('username, data').in('username', checkUsers);
+        if (adminRows) {
+          for (const aRow of adminRows) {
+            const aData = aRow?.data || {};
+            const aClasses = aData.classes;
+            if (Array.isArray(aClasses)) {
+              for (const ac of aClasses) {
+                if (ac && ac.id) {
+                  if (allClassesMap.has(ac.id)) {
+                    const targetCls = allClassesMap.get(ac.id)!;
+                    if (!targetCls.campus && ac.campus && String(ac.campus).trim()) {
+                      targetCls.campus = String(ac.campus).trim();
+                    }
+                    if (!targetCls.branch && ac.branch && String(ac.branch).trim()) {
+                      targetCls.branch = String(ac.branch).trim();
+                    }
+                  } else {
+                    allClassesMap.set(ac.id, ac);
+                  }
+                }
+              }
+            }
+            if (Array.isArray(aData.students)) {
+              for (const st of aData.students) {
+                if (st && st.id && !allStudentsMap.has(st.id)) {
+                  allStudentsMap.set(st.id, st);
+                }
+              }
+            }
+            if (Array.isArray(aData.attendanceRecords)) {
+              for (const att of aData.attendanceRecords) {
+                if (att && att.date && att.classId) {
+                  const attKey = `${att.date}_${att.classId}`;
+                  const existing = allAttendanceMap.get(attKey);
+                  if (existing) {
+                    allAttendanceMap.set(attKey, {
+                      ...existing,
+                      ...att,
+                      records: { ...(existing.records || {}), ...(att.records || {}) }
+                    });
+                  } else {
+                    allAttendanceMap.set(attKey, att);
+                  }
+                }
+              }
+            }
+            if (Array.isArray(aData.boardingRecords)) {
+              for (const b of aData.boardingRecords) {
+                if (b && b.date && b.classId) {
+                  const bKey = `${b.date}_${b.classId}`;
+                  const existing = allBoardingMap.get(bKey);
+                  if (existing) {
+                    allBoardingMap.set(bKey, {
+                      ...existing,
+                      ...b,
+                      records: { ...(existing.records || {}), ...(b.records || {}) }
+                    });
+                  } else {
+                    allBoardingMap.set(bKey, b);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
     return {
       classes: Array.from(allClassesMap.values()),
       students: Array.from(allStudentsMap.values()),
@@ -1555,6 +1766,64 @@ export const databaseService = {
       transactions: allTransactions,
       teachers: scopedTeachers
     };
+  },
+
+  // Broadcast điểm danh tức thì qua Supabase Realtime & BroadcastChannel
+  broadcastAttendance(attendanceRecord: DailyAttendance, username?: string): void {
+    try {
+      const payload = {
+        type: 'ATTENDANCE_UPDATED',
+        action: 'UPDATE_ATTENDANCE',
+        attendanceRecord,
+        username: (username || '').toLowerCase(),
+        originClientId: CLIENT_ID,
+        timestamp: Date.now()
+      };
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage(payload);
+      }
+      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        ...payload,
+        r: Math.random()
+      }));
+      initSupabaseRealtime();
+      if (realtimeChannel) {
+        realtimeChannel.send({
+          type: 'broadcast',
+          event: 'user_data_updated',
+          payload
+        }).catch(() => {});
+      }
+    } catch (_) {}
+  },
+
+  // Broadcast bán trú tức thì qua Supabase Realtime & BroadcastChannel
+  broadcastBoarding(boardingRecord: DailyBoardingMeal, username?: string): void {
+    try {
+      const payload = {
+        type: 'BOARDING_UPDATED',
+        action: 'UPDATE_BOARDING',
+        boardingRecord,
+        username: (username || '').toLowerCase(),
+        originClientId: CLIENT_ID,
+        timestamp: Date.now()
+      };
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage(payload);
+      }
+      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        ...payload,
+        r: Math.random()
+      }));
+      initSupabaseRealtime();
+      if (realtimeChannel) {
+        realtimeChannel.send({
+          type: 'broadcast',
+          event: 'user_data_updated',
+          payload
+        }).catch(() => {});
+      }
+    } catch (_) {}
   },
 
   // Admin Unified Data Sync: Save and distribute classes and students to all teachers
@@ -1647,6 +1916,12 @@ export const databaseService = {
     const nowTs = Date.now();
     let isSuccess = false;
 
+    const classDataToSave = {
+      ...classData,
+      branch: (classData?.branch && String(classData.branch).trim()) ? String(classData.branch).trim() : null,
+      campus: (classData?.campus && String(classData.campus).trim()) ? String(classData.campus).trim() : null
+    };
+
     // 1. Direct Supabase Cloud Dual-Write (Đặc biệt quan trọng trên Vercel / Cloud)
     const supabase = getBrowserSupabase();
     if (supabase) {
@@ -1661,9 +1936,9 @@ export const databaseService = {
           } else {
             const idx = curClasses.findIndex((c: any) => c.id === classData.id);
             if (idx >= 0) {
-              curClasses[idx] = { ...curClasses[idx], ...classData, teacherUsername: username };
+              curClasses[idx] = { ...curClasses[idx], ...classDataToSave, teacherUsername: username };
             } else {
-              curClasses.push({ ...classData, teacherUsername: username });
+              curClasses.push({ ...classDataToSave, teacherUsername: username });
             }
           }
           await supabase.from('user_classroom_data').upsert({
@@ -1693,9 +1968,9 @@ export const databaseService = {
           } else {
             const aIdx = aClasses.findIndex((c: any) => c.id === classData.id);
             if (aIdx >= 0) {
-              aClasses[aIdx] = { ...aClasses[aIdx], ...classData, teacherUsername: username || aClasses[aIdx].teacherUsername };
+              aClasses[aIdx] = { ...aClasses[aIdx], ...classDataToSave, teacherUsername: username || aClasses[aIdx].teacherUsername };
             } else {
-              aClasses.push({ ...classData, teacherUsername: username || classData.teacherUsername });
+              aClasses.push({ ...classDataToSave, teacherUsername: username || classDataToSave.teacherUsername });
             }
           }
           await supabase.from('user_classroom_data').upsert({
@@ -1714,13 +1989,61 @@ export const databaseService = {
           } catch (_) {}
         }
 
-        // Broadcast realtime change
+        // C. Cập nhật cho các tài khoản Quản trị nhà trường (school_admin & bgh)
+        try {
+          const { data: schoolAdmins } = await supabase
+            .from('users')
+            .select('username')
+            .in('role', ['school_admin', 'bgh']);
+          if (schoolAdmins && schoolAdmins.length > 0) {
+            for (const sa of schoolAdmins) {
+              const saUser = (sa.username || '').toLowerCase();
+              if (saUser && saUser !== 'admin' && saUser !== 'adminquantri' && saUser !== username) {
+                const { data: saRow } = await supabase.from('user_classroom_data').select('data').eq('username', saUser).maybeSingle();
+                const saData = saRow?.data || { classes: [], students: [] };
+                let saClasses: Classroom[] = Array.isArray(saData.classes) ? saData.classes : [];
+                if (isDelete) {
+                  saClasses = saClasses.filter((c: any) => c.id !== classData.id);
+                } else {
+                  const saIdx = saClasses.findIndex((c: any) => c.id === classData.id);
+                  if (saIdx >= 0) {
+                    saClasses[saIdx] = { ...saClasses[saIdx], ...classDataToSave, teacherUsername: username || saClasses[saIdx].teacherUsername };
+                  } else {
+                    saClasses.push({ ...classDataToSave, teacherUsername: username || classDataToSave.teacherUsername });
+                  }
+                }
+                await supabase.from('user_classroom_data').upsert({
+                  username: saUser,
+                  data: { ...saData, classes: saClasses, updatedAt: nowTs },
+                  updated_at: new Date().toISOString()
+                }, { onConflict: 'username' });
+
+                try {
+                  const localKey = LOCAL_DB_PREFIX + saUser;
+                  const cached = localStorage.getItem(localKey);
+                  const cachedData = cached ? JSON.parse(cached) : saData;
+                  cachedData.classes = saClasses;
+                  cachedData.updatedAt = nowTs;
+                  localStorage.setItem(localKey, JSON.stringify(cachedData));
+                } catch (_) {}
+              }
+            }
+          }
+        } catch (saErr) {
+          console.warn('Sync school_admin error:', saErr);
+        }
+
+        // Broadcast realtime change với FULL payload cho Zero Latency
         initSupabaseRealtime();
         if (realtimeChannel) {
           realtimeChannel.send({
             type: 'broadcast',
             event: 'user_data_updated',
             payload: {
+              type: isDelete ? 'CLASS_DELETED' : 'CLASS_UPDATED',
+              action: isDelete ? 'DELETE_CLASS' : 'UPDATE_CLASS',
+              classData: classDataToSave,
+              classId: classData.id,
               username: username || 'all',
               targetUsername: username || 'all',
               originClientId: CLIENT_ID,
@@ -1744,7 +2067,7 @@ export const databaseService = {
           'Content-Type': 'application/json',
           'X-Client-Id': CLIENT_ID
         },
-        body: JSON.stringify({ classData, targetUsername: username, isDelete })
+        body: JSON.stringify({ classData: classDataToSave, targetUsername: username, isDelete })
       });
       if (res.ok) {
         const data = await res.json();
@@ -1758,13 +2081,19 @@ export const databaseService = {
     try {
       if (localBroadcastChannel) {
         localBroadcastChannel.postMessage({
-          type: 'DATA_CHANGED',
+          type: isDelete ? 'CLASS_DELETED' : 'CLASS_UPDATED',
+          action: isDelete ? 'DELETE_CLASS' : 'UPDATE_CLASS',
+          classData: classDataToSave,
+          classId: classData.id,
           username: username || 'all',
           originClientId: CLIENT_ID,
           timestamp: nowTs
         });
       }
       localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        type: isDelete ? 'CLASS_DELETED' : 'CLASS_UPDATED',
+        classData: classDataToSave,
+        classId: classData.id,
         username: username || 'all',
         originClientId: CLIENT_ID,
         timestamp: nowTs,
