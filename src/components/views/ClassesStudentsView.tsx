@@ -60,6 +60,98 @@ export const OFFICER_ROLE_OPTIONS = [
   { value: 'TỔ PHÓ TỔ 4', label: 'TỔ PHÓ TỔ 4', icon: '🥈', badgeBg: 'bg-pink-50', badgeText: 'text-pink-800', badgeBorder: 'border-pink-200' },
 ];
 
+// --- START COMBOBOX COMPONENT ---
+interface SearchableTeacherSelectProps {
+  value: string;
+  onChange: (val: string) => void;
+  options: { username: string; fullName: string; schoolName?: string; }[];
+  placeholder?: string;
+  className?: string;
+}
+
+function SearchableTeacherSelect({ value, onChange, options, placeholder = '-- Chọn tài khoản giáo viên --', className = '' }: SearchableTeacherSelectProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => o.username === value);
+  const displayValue = selectedOption 
+    ? `${selectedOption.fullName} (${selectedOption.username}) - ${selectedOption.schoolName || 'Nhà trường'}` 
+    : '';
+
+  const filteredOptions = options.filter(o => 
+    o.fullName.toLowerCase().includes(search.toLowerCase()) || 
+    o.username.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={wrapperRef} className="relative w-full">
+      <div 
+        className={`w-full px-3.5 py-2.5 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500 cursor-pointer flex justify-between items-center ${className}`}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (!isOpen) setSearch('');
+        }}
+      >
+        <span className="truncate">{displayValue || placeholder}</span>
+        <ChevronDown className="w-4 h-4 text-indigo-400" />
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-slate-100 bg-slate-50">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
+              <input
+                type="text"
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                placeholder="Tìm tên hoặc mã giáo viên..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="overflow-y-auto flex-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(opt => (
+                <div
+                  key={opt.username}
+                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-indigo-50 flex items-center justify-between ${value === opt.username ? 'bg-indigo-50/50 text-indigo-700 font-bold' : 'text-slate-700'}`}
+                  onClick={() => {
+                    onChange(opt.username);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span className="truncate">
+                    {opt.fullName} ({opt.username}) - {opt.schoolName || 'Nhà trường'}
+                  </span>
+                  {value === opt.username && <Check className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />}
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-xs text-center text-slate-500">
+                Không tìm thấy giáo viên nào.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+// --- END COMBOBOX COMPONENT ---
+
 interface ClassesStudentsViewProps {
   mode?: 'classes' | 'students';
   onNavigate?: (view: any) => void;
@@ -88,6 +180,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     if (mode) setActiveTabMode(mode);
   }, [mode]);
 
+  const [classSearchQuery, setClassSearchQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
@@ -268,7 +361,34 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         }
       }
 
+      // 5. Lọc theo từ khóa tìm kiếm (Tên lớp hoặc Tên GV)
+      if (classSearchQuery.trim()) {
+        const query = classSearchQuery.trim().toLowerCase();
+        const matchName = (c.name || '').toLowerCase().includes(query);
+        const matchTeacher = (c.teacherName || '').toLowerCase().includes(query);
+        if (!matchName && !matchTeacher) {
+          return false;
+        }
+      }
+
       return true;
+    }).sort((a, b) => {
+      // Hàm hỗ trợ bóc tách khối lớp từ tên (VD: 1A1 -> 1, 4A -> 4)
+      const getGrade = (name: string) => {
+        const match = (name || '').match(/^(\d+)/);
+        return match ? parseInt(match[1], 10) : 99; // Lớp không có số đưa xuống cuối
+      };
+      
+      const gradeA = getGrade(a.name || '');
+      const gradeB = getGrade(b.name || '');
+      
+      // Sắp xếp theo khối trước
+      if (gradeA !== gradeB) {
+        return gradeA - gradeB;
+      }
+      
+      // Khối giống nhau thì sắp xếp theo tên
+      return (a.name || '').localeCompare(b.name || '', 'vi', { numeric: true });
     });
   }, [
     classes, 
@@ -278,6 +398,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     selectedSchoolFilter, 
     selectedBranchFilter, 
     selectedCampusFilter, 
+    classSearchQuery,
     allTeachers, 
     allUsers
   ]);
@@ -1333,6 +1454,17 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     setIsClearAllConfirmOpen(false);
   };
 
+  // 🌟 Lọc lấy danh sách Lớp thực tế (chỉ tính lớp chủ nhiệm, loại bỏ lớp bộ môn ảo) để thống kê chính xác
+  const statsHomeroomClasses = React.useMemo(() => {
+    return displayedClasses.filter(c => c.teacherRole === 'homeroom' || !c.teacherRole);
+  }, [displayedClasses]);
+
+  const statsTotalStudents = React.useMemo(() => {
+    return statsHomeroomClasses.reduce((sum, c) => {
+      return sum + students.filter(s => s.classId === c.id).length;
+    }, 0);
+  }, [statsHomeroomClasses, students]);
+
   return (
     <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
       {/* Top Header Switch */}
@@ -1396,7 +1528,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               <div>
                 <span className="text-[10px] font-black text-indigo-100 uppercase tracking-wider block">TỔNG LỚP ĐANG QUẢN LÝ</span>
                 <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
-                  {classes.length} <span className="text-xs font-bold text-cyan-100 uppercase">LỚP HỌC</span>
+                  {statsHomeroomClasses.length} <span className="text-xs font-bold text-cyan-100 uppercase">LỚP HỌC</span>
                 </div>
               </div>
             </div>
@@ -1409,7 +1541,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               <div>
                 <span className="text-[10px] font-black text-emerald-100 uppercase tracking-wider block">TỔNG SỐ HỌC SINH CÁC LỚP</span>
                 <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
-                  {students.length} <span className="text-xs font-bold text-emerald-100 uppercase">EM HỌC SINH</span>
+                  {statsTotalStudents} <span className="text-xs font-bold text-emerald-100 uppercase">EM HỌC SINH</span>
                 </div>
               </div>
             </div>
@@ -1418,7 +1550,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 rounded-2xl p-3 sm:p-3.5 text-white shadow-sm shadow-orange-500/20 hover-zoom-card flex flex-col justify-between space-y-1.5">
               <span className="text-[10px] font-black text-amber-100 uppercase tracking-wider block">CHI TIẾT SĨ SỐ TỪNG LỚP</span>
               <div className="flex flex-wrap gap-1.5">
-                {classes.map(c => {
+                {statsHomeroomClasses.length === 0 && (
+                  <span className="text-xs font-bold text-amber-100 italic">Chưa có dữ liệu lớp học</span>
+                )}
+                {statsHomeroomClasses.map(c => {
                   const num = students.filter(s => s.classId === c.id).length;
                   return (
                     <span 
@@ -2083,6 +2218,29 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
           )}
 
+          {/* TÌM KIẾM NHANH LỚP HỌC */}
+          <div className="relative mb-4 max-w-lg">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              value={classSearchQuery}
+              onChange={(e) => setClassSearchQuery(e.target.value)}
+              placeholder="Nhập tên lớp hoặc tên giáo viên chủ nhiệm để tìm kiếm..."
+              className="block w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-shadow"
+            />
+            {classSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setClassSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <X className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors" />
+              </button>
+            )}
+          </div>
+
           {/* Grid Thẻ Lớp Học LỚN, RÕ NÉT kèm Ảnh Đại Diện To Rõ */}
           {displayedClasses.length === 0 ? (
             <div className="bg-gradient-to-b from-white via-indigo-50/30 to-sky-50/30 rounded-2xl border-2 border-dashed border-indigo-200/90 p-8 text-center space-y-3.5 shadow-2xs">
@@ -2091,12 +2249,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </div>
               <div className="space-y-1">
                 <h3 className="text-base font-black text-indigo-950 uppercase tracking-tight">
-                  {isAdmin && adminTeacherFilter !== 'all' ? 'GIÁO VIÊN NÀY CHƯA CÓ LỚP HỌC NÀO' : 'CHƯA CÓ LỚP HỌC NÀO TRONG HỆ THỐNG'}
+                  {classSearchQuery ? 'KHÔNG TÌM THẤY LỚP HỌC HOẶC GIÁO VIÊN PHÙ HỢP' : (isAdmin && adminTeacherFilter !== 'all' ? 'GIÁO VIÊN NÀY CHƯA CÓ LỚP HỌC NÀO' : 'CHƯA CÓ LỚP HỌC NÀO TRONG HỆ THỐNG')}
                 </h3>
                 <p className="text-xs text-indigo-700 max-w-md mx-auto leading-relaxed font-semibold">
-                  {isAdmin && adminTeacherFilter !== 'all'
-                    ? 'Bạn có thể bấm nút "Tạo lớp học mới" và phân công cho giáo viên này phụ trách.'
-                    : 'Tất cả các lớp học đã được xóa hoặc chưa được tạo. Hãy bấm nút bên dưới để tạo lớp học bắt đầu năm học mới.'}
+                  {classSearchQuery 
+                    ? 'Hãy thử tìm kiếm với từ khóa khác hoặc kiểm tra lại lỗi chính tả.'
+                    : (isAdmin && adminTeacherFilter !== 'all'
+                      ? 'Bạn có thể bấm nút "Tạo lớp học mới" và phân công cho giáo viên này phụ trách.'
+                      : 'Tất cả các lớp học đã được xóa hoặc chưa được tạo. Hãy bấm nút bên dưới để tạo lớp học bắt đầu năm học mới.')}
                 </p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
@@ -3771,25 +3931,18 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
                 {isAdmin && relevantTeachers.length > 0 ? (
                   <div className="space-y-2">
-                    <select
+                    <SearchableTeacherSelect
                       value={newClassAssignedUsername}
-                      onChange={(e) => {
-                        const uVal = e.target.value;
+                      onChange={(uVal) => {
                         setNewClassAssignedUsername(uVal);
                         const foundTeacher = allTeachers.find(t => t.username.toLowerCase() === uVal.toLowerCase());
                         if (foundTeacher) {
                           setNewClassTeacher(foundTeacher.fullName);
                         }
                       }}
-                      className="w-full px-3.5 py-2.5 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="">-- Chọn tài khoản giáo viên nhận lớp --</option>
-                      {relevantTeachers.map(t => (
-                        <option key={t.username} value={t.username}>
-                          {t.fullName} ({t.username}) - {t.schoolName || 'Nhà trường'}
-                        </option>
-                      ))}
-                    </select>
+                      options={relevantTeachers}
+                      placeholder="-- Chọn tài khoản giáo viên nhận lớp --"
+                    />
 
                     <input
                       type="text"
@@ -4686,10 +4839,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                           Admin
                         </span>
                       </div>
-                      <select
+                      <SearchableTeacherSelect
                         value={editingClass.teacherUsername || ''}
-                        onChange={(e) => {
-                          const selectedU = e.target.value;
+                        onChange={(selectedU) => {
                           const teacher = allTeachers.find(t => t.username.toLowerCase() === selectedU.toLowerCase());
                           setEditingClass({
                             ...editingClass,
@@ -4698,15 +4850,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             teacherName: teacher?.fullName || editingClass.teacherName || ''
                           });
                         }}
-                        className="w-full px-2.5 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500"
-                      >
-                        <option value="">-- Chưa chỉ định tài khoản --</option>
-                        {allTeachers.map(t => (
-                          <option key={t.username} value={t.username}>
-                            {t.fullName} ({t.username}) — {t.role === 'homeroom' ? '🏫 GVCN' : '💻 GVBM'}
-                          </option>
-                        ))}
-                      </select>
+                        options={allTeachers}
+                        placeholder="-- Chưa chỉ định tài khoản --"
+                        className="bg-white border-amber-300 text-slate-800 focus:ring-amber-500"
+                      />
                     </div>
                   )}
 
