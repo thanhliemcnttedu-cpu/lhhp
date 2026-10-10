@@ -18,7 +18,7 @@ import {
   FileSpreadsheet, Download, Upload, Calendar, AlertTriangle, CheckSquare,
   Settings, BookOpen, Calculator, Globe, Atom, Map, Monitor, Palette, Music, Activity, Heart,
   Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins, Wand2,
-  Building2, MapPin, ChevronDown, ChevronUp, Filter
+  Building2, MapPin, ChevronDown, ChevronUp, Filter, Eye, BarChart3, Users2, User
 } from 'lucide-react';
 import { playCoinSound, playDeductSound, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -453,6 +453,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   }, [appliedSubjects, teacherRole, subjectTeacherConfig.subjectName]);
 
   // Modals & form states for CLASS MANAGEMENT (User Request 1)
+  const [isClassStatsModalOpen, setIsClassStatsModalOpen] = useState(false);
   const [isInitSubjectClassesModalOpen, setIsInitSubjectClassesModalOpen] = useState(false);
   const [isCreateClassOpen, setIsCreateClassOpen] = useState(false);
   const [newClassName, setNewClassName] = useState('');
@@ -1547,25 +1548,25 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
 
             {/* Card 3: Thống kê nhanh sĩ số từng lớp */}
-            <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 rounded-2xl p-3 sm:p-3.5 text-white shadow-sm shadow-orange-500/20 hover-zoom-card flex flex-col justify-between space-y-1.5">
-              <span className="text-[10px] font-black text-amber-100 uppercase tracking-wider block">CHI TIẾT SĨ SỐ TỪNG LỚP</span>
-              <div className="flex flex-wrap gap-1.5">
-                {statsHomeroomClasses.length === 0 && (
-                  <span className="text-xs font-bold text-amber-100 italic">Chưa có dữ liệu lớp học</span>
-                )}
-                {statsHomeroomClasses.map(c => {
-                  const num = students.filter(s => s.classId === c.id).length;
-                  return (
-                    <span 
-                      key={c.id} 
-                      className="px-2 py-0.5 bg-white/25 backdrop-blur-md border border-white/40 rounded-lg text-[11px] font-black text-white flex items-center gap-1 shadow-2xs"
-                    >
-                      <span className="w-2 h-2 rounded-full ring-2 ring-white/80" style={{ backgroundColor: c.color || '#3B82F6' }} />
-                      <span>LỚP {c.name}:</span>
-                      <strong className="text-yellow-200">{num} EM</strong>
-                    </span>
-                  );
-                })}
+            <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 rounded-2xl p-3 sm:p-3.5 text-white shadow-sm shadow-orange-500/20 hover-zoom-card flex flex-col justify-between h-full space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-amber-100 uppercase tracking-wider block">CHI TIẾT SĨ SỐ TỪNG LỚP</span>
+                <div className="p-1.5 rounded-lg bg-white/20 backdrop-blur-md text-white font-black shadow-xs shrink-0">
+                  <BarChart3 className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-auto pt-1">
+                <div>
+                  <div className="text-lg font-black text-white mt-1">Bảng Tổng Hợp</div>
+                  <div className="text-[11px] text-amber-100 font-semibold">{statsHomeroomClasses.length} lớp học đang hoạt động</div>
+                </div>
+                <button
+                  onClick={() => setIsClassStatsModalOpen(true)}
+                  className="px-3 py-2 bg-white text-orange-600 hover:bg-orange-50 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md transition-all hover:-translate-y-0.5"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  XEM CHI TIẾT
+                </button>
               </div>
             </div>
           </div>
@@ -3821,21 +3822,33 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       {/* ========================================================================= */}
       {isCreateClassOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-4xl w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150 max-h-[95vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-100 shrink-0">
               <div>
-                <h3 className="text-base font-black text-indigo-950">Tạo Lớp Học Mới</h3>
-                <p className="text-xs text-indigo-700 mt-0.5">Nhập tên lớp, giáo viên, năm học & ảnh đại diện lớp</p>
+                <h3 className="text-lg font-black text-indigo-950">Tạo Lớp Học Mới</h3>
+                <p className="text-xs font-semibold text-indigo-600 mt-0.5">Vui lòng điền đầy đủ các thông tin tổ chức của lớp học</p>
               </div>
               <button 
+                type="button"
                 onClick={() => setIsCreateClassOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateClass} className="space-y-4">
+            <form onSubmit={handleCreateClass} className="flex-1 overflow-y-auto pr-2 pb-2 space-y-0">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+                
+                {/* --- CỘT 1: THÔNG TIN CƠ BẢN --- */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                      <School className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wide">Thông tin cơ bản</span>
+                  </div>
+
               {/* Chọn Ảnh đại diện của lớp & Tải từ máy tính (User Request 1) */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-700">Ảnh đại diện của lớp (To, rõ nét)</label>
@@ -3964,6 +3977,17 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   />
                 )}
               </div>
+
+              </div> {/* END CỘT 1 */}
+
+                {/* --- CỘT 2: TỔ CHỨC & BAN PHỤ HUYNH --- */}
+                <div className="space-y-5">
+                  <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                      <Users2 className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wide">Tổ chức & Ban phụ huynh</span>
+                  </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -4222,7 +4246,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              </div> {/* END CỘT 2 */}
+              </div> {/* END GRID */}
+
+              <div className="flex items-center justify-end gap-2 pt-4 mt-6 border-t border-slate-200 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsCreateClassOpen(false)}
@@ -6641,6 +6668,92 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             alert(`Đã hoàn tất tự động gán ảnh đại diện (${type === 'default' ? 'Mặc định' : 'Ảnh thật demo'}) cho ${res.updatedCount} học sinh lớp ${activeClass.name}!`);
           }}
         />
+      )}
+
+      {/* MODAL: Bảng Tổng Hợp Chi Tiết Sĩ Số Từng Lớp */}
+      {isClassStatsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-sm">
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Bảng Tổng Hợp Sĩ Số Lớp Học</h3>
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">Chi tiết phân bổ học sinh theo từng lớp thực tế</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsClassStatsModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto mt-4 pr-1 scrollbar-thin">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 sticky top-0 z-10">
+                  <tr>
+                    <th className="py-3 px-4 font-black text-slate-600 text-xs uppercase tracking-wider rounded-tl-xl rounded-bl-xl border-b border-slate-200">STT</th>
+                    <th className="py-3 px-4 font-black text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">Tên Lớp Học</th>
+                    <th className="py-3 px-4 font-black text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">Giáo Viên Chủ Nhiệm</th>
+                    <th className="py-3 px-4 font-black text-slate-600 text-xs uppercase tracking-wider text-right rounded-tr-xl rounded-br-xl border-b border-slate-200">Sĩ Số</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {statsHomeroomClasses.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-500 font-medium italic text-sm">
+                        Chưa có dữ liệu lớp học chủ nhiệm.
+                      </td>
+                    </tr>
+                  ) : (
+                    statsHomeroomClasses.map((c, idx) => {
+                      const num = students.filter(s => s.classId === c.id).length;
+                      return (
+                        <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3 px-4 text-slate-500 font-bold text-xs">
+                            {(idx + 1).toString().padStart(2, '0')}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: c.color || '#3B82F6' }} />
+                              <span className="font-bold text-indigo-700">Lớp {c.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                <User className="w-3 h-3" />
+                              </div>
+                              <span className="font-semibold text-slate-700">{c.teacherName || 'Chưa phân công'}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-black text-xs">
+                              {num} Học Sinh
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="pt-4 pb-2 mt-2 border-t border-slate-100 flex justify-between items-center shrink-0">
+              <div className="text-xs font-bold text-slate-500">
+                Tổng số lớp: <span className="text-indigo-600">{statsHomeroomClasses.length}</span>
+              </div>
+              <div className="text-sm font-black text-slate-800">
+                Tổng số học sinh toàn trường: <span className="text-emerald-600">{statsTotalStudents} Em</span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
