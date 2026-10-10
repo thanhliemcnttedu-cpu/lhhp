@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-10T05:09:11.008Z",
+  "lastSync": "2026-10-10T05:09:35.147Z",
   "schools": [],
   "users": [
     {
@@ -6331,6 +6331,538 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-1791608958214-0-s09o",
+          "classId": "class-1791608320266",
+          "stt": 1,
+          "name": "Đàm Hà Anh",
+          "birthDate": "15/02/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-39.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-1-5i7t",
+          "classId": "class-1791608320266",
+          "stt": 2,
+          "name": "Hán Nhật Anh",
+          "birthDate": "02/01/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-40.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-2-uo9v",
+          "classId": "class-1791608320266",
+          "stt": 3,
+          "name": "Chu Gia Bảo",
+          "birthDate": "08/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-3-5r6j",
+          "classId": "class-1791608320266",
+          "stt": 4,
+          "name": "Phạm Tuệ Băng",
+          "birthDate": "29/04/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-48.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-4-55dy",
+          "classId": "class-1791608320266",
+          "stt": 5,
+          "name": "Lò Tư Duệ",
+          "birthDate": "12/10/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-5-2upw",
+          "classId": "class-1791608320266",
+          "stt": 6,
+          "name": "Hoàng Linh Đan",
+          "birthDate": "02/01/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-6-d7f6",
+          "classId": "class-1791608320266",
+          "stt": 7,
+          "name": "Nguyễn Hữu Đức",
+          "birthDate": "22/12/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-04.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-7-cadu",
+          "classId": "class-1791608320266",
+          "stt": 8,
+          "name": "Đào Gia Huy",
+          "birthDate": "02/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-18.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-8-acte",
+          "classId": "class-1791608320266",
+          "stt": 9,
+          "name": "Đàm Minh Khang",
+          "birthDate": "22/11/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-9-3kan",
+          "classId": "class-1791608320266",
+          "stt": 10,
+          "name": "Lường Nguyễn Minh Khang",
+          "birthDate": "23/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-20.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-10-ro2r",
+          "classId": "class-1791608320266",
+          "stt": 11,
+          "name": "Hoàng Gia Khánh",
+          "birthDate": "24/02/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-21.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-11-akj9",
+          "classId": "class-1791608320266",
+          "stt": 12,
+          "name": "Đinh Gia Khôi",
+          "birthDate": "27/05/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-22.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-12-t0lo",
+          "classId": "class-1791608320266",
+          "stt": 13,
+          "name": "Đồng Minh Khôi",
+          "birthDate": "20/08/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-32.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-13-w054",
+          "classId": "class-1791608320266",
+          "stt": 14,
+          "name": "Đỗ Khánh Linh",
+          "birthDate": "16/06/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-14-35zb",
+          "classId": "class-1791608320266",
+          "stt": 15,
+          "name": "Nguyễn Thùy Linh",
+          "birthDate": "23/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-34.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-15-oxds",
+          "classId": "class-1791608320266",
+          "stt": 16,
+          "name": "Phạm Trúc Linh",
+          "birthDate": "03/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-35.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-16-4iad",
+          "classId": "class-1791608320266",
+          "stt": 17,
+          "name": "Lò Hà My",
+          "birthDate": "12/05/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-36.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-17-vaen",
+          "classId": "class-1791608320266",
+          "stt": 18,
+          "name": "Nguyễn Bảo Nam",
+          "birthDate": "22/03/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-37.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-18-6ydx",
+          "classId": "class-1791608320266",
+          "stt": 19,
+          "name": "Phạm Chí Nam",
+          "birthDate": "28/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-38.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-19-3zd1",
+          "classId": "class-1791608320266",
+          "stt": 20,
+          "name": "Nguyễn Thị Kim Ngân",
+          "birthDate": "02/08/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-39.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-20-p1uq",
+          "classId": "class-1791608320266",
+          "stt": 21,
+          "name": "Đèo Lê Ngọc Nhi",
+          "birthDate": "18/10/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-40.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-21-eblf",
+          "classId": "class-1791608320266",
+          "stt": 22,
+          "name": "Hà Tấn Phát",
+          "birthDate": "21/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-22-as6m",
+          "classId": "class-1791608320266",
+          "stt": 23,
+          "name": "Lưu Thiên Phong",
+          "birthDate": "31/03/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-48.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-23-zii0",
+          "classId": "class-1791608320266",
+          "stt": 24,
+          "name": "Nguyễn Ngọc Thảo",
+          "birthDate": "31/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-24-f5se",
+          "classId": "class-1791608320266",
+          "stt": 25,
+          "name": "Nguyễn Thanh Trúc",
+          "birthDate": "13/08/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-25-ud9f",
+          "classId": "class-1791608320266",
+          "stt": 26,
+          "name": "Vũ Đình Vinh",
+          "birthDate": "06/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-04.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-26-7c9t",
+          "classId": "class-1791608320266",
+          "stt": 27,
+          "name": "Đỗ Hoàng Hải Yến",
+          "birthDate": "31/12/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-18.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-27-5971",
+          "classId": "class-1791608320266",
+          "stt": 28,
+          "name": "Tráng Xuân Trường",
+          "birthDate": "17/02/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
         }
       ],
       "subjects": [
@@ -7644,7 +8176,7 @@
         "fullName": "Lò Văn Nghiêm",
         "role": "school_admin"
       },
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608975146
     },
     "gvcn_1a5": {
       "classes": [
@@ -7693,7 +8225,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a10": {
       "classes": [
@@ -7742,7 +8274,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a8": {
       "classes": [
@@ -7791,7 +8323,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a10": {
       "classes": [
@@ -7840,7 +8372,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a2": {
       "classes": [
@@ -7888,8 +8420,541 @@
           "teacherUsername": "gvcn_1a2"
         }
       ],
-      "students": [],
-      "updatedAt": 1791608951004
+      "students": [
+        {
+          "id": "hs-1791608958214-0-s09o",
+          "classId": "class-1791608320266",
+          "stt": 1,
+          "name": "Đàm Hà Anh",
+          "birthDate": "15/02/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-39.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-1-5i7t",
+          "classId": "class-1791608320266",
+          "stt": 2,
+          "name": "Hán Nhật Anh",
+          "birthDate": "02/01/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-40.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-2-uo9v",
+          "classId": "class-1791608320266",
+          "stt": 3,
+          "name": "Chu Gia Bảo",
+          "birthDate": "08/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-3-5r6j",
+          "classId": "class-1791608320266",
+          "stt": 4,
+          "name": "Phạm Tuệ Băng",
+          "birthDate": "29/04/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-48.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-4-55dy",
+          "classId": "class-1791608320266",
+          "stt": 5,
+          "name": "Lò Tư Duệ",
+          "birthDate": "12/10/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-5-2upw",
+          "classId": "class-1791608320266",
+          "stt": 6,
+          "name": "Hoàng Linh Đan",
+          "birthDate": "02/01/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-6-d7f6",
+          "classId": "class-1791608320266",
+          "stt": 7,
+          "name": "Nguyễn Hữu Đức",
+          "birthDate": "22/12/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-04.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-7-cadu",
+          "classId": "class-1791608320266",
+          "stt": 8,
+          "name": "Đào Gia Huy",
+          "birthDate": "02/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-18.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-8-acte",
+          "classId": "class-1791608320266",
+          "stt": 9,
+          "name": "Đàm Minh Khang",
+          "birthDate": "22/11/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-9-3kan",
+          "classId": "class-1791608320266",
+          "stt": 10,
+          "name": "Lường Nguyễn Minh Khang",
+          "birthDate": "23/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-20.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-10-ro2r",
+          "classId": "class-1791608320266",
+          "stt": 11,
+          "name": "Hoàng Gia Khánh",
+          "birthDate": "24/02/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-21.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-11-akj9",
+          "classId": "class-1791608320266",
+          "stt": 12,
+          "name": "Đinh Gia Khôi",
+          "birthDate": "27/05/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-22.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-12-t0lo",
+          "classId": "class-1791608320266",
+          "stt": 13,
+          "name": "Đồng Minh Khôi",
+          "birthDate": "20/08/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-32.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-13-w054",
+          "classId": "class-1791608320266",
+          "stt": 14,
+          "name": "Đỗ Khánh Linh",
+          "birthDate": "16/06/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-14-35zb",
+          "classId": "class-1791608320266",
+          "stt": 15,
+          "name": "Nguyễn Thùy Linh",
+          "birthDate": "23/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-34.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-15-oxds",
+          "classId": "class-1791608320266",
+          "stt": 16,
+          "name": "Phạm Trúc Linh",
+          "birthDate": "03/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-35.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-16-4iad",
+          "classId": "class-1791608320266",
+          "stt": 17,
+          "name": "Lò Hà My",
+          "birthDate": "12/05/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-36.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-17-vaen",
+          "classId": "class-1791608320266",
+          "stt": 18,
+          "name": "Nguyễn Bảo Nam",
+          "birthDate": "22/03/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-37.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-18-6ydx",
+          "classId": "class-1791608320266",
+          "stt": 19,
+          "name": "Phạm Chí Nam",
+          "birthDate": "28/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-38.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-19-3zd1",
+          "classId": "class-1791608320266",
+          "stt": 20,
+          "name": "Nguyễn Thị Kim Ngân",
+          "birthDate": "02/08/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-39.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-20-p1uq",
+          "classId": "class-1791608320266",
+          "stt": 21,
+          "name": "Đèo Lê Ngọc Nhi",
+          "birthDate": "18/10/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-40.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-21-eblf",
+          "classId": "class-1791608320266",
+          "stt": 22,
+          "name": "Hà Tấn Phát",
+          "birthDate": "21/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-22-as6m",
+          "classId": "class-1791608320266",
+          "stt": 23,
+          "name": "Lưu Thiên Phong",
+          "birthDate": "31/03/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-48.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-23-zii0",
+          "classId": "class-1791608320266",
+          "stt": 24,
+          "name": "Nguyễn Ngọc Thảo",
+          "birthDate": "31/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-24-f5se",
+          "classId": "class-1791608320266",
+          "stt": 25,
+          "name": "Nguyễn Thanh Trúc",
+          "birthDate": "13/08/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-25-ud9f",
+          "classId": "class-1791608320266",
+          "stt": 26,
+          "name": "Vũ Đình Vinh",
+          "birthDate": "06/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-04.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-26-7c9t",
+          "classId": "class-1791608320266",
+          "stt": 27,
+          "name": "Đỗ Hoàng Hải Yến",
+          "birthDate": "31/12/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-18.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-27-5971",
+          "classId": "class-1791608320266",
+          "stt": 28,
+          "name": "Tráng Xuân Trường",
+          "birthDate": "17/02/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        }
+      ],
+      "updatedAt": 1791608975146
     },
     "gvcn_1a1": {
       "classes": [
@@ -8569,7 +9634,7 @@
           }
         }
       ],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a6": {
       "classes": [
@@ -8618,7 +9683,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a5": {
       "classes": [
@@ -8667,7 +9732,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a11": {
       "classes": [
@@ -8716,7 +9781,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a11": {
       "classes": [
@@ -8765,7 +9830,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a4": {
       "classes": [
@@ -8814,7 +9879,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a7": {
       "classes": [
@@ -8863,7 +9928,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a3": {
       "classes": [
@@ -8912,7 +9977,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a6": {
       "classes": [
@@ -8961,7 +10026,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a8": {
       "classes": [
@@ -9010,7 +10075,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a12": {
       "classes": [
@@ -9059,7 +10124,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a1": {
       "classes": [
@@ -9108,7 +10173,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a9": {
       "classes": [
@@ -9157,7 +10222,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a9": {
       "classes": [
@@ -9206,7 +10271,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a4": {
       "classes": [
@@ -9255,7 +10320,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a7": {
       "classes": [
@@ -9304,7 +10369,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a13": {
       "classes": [
@@ -9353,7 +10418,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a13": {
       "classes": [
@@ -9402,7 +10467,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a1": {
       "classes": [
@@ -9451,7 +10516,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a1": {
       "classes": [
@@ -9500,7 +10565,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_2a2": {
       "classes": [
@@ -9549,7 +10614,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a10": {
       "classes": [
@@ -9598,7 +10663,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a11": {
       "classes": [
@@ -9647,7 +10712,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a12": {
       "classes": [
@@ -9696,7 +10761,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a2": {
       "classes": [
@@ -9745,7 +10810,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a3": {
       "classes": [
@@ -9794,7 +10859,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a4": {
       "classes": [
@@ -9843,7 +10908,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a5": {
       "classes": [
@@ -9892,7 +10957,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a6": {
       "classes": [
@@ -9941,7 +11006,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a7": {
       "classes": [
@@ -9990,7 +11055,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a9": {
       "classes": [
@@ -10039,7 +11104,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_3a8": {
       "classes": [
@@ -10088,7 +11153,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a10": {
       "classes": [
@@ -10137,7 +11202,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a11": {
       "classes": [
@@ -10186,7 +11251,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a12": {
       "classes": [
@@ -10235,7 +11300,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a13": {
       "classes": [
@@ -10284,7 +11349,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a2": {
       "classes": [
@@ -10333,7 +11398,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a3": {
       "classes": [
@@ -10382,7 +11447,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a4": {
       "classes": [
@@ -10431,7 +11496,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a5": {
       "classes": [
@@ -10480,7 +11545,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a6": {
       "classes": [
@@ -10529,7 +11594,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a7": {
       "classes": [
@@ -10578,7 +11643,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a8": {
       "classes": [
@@ -10627,7 +11692,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_4a9": {
       "classes": [
@@ -10676,7 +11741,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a1": {
       "classes": [
@@ -10725,7 +11790,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a10": {
       "classes": [
@@ -10774,7 +11839,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a11": {
       "classes": [
@@ -10823,7 +11888,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a12": {
       "classes": [
@@ -10872,7 +11937,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a15": {
       "classes": [
@@ -10921,7 +11986,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a2": {
       "classes": [
@@ -10970,7 +12035,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a6": {
       "classes": [
@@ -11019,7 +12084,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a13": {
       "classes": [
@@ -11068,7 +12133,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a14": {
       "classes": [
@@ -11117,7 +12182,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a3": {
       "classes": [
@@ -11166,7 +12231,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a4": {
       "classes": [
@@ -11215,7 +12280,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a5": {
       "classes": [
@@ -11264,7 +12329,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a7": {
       "classes": [
@@ -11313,7 +12378,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a8": {
       "classes": [
@@ -11362,7 +12427,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_5a9": {
       "classes": [
@@ -11411,7 +12476,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "gvcn_1a3": {
       "classes": [
@@ -11993,7 +13058,7 @@
           }
         }
       ],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608967464
     },
     "admin": {
       "classes": [
@@ -18304,12 +19369,553 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-1791608958214-0-s09o",
+          "classId": "class-1791608320266",
+          "stt": 1,
+          "name": "Đàm Hà Anh",
+          "birthDate": "15/02/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-39.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-1-5i7t",
+          "classId": "class-1791608320266",
+          "stt": 2,
+          "name": "Hán Nhật Anh",
+          "birthDate": "02/01/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-40.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-2-uo9v",
+          "classId": "class-1791608320266",
+          "stt": 3,
+          "name": "Chu Gia Bảo",
+          "birthDate": "08/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-3-5r6j",
+          "classId": "class-1791608320266",
+          "stt": 4,
+          "name": "Phạm Tuệ Băng",
+          "birthDate": "29/04/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-48.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-4-55dy",
+          "classId": "class-1791608320266",
+          "stt": 5,
+          "name": "Lò Tư Duệ",
+          "birthDate": "12/10/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-5-2upw",
+          "classId": "class-1791608320266",
+          "stt": 6,
+          "name": "Hoàng Linh Đan",
+          "birthDate": "02/01/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 1",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-6-d7f6",
+          "classId": "class-1791608320266",
+          "stt": 7,
+          "name": "Nguyễn Hữu Đức",
+          "birthDate": "22/12/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-04.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-7-cadu",
+          "classId": "class-1791608320266",
+          "stt": 8,
+          "name": "Đào Gia Huy",
+          "birthDate": "02/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-18.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-8-acte",
+          "classId": "class-1791608320266",
+          "stt": 9,
+          "name": "Đàm Minh Khang",
+          "birthDate": "22/11/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-9-3kan",
+          "classId": "class-1791608320266",
+          "stt": 10,
+          "name": "Lường Nguyễn Minh Khang",
+          "birthDate": "23/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-20.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-10-ro2r",
+          "classId": "class-1791608320266",
+          "stt": 11,
+          "name": "Hoàng Gia Khánh",
+          "birthDate": "24/02/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-21.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-11-akj9",
+          "classId": "class-1791608320266",
+          "stt": 12,
+          "name": "Đinh Gia Khôi",
+          "birthDate": "27/05/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-22.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-12-t0lo",
+          "classId": "class-1791608320266",
+          "stt": 13,
+          "name": "Đồng Minh Khôi",
+          "birthDate": "20/08/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-32.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-13-w054",
+          "classId": "class-1791608320266",
+          "stt": 14,
+          "name": "Đỗ Khánh Linh",
+          "birthDate": "16/06/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 2",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-14-35zb",
+          "classId": "class-1791608320266",
+          "stt": 15,
+          "name": "Nguyễn Thùy Linh",
+          "birthDate": "23/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-34.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-15-oxds",
+          "classId": "class-1791608320266",
+          "stt": 16,
+          "name": "Phạm Trúc Linh",
+          "birthDate": "03/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-35.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-16-4iad",
+          "classId": "class-1791608320266",
+          "stt": 17,
+          "name": "Lò Hà My",
+          "birthDate": "12/05/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-36.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-17-vaen",
+          "classId": "class-1791608320266",
+          "stt": 18,
+          "name": "Nguyễn Bảo Nam",
+          "birthDate": "22/03/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-37.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-18-6ydx",
+          "classId": "class-1791608320266",
+          "stt": 19,
+          "name": "Phạm Chí Nam",
+          "birthDate": "28/07/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-38.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-19-3zd1",
+          "classId": "class-1791608320266",
+          "stt": 20,
+          "name": "Nguyễn Thị Kim Ngân",
+          "birthDate": "02/08/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-39.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-20-p1uq",
+          "classId": "class-1791608320266",
+          "stt": 21,
+          "name": "Đèo Lê Ngọc Nhi",
+          "birthDate": "18/10/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-40.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 3",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-21-eblf",
+          "classId": "class-1791608320266",
+          "stt": 22,
+          "name": "Hà Tấn Phát",
+          "birthDate": "21/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-22-as6m",
+          "classId": "class-1791608320266",
+          "stt": 23,
+          "name": "Lưu Thiên Phong",
+          "birthDate": "31/03/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-48.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-23-zii0",
+          "classId": "class-1791608320266",
+          "stt": 24,
+          "name": "Nguyễn Ngọc Thảo",
+          "birthDate": "31/07/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-24-f5se",
+          "classId": "class-1791608320266",
+          "stt": 25,
+          "name": "Nguyễn Thanh Trúc",
+          "birthDate": "13/08/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-25-ud9f",
+          "classId": "class-1791608320266",
+          "stt": 26,
+          "name": "Vũ Đình Vinh",
+          "birthDate": "06/10/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-04.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-26-7c9t",
+          "classId": "class-1791608320266",
+          "stt": 27,
+          "name": "Đỗ Hoàng Hải Yến",
+          "birthDate": "31/12/2020",
+          "gender": "Nữ",
+          "avatar": "/avatars/real_demo/boys/student-avatar-18.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
+        },
+        {
+          "id": "hs-1791608958214-27-5971",
+          "classId": "class-1791608320266",
+          "stt": 28,
+          "name": "Tráng Xuân Trường",
+          "birthDate": "17/02/2020",
+          "gender": "Nam",
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
+          "avatarScale": 1,
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "points": 0,
+          "subjectPoints": {},
+          "group": "Tổ 4",
+          "role": "",
+          "roles": []
         }
       ],
-      "updatedAt": 1791608951004
+      "updatedAt": 1791608975146
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791608958221-tjw6v1",
+      "timestamp": 1791608958221,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "BATCH_STUDENTS",
+      "description": "Thêm mới danh sách 28 học sinh vào lớp 1A2 Đỗ Thị Hải"
+    },
     {
       "id": "log-1791608931135-zqkbsf",
       "timestamp": 1791608931135,
@@ -18447,6 +20053,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791608937862
+    "lastGithubPushAt": 1791608956968
   }
 }
