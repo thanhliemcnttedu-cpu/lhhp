@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-12T08:05:18.052Z",
+  "lastSync": "2026-10-12T09:01:19.686Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -3838,7 +3838,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791792039955
+      "updatedAt": 1791795678930
     },
     "gvcn_2a6": {
       "classes": [
@@ -6946,17 +6946,17 @@
     "quantriths1tu": {
       "classes": [
         {
-          "id": "class-1791591691188",
-          "name": "1A6 Lê Thị Thủy",
+          "id": "class-1791591487941",
+          "name": "1A3 Hoàng Thị Hương",
           "color": "#3B82F6",
           "grade": "Khối 1",
           "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
           "branch": "Phân hiệu trung tâm",
-          "campus": "Nà Ban",
+          "campus": "Trung tâm",
           "slogan": "",
           "isHomeroom": true,
           "avatarScale": 1,
-          "teacherName": "Lê Thị Thủy",
+          "teacherName": "Hoàng Thị Hương",
           "teacherRole": "homeroom",
           "academicYear": "2026–2027",
           "avatarPosition": {
@@ -6986,93 +6986,7 @@
               "roleTitle": "Ủy viên ban phụ huynh"
             }
           },
-          "teacherUsername": "gvcn_1a6"
-        },
-        {
-          "id": "class-1791594022890",
-          "name": "2A7 Trần Thị Thu Hải",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Nà Ban",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Trần Thị Thu Hải",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a7"
-        },
-        {
-          "id": "class-1791594052879",
-          "name": "2A8 Nguyễn Hải Yến",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Chạm Cả",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Nguyễn Hải Yến",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a8"
+          "teacherUsername": "gvcn1a3"
         },
         {
           "id": "class-1791590199229",
@@ -7118,393 +7032,6 @@
           "teacherUsername": "gvcn1a1"
         },
         {
-          "id": "class-1791591893850",
-          "name": "1A9 Phạm Thị Hoàn",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Hô Be",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Phạm Thị Hoàn",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_1a9"
-        },
-        {
-          "id": "class-1791591487941",
-          "name": "1A3 Hoàng Thị Hương",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Hoàng Thị Hương",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn1a3"
-        },
-        {
-          "id": "class-1791591781877",
-          "name": "1A7 Nguyễn Thị Thanh Hà",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Chạm Cả",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Nguyễn Thị Thanh Hà",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_1a7"
-        },
-        {
-          "id": "class-1791591566650",
-          "name": "1A4 Trần Thị Hà",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Trần Thị Hà",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn1a4"
-        },
-        {
-          "id": "class-1791593980705",
-          "name": "2A6 Bùi Thị Hải",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Bùi Thị Hải",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a6"
-        },
-        {
-          "id": "class-1791591628525",
-          "name": "1A5 Chử Thị Nghĩa",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Chử Thị Nghĩa",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn1a5"
-        },
-        {
-          "id": "class-1791592363912",
-          "name": "1A10 Tống Thị Nhương",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Hô Be",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Tống Thị Nhương",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_1a10"
-        },
-        {
-          "id": "class-1791594106515",
-          "name": "2A9 Hoàng Thanh Hà",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Nà Nọi",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Hoàng Thanh Hà",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a9"
-        },
-        {
-          "id": "class-1791592690671",
-          "name": "1A11 Nguyễn Thị Xuyên",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Hoàng Liên",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Nguyễn Thị Xuyên",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_1a11"
-        },
-        {
           "id": "class-1791608320266",
           "name": "1A2 Đỗ Thị Hải",
           "color": "#3B82F6",
@@ -7546,264 +7073,6 @@
             }
           },
           "teacherUsername": "gvcn1a2"
-        },
-        {
-          "id": "class-1791592033234",
-          "name": "2A1 Nguyễn Thị Thuận",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Nguyễn Thị Thuận",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a1"
-        },
-        {
-          "id": "class-1791592764810",
-          "name": "1A12 Tòng Thị Thi",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Tân Muôn",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Tòng Thị Thi",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_1a12"
-        },
-        {
-          "id": "class-1791593851753",
-          "name": "2A3 Vũ Thị Hoa Lý",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Vũ Thị Hoa Lý",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a3"
-        },
-        {
-          "id": "class-1791593953217",
-          "name": "2A5 Đào Thị Hảo",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Đào Thị Hảo",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a5"
-        },
-        {
-          "id": "class-1791591847563",
-          "name": "1A8 Lò Thị Hoa",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Nà Nọi",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Nguyễn Thị Thanh Hà",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_1a8"
-        },
-        {
-          "id": "class-1791593911562",
-          "name": "2A4 Nguyễn Thị Huệ",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Nguyễn Thị Huệ",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a4"
         },
         {
           "id": "class-1791592804015",
@@ -7892,6 +7161,221 @@
           "teacherUsername": "gvcn_2a2"
         },
         {
+          "id": "class-1791592764810",
+          "name": "1A12 Tòng Thị Thi",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Tân Muôn",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Tòng Thị Thi",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_1a12"
+        },
+        {
+          "id": "class-1791594106515",
+          "name": "2A9 Hoàng Thanh Hà",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Nà Nọi",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Hoàng Thanh Hà",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a9"
+        },
+        {
+          "id": "class-1791591628525",
+          "name": "1A5 Chử Thị Nghĩa",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Chử Thị Nghĩa",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn1a5"
+        },
+        {
+          "id": "class-1791593953217",
+          "name": "2A5 Đào Thị Hảo",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Đào Thị Hảo",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a5"
+        },
+        {
+          "id": "class-1791594052879",
+          "name": "2A8 Nguyễn Hải Yến",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Chạm Cả",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Nguyễn Hải Yến",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a8"
+        },
+        {
           "id": "class-1791593262512",
           "name": "2A10 Trần Thị Vân",
           "color": "#10B981",
@@ -7933,6 +7417,565 @@
             }
           },
           "teacherUsername": "gvcn_2a10"
+        },
+        {
+          "id": "class-1791591893850",
+          "name": "1A9 Phạm Thị Hoàn",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Hô Be",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Phạm Thị Hoàn",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_1a9"
+        },
+        {
+          "id": "class-1791593338373",
+          "name": "2A11 Nguyễn Thị Hường",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Hoàng Liên",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Nguyễn Thị Hường",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a11"
+        },
+        {
+          "id": "class-1791594022890",
+          "name": "2A7 Trần Thị Thu Hải",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Nà Ban",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Trần Thị Thu Hải",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a7"
+        },
+        {
+          "id": "class-1791591566650",
+          "name": "1A4 Trần Thị Hà",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Trần Thị Hà",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn1a4"
+        },
+        {
+          "id": "class-1791591691188",
+          "name": "1A6 Lê Thị Thủy",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Nà Ban",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Lê Thị Thủy",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_1a6"
+        },
+        {
+          "id": "class-1791592033234",
+          "name": "2A1 Nguyễn Thị Thuận",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Nguyễn Thị Thuận",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a1"
+        },
+        {
+          "id": "class-1791592363912",
+          "name": "1A10 Tống Thị Nhương",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Hô Be",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Tống Thị Nhương",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_1a10"
+        },
+        {
+          "id": "class-1791591781877",
+          "name": "1A7 Nguyễn Thị Thanh Hà",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Chạm Cả",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Nguyễn Thị Thanh Hà",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_1a7"
+        },
+        {
+          "id": "class-1791593911562",
+          "name": "2A4 Nguyễn Thị Huệ",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Nguyễn Thị Huệ",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a4"
+        },
+        {
+          "id": "class-1791592690671",
+          "name": "1A11 Nguyễn Thị Xuyên",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Hoàng Liên",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Nguyễn Thị Xuyên",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_1a11"
+        },
+        {
+          "id": "class-1791593980705",
+          "name": "2A6 Bùi Thị Hải",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Bùi Thị Hải",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a6"
+        },
+        {
+          "id": "class-1791593851753",
+          "name": "2A3 Vũ Thị Hoa Lý",
+          "color": "#10B981",
+          "grade": "Khối 2",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Vũ Thị Hoa Lý",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_2a3"
+        },
+        {
+          "id": "class-1791591847563",
+          "name": "1A8 Lò Thị Hoa",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu 1",
+          "campus": "Nà Nọi",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Nguyễn Thị Thanh Hà",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn_1a8"
         },
         {
           "id": "class-1791593457868",
@@ -8019,49 +8062,6 @@
             }
           },
           "teacherUsername": "gvcn_2a13"
-        },
-        {
-          "id": "class-1791593338373",
-          "name": "2A11 Nguyễn Thị Hường",
-          "color": "#10B981",
-          "grade": "Khối 2",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu 1",
-          "campus": "Hoàng Liên",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Nguyễn Thị Hường",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn_2a11"
         },
         {
           "id": "class-1791594633794",
@@ -9784,7 +9784,7 @@
           "teacherUsername": "gvcn_5a9"
         }
       ],
-      "activeClassId": "class-1791591893850",
+      "activeClassId": "class-1791591487941",
       "students": [
         {
           "id": "hs-1791608712196-0-z7g2",
@@ -14415,7 +14415,7 @@
         }
       ],
       "teacherProfile": {
-        "name": "Hoàng Thanh Hà",
+        "name": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
         "birthDate": "",
         "role": "QUẢN TRỊ NHÀ TRƯỜNG",
         "teachingSubject": "Quản trị & Giám sát",
@@ -14425,7 +14425,7 @@
         "zalo": "",
         "facebook": "",
         "socialLink": "",
-        "academicYear": "2026–2027"
+        "academicYear": ""
       },
       "quizBank": [
         {
@@ -14790,7 +14790,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791792318052
+      "updatedAt": 1791795679685
     },
     "gvcn1a1": {
       "classes": [
@@ -15310,6 +15310,15 @@
   },
   "auditLogs": [
     {
+      "id": "log-1791795678845-hcs1k4",
+      "timestamp": 1791795678845,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A3 Vũ Thị Hoa Lý"
+    },
+    {
       "id": "log-1791792317389-f27yfg",
       "timestamp": 1791792317389,
       "username": "quantriths1tu",
@@ -15773,6 +15782,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791792317975
+    "lastGithubPushAt": 1791792323183
   }
 }
