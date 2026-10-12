@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-12T06:27:39.930Z",
+  "lastSync": "2026-10-12T06:27:43.900Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -2292,7 +2292,7 @@
               "roleTitle": "Ủy viên ban phụ huynh"
             }
           },
-          "teacherUsername": "gvcn_1a1"
+          "teacherUsername": "gvcn1a1"
         }
       ],
       "students": [
@@ -2927,7 +2927,7 @@
           }
         }
       ],
-      "updatedAt": 1791608967464
+      "updatedAt": 1791786463899
     },
     "gvcn_1a6": {
       "classes": [
@@ -14216,7 +14216,56 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791786459929
+      "updatedAt": 1791786463899
+    },
+    "gvcn1a1": {
+      "classes": [
+        {
+          "id": "class-1791590199229",
+          "name": "1A1 Lê Thị Việt Hà",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Lê Thị Việt Hà",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn1a1"
+        }
+      ],
+      "students": [],
+      "updatedAt": 1791786463899
     }
   },
   "auditLogs": [
