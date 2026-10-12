@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-12T06:27:43.900Z",
+  "lastSync": "2026-10-12T06:27:47.731Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -6372,6 +6372,49 @@
     "quantriths1tu": {
       "classes": [
         {
+          "id": "class-1791590199229",
+          "name": "1A1 Lê Thị Việt Hà",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Lê Thị Việt Hà",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn1a1"
+        },
+        {
           "id": "class-1791594052879",
           "name": "2A8 Nguyễn Hải Yến",
           "color": "#10B981",
@@ -7703,49 +7746,6 @@
             }
           },
           "teacherUsername": "gvcn_2a3"
-        },
-        {
-          "id": "class-1791590199229",
-          "name": "1A1 Lê Thị Việt Hà",
-          "color": "#3B82F6",
-          "grade": "Khối 1",
-          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "branch": "Phân hiệu trung tâm",
-          "campus": "Trung tâm",
-          "slogan": "",
-          "isHomeroom": true,
-          "avatarScale": 1,
-          "teacherName": "Lê Thị Việt Hà",
-          "teacherRole": "homeroom",
-          "academicYear": "2026–2027",
-          "avatarPosition": {
-            "x": 0,
-            "y": 0
-          },
-          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
-          "parentCommittee": {
-            "head": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Trưởng ban phụ huynh"
-            },
-            "deputy": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Phó ban phụ huynh"
-            },
-            "member1": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            },
-            "member2": {
-              "name": "",
-              "phone": "",
-              "roleTitle": "Ủy viên ban phụ huynh"
-            }
-          },
-          "teacherUsername": "gvcn1a1"
         },
         {
           "id": "class-1791594666769",
@@ -9164,7 +9164,7 @@
               "roleTitle": "Ủy viên ban phụ huynh"
             }
           },
-          "teacherUsername": "gvcn_1a2"
+          "teacherUsername": "gvcn1a2"
         },
         {
           "id": "class-1791592764810",
@@ -13841,7 +13841,7 @@
         }
       ],
       "teacherProfile": {
-        "name": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+        "name": "Lê Thị Việt Hà",
         "birthDate": "",
         "role": "QUẢN TRỊ NHÀ TRƯỜNG",
         "teachingSubject": "Quản trị & Giám sát",
@@ -13851,7 +13851,7 @@
         "zalo": "",
         "facebook": "",
         "socialLink": "",
-        "academicYear": ""
+        "academicYear": "2026–2027"
       },
       "quizBank": [
         {
@@ -14216,7 +14216,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791786463899
+      "updatedAt": 1791786467409
     },
     "gvcn1a1": {
       "classes": [
@@ -14269,6 +14269,15 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791786466816-p1rq84",
+      "timestamp": 1791786466816,
+      "username": "quantriths1tu",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A2 Đỗ Thị Hải"
+    },
     {
       "id": "log-1791786458867-o2y28o",
       "timestamp": 1791786458867,
@@ -14517,6 +14526,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791608981532
+    "lastGithubPushAt": 1791786467731
   }
 }
