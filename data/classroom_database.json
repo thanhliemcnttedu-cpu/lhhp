@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-12T06:29:10.353Z",
+  "lastSync": "2026-10-12T06:29:12.817Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -1517,11 +1517,11 @@
               "roleTitle": "Ủy viên ban phụ huynh"
             }
           },
-          "teacherUsername": "gvcn_1a5"
+          "teacherUsername": "gvcn1a5"
         }
       ],
       "students": [],
-      "updatedAt": 1791608967464
+      "updatedAt": 1791786552781
     },
     "gvcn_2a10": {
       "classes": [
@@ -14219,7 +14219,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791786550353
+      "updatedAt": 1791786552781
     },
     "gvcn1a1": {
       "classes": [
@@ -14416,6 +14416,55 @@
       ],
       "students": [],
       "updatedAt": 1791786545917
+    },
+    "gvcn1a5": {
+      "classes": [
+        {
+          "id": "class-1791591628525",
+          "name": "1A5 Chử Thị Nghĩa",
+          "color": "#3B82F6",
+          "grade": "Khối 1",
+          "avatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "branch": "Phân hiệu trung tâm",
+          "campus": "Trung tâm",
+          "slogan": "",
+          "isHomeroom": true,
+          "avatarScale": 1,
+          "teacherName": "Chử Thị Nghĩa",
+          "teacherRole": "homeroom",
+          "academicYear": "2026–2027",
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          },
+          "originalAvatar": "https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1",
+          "parentCommittee": {
+            "head": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Trưởng ban phụ huynh"
+            },
+            "deputy": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Phó ban phụ huynh"
+            },
+            "member1": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            },
+            "member2": {
+              "name": "",
+              "phone": "",
+              "roleTitle": "Ủy viên ban phụ huynh"
+            }
+          },
+          "teacherUsername": "gvcn1a5"
+        }
+      ],
+      "students": [],
+      "updatedAt": 1791786552781
     }
   },
   "auditLogs": [
@@ -14703,6 +14752,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791786548846
+    "lastGithubPushAt": 1791786552817
   }
 }
