@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-12T08:04:47.938Z",
+  "lastSync": "2026-10-12T08:04:51.322Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -3587,7 +3587,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791608967464
+      "updatedAt": 1791792290884
     },
     "gvcn_1a11": {
       "classes": [
@@ -7257,7 +7257,7 @@
           "slogan": "",
           "isHomeroom": true,
           "avatarScale": 1,
-          "teacherName": "Vũ Thị Hoa Lý",
+          "teacherName": "Nguyễn Thị Huệ",
           "teacherRole": "homeroom",
           "academicYear": "2026–2027",
           "avatarPosition": {
@@ -8246,7 +8246,7 @@
           "slogan": "",
           "isHomeroom": true,
           "avatarScale": 1,
-          "teacherName": "Hồng Thị Hoa",
+          "teacherName": "Nguyễn Thị Huệ",
           "teacherRole": "homeroom",
           "academicYear": "2026–2027",
           "avatarPosition": {
@@ -8461,7 +8461,7 @@
           "slogan": "",
           "isHomeroom": true,
           "avatarScale": 1,
-          "teacherName": "Nguyễn Thị Hoa",
+          "teacherName": "Nguyễn Thị Huệ",
           "teacherRole": "homeroom",
           "academicYear": "2026–2027",
           "avatarPosition": {
@@ -14415,7 +14415,7 @@
         }
       ],
       "teacherProfile": {
-        "name": "Vũ Thị Hoa Lý",
+        "name": "Nguyễn Thị Huệ",
         "birthDate": "",
         "role": "QUẢN TRỊ NHÀ TRƯỜNG",
         "teachingSubject": "Quản trị & Giám sát",
@@ -14790,7 +14790,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791792287938
+      "updatedAt": 1791792291322
     },
     "gvcn1a1": {
       "classes": [
@@ -15309,6 +15309,15 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791792290792-45uiu3",
+      "timestamp": 1791792290792,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Huệ",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A5 Đào Thị Hảo"
+    },
     {
       "id": "log-1791792286981-e2qyku",
       "timestamp": 1791792286981,
