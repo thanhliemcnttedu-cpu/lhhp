@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-12T09:01:19.686Z",
+  "lastSync": "2026-10-12T09:01:23.391Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -4184,7 +4184,7 @@
         }
       ],
       "students": [],
-      "updatedAt": 1791792287027
+      "updatedAt": 1791795683294
     },
     "gvcn_2a7": {
       "classes": [
@@ -14415,7 +14415,7 @@
         }
       ],
       "teacherProfile": {
-        "name": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+        "name": "Vũ Thị Hoa Lý",
         "birthDate": "",
         "role": "QUẢN TRỊ NHÀ TRƯỜNG",
         "teachingSubject": "Quản trị & Giám sát",
@@ -14425,7 +14425,7 @@
         "zalo": "",
         "facebook": "",
         "socialLink": "",
-        "academicYear": ""
+        "academicYear": "2026–2027"
       },
       "quizBank": [
         {
@@ -14790,7 +14790,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791795679685
+      "updatedAt": 1791795683386
     },
     "gvcn1a1": {
       "classes": [
@@ -15309,6 +15309,15 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791795683248-5fcmlc",
+      "timestamp": 1791795683248,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Hoa Lý",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A4 Nguyễn Thị Huệ"
+    },
     {
       "id": "log-1791795678845-hcs1k4",
       "timestamp": 1791795678845,
