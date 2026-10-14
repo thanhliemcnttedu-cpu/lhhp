@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-14T16:08:42.411Z",
+  "lastSync": "2026-10-14T16:09:13.558Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -3574,12 +3574,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 16,
           "classId": "class-1791590199229",
           "birthDate": "13/07/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 16
           },
           "avatarPosition": {
             "x": 0,
@@ -3839,7 +3839,7 @@
           }
         }
       ],
-      "updatedAt": 1791994122410
+      "updatedAt": 1791994153557
     },
     "gvcn_1a6": {
       "classes": [
@@ -7368,6 +7368,27 @@
             "x": 0,
             "y": 0
           }
+        },
+        {
+          "id": "hs-1791590429899-17-9ypb",
+          "stt": 18,
+          "name": "Phùng Thị Thảo Nguyên",
+          "role": "",
+          "group": "Tổ 3",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
+          "gender": "Nữ",
+          "points": 16,
+          "classId": "class-1791590199229",
+          "birthDate": "13/07/2020",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 16
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
         }
       ],
       "subjectClasses": [],
@@ -7375,7 +7396,7 @@
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       },
-      "updatedAt": 1791994122410
+      "updatedAt": 1791994153557
     },
     "quantriths1tu": {
       "classes": [
@@ -10652,12 +10673,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 16,
           "classId": "class-1791590199229",
           "birthDate": "13/07/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 16
           },
           "avatarPosition": {
             "x": 0,
@@ -13127,7 +13148,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791994122410
+      "updatedAt": 1791994153557
     },
     "gvcn1a1": {
       "classes": [
@@ -13543,12 +13564,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-47.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 16,
           "classId": "class-1791590199229",
           "birthDate": "13/07/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 16
           },
           "avatarPosition": {
             "x": 0,
@@ -13808,7 +13829,7 @@
           }
         }
       ],
-      "updatedAt": 1791994122410,
+      "updatedAt": 1791994153557,
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       }
@@ -15455,6 +15476,24 @@
   },
   "auditLogs": [
     {
+      "id": "log-1791994149651-ripyyb",
+      "timestamp": 1791994149651,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Tặng 1 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994146015-yjau50",
+      "timestamp": 1791994146015,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 1 xu cho 1 học sinh (Lý do: Khen thưởng +1 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
       "id": "log-1791994119453-ry453v",
       "timestamp": 1791994119453,
       "username": "bgh_thths1tu",
@@ -16692,6 +16731,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791994061489
+    "lastGithubPushAt": 1791994129297
   }
 }
