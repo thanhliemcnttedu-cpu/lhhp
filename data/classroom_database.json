@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-14T16:07:35.377Z",
+  "lastSync": "2026-10-14T16:08:39.454Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -45,7 +45,8 @@
       "createdAt": 1791779023757,
       "status": "active",
       "assignedClassName": "4A1",
-      "subjectName": "Tin học"
+      "subjectName": "Tin học",
+      "lastLoginAt": 1791994098999
     },
     {
       "id": "user-1791782991879-hm9e7",
@@ -3300,12 +3301,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
-          "points": 10,
+          "points": 15,
           "classId": "class-1791590199229",
           "birthDate": "29/06/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 15
           },
           "avatarPosition": {
             "x": 0,
@@ -3838,7 +3839,7 @@
           }
         }
       ],
-      "updatedAt": 1791994055376
+      "updatedAt": 1791994118330
     },
     "gvcn_1a6": {
       "classes": [
@@ -7346,13 +7347,35 @@
     },
     "bgh_thths1tu": {
       "classes": [],
-      "students": [],
+      "students": [
+        {
+          "id": "hs-1791590429899-4-u7eg",
+          "stt": 5,
+          "name": "Trần Gia Bảo",
+          "role": "",
+          "group": "Tổ 1",
+          "roles": [],
+          "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
+          "gender": "Nam",
+          "points": 15,
+          "classId": "class-1791590199229",
+          "birthDate": "29/06/2020",
+          "avatarScale": 1,
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 15
+          },
+          "avatarPosition": {
+            "x": 0,
+            "y": 0
+          }
+        }
+      ],
       "subjectClasses": [],
       "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN",
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       },
-      "updatedAt": 1791780423657
+      "updatedAt": 1791994118330
     },
     "quantriths1tu": {
       "classes": [
@@ -10356,12 +10379,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
-          "points": 10,
+          "points": 15,
           "classId": "class-1791590199229",
           "birthDate": "29/06/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 15
           },
           "avatarPosition": {
             "x": 0,
@@ -13104,7 +13127,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791994055376
+      "updatedAt": 1791994118330
     },
     "gvcn1a1": {
       "classes": [
@@ -13247,12 +13270,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
-          "points": 10,
+          "points": 15,
           "classId": "class-1791590199229",
           "birthDate": "29/06/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 15
           },
           "avatarPosition": {
             "x": 0,
@@ -13785,7 +13808,7 @@
           }
         }
       ],
-      "updatedAt": 1791994055376,
+      "updatedAt": 1791994118330,
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       }
@@ -15432,6 +15455,33 @@
   },
   "auditLogs": [
     {
+      "id": "log-1791994119453-ry453v",
+      "timestamp": 1791994119453,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 1 xu cho 1 học sinh (Lý do: Khen thưởng +1 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994116058-wtlld3",
+      "timestamp": 1791994116058,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Tặng 1 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994099079-3xj8pu",
+      "timestamp": 1791994099079,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
       "id": "log-1791994053668-410bag",
       "timestamp": 1791994053668,
       "username": "quantriths1tu",
@@ -16642,6 +16692,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791986986362
+    "lastGithubPushAt": 1791994061489
   }
 }
