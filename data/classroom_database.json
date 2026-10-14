@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-14T16:16:23.518Z",
+  "lastSync": "2026-10-14T16:17:45.233Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -3240,12 +3240,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 25,
           "classId": "class-1791590199229",
           "birthDate": "10/09/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 25
           },
           "avatarPosition": {
             "x": 0,
@@ -3841,7 +3841,7 @@
           }
         }
       ],
-      "updatedAt": 1791994363702
+      "updatedAt": 1791994665232
     },
     "gvcn_1a6": {
       "classes": [
@@ -10341,12 +10341,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 25,
           "classId": "class-1791590199229",
           "birthDate": "10/09/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 25
           },
           "avatarPosition": {
             "x": 0,
@@ -13152,7 +13152,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791994363702
+      "updatedAt": 1791994665232
     },
     "gvcn1a1": {
       "classes": [
@@ -14662,7 +14662,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791994579853
+      "updatedAt": 1791994665232
     },
     "gvcn1a2": {
       "classes": [
@@ -17606,6 +17606,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791994583517
+    "lastGithubPushAt": 1791994590499
   }
 }
