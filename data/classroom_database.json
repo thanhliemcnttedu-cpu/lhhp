@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-14T16:07:30.189Z",
+  "lastSync": "2026-10-14T16:07:35.377Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -3216,12 +3216,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 11,
           "classId": "class-1791590199229",
           "birthDate": "11/03/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 11
           },
           "avatarPosition": {
             "x": 0,
@@ -3838,7 +3838,7 @@
           }
         }
       ],
-      "updatedAt": 1791994050187
+      "updatedAt": 1791994055376
     },
     "gvcn_1a6": {
       "classes": [
@@ -10272,12 +10272,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 11,
           "classId": "class-1791590199229",
           "birthDate": "11/03/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 11
           },
           "avatarPosition": {
             "x": 0,
@@ -13104,7 +13104,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791994050187
+      "updatedAt": 1791994055376
     },
     "gvcn1a1": {
       "classes": [
@@ -13163,12 +13163,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 11,
           "classId": "class-1791590199229",
           "birthDate": "11/03/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 11
           },
           "avatarPosition": {
             "x": 0,
@@ -13785,7 +13785,7 @@
           }
         }
       ],
-      "updatedAt": 1791994050187,
+      "updatedAt": 1791994055376,
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       }
@@ -15431,6 +15431,15 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1791994053668-410bag",
+      "timestamp": 1791994053668,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 1 xu cho 1 học sinh (Lý do: Khen thưởng +1 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
     {
       "id": "log-1791994047777-6d2nhe",
       "timestamp": 1791994047777,
