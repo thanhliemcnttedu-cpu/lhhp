@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-14T14:09:40.957Z",
+  "lastSync": "2026-10-14T16:07:30.189Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -3384,12 +3384,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-32.jpg",
           "gender": "Nam",
-          "points": 10,
+          "points": 15,
           "classId": "class-1791590199229",
           "birthDate": "24/11/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 15
           },
           "avatarPosition": {
             "x": 0,
@@ -3838,7 +3838,7 @@
           }
         }
       ],
-      "updatedAt": 1791986583804
+      "updatedAt": 1791994050187
     },
     "gvcn_1a6": {
       "classes": [
@@ -10440,12 +10440,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-32.jpg",
           "gender": "Nam",
-          "points": 10,
+          "points": 15,
           "classId": "class-1791590199229",
           "birthDate": "24/11/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 15
           },
           "avatarPosition": {
             "x": 0,
@@ -13104,7 +13104,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791986980957
+      "updatedAt": 1791994050187
     },
     "gvcn1a1": {
       "classes": [
@@ -13331,12 +13331,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-32.jpg",
           "gender": "Nam",
-          "points": 10,
+          "points": 15,
           "classId": "class-1791590199229",
           "birthDate": "24/11/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 15
           },
           "avatarPosition": {
             "x": 0,
@@ -13785,7 +13785,7 @@
           }
         }
       ],
-      "updatedAt": 1791986583804,
+      "updatedAt": 1791994050187,
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       }
@@ -15432,6 +15432,15 @@
   },
   "auditLogs": [
     {
+      "id": "log-1791994047777-6d2nhe",
+      "timestamp": 1791994047777,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Tặng 1 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
       "id": "log-1791983971438-bctm9e",
       "timestamp": 1791983971438,
       "username": "quantriths1tu",
@@ -16624,6 +16633,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791986927447
+    "lastGithubPushAt": 1791986986362
   }
 }
