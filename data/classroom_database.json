@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-14T16:08:39.454Z",
+  "lastSync": "2026-10-14T16:08:42.411Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -3301,12 +3301,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
-          "points": 15,
+          "points": 11,
           "classId": "class-1791590199229",
           "birthDate": "29/06/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 15
+            "GHI CHUNG / NỀ NẾP": 11
           },
           "avatarPosition": {
             "x": 0,
@@ -3839,7 +3839,7 @@
           }
         }
       ],
-      "updatedAt": 1791994118330
+      "updatedAt": 1791994122410
     },
     "gvcn_1a6": {
       "classes": [
@@ -7357,12 +7357,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
-          "points": 15,
+          "points": 11,
           "classId": "class-1791590199229",
           "birthDate": "29/06/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 15
+            "GHI CHUNG / NỀ NẾP": 11
           },
           "avatarPosition": {
             "x": 0,
@@ -7375,7 +7375,7 @@
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       },
-      "updatedAt": 1791994118330
+      "updatedAt": 1791994122410
     },
     "quantriths1tu": {
       "classes": [
@@ -10379,12 +10379,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
-          "points": 15,
+          "points": 11,
           "classId": "class-1791590199229",
           "birthDate": "29/06/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 15
+            "GHI CHUNG / NỀ NẾP": 11
           },
           "avatarPosition": {
             "x": 0,
@@ -13127,7 +13127,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791994118330
+      "updatedAt": 1791994122410
     },
     "gvcn1a1": {
       "classes": [
@@ -13270,12 +13270,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-19.jpg",
           "gender": "Nam",
-          "points": 15,
+          "points": 11,
           "classId": "class-1791590199229",
           "birthDate": "29/06/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 15
+            "GHI CHUNG / NỀ NẾP": 11
           },
           "avatarPosition": {
             "x": 0,
@@ -13808,7 +13808,7 @@
           }
         }
       ],
-      "updatedAt": 1791994118330,
+      "updatedAt": 1791994122410,
       "teacherProfile": {
         "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN"
       }
