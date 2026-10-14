@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-14T16:16:20.116Z",
+  "lastSync": "2026-10-14T16:16:23.518Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -13235,12 +13235,12 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-50.jpg",
           "gender": "Nữ",
-          "points": 10,
+          "points": 25,
           "classId": "class-1791590199229",
           "birthDate": "10/09/2020",
           "avatarScale": 1,
           "subjectPoints": {
-            "GHI CHUNG / NỀ NẾP": 10
+            "GHI CHUNG / NỀ NẾP": 25
           },
           "avatarPosition": {
             "x": 0,
@@ -14008,7 +14008,18 @@
           "category": "Học tập"
         }
       ],
-      "transactions": [],
+      "transactions": [
+        {
+          "id": "tx-1791994457581-hs-1791590429899-1-wtra",
+          "studentId": "hs-1791590429899-1-wtra",
+          "studentName": "Lò Phương Tuệ Anh",
+          "classId": "class-1791590199229",
+          "amount": 15,
+          "reason": "Đạt điểm 10 bài kiểm tra",
+          "subjectName": "GHI CHUNG / NỀ NẾP",
+          "timestamp": 1791994457581
+        }
+      ],
       "rewards": [],
       "redemptions": [],
       "seatingColumns": 4,
@@ -14651,7 +14662,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1791994572031
+      "updatedAt": 1791994579853
     },
     "gvcn1a2": {
       "classes": [
@@ -17595,6 +17606,6 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791994580116
+    "lastGithubPushAt": 1791994583517
   }
 }
