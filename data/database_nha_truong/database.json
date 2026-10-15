@@ -1,7 +1,7 @@
 {
   "partition": "nha_truong",
   "title": "Cơ Sở Dữ Liệu Tổ Chức Nhà Trường (TIỂU HỌC SỐ 1 TÂN UYÊN & Các Trường)",
-  "lastSync": "2026-10-15T04:40:23.297Z",
+  "lastSync": "2026-10-15T05:23:36.825Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -4866,11 +4866,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 3,
           "classId": "class-1791608320266",
           "birthDate": "12/10/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "Toán học": 3
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -5046,11 +5048,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 2,
           "classId": "class-1791608320266",
           "birthDate": "16/06/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 2
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -6965,7 +6969,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792037307459
+      "updatedAt": 1792040996117
     },
     "gvcn_1a1": {
       "classes": [
@@ -8971,11 +8975,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 3,
           "classId": "class-1791608320266",
           "birthDate": "12/10/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "Toán học": 3
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -9142,11 +9148,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 2,
           "classId": "class-1791608320266",
           "birthDate": "16/06/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 2
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -10242,7 +10250,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792038981514
+      "updatedAt": 1792041277927
     },
     "gvcn_1a3": {
       "classes": [
@@ -11649,7 +11657,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792039223285
+      "updatedAt": 1792041292383
     },
     "gvcn_1a4": {
       "classes": [
@@ -16184,11 +16192,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 3,
           "classId": "class-1791608320266",
           "birthDate": "12/10/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "Toán học": 3
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -16364,11 +16374,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 2,
           "classId": "class-1791608320266",
           "birthDate": "16/06/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 2
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -18283,7 +18295,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792037282599
+      "updatedAt": 1792040996117
     },
     "gvcn_4a1": {
       "classes": [

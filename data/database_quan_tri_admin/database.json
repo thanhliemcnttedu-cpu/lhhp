@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-15T04:40:23.297Z",
+  "lastSync": "2026-10-15T05:23:36.825Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -27,9 +27,36 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791994678605
+    "lastGithubPushAt": 1792041816825
   },
   "auditLogs": [
+    {
+      "id": "log-1792041678656-un026f",
+      "timestamp": 1792041678656,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1792040975981-rgrraz",
+      "timestamp": 1792040975982,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 3 xu cho 1 học sinh (Lý do: Trả lời đúng câu nhiều đáp án môn Toán học, Môn: Toán học)"
+    },
+    {
+      "id": "log-1792040842809-eml3by",
+      "timestamp": 1792040842810,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 2 xu cho 1 học sinh (Lý do: Thưởng trò chơi Tàu Vũ Trụ Khám Phá, Môn: GHI CHUNG / NỀ NẾP)"
+    },
     {
       "id": "log-1792033494039-msfewd",
       "timestamp": 1792033494039,
@@ -1541,6 +1568,6 @@
   "masterSummary": {
     "totalUsers": 78,
     "totalSchools": 1,
-    "totalClassesConfigured": 73
+    "totalClassesConfigured": 69
   }
 }
