@@ -6,11 +6,44 @@
 let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext {
-  throw new Error('Audio disabled');
+  if (typeof window === 'undefined') {
+    throw new Error('AudioContext is only available in browser environment');
+  }
+
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) {
+      throw new Error('Web Audio API is not supported in this browser');
+    }
+    audioCtx = new AudioContextClass();
+  }
+
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+
+  return audioCtx;
+}
+
+// Auto-unlock AudioContext on first user interaction to comply with browser Autoplay Policy
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    try {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+    } catch (_) {}
+    window.removeEventListener('pointerdown', unlockAudio);
+    window.removeEventListener('keydown', unlockAudio);
+    window.removeEventListener('click', unlockAudio);
+  };
+  window.addEventListener('pointerdown', unlockAudio, { passive: true, once: true });
+  window.addEventListener('keydown', unlockAudio, { passive: true, once: true });
+  window.addEventListener('click', unlockAudio, { passive: true, once: true });
 }
 
 /**
- * Play a cheery coin / reward sound
+ * Play a cheery coin / reward sound (LOUD & ENERGETIC)
  */
 export function playCoinSound() {
   try {
@@ -28,8 +61,8 @@ export function playCoinSound() {
     osc2.type = 'triangle';
     osc2.frequency.setValueAtTime(1975.53, now + 0.08); // B6
 
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    gain.gain.setValueAtTime(0.42, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
 
     osc1.connect(gain);
     osc2.connect(gain);
@@ -37,15 +70,15 @@ export function playCoinSound() {
 
     osc1.start(now);
     osc2.start(now + 0.08);
-    osc1.stop(now + 0.4);
-    osc2.stop(now + 0.4);
+    osc1.stop(now + 0.45);
+    osc2.stop(now + 0.45);
   } catch (e) {
     console.warn('Audio playback error', e);
   }
 }
 
 /**
- * Play a gentle deduction / warning sound
+ * Play a gentle deduction / warning sound (LOUD)
  */
 export function playDeductSound() {
   try {
@@ -55,78 +88,79 @@ export function playDeductSound() {
     const gain = ctx.createGain();
 
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(180, now + 0.25);
+    osc.frequency.setValueAtTime(360, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.3);
 
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.25);
+    osc.stop(now + 0.3);
   } catch (e) {
     console.warn(e);
   }
 }
 
 /**
- * Play tick sound for wheel or film reel
+ * Play tick sound for wheel or film reel (LOUD & CRISP)
  */
-export function playTickSound(frequency = 600) {
+export function playTickSound(frequency = 700) {
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = 'sine';
+    osc.type = 'triangle';
     osc.frequency.setValueAtTime(frequency, now);
 
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    gain.gain.setValueAtTime(0.28, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.05);
+    osc.stop(now + 0.06);
   } catch (e) {
     console.warn(e);
   }
 }
 
 /**
- * Play a triumphant fanfare / victory chime
+ * Play a triumphant fanfare / victory chime (LOUD, MAJESTIC & JOYFUL)
  */
 export function playFanfareSound() {
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
 
     notes.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, now + i * 0.1);
+      osc.frequency.setValueAtTime(freq, now + i * 0.09);
 
-      const noteDuration = i === notes.length - 1 ? 0.6 : 0.15;
-      gain.gain.setValueAtTime(0.2, now + i * 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + noteDuration);
+      const noteDuration = i === notes.length - 1 ? 0.8 : 0.18;
+      gain.gain.setValueAtTime(0.45, now + i * 0.09);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.09 + noteDuration);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      osc.start(now + i * 0.1);
-      osc.stop(now + i * 0.1 + noteDuration);
+      osc.start(now + i * 0.09);
+      osc.stop(now + i * 0.09 + noteDuration);
     });
   } catch (e) {
     console.warn(e);
   }
 }
+
 
 /**
  * 10-second warning tick for timer
@@ -759,24 +793,24 @@ export function playWhistleSound() {
 }
 
 /**
- * Realistic Applause / Clapping Sound with cheer for "TUYỆT VỜI"
+ * Realistic Applause / Clapping Sound with cheer (LOUD & ENERGETIC)
  */
 export function playApplauseSound() {
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
-    const duration = 2.5;
+    const duration = 2.8;
 
     // Buffer of white noise for clapping bursts
-    const bufferSize = ctx.sampleRate * 0.05; // 50ms per clap
+    const bufferSize = Math.floor(ctx.sampleRate * 0.05); // 50ms per clap
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
       data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
     }
 
-    // Play multiple random clapping sounds
-    const clapCount = 38;
+    // Play multiple random clapping sounds (rich crowd effect)
+    const clapCount = 52;
     for (let i = 0; i < clapCount; i++) {
       const startTime = now + Math.random() * duration;
       const noise = ctx.createBufferSource();
@@ -785,12 +819,12 @@ export function playApplauseSound() {
       // Bandpass filter to shape clap frequency
       const filter = ctx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(900 + Math.random() * 800, startTime);
-      filter.Q.setValueAtTime(2.5, startTime);
+      filter.frequency.setValueAtTime(850 + Math.random() * 950, startTime);
+      filter.Q.setValueAtTime(2.2, startTime);
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.12 + Math.random() * 0.12, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.06);
+      gain.gain.setValueAtTime(0.25 + Math.random() * 0.2, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.07);
 
       noise.connect(filter);
       filter.connect(gain);
@@ -799,15 +833,15 @@ export function playApplauseSound() {
       noise.start(startTime);
     }
 
-    // Add a warm chord swell under the applause
-    const freqs = [523.25, 659.25, 783.99, 1046.50]; // C Major
+    // Add a triumphant chord swell under the applause
+    const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C Major
     freqs.forEach(freq => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
+      osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, now);
-      gain.gain.setValueAtTime(0.05, now);
-      gain.gain.linearRampToValueAtTime(0.12, now + 0.5);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.4);
       gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -819,5 +853,201 @@ export function playApplauseSound() {
   }
 }
 
+/**
+ * 🌟 Energetic "YES!" Victory Sound
+ * Phát âm thanh "Yes!" hào hứng qua Web Speech Synthesis + hợp âm Synth vui tươi
+ */
+export function playYesSound() {
+  try {
+    // 1. Synth chime nảy tươi vui
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const notes = [659.25, 783.99, 1046.50, 1318.51]; // E5, G5, C6, E6
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+      gain.gain.setValueAtTime(0.35, now + idx * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.06);
+      osc.stop(now + idx * 0.06 + 0.35);
+    });
+
+    // 2. Giọng nói hô vang "Yes!" / "Tuyệt vời!" qua Web Speech API
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Dừng câu trước nếu có
+      const utterance = new SpeechSynthesisUtterance('Yes!');
+      utterance.rate = 1.15;
+      utterance.pitch = 1.35;
+      utterance.volume = 1.0;
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch (e) {
+    console.warn('playYesSound error:', e);
+  }
+}
+
+/**
+ * ❌ Funny Wrong Answer Buzzer Sound ("Uh-oh!" slide down)
+ */
+export function playWrongBuzzerSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    // Two-tone descending slide: 380Hz -> 260Hz -> 160Hz
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(340, now);
+    osc.frequency.setValueAtTime(260, now + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.45);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.setValueAtTime(0.35, now + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.45);
+  } catch (e) {
+    console.warn('playWrongBuzzerSound error:', e);
+  }
+}
+
+/**
+ * 🌸 Hiệu ứng Tung Hoa Rơi Lả Tả & Pháo Hoa Rực Rỡ (Canvas Confetti)
+ */
+export function triggerFlowerConfetti() {
+  if (typeof window === 'undefined') return;
+
+  import('canvas-confetti').then(({ default: confetti }) => {
+    // Đợt 1: Bắn cánh hoa pastel rực rỡ từ 2 góc dưới màn hình
+    const colors = ['#f472b6', '#fb7185', '#fde047', '#38bdf8', '#c084fc', '#4ade80', '#fb923c'];
+
+    confetti({
+      particleCount: 55,
+      angle: 60,
+      spread: 65,
+      origin: { x: 0, y: 0.8 },
+      colors,
+      shapes: ['circle', 'square'],
+      scalar: 1.2
+    });
+
+    confetti({
+      particleCount: 55,
+      angle: 120,
+      spread: 65,
+      origin: { x: 1, y: 0.8 },
+      colors,
+      shapes: ['circle', 'square'],
+      scalar: 1.2
+    });
+
+    // Đợt 2: Tung pháo hoa kim tuyến giữa màn hình
+    setTimeout(() => {
+      confetti({
+        particleCount: 75,
+        spread: 100,
+        origin: { y: 0.5 },
+        colors,
+        gravity: 0.7,
+        ticks: 300,
+        scalar: 1.3
+      });
+    }, 180);
+  }).catch(() => {});
+}
+
+/**
+ * 🎉 Tổ hợp Hiệu Ứng Trả Lời ĐÚNG: Tung hoa + Vỗ tay + Hô "Yes!" + Kèn chiến thắng
+ */
+export function triggerCorrectCelebration() {
+  playCoinSound();
+  playFanfareSound();
+  playApplauseSound();
+  playYesSound();
+  triggerFlowerConfetti();
+}
+
+/**
+ * 💔 Hiệu ứng Trả Lời SAI: Âm thanh Uh-oh + Rung nhẹ thiết bị
+ */
+export function triggerWrongFeedback() {
+  playWrongBuzzerSound();
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try {
+      navigator.vibrate([80, 50, 80]);
+    } catch (_) {}
+  }
+}
+
 export const playPointClink = playCoinSound;
 export const playFanfare = playFanfareSound;
+
+/**
+ * 🚀 Âm thanh Tên lửa phóng lên vũ trụ (Rocket Thruster Whoosh)
+ */
+export function playRocketLaunchSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    // 1. Synth sweep up (110Hz -> 880Hz)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 1.2);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.linearRampToValueAtTime(0.45, now + 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 1.3);
+
+    // 2. White noise booster rush
+    const bufferSize = Math.floor(ctx.sampleRate * 1.2);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.exponentialRampToValueAtTime(3200, now + 1.0);
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.3, now);
+    noiseGain.gain.linearRampToValueAtTime(0.4, now + 0.5);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+    noise.connect(filter);
+    filter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    noise.start(now);
+    noise.stop(now + 1.2);
+  } catch (e) {
+    console.warn('playRocketLaunchSound error:', e);
+  }
+}
+

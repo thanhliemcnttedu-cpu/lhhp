@@ -7,7 +7,13 @@ import {
   BookOpen, ChevronRight, Clock, ShieldCheck, Eye, EyeOff, Edit3,
   RefreshCw, Maximize2, X, CheckSquare
 } from 'lucide-react';
-import { playTickSound, playFanfareSound, playCoinSound } from '../../utils/audio';
+import { 
+  playTickSound, 
+  playFanfareSound, 
+  playCoinSound, 
+  triggerCorrectCelebration, 
+  triggerWrongFeedback 
+} from '../../utils/audio';
 import confetti from 'canvas-confetti';
 import { QuestionBankModal } from '../modals/QuestionBankModal';
 import { loadQuizBank, saveQuizBank } from '../../utils/quizParser';
@@ -284,8 +290,7 @@ export const FilmReelView: React.FC = () => {
     setIsAnswerCorrect(correct);
 
     if (correct) {
-      playFanfareSound();
-      confetti({ particleCount: 65, spread: 75 });
+      triggerCorrectCelebration();
       const ptsToAward = customOralPoints || currentQuestion.pointsReward || 2;
       handleAward(
         ptsToAward, 
@@ -293,7 +298,7 @@ export const FilmReelView: React.FC = () => {
       );
     } else {
       setShowTeacherKey(true);
-      playTickSound(260);
+      triggerWrongFeedback();
     }
   };
 
@@ -308,13 +313,12 @@ export const FilmReelView: React.FC = () => {
 
     setIsAnswerCorrect(isCorrect);
     if (isCorrect) {
-      playFanfareSound();
-      confetti({ particleCount: 70, spread: 80 });
+      triggerCorrectCelebration();
       const pts = customOralPoints || currentQuestion.pointsReward || 3;
       handleAward(pts, `Trả lời đúng câu nhiều đáp án môn ${currentQuestion.subject || 'Tổng hợp'}`);
     } else {
       setShowTeacherKey(true);
-      playTickSound(260);
+      triggerWrongFeedback();
     }
   };
 
@@ -326,13 +330,12 @@ export const FilmReelView: React.FC = () => {
     setIsAnswerCorrect(correct);
 
     if (correct) {
-      playFanfareSound();
-      confetti({ particleCount: 65, spread: 75 });
+      triggerCorrectCelebration();
       const pts = customOralPoints || currentQuestion.pointsReward || 2;
       handleAward(pts, `Trả lời đúng câu Đúng/Sai môn ${currentQuestion.subject || 'Tổng hợp'}`);
     } else {
       setShowTeacherKey(true);
-      playTickSound(260);
+      triggerWrongFeedback();
     }
   };
 
@@ -352,13 +355,12 @@ export const FilmReelView: React.FC = () => {
 
     setIsAnswerCorrect(allCorrect);
     if (allCorrect) {
-      playFanfareSound();
-      confetti({ particleCount: 75, spread: 85 });
+      triggerCorrectCelebration();
       const pts = customOralPoints || currentQuestion.pointsReward || 3;
       handleAward(pts, `Điền đúng chỗ trống môn ${currentQuestion.subject || 'Tổng hợp'}`);
     } else {
       setShowTeacherKey(true);
-      playTickSound(260);
+      triggerWrongFeedback();
     }
   };
 
@@ -371,13 +373,12 @@ export const FilmReelView: React.FC = () => {
 
     setIsAnswerCorrect(isCorrect);
     if (isCorrect) {
-      playFanfareSound();
-      confetti({ particleCount: 80, spread: 85 });
+      triggerCorrectCelebration();
       const pts = customOralPoints || currentQuestion.pointsReward || 4;
       handleAward(pts, `Sắp xếp đúng thứ tự môn ${currentQuestion.subject || 'Tổng hợp'}`);
     } else {
       setShowTeacherKey(true);
-      playTickSound(260);
+      triggerWrongFeedback();
     }
   };
 
@@ -396,13 +397,12 @@ export const FilmReelView: React.FC = () => {
 
     setIsAnswerCorrect(isCorrect);
     if (isCorrect) {
-      playFanfareSound();
-      confetti({ particleCount: 80, spread: 85 });
+      triggerCorrectCelebration();
       const pts = customOralPoints || currentQuestion.pointsReward || 4;
       handleAward(pts, `Nối đúng cột A-B môn ${currentQuestion.subject || 'Tổng hợp'}`);
     } else {
       setShowTeacherKey(true);
-      playTickSound(260);
+      triggerWrongFeedback();
     }
   };
 

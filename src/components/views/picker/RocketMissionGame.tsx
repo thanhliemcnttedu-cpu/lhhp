@@ -5,7 +5,14 @@ import {
   Rocket, Play, Award, RotateCcw, Sparkles, Check, 
   HelpCircle, ChevronRight, Volume2, ShieldCheck, Compass, Edit3
 } from 'lucide-react';
-import { playTickSound, playFanfareSound, playCoinSound } from '../../../utils/audio';
+import { 
+  playTickSound, 
+  playFanfareSound, 
+  playCoinSound, 
+  playRocketLaunchSound,
+  triggerCorrectCelebration, 
+  triggerWrongFeedback 
+} from '../../../utils/audio';
 import confetti from 'canvas-confetti';
 import { QuestionBankModal } from '../../modals/QuestionBankModal';
 import { loadQuizBank, saveQuizBank } from '../../../utils/quizParser';
@@ -137,8 +144,7 @@ export const RocketMissionGame: React.FC = () => {
         setCurrentPlanetIndex(finalWinnerIdx >= 0 ? finalWinnerIdx : 0);
         setWinner(targetWinner);
         setIsLaunching(false);
-        playFanfareSound();
-        confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
+        triggerCorrectCelebration();
 
         if (autoExclude) {
           setExcludedIds(prev => [...prev, targetWinner.id]);
@@ -170,11 +176,11 @@ export const RocketMissionGame: React.FC = () => {
     setIsAnswerCorrect(correct);
 
     if (correct) {
-      playFanfareSound();
-      confetti({ particleCount: 60, spread: 70 });
+      triggerCorrectCelebration();
       handleAwardCoins(currentQuestion.pointsReward || 2);
     } else {
       setShowTeacherKey(true);
+      triggerWrongFeedback();
     }
   };
 
@@ -285,12 +291,14 @@ export const RocketMissionGame: React.FC = () => {
           {/* Current Scanned Planet Banner */}
           <div className="mt-5 text-center">
             {activeList[currentPlanetIndex] && (
-              <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-slate-900/90 border-2 border-cyan-500/60 rounded-2xl shadow-xl backdrop-blur-md">
-                <img
-                  src={activeList[currentPlanetIndex].avatar}
-                  alt={activeList[currentPlanetIndex].name}
-                  className="w-10 h-10 rounded-xl object-cover border border-cyan-400"
-                />
+              <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-slate-900/90 border-2 border-cyan-500/60 rounded-full shadow-xl backdrop-blur-md">
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-300 shadow-md shadow-cyan-400/50 aspect-square shrink-0 ring-2 ring-cyan-500/30">
+                  <img
+                    src={activeList[currentPlanetIndex].avatar}
+                    alt={activeList[currentPlanetIndex].name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
                 <div className="text-left">
                   <div className="text-[10px] text-cyan-300 font-mono font-bold">HÀNH TINH #{activeList[currentPlanetIndex].stt}</div>
                   <div className="text-base font-black text-white">{activeList[currentPlanetIndex].name}</div>
@@ -319,12 +327,14 @@ export const RocketMissionGame: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4 text-center sm:text-left">
               <div className="relative shrink-0">
-                <img 
-                  src={winner.avatar} 
-                  alt={winner.name} 
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border-4 border-indigo-500 bg-white shadow-lg"
-                />
-                <span className="absolute -bottom-1 -right-1 px-2 py-0.5 bg-indigo-600 text-white font-black text-[10px] rounded-full">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-4 border-indigo-500 bg-white shadow-2xl ring-4 ring-amber-400/70 aspect-square">
+                  <img 
+                    src={winner.avatar} 
+                    alt={winner.name} 
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <span className="absolute -bottom-1 -right-1 px-2.5 py-0.5 bg-indigo-600 text-white font-black text-xs rounded-full shadow-md">
                   #{winner.stt}
                 </span>
               </div>

@@ -5,7 +5,14 @@ import {
   Sparkles, RotateCcw, Award, Users, 
   Trash2, Volume2, Trophy, Check, ArrowRight
 } from 'lucide-react';
-import { playTickSound, playFanfareSound, playCoinSound } from '../../utils/audio';
+import { 
+  playTickSound, 
+  playFanfareSound, 
+  playCoinSound,
+  playApplauseSound,
+  playYesSound,
+  triggerFlowerConfetti
+} from '../../utils/audio';
 import confetti from 'canvas-confetti';
 
 const SLICE_COLORS = [
@@ -178,11 +185,9 @@ export const LuckyWheelView: React.FC = () => {
         
         // Announce winner
         playFanfareSound();
-        confetti({
-          particleCount: 100,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
+        playApplauseSound();
+        playYesSound();
+        triggerFlowerConfetti();
 
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 

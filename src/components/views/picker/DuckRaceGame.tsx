@@ -6,7 +6,14 @@ import {
   Crown, Flag, Timer, Volume2, VolumeX, ChevronRight, Waves,
   Maximize2, X, Star, Heart
 } from 'lucide-react';
-import { playFanfareSound, playCoinSound, playTickSound } from '../../../utils/audio';
+import { 
+  playFanfareSound, 
+  playCoinSound, 
+  playTickSound, 
+  playApplauseSound, 
+  playYesSound, 
+  triggerFlowerConfetti 
+} from '../../../utils/audio';
 import confetti from 'canvas-confetti';
 
 // Duck color palettes with cute 3D glossy gradients
@@ -614,11 +621,14 @@ export const DuckRaceGame: React.FC = () => {
         setIsScreenShaking(true);
         setTimeout(() => setIsScreenShaking(false), 900);
 
-        // Sound effects
+        // Sound effects (LOUD, VIBRANT & JOYFUL)
         playWhistle();
         playFanfareSound();
+        playApplauseSound();
+        playYesSound();
         playCrowdCheer();
         playDuckQuack();
+        triggerFlowerConfetti();
 
         // Confetti cannon
         confetti({
@@ -1025,12 +1035,12 @@ export const DuckRaceGame: React.FC = () => {
                     </svg>
 
                     {/* Miniature Student Avatar attached to the duck - circular frame */}
-                    <div className={`absolute -top-1.5 -left-1.5 rounded-full overflow-hidden z-10 shrink-0
+                    <div className={`absolute -top-2 -left-2 rounded-full overflow-hidden z-10 shrink-0 aspect-square
                       ${isWinner
-                        ? 'w-8 h-8 border-2 border-amber-300 shadow-lg shadow-amber-400/60 ring-2 ring-white'
-                        : 'w-7 h-7 border-2 border-white shadow-md'
+                        ? 'w-9 h-9 border-2 border-amber-300 shadow-lg shadow-amber-400/80 ring-2 ring-white'
+                        : 'w-8 h-8 border-2 border-white shadow-md ring-1 ring-sky-300'
                       }`}>
-                      <img src={st.avatar} alt={st.name} className="w-full h-full object-cover" />
+                      <img src={st.avatar} alt={st.name} className="w-full h-full object-cover rounded-full" />
                     </div>
                   </div>
 

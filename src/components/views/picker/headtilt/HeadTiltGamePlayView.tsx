@@ -6,7 +6,15 @@ import {
   Check, X, AlertTriangle, Sparkles, Trophy, Camera, 
   HelpCircle, ChevronRight, Play, RefreshCw, Smile
 } from 'lucide-react';
-import { playCoinSound, playFanfareSound, playTickSound, playDeductSound } from '../../../../utils/audio';
+import { 
+  playCoinSound, 
+  playFanfareSound, 
+  playTickSound, 
+  playDeductSound,
+  triggerCorrectCelebration,
+  triggerWrongFeedback,
+  triggerFlowerConfetti
+} from '../../../../utils/audio';
 import confetti from 'canvas-confetti';
 import { HeadTiltReportModal } from './HeadTiltReportModal';
 
@@ -72,15 +80,16 @@ export const HeadTiltGamePlayView: React.FC<HeadTiltGamePlayViewProps> = ({
 
     if (isCorrect) {
       setCorrectCount(prev => prev + 1);
-      if (isAudioEnabled) playCoinSound();
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.6 }
-      });
+      if (isAudioEnabled) {
+        triggerCorrectCelebration();
+      } else {
+        triggerFlowerConfetti();
+      }
     } else {
       setWrongCount(prev => prev + 1);
-      if (isAudioEnabled) playTickSound();
+      if (isAudioEnabled) {
+        triggerWrongFeedback();
+      }
     }
 
     // Save record
@@ -123,14 +132,15 @@ export const HeadTiltGamePlayView: React.FC<HeadTiltGamePlayViewProps> = ({
     tiltDirection,
     tiltAngle,
     holdProgress,
+    engineType,
     startCamera,
     stopCamera,
     triggerManualTilt,
     resetTilt
   } = useHeadTracking({
     enabled: gameState === 'playing' && quiz.useCamera,
-    sensitivity: quiz.tiltSensitivity || 20,
-    holdDurationMs: 1000, // 1 giây dwell time theo chuẩn
+    sensitivity: quiz.tiltSensitivity || 18,
+    holdDurationMs: 900,
     onConfirmed: handleConfirmAnswer
   });
 
@@ -557,13 +567,21 @@ export const HeadTiltGamePlayView: React.FC<HeadTiltGamePlayViewProps> = ({
 
                   {/* Camera Fallback / Not Active Warning */}
                   {!isCameraActive && (
-                    <div className="absolute inset-0 bg-slate-800 flex flex-col items-center justify-center p-3 text-center">
+                    <div className="absolute inset-0 bg-slate-800 flex flex-col items-center justify-center p-3 text-center pointer-events-auto">
                       <Camera className="w-8 h-8 text-slate-400 mb-1" />
                       <span className="text-[10px] font-bold text-slate-300 leading-tight">
-                        {cameraError ? 'Không có camera' : 'Đang bật camera...'}
+                        {cameraError ? cameraError : 'Camera chưa bật'}
                       </span>
-                      <span className="text-[9px] text-amber-300 mt-1">
-                        (Bấm vào đáp án để chọn)
+                      <button
+                        type="button"
+                        onClick={() => startCamera()}
+                        className="mt-2 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-black shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-1"
+                      >
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Bật Camera ngay
+                      </button>
+                      <span className="text-[9px] text-amber-300 mt-1.5">
+                        (Hoặc bấm vào đáp án để chọn)
                       </span>
                     </div>
                   )}
@@ -573,7 +591,7 @@ export const HeadTiltGamePlayView: React.FC<HeadTiltGamePlayViewProps> = ({
                     <div 
                       className={`absolute inset-0 flex items-center justify-center animate-in zoom-in-75 ${
                         isCurrentCorrect 
-                          ? 'bg-emerald-500/90 text-white' 
+                           ? 'bg-emerald-500/90 text-white' 
                           : 'bg-rose-500/90 text-white'
                       }`}
                     >
@@ -589,10 +607,11 @@ export const HeadTiltGamePlayView: React.FC<HeadTiltGamePlayViewProps> = ({
 
               {/* Tilt degree & Hold progress ring */}
               {!isConfirmed && isCameraActive && (
-                <div className="mt-2.5 px-3.5 py-1 rounded-full bg-slate-900/90 border border-slate-700/80 backdrop-blur-md text-[11px] font-black tracking-wider flex items-center gap-1.5 text-white shadow-lg">
-                  {!isModelLoaded ? (
-                    <span className="text-amber-400 animate-pulse">⚡ Đang tải AI FaceMesh...</span>
-                  ) : tiltDirection === 'left' ? (
+                <div className="mt-2.5 px-3.5 py-1 rounded-full bg-slate-900/90 border border-slate-700/80 backdrop-blur-md text-[11px] font-black tracking-wider flex items-center gap-1.5 text-white shadow-lg pointer-events-auto">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/30 text-indigo-300 font-mono">
+                    {engineType === 'mediapipe' ? 'AI MediaPipe' : 'AI Native CV'}
+                  </span>
+                  {tiltDirection === 'left' ? (
                     <span className="text-cyan-400">👈 Nghiêng trái: {Math.abs(tiltAngle)}° (Giữ: {holdProgress}%)</span>
                   ) : tiltDirection === 'right' ? (
                     <span className="text-amber-400">👉 Nghiêng phải: {Math.abs(tiltAngle)}° (Giữ: {holdProgress}%)</span>
@@ -605,7 +624,7 @@ export const HeadTiltGamePlayView: React.FC<HeadTiltGamePlayViewProps> = ({
 
           </div>
 
-          {/* BOTTOM BAR: THOÁT & HƯỚNG DẪN DỰ PHÒNG */}
+          {/* BOTTOM BAR: THOÁT & ĐIỀU KHIỂN DỰ PHÒNG */}
           <div className="w-full flex items-center justify-between pt-2">
             <button
               type="button"
@@ -616,8 +635,28 @@ export const HeadTiltGamePlayView: React.FC<HeadTiltGamePlayViewProps> = ({
               THOÁT
             </button>
 
-            <div className="text-[11px] text-slate-400 font-medium">
-              💡 Không thấy camera? Hãy bấm trực tiếp vào đáp án A hoặc B trên màn hình!
+            {/* Quick Tilt Buttons for Teachers / Students */}
+            {!isConfirmed && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => triggerManualTilt('left')}
+                  className="px-3 py-1 bg-sky-500/30 hover:bg-sky-500/50 border border-sky-400/50 text-sky-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  👈 Nghiêng Trái (A)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => triggerManualTilt('right')}
+                  className="px-3 py-1 bg-orange-500/30 hover:bg-orange-500/50 border border-orange-400/50 text-orange-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  👉 Nghiêng Phải (B)
+                </button>
+              </div>
+            )}
+
+            <div className="text-[11px] text-slate-400 font-medium hidden sm:block">
+              💡 Nghiêng đầu giữ 1s • Hoặc bấm phím mũi tên ⬅️ ➡️
             </div>
           </div>
 

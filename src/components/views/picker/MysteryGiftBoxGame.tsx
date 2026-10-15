@@ -5,7 +5,13 @@ import {
   Gift, Play, Award, RotateCcw, Sparkles, Check, 
   HelpCircle, ChevronRight, Volume2, ShieldCheck, Heart, Edit3
 } from 'lucide-react';
-import { playTickSound, playFanfareSound, playCoinSound } from '../../../utils/audio';
+import { 
+  playTickSound, 
+  playFanfareSound, 
+  playCoinSound,
+  triggerCorrectCelebration,
+  triggerWrongFeedback
+} from '../../../utils/audio';
 import confetti from 'canvas-confetti';
 import { QuestionBankModal } from '../../modals/QuestionBankModal';
 import { loadQuizBank, saveQuizBank } from '../../../utils/quizParser';
@@ -141,10 +147,10 @@ export const MysteryGiftBoxGame: React.FC = () => {
     setIsAnswerCorrect(correct);
 
     if (correct) {
-      playFanfareSound();
-      confetti({ particleCount: 60, spread: 70 });
+      triggerCorrectCelebration();
       handleAwardCoins(currentQuestion.pointsReward || 2);
     } else {
+      triggerWrongFeedback();
       setShowTeacherKey(true);
     }
   };
@@ -316,7 +322,7 @@ export const MysteryGiftBoxGame: React.FC = () => {
                 <img 
                   src={winner.avatar} 
                   alt={winner.name} 
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border-4 border-rose-400 bg-white shadow-lg"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full aspect-square object-cover border-4 border-rose-400 bg-white shadow-lg"
                 />
                 <span className="absolute -bottom-1 -right-1 px-2 py-0.5 bg-rose-600 text-white font-black text-[10px] rounded-full">
                   #{winner.stt}
