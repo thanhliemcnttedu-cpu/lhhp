@@ -15,10 +15,10 @@ export const CLIENT_ID = 'client_' + Date.now().toString(36) + '_' + Math.random
 
 // Supabase Cloud Configuration with fallback for direct client access
 const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) 
-  || 'https://cscsruulmkcenhgrhtrr.supabase.co';
+  || 'https://ldqcbxoybriraykbnxsu.supabase.co';
 
 const SUPABASE_ANON_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY)
-  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzY3NydXVsbWtjZW5oZ3JodHJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MjE4MDUsImV4cCI6MjEwNzA5NzgwNX0.WCgcmJA8JvEYF6D40oudW8inVVYQH9jJPryNBL90u78';
+  || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkcWNieG95YnJpcmF5a2JueHN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNDAzMDgsImV4cCI6MjEwNzYxNjMwOH0.sppwoVpSQ8wISEGLSTN83MfWKnLIl3JhTINLkzxRi6g';
 
 let supabaseClient: SupabaseClient | null = null;
 let realtimeChannel: RealtimeChannel | null = null;
