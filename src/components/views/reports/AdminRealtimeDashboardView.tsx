@@ -587,34 +587,314 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     }
   };
 
-  // Xuất file Báo cáo Excel cho BGH theo đúng Khung Thời Gian đã chọn
+  // Helper tạo thanh biểu đồ trực quan trong Excel bằng ký tự Unicode
+  const generateAsciiBar = (pct: number, maxBlocks = 10) => {
+    const p = Math.min(100, Math.max(0, Math.round(pct)));
+    const filled = Math.min(maxBlocks, Math.max(0, Math.round((p / 100) * maxBlocks)));
+    const empty = maxBlocks - filled;
+    return `[${'█'.repeat(filled)}${'░'.repeat(empty)}] ${p}%`;
+  };
+
+  // Xuất file Báo cáo Excel cho BGH theo đúng Khung Thời Gian đã chọn (Đầy đủ tỷ lệ %, bảng tổng hợp và biểu đồ)
   const handleExportExcel = () => {
-    const rows = perClassStatistics.map((cls, idx) => ({
-      'STT': idx + 1,
-      'Lớp': cls.name,
-      'Khối': cls.grade,
-      'Phân hiệu': cls.branch || 'Chưa cấu hình (Null)',
-      'Điểm trường': cls.campus || 'Chưa cấu hình (Null)',
-      'Giáo viên chủ nhiệm': cls.teacherName || 'Chưa cập nhật',
-      'Sĩ số': cls.studentCount,
-      'Chuyên cần': timeframe === 'day' 
-        ? (cls.hasAttendanceData ? `${cls.attendanceRate}% (${cls.present}/${cls.studentCount})` : 'Chưa điểm danh')
-        : (cls.hasAttendanceData ? `${cls.attendanceRate}% (${cls.present} lượt • ${cls.attendanceDaysCount} buổi)` : 'Chưa có dữ liệu'),
-      'Ăn bán trú': timeframe === 'day'
-        ? `${cls.eatingCount} suất`
-        : `${cls.eatingCount} suất (TB ${cls.avgEatingPerDay}/ngày)`,
-      'Tổng xu thi đua': cls.coins,
-      'Điểm trung bình': cls.avgCoins
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `BaoCao_${timeframe.toUpperCase()}`);
+    const schoolTitle = currentUser?.schoolName || 'TRƯỜNG TIỂU HỌC SỐ 1 TÂN UYÊN';
+    const periodLabel = timeframe === 'day' 
+      ? `NGÀY HÔM NAY (${dateRange.startDate})` 
+      : timeframe === 'week' 
+      ? `THEO TUẦN (${dateRange.startDate} đến ${dateRange.endDate})` 
+      : timeframe === 'month' 
+      ? `THEO THÁNG (${dateRange.startDate} đến ${dateRange.endDate})` 
+      : `TÙY CHỈNH (${dateRange.startDate} đến ${dateRange.endDate})`;
 
+    // =========================================================================
+    // 📋 SHEET 1: TỔNG HỢP CHUNG VĨ MÔ & THEO KHỐI
+    // =========================================================================
+    const sheet1Rows: any[][] = [
+      [schoolTitle.toUpperCase()],
+      ['BÁO CÁO TỔNG HỢP THỜI GIAN THỰC ĐA TẦNG (BGH & QUẢN TRỊ TOÀN TRƯỜNG)'],
+      [`Kỳ báo cáo: ${periodLabel} • Thời điểm xuất: ${new Date().toLocaleString('vi-VN')}`],
+      [`Phạm vi: Phân hiệu [${selectedBranch === 'all' ? 'Toàn trường' : selectedBranch}] • Điểm trường [${selectedCampus === 'all' ? 'Tất cả' : selectedCampus}] • Khối [${selectedGrade === 'all' ? 'Tất cả khối' : selectedGrade}]`],
+      [],
+      ['I. BẢNG CHỈ SỐ KPI TỔNG HỢP VĨ MÔ TOÀN TRƯỜNG'],
+      ['Chỉ số KPI', 'Số lượng', 'Tỷ lệ & Biểu đồ trực quan', 'Ghi chú chi tiết'],
+      ['Tổng số lớp học', filteredClasses.length, `${filteredClasses.length} lớp`, 'Số lớp theo phạm vi lọc'],
+      ['Tổng sĩ số học sinh', totalStudents, `${totalStudents} học sinh`, 'Toàn bộ học sinh chính thức'],
+      ['Tổng học sinh có mặt', periodAttendance.present, generateAsciiBar(periodAttendance.rate), `Tỷ lệ chuyên cần đạt ${periodAttendance.rate}%`],
+      ['Tổng học sinh vắng mặt', periodAttendance.absentTotal, `${periodAttendance.totalLogged > 0 ? Math.round((periodAttendance.absentTotal / periodAttendance.totalLogged) * 100) : 0}%`, `Muộn: ${periodAttendance.late} • Có phép: ${periodAttendance.excused} • Không phép: ${periodAttendance.unexcused} • Ốm: ${periodAttendance.sick}`],
+      ['Tổng suất ăn bán trú', periodBoarding.eating, generateAsciiBar(periodBoarding.rate), `Tỷ lệ bán trú đạt ${periodBoarding.rate}% (TB ${periodBoarding.avgEatingPerDay} suất/ngày)`],
+      ['Học sinh không ăn bán trú', periodBoarding.notEating, `${periodBoarding.totalLogged > 0 ? Math.round((periodBoarding.notEating / periodBoarding.totalLogged) * 100) : 0}%`, `Vắng ăn: ${periodBoarding.absentMeal} suất`],
+      ['Tổng Xu thi đua toàn trường', totalCoins, `${avgCoins} xu / HS`, 'Điểm tích lũy khen thưởng rèn luyện'],
+      [],
+      ['II. BẢNG THỐNG KÊ TỔNG HỢP & XẾP HẠNG THEO TỪNG KHỐI LỚP (KHỐI 1 - KHỐI 5)'],
+      ['STT', 'Khối Lớp', 'Số Lớp', 'Sĩ Số', 'Có Mặt', 'Vắng', '% Chuyên Cần', 'Biểu Đồ Chuyên Cần', 'Suất Bán Trú', '% Bán Trú', 'Biểu Đồ Bán Trú', 'Tổng Xu Thi Đua', 'TB Xu/HS', 'Đánh Giá']
+    ];
+
+    // Tính toán dữ liệu theo 5 khối lớp
+    const grades = ['Khối 1', 'Khối 2', 'Khối 3', 'Khối 4', 'Khối 5'];
+    let sumGradeClasses = 0;
+    let sumGradeStudents = 0;
+    let sumGradePresent = 0;
+    let sumGradeAbsent = 0;
+    let sumGradeMeals = 0;
+    let sumGradeCoins = 0;
+
+    grades.forEach((grd, idx) => {
+      const clsInGrade = perClassStatistics.filter(c => (c.grade || '').trim() === grd || (c.name || '').startsWith(grd.replace('Khối ', '')));
+      const gClassesCount = clsInGrade.length;
+      const gStudents = clsInGrade.reduce((s, c) => s + (c.studentCount || 0), 0);
+      const gPresent = clsInGrade.reduce((s, c) => s + (c.present || 0), 0);
+      const gAbsent = clsInGrade.reduce((s, c) => s + (c.absent || 0), 0);
+      const gMeals = clsInGrade.reduce((s, c) => s + (c.eatingCount || 0), 0);
+      const gCoins = clsInGrade.reduce((s, c) => s + (c.coins || 0), 0);
+
+      const gLogged = gPresent + gAbsent;
+      const gAttRate = gLogged > 0 ? Math.round((gPresent / gLogged) * 100) : 0;
+      const gMealRate = gStudents > 0 ? Math.round((gMeals / gStudents) * 100) : 0;
+      const gAvgCoins = gStudents > 0 ? (gCoins / gStudents).toFixed(1) : '0';
+
+      sumGradeClasses += gClassesCount;
+      sumGradeStudents += gStudents;
+      sumGradePresent += gPresent;
+      sumGradeAbsent += gAbsent;
+      sumGradeMeals += gMeals;
+      sumGradeCoins += gCoins;
+
+      const evalText = gAttRate >= 95 ? 'Xuất sắc' : gAttRate >= 85 ? 'Tốt' : gAttRate >= 70 ? 'Khá' : 'Cần đôn đốc';
+
+      sheet1Rows.push([
+        idx + 1,
+        grd,
+        gClassesCount,
+        gStudents,
+        gPresent,
+        gAbsent,
+        `${gAttRate}%`,
+        generateAsciiBar(gAttRate),
+        gMeals,
+        `${gMealRate}%`,
+        generateAsciiBar(gMealRate),
+        gCoins,
+        gAvgCoins,
+        evalText
+      ]);
+    });
+
+    // Dòng tổng cộng cho Sheet 1
+    const totalGradeLogged = sumGradePresent + sumGradeAbsent;
+    const totalGradeAttRate = totalGradeLogged > 0 ? Math.round((sumGradePresent / totalGradeLogged) * 100) : 0;
+    const totalGradeMealRate = sumGradeStudents > 0 ? Math.round((sumGradeMeals / sumGradeStudents) * 100) : 0;
+    const totalGradeAvgCoins = sumGradeStudents > 0 ? (sumGradeCoins / sumGradeStudents).toFixed(1) : '0';
+
+    sheet1Rows.push([
+      '--',
+      'TỔNG CỘNG TOÀN TRƯỜNG',
+      sumGradeClasses || filteredClasses.length,
+      sumGradeStudents || totalStudents,
+      sumGradePresent || periodAttendance.present,
+      sumGradeAbsent || periodAttendance.absentTotal,
+      `${totalGradeAttRate || periodAttendance.rate}%`,
+      generateAsciiBar(totalGradeAttRate || periodAttendance.rate),
+      sumGradeMeals || periodBoarding.eating,
+      `${totalGradeMealRate || periodBoarding.rate}%`,
+      generateAsciiBar(totalGradeMealRate || periodBoarding.rate),
+      sumGradeCoins || totalCoins,
+      totalGradeAvgCoins || avgCoins,
+      'HOÀN TẤT BÁO CÁO'
+    ]);
+
+    const ws1 = XLSX.utils.aoa_to_sheet(sheet1Rows);
+    ws1['!cols'] = [
+      { wch: 6 },  // STT
+      { wch: 26 }, // Khối Lớp / Chỉ số
+      { wch: 14 }, // Số Lớp / Số lượng
+      { wch: 14 }, // Sĩ Số
+      { wch: 14 }, // Có Mặt
+      { wch: 14 }, // Vắng
+      { wch: 16 }, // % Chuyên Cần
+      { wch: 22 }, // Biểu Đồ Chuyên Cần
+      { wch: 16 }, // Suất Bán Trú
+      { wch: 14 }, // % Bán Trú
+      { wch: 22 }, // Biểu Đồ Bán Trú
+      { wch: 18 }, // Tổng Xu
+      { wch: 14 }, // TB Xu/HS
+      { wch: 20 }  // Đánh Giá
+    ];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Tong_Hop_BGH');
+
+    // =========================================================================
+    // 📋 SHEET 2: BẢNG CHI TIẾT TỪNG LỚP HỌC (ĐẦY ĐỦ DÒNG TỔNG CỘNG)
+    // =========================================================================
+    const sheet2Rows: any[][] = [
+      [schoolTitle.toUpperCase()],
+      [`BẢNG THEO DÕI THỜI GIAN THỰC TỪNG LỚP HỌC (${filteredClasses.length} LỚP)`],
+      [`Kỳ: ${periodLabel} • Xuất lúc: ${new Date().toLocaleString('vi-VN')}`],
+      [],
+      [
+        'STT', 'Lớp Học', 'Khối', 'Phân Hiệu', 'Điểm Trường', 'Giáo Viên Chủ Nhiệm',
+        'Sĩ Số', 'Có Mặt', 'Vắng', '% Chuyên Cần', 'Biểu Đồ Chuyên Cần',
+        'Suất Ăn Bán Trú', 'TB Ăn/Ngày', '% Bán Trú', 'Biểu Đồ Bán Trú',
+        'Tổng Xu Thi Đua', 'Điểm TB Xu', 'Trạng Thái'
+      ]
+    ];
+
+    let totalClassStudents = 0;
+    let totalClassPresent = 0;
+    let totalClassAbsent = 0;
+    let totalClassEating = 0;
+    let totalClassCoins = 0;
+
+    perClassStatistics.forEach((cls, idx) => {
+      totalClassStudents += cls.studentCount || 0;
+      totalClassPresent += cls.present || 0;
+      totalClassAbsent += cls.absent || 0;
+      totalClassEating += cls.eatingCount || 0;
+      totalClassCoins += cls.coins || 0;
+
+      const cLogged = (cls.present || 0) + (cls.absent || 0);
+      const cAttRate = cLogged > 0 ? Math.round(((cls.present || 0) / cLogged) * 100) : (cls.hasAttendanceData ? 100 : 0);
+      const cMealRate = (cls.studentCount || 0) > 0 ? Math.round(((cls.eatingCount || 0) / cls.studentCount) * 100) : 0;
+      const statusText = !cls.hasAttendanceData ? 'Chưa điểm danh' : cAttRate >= 95 ? 'Tốt' : 'Có học sinh vắng';
+
+      sheet2Rows.push([
+        idx + 1,
+        cls.name,
+        cls.grade,
+        cls.branch || 'Trung tâm',
+        cls.campus || 'Điểm chính',
+        cls.teacherName || 'Chưa cập nhật',
+        cls.studentCount,
+        cls.present,
+        cls.absent,
+        `${cAttRate}%`,
+        generateAsciiBar(cAttRate),
+        cls.eatingCount,
+        cls.avgEatingPerDay,
+        `${cMealRate}%`,
+        generateAsciiBar(cMealRate),
+        cls.coins,
+        cls.avgCoins,
+        statusText
+      ]);
+    });
+
+    // Dòng tổng cộng cho Sheet 2
+    const totalClsLogged = totalClassPresent + totalClassAbsent;
+    const finalAttRate = totalClsLogged > 0 ? Math.round((totalClassPresent / totalClsLogged) * 100) : 0;
+    const finalMealRate = totalClassStudents > 0 ? Math.round((totalClassEating / totalClassStudents) * 100) : 0;
+    const finalAvgCoins = totalClassStudents > 0 ? (totalClassCoins / totalClassStudents).toFixed(1) : '0';
+
+    sheet2Rows.push([
+      '--',
+      'TỔNG CỘNG TOÀN TRƯỜNG',
+      `${filteredClasses.length} lớp`,
+      '--',
+      '--',
+      '--',
+      totalClassStudents,
+      totalClassPresent,
+      totalClassAbsent,
+      `${finalAttRate}%`,
+      generateAsciiBar(finalAttRate),
+      totalClassEating,
+      Math.round(totalClassEating / Math.max(1, periodBoarding.daysCount || 1)),
+      `${finalMealRate}%`,
+      generateAsciiBar(finalMealRate),
+      totalClassCoins,
+      finalAvgCoins,
+      'HOÀN THÀNH'
+    ]);
+
+    const ws2 = XLSX.utils.aoa_to_sheet(sheet2Rows);
+    ws2['!cols'] = [
+      { wch: 6 },  // STT
+      { wch: 14 }, // Lớp
+      { wch: 10 }, // Khối
+      { wch: 16 }, // Phân hiệu
+      { wch: 16 }, // Điểm trường
+      { wch: 24 }, // GVCN
+      { wch: 10 }, // Sĩ số
+      { wch: 10 }, // Có mặt
+      { wch: 10 }, // Vắng
+      { wch: 14 }, // % Chuyên cần
+      { wch: 20 }, // Biểu đồ CC
+      { wch: 16 }, // Suất ăn
+      { wch: 14 }, // TB ăn
+      { wch: 14 }, // % Bán trú
+      { wch: 20 }, // Biểu đồ BT
+      { wch: 16 }, // Tổng xu
+      { wch: 14 }, // TB xu
+      { wch: 18 }  // Trạng thái
+    ];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Chi_Tiet_Tung_Lop');
+
+    // =========================================================================
+    // 📋 SHEET 3: BIỂU ĐỒ & BẢNG XẾP HẠNG THI ĐUA TOP LỚP
+    // =========================================================================
+    const sortedByAtt = [...perClassStatistics].sort((a, b) => (b.attendanceRate || 0) - (a.attendanceRate || 0)).slice(0, 10);
+    const sortedByCoins = [...perClassStatistics].sort((a, b) => (b.coins || 0) - (a.coins || 0)).slice(0, 10);
+
+    const sheet3Rows: any[][] = [
+      [schoolTitle.toUpperCase()],
+      ['BẢNG XẾP HẠNG THI ĐUA & BIỂU ĐỒ TRỰC QUAN TOP DẪN ĐẦU'],
+      [`Kỳ: ${periodLabel}`],
+      [],
+      ['🏆 TOP 10 LỚP DẪN ĐẦU TỶ LỆ CHUYÊN CẦN TOÀN TRƯỜNG'],
+      ['Hạng', 'Lớp Học', 'Khối', 'Giáo Viên Chủ Nhiệm', 'Sĩ Số', 'Có Mặt', '% Chuyên Cần', 'Biểu Đồ Thanh Ngang Trực Quan']
+    ];
+
+    sortedByAtt.forEach((cls, i) => {
+      sheet3Rows.push([
+        `Hạng ${i + 1}`,
+        cls.name,
+        cls.grade,
+        cls.teacherName || 'Chưa cập nhật',
+        cls.studentCount,
+        cls.present,
+        `${cls.attendanceRate}%`,
+        generateAsciiBar(cls.attendanceRate, 12)
+      ]);
+    });
+
+    sheet3Rows.push(
+      [],
+      ['⭐ TOP 10 LỚP DẪN ĐẦU TÍCH LŨY XU THI ĐUA & KHEN THƯỞNG'],
+      ['Hạng', 'Lớp Học', 'Khối', 'Giáo Viên Chủ Nhiệm', 'Sĩ Số', 'Tổng Xu', 'TB Xu/HS', 'Biểu Đồ Thi Đua Xu']
+    );
+
+    const maxCoin = Math.max(...sortedByCoins.map(c => c.coins || 1), 1);
+    sortedByCoins.forEach((cls, i) => {
+      const coinPct = Math.round(((cls.coins || 0) / maxCoin) * 100);
+      sheet3Rows.push([
+        `Hạng ${i + 1}`,
+        cls.name,
+        cls.grade,
+        cls.teacherName || 'Chưa cập nhật',
+        cls.studentCount,
+        cls.coins,
+        cls.avgCoins,
+        generateAsciiBar(coinPct, 12)
+      ]);
+    });
+
+    const ws3 = XLSX.utils.aoa_to_sheet(sheet3Rows);
+    ws3['!cols'] = [
+      { wch: 10 },
+      { wch: 16 },
+      { wch: 12 },
+      { wch: 24 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 28 }
+    ];
+    XLSX.utils.book_append_sheet(wb, ws3, 'BieuDo_XepHang_ThiDua');
+
+    // Lưu file Excel hoàn chỉnh
     const scopeTitle = selectedBranch === 'all' 
       ? 'Toan_Truong' 
       : `${selectedBranch}_${selectedCampus === 'all' ? 'Tat_Ca' : selectedCampus}`.replace(/\s+/g, '_');
-    XLSX.writeFile(wb, `Bao_Cao_${timeframe.toUpperCase()}_${scopeTitle}_${dateRange.startDate}_den_${dateRange.endDate}.xlsx`);
+    XLSX.writeFile(wb, `Bao_Cao_Realtime_BGH_${timeframe.toUpperCase()}_${scopeTitle}_${dateRange.startDate}_den_${dateRange.endDate}.xlsx`);
   };
 
   return (
