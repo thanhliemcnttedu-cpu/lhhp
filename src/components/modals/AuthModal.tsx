@@ -302,7 +302,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Ví dụ: adminquantri, adminths1, admin_canhan, nguyenthitrangtu1..."
+                      placeholder="Ví dụ: adminquantri, adminths1, nguyenthitrangtu1..."
                       className="w-full pl-11 pr-4 py-2.5 rounded-xl text-sm font-bold text-white placeholder-blue-300/40 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all"
                       style={{
                         background: 'rgba(255,255,255,0.08)',

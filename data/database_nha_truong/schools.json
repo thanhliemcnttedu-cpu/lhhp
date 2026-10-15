@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": "school_1791779023757_riyn",
+    "name": "TIỂU HỌC SỐ 1 TÂN UYÊN",
+    "code": "TH_THS1TU",
+    "address": "Thôn 21, xã Tân Uyên, tỉnh Lai Châu",
+    "phone": "0888358363",
+    "adminUsername": "bgh_thths1tu",
+    "createdAt": 1791779023757
+  }
+]

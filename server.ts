@@ -38,9 +38,11 @@ import {
   createSchool,
   updateSchool,
   deleteSchool,
+  provisionSchoolAdmin,
   exportDatabaseScoped,
   importDatabaseScoped,
-  transferUserToSchool
+  transferUserToSchool,
+  getExecutiveScopedDataServer
 } from './server/database';
 import {
   initGitSync,
@@ -58,6 +60,7 @@ import {
   migrateLocalDatabaseToSupabase
 } from './server/supabase';
 
+// Trigger tsx watch reload: 2026-10-12 13:46
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -82,13 +85,20 @@ interface RealtimeClient {
 const sseClients = new Map<string, RealtimeClient>();
 
 export function broadcastRealtimeEvent(event: {
-  type: 'DATA_CHANGED' | 'USER_CHANGED' | 'SYSTEM_SYNC' | 'GITHUB_SYNC';
+  type: string;
+  action?: string;
   username?: string;
   targetUsername?: string;
   role?: string;
+  classId?: string;
+  classData?: any;
+  attendanceRecord?: any;
+  boardingRecord?: any;
+  schoolName?: string;
   timestamp: number;
   originClientId?: string;
   message?: string;
+  payload?: any;
 }) {
   const payload = `data: ${JSON.stringify(event)}\n\n`;
   for (const [id, client] of sseClients.entries()) {
@@ -99,6 +109,40 @@ export function broadcastRealtimeEvent(event: {
     }
   }
 }
+
+// Endpoint nhận broadcast từ client để chuyển tiếp tức thì tới tất cả các máy khác
+app.post('/api/realtime/broadcast', (req, res) => {
+  try {
+    const event = req.body;
+    if (!event || !event.type) {
+      return res.status(400).json({ success: false, message: 'Dữ liệu broadcast không hợp lệ.' });
+    }
+    broadcastRealtimeEvent({
+      ...event,
+      timestamp: event.timestamp || Date.now()
+    });
+    return res.json({ 
+      success: true, 
+      message: 'Đã phát sóng thời gian thực thành công.', 
+      connectedClients: sseClients.size 
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message });
+  }
+});
+
+// Local Supabase Simulator status endpoint
+app.get('/api/sim/status', (req, res) => {
+  try {
+    // Import lazily to avoid circular deps if server.ts imports this module later
+    const { getSimStatus } = require('./localSupabaseSim');
+    const status = getSimStatus();
+    res.json({ success: true, status });
+  } catch (err) {
+    console.error('[SimStatus] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to retrieve simulator status' });
+  }
+});
 
 // SSE Live Stream Endpoint: Multi-computer and multi-browser instant sync
 app.get('/api/realtime/stream', (req, res) => {
@@ -542,6 +586,37 @@ app.get('/api/admin/all-data', (_req, res) => {
   }
 });
 
+// ⚡ Executive Scoped Data API: Liên thông tức thì đa tầng (BGH & Quản trị trường < 2ms)
+app.post('/api/executive/scoped-data', (req, res) => {
+  try {
+    const currentUser = req.body || {};
+    const scoped = getExecutiveScopedDataServer(currentUser);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    return res.json(scoped);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.get('/api/executive/scoped-data', (req, res) => {
+  try {
+    const currentUser = {
+      username: req.query.username as string,
+      role: req.query.role as string,
+      schoolName: req.query.schoolName as string
+    };
+    const scoped = getExecutiveScopedDataServer(currentUser);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    return res.json(scoped);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
 // Dynamic Avatar Scanner API: Automatically scans public/avatars/default and public/avatars/real_demo
 app.get('/api/avatars-list', (_req, res) => {
   try {
@@ -774,6 +849,33 @@ app.post('/api/database/reset-academic-year', (req, res) => {
 });
 
 // ==========================================
+// 4.0. SUPABASE CLOUD SYNC API
+// ==========================================
+app.get('/api/supabase/status', async (_req, res) => {
+  try {
+    const configured = isSupabaseConfigured();
+    const conn = configured ? await testSupabaseConnection() : { success: false, message: 'Chưa cấu hình Supabase' };
+    return res.json({
+      configured,
+      connected: conn.success,
+      message: conn.message
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message });
+  }
+});
+
+app.post('/api/supabase/sync', async (_req, res) => {
+  try {
+    const db = loadDatabase();
+    const result = await migrateLocalDatabaseToSupabase(db);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message });
+  }
+});
+
+// ==========================================
 // 4.1. SCHOOL DATABASE CRUD API (ADMIN)
 // ==========================================
 app.get('/api/schools', (_req, res) => {
@@ -807,6 +909,15 @@ app.delete('/api/schools/:id', (req, res) => {
   try {
     const schoolName = req.query.schoolName as string | undefined;
     const result = deleteSchool(req.params.id, schoolName);
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error?.message });
+  }
+});
+
+app.post('/api/schools/:id/provision-admin', (req, res) => {
+  try {
+    const result = provisionSchoolAdmin(req.params.id, req.body);
     return res.status(result.success ? 200 : 400).json(result);
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error?.message });

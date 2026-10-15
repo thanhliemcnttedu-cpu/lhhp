@@ -6,7 +6,7 @@ import {
   TrendingUp, RefreshCw, Calendar, Award, Sparkles, Filter, 
   Download, ChevronRight, Wifi, Bell, Volume2, VolumeX, ArrowUpRight,
   ShieldCheck, AlertCircle, PieChart, BarChart3, CheckCircle2, XCircle, Clock,
-  ChevronLeft, CalendarDays, CalendarRange, Clock3
+  ChevronLeft, CalendarDays, CalendarRange, Clock3, Layers, ArrowDownAZ, GraduationCap
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { playPointClink } from '../../../utils/audio';
@@ -38,11 +38,15 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     dbSyncStatus, schoolBranches
   } = useClassroom();
 
-  // 1. Bộ lọc phân cấp 3 tầng (Multi-level Filter)
+  // 1. Bộ lọc phân cấp đa tầng (Multi-level Filter)
   // Cấp 1: 'all' (Toàn trường) | Tên Phân hiệu cụ thể
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
   // Cấp 2: 'all' (Tất cả điểm trường) | Tên Điểm trường cụ thể
   const [selectedCampus, setSelectedCampus] = useState<string>('all');
+  // Cấp 3: 'all' (Tất cả các khối) | 'Khối 1', 'Khối 2'...
+  const [selectedGrade, setSelectedGrade] = useState<string>('all');
+  // Chế độ sắp xếp bảng: 'abc' (Tự động theo thứ tự ABC) | 'coins' (Theo xu thi đua)
+  const [classSortBy, setClassSortBy] = useState<'abc' | 'coins'>('abc');
 
   // =========================================================================
   // 🌟 KHUNG THỜI GIAN BÁO CÁO: THEO NGÀY • THEO TUẦN • THEO THÁNG
@@ -264,7 +268,17 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     }
   }, [selectedBranch, availableCampuses, selectedCampus]);
 
-  // Lọc danh sách lớp học theo phân cấp Phân hiệu & Điểm trường
+  // Danh sách Khối học thực tế trích xuất từ các lớp GVCN
+  const availableGrades = useMemo(() => {
+    const set = new Set<string>();
+    homeroomClasses.forEach(c => {
+      const g = (c.grade || '').trim();
+      if (g) set.add(g);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+  }, [homeroomClasses]);
+
+  // Lọc danh sách lớp học theo phân cấp Phân hiệu, Điểm trường & Khối
   const filteredClasses = useMemo(() => {
     let list = homeroomClasses; // Đã cô lập hoàn toàn GVBM
     if (selectedBranch === '__unassigned__') {
@@ -278,8 +292,19 @@ export const AdminRealtimeDashboardView: React.FC = () => {
     } else if (selectedCampus !== 'all') {
       list = list.filter(c => (c.campus || '').trim() === selectedCampus);
     }
+
+    if (selectedGrade !== 'all') {
+      list = list.filter(c => {
+        const g = (c.grade || '').trim();
+        if (g === selectedGrade) return true;
+        const numFilter = selectedGrade.replace(/\D/g, '');
+        const numClass = g.replace(/\D/g, '');
+        return Boolean(numFilter && numFilter === numClass);
+      });
+    }
+
     return list;
-  }, [homeroomClasses, selectedBranch, selectedCampus]);
+  }, [homeroomClasses, selectedBranch, selectedCampus, selectedGrade]);
 
   const filteredClassIds = useMemo(() => {
     return new Set(filteredClasses.map(c => c.id));
@@ -477,8 +502,44 @@ export const AdminRealtimeDashboardView: React.FC = () => {
         mealDaysCount: clsMealRecords.length,
         avgEatingPerDay
       };
-    }).sort((a, b) => b.coins - a.coins);
-  }, [filteredClasses, students, attendanceRecords, boardingRecords, dateRange]);
+    }).sort((a, b) => {
+      // Khi lọc xem, tự động sắp xếp thứ tự các lớp theo ABC
+      if (classSortBy === 'abc') {
+        return (a.name || '').localeCompare(b.name || '', 'vi', { numeric: true, sensitivity: 'base' });
+      }
+      // Chế độ xem theo Xu thi đua (Hạng từ cao xuống thấp)
+      if (b.coins !== a.coins) {
+        return b.coins - a.coins;
+      }
+      return (a.name || '').localeCompare(b.name || '', 'vi', { numeric: true, sensitivity: 'base' });
+    });
+  }, [filteredClasses, students, attendanceRecords, boardingRecords, dateRange, classSortBy]);
+
+  // =========================================================================
+  // 🌟 HÀM ĐIỀU KHIỂN BỘ LỌC KÈM TỰ ĐỘNG SẮP XẾP THEO THỨ TỰ ABC
+  // =========================================================================
+  const handleFilterAll = () => {
+    setSelectedBranch('all');
+    setSelectedCampus('all');
+    setSelectedGrade('all');
+    setClassSortBy('abc'); // Tự động sắp xếp ABC
+  };
+
+  const handleSelectBranch = (branch: string) => {
+    setSelectedBranch(branch);
+    setSelectedCampus('all');
+    setClassSortBy('abc'); // Tự động sắp xếp ABC
+  };
+
+  const handleSelectCampus = (campus: string) => {
+    setSelectedCampus(campus);
+    setClassSortBy('abc'); // Tự động sắp xếp ABC
+  };
+
+  const handleSelectGrade = (grade: string) => {
+    setSelectedGrade(grade);
+    setClassSortBy('abc'); // Tự động sắp xếp ABC
+  };
 
   // Động cơ đồng bộ trực tuyến 2 chiều (Two-way Realtime Engine)
   useEffect(() => {
@@ -494,6 +555,11 @@ export const AdminRealtimeDashboardView: React.FC = () => {
       if (soundEnabled) {
         try { playPointClink(); } catch (_) {}
       }
+
+      // ⚡ Tự động kích hoạt làm tươi dữ liệu tức thì cho Quản trị tối cao & BGH
+      try {
+        syncDatabaseNow().catch(() => {});
+      } catch (_) {}
 
       const timer = setTimeout(() => {
         setIsPulseActive(false);
@@ -847,8 +913,8 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Hàng 3: 3 Cột Bộ lọc Phân hiệu & Điểm trường */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+        {/* Hàng 3: 4 Cột Bộ lọc Đa tầng: Phân hiệu • Điểm trường • Khối • Phạm vi */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
           {/* Cấp 1: Phân hiệu */}
           <div className="space-y-1">
             <label className="text-[11px] font-black text-slate-700 flex items-center gap-1.5">
@@ -857,11 +923,8 @@ export const AdminRealtimeDashboardView: React.FC = () => {
             </label>
             <select
               value={selectedBranch}
-              onChange={(e) => {
-                setSelectedBranch(e.target.value);
-                setSelectedCampus('all');
-              }}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => handleSelectBranch(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
             >
               <option value="all">🌐 Toàn trường (Tất cả phân hiệu)</option>
               {availableBranches.map(branch => (
@@ -883,8 +946,8 @@ export const AdminRealtimeDashboardView: React.FC = () => {
             </label>
             <select
               value={selectedCampus}
-              onChange={(e) => setSelectedCampus(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+              onChange={(e) => handleSelectCampus(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
             >
               <option value="all">📍 Tất cả điểm trường ({availableCampuses.length} điểm)</option>
               {availableCampuses.map(campus => (
@@ -898,31 +961,50 @@ export const AdminRealtimeDashboardView: React.FC = () => {
             </select>
           </div>
 
+          {/* Cấp 3: Khối học */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-black text-slate-700 flex items-center gap-1.5">
+              <GraduationCap className="w-3.5 h-3.5 text-amber-600" />
+              <span>CẤP 3: CHỌN KHỐI HỌC</span>
+            </label>
+            <select
+              value={selectedGrade}
+              onChange={(e) => handleSelectGrade(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            >
+              <option value="all">🎓 Tất cả các khối ({availableGrades.length} khối)</option>
+              {availableGrades.map(grade => (
+                <option key={grade} value={grade}>
+                  📚 {grade}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Thông tin phạm vi áp dụng & Nút Reset */}
           <div className="space-y-1">
             <label className="text-[11px] font-black text-slate-700 flex items-center gap-1.5">
               <School className="w-3.5 h-3.5 text-emerald-600" />
               <span>PHẠM VI ĐANG THEO DÕI</span>
             </label>
-            <div className="flex items-center justify-between p-1.5 px-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl">
-              <div className="truncate">
+            <div className="flex items-center justify-between p-1.5 px-3 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl min-h-[38px]">
+              <div className="truncate mr-1">
                 <span className="text-[11px] font-black text-indigo-950 block truncate">
                   {selectedBranch === 'all' ? 'TOÀN TRƯỜNG' : selectedBranch}
                   {selectedCampus !== 'all' && ` • ${selectedCampus}`}
+                  {selectedGrade !== 'all' && ` • ${selectedGrade}`}
                 </span>
                 <span className="text-[10px] text-indigo-700 font-bold">
-                  {filteredClasses.length} lớp học • {totalStudents} học sinh
+                  {filteredClasses.length} lớp • {totalStudents} HS • Tự xếp ABC
                 </span>
               </div>
-              {(selectedBranch !== 'all' || selectedCampus !== 'all') && (
+              {(selectedBranch !== 'all' || selectedCampus !== 'all' || selectedGrade !== 'all') && (
                 <button
-                  onClick={() => {
-                    setSelectedBranch('all');
-                    setSelectedCampus('all');
-                  }}
+                  onClick={handleFilterAll}
                   className="px-2 py-1 bg-white hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-lg text-[10px] font-black shadow-xs shrink-0 cursor-pointer"
+                  title="Đặt lại về Toàn trường"
                 >
-                  Đặt lại
+                  Toàn trường
                 </button>
               )}
             </div>
@@ -1235,7 +1317,8 @@ export const AdminRealtimeDashboardView: React.FC = () => {
 
       {/* 5. Bảng Giám Sát Chi Tiết Từng Lớp Trong Phân Hệ (Per-Class Grid) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-3.5 sm:p-4 bg-gradient-to-r from-slate-50 to-indigo-50/40 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        {/* Header chính của bảng */}
+        <div className="p-3.5 sm:p-4 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-blue-50/40 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h3 className="text-xs sm:text-sm font-black text-indigo-950 uppercase tracking-tight flex items-center gap-2">
               <Award className="w-4 h-4 text-amber-500" />
@@ -1245,8 +1328,128 @@ export const AdminRealtimeDashboardView: React.FC = () => {
               Dữ liệu được cập nhật tự động khi bất kỳ GVCN nào điểm danh, báo ăn hoặc cộng điểm
             </p>
           </div>
-          <span className="text-[11px] font-black bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-xl self-start sm:self-auto">
-            {selectedBranch === 'all' ? 'Toàn trường' : selectedBranch}
+
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+            {/* Nút chuyển chế độ sắp xếp */}
+            <button
+              onClick={() => setClassSortBy(prev => prev === 'abc' ? 'coins' : 'abc')}
+              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-1.5 transition-all cursor-pointer border shadow-2xs ${
+                classSortBy === 'abc'
+                  ? 'bg-indigo-600 text-white border-indigo-700 shadow-indigo-200'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+              title="Click để đổi giữa Sắp xếp ABC (A-Z) và Theo điểm thi đua"
+            >
+              <ArrowDownAZ className="w-3.5 h-3.5" />
+              <span>{classSortBy === 'abc' ? 'Sắp xếp: Tên lớp A-Z (ABC)' : 'Sắp xếp: Điểm thi đua'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Thanh công cụ Bộ lọc Trực tiếp ngay tại Bảng (Toàn trường • Phân hiệu • Điểm trường • Khối) */}
+        <div className="p-2.5 sm:p-3 bg-slate-50/90 border-b border-slate-200 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-[11px] font-black text-slate-600 flex items-center gap-1 mr-1">
+            <Filter className="w-3.5 h-3.5 text-indigo-600" />
+            <span>LỌC XEM:</span>
+          </span>
+
+          {/* 1. Nút Toàn trường */}
+          <button
+            onClick={handleFilterAll}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center gap-1 ${
+              selectedBranch === 'all' && selectedCampus === 'all' && selectedGrade === 'all'
+                ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs scale-102'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-indigo-50 hover:text-indigo-800'
+            }`}
+          >
+            <School className="w-3.5 h-3.5" />
+            <span>Toàn trường</span>
+          </button>
+
+          {/* 2. Dropdown Phân hiệu */}
+          <div className="relative inline-flex items-center">
+            <select
+              value={selectedBranch}
+              onChange={(e) => handleSelectBranch(e.target.value)}
+              className={`px-2.5 py-1.5 pr-7 bg-white border rounded-xl text-xs font-bold transition-all cursor-pointer appearance-none ${
+                selectedBranch !== 'all'
+                  ? 'border-purple-400 bg-purple-50 text-purple-900 font-black'
+                  : 'border-slate-300 text-slate-700 hover:border-slate-400'
+              }`}
+            >
+              <option value="all">🏛️ Phân hiệu: Tất cả</option>
+              {availableBranches.map(branch => (
+                <option key={branch} value={branch}>🏛️ {branch}</option>
+              ))}
+              {hasUnassignedBranch && (
+                <option value="__unassigned__">⚠️ Chưa có phân hiệu</option>
+              )}
+            </select>
+            <ChevronRight className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none rotate-90" />
+          </div>
+
+          {/* 3. Dropdown Điểm trường */}
+          <div className="relative inline-flex items-center">
+            <select
+              value={selectedCampus}
+              onChange={(e) => handleSelectCampus(e.target.value)}
+              className={`px-2.5 py-1.5 pr-7 bg-white border rounded-xl text-xs font-bold transition-all cursor-pointer appearance-none ${
+                selectedCampus !== 'all'
+                  ? 'border-sky-400 bg-sky-50 text-sky-900 font-black'
+                  : 'border-slate-300 text-slate-700 hover:border-slate-400'
+              }`}
+            >
+              <option value="all">📍 Điểm trường: Tất cả</option>
+              {availableCampuses.map(campus => (
+                <option key={campus} value={campus}>📍 {campus}</option>
+              ))}
+              {hasUnassignedCampus && (
+                <option value="__unassigned__">⚠️ Chưa có điểm trường</option>
+              )}
+            </select>
+            <ChevronRight className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none rotate-90" />
+          </div>
+
+          {/* 4. Bộ nút lọc theo Khối */}
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-300">
+            <span className="text-[10.5px] font-bold text-slate-500 px-1.5 flex items-center gap-1">
+              <GraduationCap className="w-3 h-3 text-amber-600" />
+              <span>Khối:</span>
+            </span>
+            <button
+              onClick={() => handleSelectGrade('all')}
+              className={`px-2 py-0.5 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                selectedGrade === 'all'
+                  ? 'bg-amber-500 text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Tất cả
+            </button>
+            {availableGrades.map(grade => {
+              const shortGrade = grade.replace(/Khối\s*/i, 'K');
+              const isSelected = selectedGrade === grade;
+              return (
+                <button
+                  key={grade}
+                  onClick={() => handleSelectGrade(grade)}
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-500 text-white shadow-2xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  title={grade}
+                >
+                  {shortGrade}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Badge thông báo tự động sắp xếp ABC */}
+          <span className="ml-auto text-[10.5px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-1 rounded-lg flex items-center gap-1">
+            <ArrowDownAZ className="w-3 h-3 text-indigo-600" />
+            <span>Tự động sắp xếp ABC</span>
           </span>
         </div>
 
@@ -1254,7 +1457,7 @@ export const AdminRealtimeDashboardView: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50/80 text-[11px] font-black text-slate-600 uppercase border-b border-slate-200">
               <tr>
-                <th className="py-2.5 px-3 w-12 text-center">Hạng</th>
+                <th className="py-2.5 px-3 w-14 text-center">{classSortBy === 'abc' ? 'STT' : 'Hạng'}</th>
                 <th className="py-2.5 px-3">Lớp & Khối</th>
                 <th className="py-2.5 px-3">Phân hiệu / Điểm trường</th>
                 <th className="py-2.5 px-3">Giáo viên chủ nhiệm</th>
@@ -1269,22 +1472,24 @@ export const AdminRealtimeDashboardView: React.FC = () => {
               {perClassStatistics.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-slate-400 font-bold">
-                    Không tìm thấy lớp học nào trong phân hệ đã chọn.
+                    Không tìm thấy lớp học nào thỏa mãn bộ lọc đã chọn.
                   </td>
                 </tr>
               ) : (
                 perClassStatistics.map((cls, idx) => (
                   <tr key={cls.id} className="hover:bg-indigo-50/30 transition-colors">
-                    {/* Hạng */}
+                    {/* Hạng / STT */}
                     <td className="py-2.5 px-3 text-center">
                       <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-black ${
-                        idx === 0 
-                          ? 'bg-amber-400 text-white shadow-xs' 
-                          : idx === 1 
-                          ? 'bg-slate-300 text-slate-800' 
-                          : idx === 2 
-                          ? 'bg-amber-600 text-white' 
-                          : 'text-slate-500'
+                        classSortBy === 'coins'
+                          ? (idx === 0 
+                              ? 'bg-amber-400 text-white shadow-xs' 
+                              : idx === 1 
+                              ? 'bg-slate-300 text-slate-800' 
+                              : idx === 2 
+                              ? 'bg-amber-600 text-white' 
+                              : 'text-slate-500')
+                          : 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-100'
                       }`}>
                         {idx + 1}
                       </span>

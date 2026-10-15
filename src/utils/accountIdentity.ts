@@ -1,0 +1,150 @@
+import { UserAccount } from '../types';
+
+/**
+ * 🏛️ BẢNG ÁNH XẠ ĐỊNH DANH TÀI KHOẢN CHUẨN TỪ QUẢN TRỊ NHÀ TRƯỜNG (ACCOUNT IDENTITY MAP)
+ * Định danh tên hiển thị chính xác theo hồ sơ khởi tạo của Nhà trường & Hệ thống.
+ */
+export const ACCOUNT_IDENTITY_MAP: Record<string, {
+  fullName: string;
+  role: 'admin' | 'school_admin' | 'bgh' | 'guest_admin' | 'homeroom' | 'subject';
+  schoolName: string;
+  roleTitle: string;
+}> = {
+  // Tài khoản Quản trị Nhà trường (TIỂU HỌC SỐ 1 TÂN UYÊN)
+  'quantriths1tu': {
+    fullName: 'Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN',
+    role: 'school_admin',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    roleTitle: 'Quản trị Nhà trường'
+  },
+  // Tài khoản Ban Giám Hiệu (TIỂU HỌC SỐ 1 TÂN UYÊN)
+  'bgh_thths1tu': {
+    fullName: 'Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN',
+    role: 'bgh',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    roleTitle: 'Ban Giám Hiệu'
+  },
+  // Tài khoản Quản trị Tối cao Hệ thống
+  'adminquantri': {
+    fullName: 'Quản trị viên Hệ thống Cấp cao',
+    role: 'admin',
+    schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
+    roleTitle: 'Quản trị Tối cao'
+  },
+  // Quản trị viên phụ
+  'admin': {
+    fullName: 'Tài khoản Quản trị Cao nhất',
+    role: 'admin',
+    schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
+    roleTitle: 'Quản trị Tối cao'
+  }
+};
+
+/**
+ * 🌟 SINGLE SOURCE OF TRUTH: Lấy tên hiển thị định danh chuẩn xác 100% của tài khoản
+ * Ưu tiên:
+ * 1. Bảng ánh xạ định danh khởi tạo (ACCOUNT_IDENTITY_MAP)
+ * 2. Khớp từ cơ sở dữ liệu tài khoản quản trị nhà trường (allUsers)
+ * 3. Thuộc tính fullName của user hiện tại
+ * 4. Fallback tự động nhận diện theo vai trò và trường học
+ */
+export function getOfficialDisplayName(
+  user: {
+    username?: string;
+    fullName?: string;
+    schoolName?: string;
+    role?: string;
+    isBgh?: boolean;
+    isSchoolAdmin?: boolean;
+    isGuestAdmin?: boolean;
+    assignedClassName?: string;
+    subjectName?: string;
+  } | null | undefined,
+  allUsers?: Array<{ username: string; fullName: string; schoolName?: string; role?: string }>
+): string {
+  if (!user || !user.username) return 'Khách';
+  const cleanU = user.username.trim().toLowerCase();
+
+  // 1. Kiểm tra bảng ánh xạ định danh tài khoản chuẩn
+  if (ACCOUNT_IDENTITY_MAP[cleanU]?.fullName) {
+    return ACCOUNT_IDENTITY_MAP[cleanU].fullName;
+  }
+
+  // 2. Tra cứu từ cơ sở dữ liệu người dùng (allUsers) do quản trị nhà trường khởi tạo/import
+  if (Array.isArray(allUsers) && allUsers.length > 0) {
+    const matched = allUsers.find(u => u.username.toLowerCase() === cleanU);
+    if (matched && matched.fullName && matched.fullName.trim()) {
+      return matched.fullName.trim();
+    }
+  }
+
+  // 3. Sử dụng fullName hiện tại của người dùng nếu có và không rỗng
+  if (user.fullName && user.fullName.trim()) {
+    const fn = user.fullName.trim();
+    // Bỏ qua các placeholder chung chung nếu có trường học cụ thể
+    if (fn !== 'Giáo viên' && fn !== 'Quản trị viên') {
+      return fn;
+    }
+  }
+
+  // 4. Fallback động nhận diện theo vai trò quản trị nhà trường
+  if (user.role === 'school_admin' || user.isSchoolAdmin) {
+    const sName = user.schoolName?.trim() || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+    return `Quản trị ${sName.toUpperCase().replace(/^TRƯỜNG\s+/i, '')}`;
+  }
+
+  if (user.role === 'bgh' || user.isBgh) {
+    const sName = user.schoolName?.trim() || 'TIỂU HỌC SỐ 1 TÂN UYÊN';
+    return `Ban Giám Hiệu ${sName.toUpperCase().replace(/^TRƯỜNG\s+/i, '')}`;
+  }
+
+  if (user.role === 'admin') {
+    return 'Quản trị viên Hệ thống Cấp cao';
+  }
+
+  if (user.role === 'homeroom') {
+    return user.assignedClassName ? `GVCN Lớp ${user.assignedClassName}` : 'Giáo viên chủ nhiệm';
+  }
+
+  if (user.role === 'subject') {
+    return user.subjectName ? `GVBM Môn ${user.subjectName}` : 'Giáo viên bộ môn';
+  }
+
+  return user.username;
+}
+
+/**
+ * 🏷️ Lấy chức danh / vai trò định danh chuẩn hiển thị trên Header & Thẻ người dùng
+ */
+export function getOfficialRoleTitle(
+  user: {
+    username?: string;
+    role?: string;
+    isBgh?: boolean;
+    isSchoolAdmin?: boolean;
+    isGuestAdmin?: boolean;
+    assignedClassName?: string;
+    subjectName?: string;
+    schoolName?: string;
+  } | null | undefined
+): string {
+  if (!user) return 'Chưa đăng nhập';
+  const cleanU = (user.username || '').trim().toLowerCase();
+
+  if (ACCOUNT_IDENTITY_MAP[cleanU]?.roleTitle) {
+    return ACCOUNT_IDENTITY_MAP[cleanU].roleTitle;
+  }
+
+  if (user.role === 'admin') return 'Tài khoản quản trị Cao nhất';
+  if (user.role === 'bgh' || user.isBgh) return 'Ban Giám Hiệu';
+  if (user.role === 'school_admin' || user.isSchoolAdmin) return 'Quản trị Nhà trường';
+  if (user.role === 'guest_admin' || user.isGuestAdmin) return 'Quản trị GV Cá nhân';
+  if (user.role === 'homeroom') {
+    return user.assignedClassName ? `GV Chủ nhiệm (${user.assignedClassName})` : 'GV Chủ nhiệm';
+  }
+  if (user.role === 'subject') {
+    return user.subjectName ? `GV Bộ môn (${user.subjectName})` : 'GV Bộ môn';
+  }
+
+  return 'Giáo viên';
+}

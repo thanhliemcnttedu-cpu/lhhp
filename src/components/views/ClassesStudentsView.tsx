@@ -18,7 +18,8 @@ import {
   FileSpreadsheet, Download, Upload, Calendar, AlertTriangle, CheckSquare,
   Settings, BookOpen, Calculator, Globe, Atom, Map, Monitor, Palette, Music, Activity, Heart,
   Flame, HelpCircle, Layers, ZoomIn, Crown, Shield, ShieldCheck, SlidersHorizontal, Coins, Wand2,
-  Building2, MapPin, ChevronDown, ChevronUp, Filter, Eye, BarChart3, Users2, User
+  Building2, MapPin, ChevronDown, ChevronUp, Filter, Eye, BarChart3, Users2, User,
+  ArrowUpDown
 } from 'lucide-react';
 import { playCoinSound, playDeductSound, playFanfareSound } from '../../utils/audio';
 import confetti from 'canvas-confetti';
@@ -207,6 +208,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   const [selectedSchoolFilter, setSelectedSchoolFilter] = useState<string>('all');
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('all');
   const [selectedCampusFilter, setSelectedCampusFilter] = useState<string>('all');
+  const [selectedGradeFilter, setSelectedGradeFilter] = useState<string>('all');
+  const [classSortBy, setClassSortBy] = useState<'grade' | 'branch' | 'campus' | 'name'>('grade');
+  const [classSortOrder, setClassSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const isDemoAccount = !isSuperAdmin && Boolean(
     currentUser?.isDemo ||
@@ -221,19 +225,24 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   // 🌟 Danh sách trường học hệ thống phục vụ lọc cho Super Admin
   const availableSchools = React.useMemo(() => {
     const schoolSet = new Set<string>();
-    // Lấy từ các tài khoản người dùng
+    // Lấy từ các tài khoản người dùng thuộc các trường (loại trừ tài khoản admin hệ thống và guest)
     allUsers.forEach(u => {
-      if (u.schoolName && u.schoolName.trim() && !u.isGuestAdmin && u.tenantType !== 'guest') {
-        schoolSet.add(u.schoolName.trim());
+      if (u.schoolName && u.schoolName.trim() && !u.isGuestAdmin && u.tenantType !== 'guest' && u.role !== 'admin' && u.username?.toLowerCase() !== 'adminquantri') {
+        const sName = u.schoolName.trim();
+        if (!sName.toLowerCase().includes('hệ thống quản trị')) {
+          schoolSet.add(sName);
+        }
       }
     });
     // Lấy từ các lớp học nếu có trường schoolName
     classes.forEach(c => {
       if (c.schoolName && c.schoolName.trim()) {
-        schoolSet.add(c.schoolName.trim());
+        const sName = c.schoolName.trim();
+        if (!sName.toLowerCase().includes('hệ thống quản trị')) {
+          schoolSet.add(sName);
+        }
       }
     });
-    // Không tự động chèn trường giả lập 'TRƯỜNG HỌC HẠNH PHÚC DEMO' khi hệ thống chưa có trường nào
     return Array.from(schoolSet).sort();
   }, [allUsers, classes]);
 
@@ -280,6 +289,52 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     }
   }, [selectedBranchFilter, availableCampuses, selectedCampusFilter]);
 
+  // 🌟 Hàm bóc tách số khối lớp từ tên hoặc thuộc tính grade (VD: "1A1" -> 1, "Khối 2" -> 2)
+  const getClassGradeNumber = React.useCallback((c: Classroom | { name?: string; grade?: string }): number => {
+    if (c.grade && typeof c.grade === 'string') {
+      const m = c.grade.match(/(\d+)/);
+      if (m) return parseInt(m[1], 10);
+    }
+    if (c.name && typeof c.name === 'string') {
+      const m = c.name.match(/(\d+)/);
+      if (m) return parseInt(m[1], 10);
+    }
+    return 99;
+  }, []);
+
+  // 🌟 Chuẩn hóa nhãn hiển thị khối lớp (VD: "Khối 1", "Khối 2", "Khối 3", "Khối 4", "Khối 5")
+  const getClassGradeLabel = React.useCallback((c: Classroom | { name?: string; grade?: string }): string => {
+    if (c.grade && typeof c.grade === 'string' && c.grade.trim()) {
+      const trimmed = c.grade.trim();
+      if (/^khối\s*\d+/i.test(trimmed)) {
+        const m = trimmed.match(/\d+/);
+        return `Khối ${m ? m[0] : trimmed}`;
+      }
+      const num = trimmed.match(/^(\d+)$/);
+      if (num) return `Khối ${num[1]}`;
+      return trimmed;
+    }
+    const num = getClassGradeNumber(c);
+    if (num && num !== 99) return `Khối ${num}`;
+    return 'Khối khác';
+  }, [getClassGradeNumber]);
+
+  // 🌟 Danh sách Khối lớp phục vụ lọc cho Quản trị Trường & Quản trị Cao nhất
+  const availableGrades = React.useMemo(() => {
+    const gradeSet = new Set<string>();
+    classes.forEach(c => {
+      const g = getClassGradeLabel(c);
+      if (g) gradeSet.add(g);
+    });
+    // Sắp xếp các khối theo thứ tự số: Khối 1, Khối 2, Khối 3, Khối 4, Khối 5...
+    return Array.from(gradeSet).sort((a, b) => {
+      const numA = (a.match(/\d+/) ? parseInt(a.match(/\d+/)![0], 10) : 99);
+      const numB = (b.match(/\d+/) ? parseInt(b.match(/\d+/)![0], 10) : 99);
+      if (numA !== numB) return numA - numB;
+      return a.localeCompare(b, 'vi');
+    });
+  }, [classes, getClassGradeLabel]);
+
   // 🌟 Lọc danh sách giáo viên phụ trách theo phạm vi trường của BGH / Quản trị
   // QUY TẮC CỐT LÕI: Chỉ quản lý và tổng hợp từ GIÁO VIÊN CHỦ NHIỆM (role === 'homeroom')
   const relevantTeachers = React.useMemo(() => {
@@ -299,11 +354,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       }
       const tSchool = (t.schoolName || '').trim().toLowerCase();
       if (!mySchool || !tSchool) return false;
-      return tSchool === mySchool || tSchool.includes(mySchool) || mySchool.includes(tSchool);
+      // 🔒 STRICT MATCH: So sánh chính xác tên trường để tránh nhầm trường có tên tương tự
+      return tSchool === mySchool;
     });
   }, [allTeachers, currentUser]);
 
-  // Lọc danh sách lớp học theo tài khoản giáo viên, trường học, phân hiệu & điểm trường
+  // Lọc danh sách lớp học theo tài khoản giáo viên, trường học, phân hiệu, điểm trường & khối lớp
   const displayedClasses = React.useMemo(() => {
     return classes.filter(c => {
       // 1. Lọc theo Giáo viên khi Admin chọn
@@ -326,15 +382,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         const targetSchoolNorm = selectedSchoolFilter.trim().toLowerCase();
         // Kiểm tra qua schoolName của lớp
         const classSchool = (c.schoolName || '').trim().toLowerCase();
-        // Hoặc kiểm tra qua giáo viên phụ trách lớp
+        // Hoặc kiểm tra qua giáo viên phụ trách lớp (chỉ match tài khoản giáo viên, loại trừ tài khoản admin hệ thống)
         const teacherObj = allUsers.find(u => 
           (c.teacherUsername && u.username.toLowerCase() === c.teacherUsername.toLowerCase()) ||
-          (c.teacherName && u.fullName && c.teacherName.toLowerCase() === u.fullName.toLowerCase())
+          (u.role !== 'admin' && u.username?.toLowerCase() !== 'adminquantri' && c.teacherName && u.fullName && c.teacherName.toLowerCase() === u.fullName.toLowerCase())
         );
         const teacherSchool = (teacherObj?.schoolName || '').trim().toLowerCase();
 
-        const matchClassSchool = classSchool === targetSchoolNorm || classSchool.includes(targetSchoolNorm);
-        const matchTeacherSchool = teacherSchool === targetSchoolNorm || teacherSchool.includes(targetSchoolNorm);
+        // 🔒 STRICT MATCH: So sánh chính xác tên trường, không dùng includes()
+        const matchClassSchool = classSchool === targetSchoolNorm;
+        const matchTeacherSchool = teacherSchool === targetSchoolNorm;
 
         if (!matchClassSchool && !matchTeacherSchool) {
           return false;
@@ -361,34 +418,97 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         }
       }
 
-      // 5. Lọc theo từ khóa tìm kiếm (Tên lớp hoặc Tên GV)
+      // 5. Lọc theo KHỐI LỚP (Dành cho Quản trị Trường & Quản trị Cao nhất)
+      if (selectedGradeFilter !== 'all') {
+        const cGradeLabel = getClassGradeLabel(c);
+        const targetNum = selectedGradeFilter.match(/\d+/)?.[0];
+        const classNum = getClassGradeNumber(c).toString();
+
+        const matchLabel = cGradeLabel.toLowerCase() === selectedGradeFilter.toLowerCase();
+        const matchNum = Boolean(targetNum && targetNum === classNum);
+        if (!matchLabel && !matchNum) {
+          return false;
+        }
+      }
+
+      // 6. Lọc theo từ khóa tìm kiếm (Tên lớp, Tên GV, Phân hiệu, Điểm trường)
       if (classSearchQuery.trim()) {
         const query = classSearchQuery.trim().toLowerCase();
         const matchName = (c.name || '').toLowerCase().includes(query);
         const matchTeacher = (c.teacherName || '').toLowerCase().includes(query);
-        if (!matchName && !matchTeacher) {
+        const matchBranch = (c.branch || '').toLowerCase().includes(query);
+        const matchCampus = (c.campus || '').toLowerCase().includes(query);
+        const matchGrade = (c.grade || '').toLowerCase().includes(query);
+        if (!matchName && !matchTeacher && !matchBranch && !matchCampus && !matchGrade) {
           return false;
         }
       }
 
       return true;
     }).sort((a, b) => {
-      // Hàm hỗ trợ bóc tách khối lớp từ tên (VD: 1A1 -> 1, 4A -> 4)
-      const getGrade = (name: string) => {
-        const match = (name || '').match(/^(\d+)/);
-        return match ? parseInt(match[1], 10) : 99; // Lớp không có số đưa xuống cuối
-      };
-      
-      const gradeA = getGrade(a.name || '');
-      const gradeB = getGrade(b.name || '');
-      
-      // Sắp xếp theo khối trước
-      if (gradeA !== gradeB) {
-        return gradeA - gradeB;
+      // 🌟 SẮP XẾP LINH HOẠT THEO YÊU CẦU: Khối lớp, Phân hiệu, Điểm trường, Tên lớp
+      const gradeA = getClassGradeNumber(a);
+      const gradeB = getClassGradeNumber(b);
+      const branchA = (a.branch || '').trim();
+      const branchB = (b.branch || '').trim();
+      const campusA = (a.campus || '').trim();
+      const campusB = (b.campus || '').trim();
+      const nameA = (a.name || '').trim();
+      const nameB = (b.name || '').trim();
+
+      let cmp = 0;
+
+      if (classSortBy === 'branch') {
+        // Sắp xếp theo Phân hiệu: các lớp có phân hiệu xếp trước lớp chưa có
+        if (branchA && !branchB) return classSortOrder === 'asc' ? -1 : 1;
+        if (!branchA && branchB) return classSortOrder === 'asc' ? 1 : -1;
+        cmp = branchA.localeCompare(branchB, 'vi', { sensitivity: 'base' });
+        if (cmp === 0) {
+          // Cùng phân hiệu -> so sánh theo Điểm trường
+          if (campusA && !campusB) return -1;
+          if (!campusA && campusB) return 1;
+          cmp = campusA.localeCompare(campusB, 'vi', { sensitivity: 'base' });
+          if (cmp === 0) {
+            // Cùng điểm trường -> so sánh theo Khối lớp
+            if (gradeA !== gradeB) return gradeA - gradeB;
+            return nameA.localeCompare(nameB, 'vi', { numeric: true });
+          }
+        }
+      } else if (classSortBy === 'campus') {
+        // Sắp xếp theo Điểm trường: các lớp có điểm trường xếp trước
+        if (campusA && !campusB) return classSortOrder === 'asc' ? -1 : 1;
+        if (!campusA && campusB) return classSortOrder === 'asc' ? 1 : -1;
+        cmp = campusA.localeCompare(campusB, 'vi', { sensitivity: 'base' });
+        if (cmp === 0) {
+          // Cùng điểm trường -> so sánh theo Phân hiệu
+          if (branchA && !branchB) return -1;
+          if (!branchA && branchB) return 1;
+          cmp = branchA.localeCompare(branchB, 'vi', { sensitivity: 'base' });
+          if (cmp === 0) {
+            if (gradeA !== gradeB) return gradeA - gradeB;
+            return nameA.localeCompare(nameB, 'vi', { numeric: true });
+          }
+        }
+      } else if (classSortBy === 'name') {
+        // Sắp xếp theo Tên lớp
+        cmp = nameA.localeCompare(nameB, 'vi', { numeric: true });
+      } else {
+        // Mặc định: Sắp xếp theo Khối lớp (grade)
+        if (gradeA !== gradeB) {
+          cmp = gradeA - gradeB;
+        } else {
+          // Cùng khối -> so sánh theo Phân hiệu -> Điểm trường -> Tên lớp
+          if (branchA !== branchB) {
+            cmp = branchA.localeCompare(branchB, 'vi', { sensitivity: 'base' });
+          } else if (campusA !== campusB) {
+            cmp = campusA.localeCompare(campusB, 'vi', { sensitivity: 'base' });
+          } else {
+            cmp = nameA.localeCompare(nameB, 'vi', { numeric: true });
+          }
+        }
       }
-      
-      // Khối giống nhau thì sắp xếp theo tên
-      return (a.name || '').localeCompare(b.name || '', 'vi', { numeric: true });
+
+      return classSortOrder === 'asc' ? cmp : -cmp;
     });
   }, [
     classes, 
@@ -398,9 +518,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     selectedSchoolFilter, 
     selectedBranchFilter, 
     selectedCampusFilter, 
+    selectedGradeFilter,
+    classSortBy,
+    classSortOrder,
     classSearchQuery,
     allTeachers, 
-    allUsers
+    allUsers,
+    getClassGradeLabel,
+    getClassGradeNumber
   ]);
   
   // Selection for bulk student actions
@@ -1171,7 +1296,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const rawData: any[] = XLSX.utils.sheet_to_json(ws);
+        // Đảm bảo không bị sót dòng trống hoặc thiếu cột (User Request 2)
+        const rawData: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
         const parsed: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }> = [];
 
@@ -1455,14 +1581,35 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     setIsClearAllConfirmOpen(false);
   };
 
-  // 🌟 Lọc lấy danh sách Lớp thực tế (chỉ tính lớp chủ nhiệm, loại bỏ lớp bộ môn ảo) để thống kê chính xác
+  // 🌟 Toàn bộ danh sách lớp chủ nhiệm toàn trường (loại bỏ lớp bộ môn/ảo)
+  const allSchoolHomeroomClasses = React.useMemo(() => {
+    return classes.filter(c => (c.teacherRole === 'homeroom' || !c.teacherRole) && !c.id.startsWith('class-sub-'));
+  }, [classes]);
+
+  // 🌟 Tập hợp ID lớp hợp lệ thuộc toàn trường
+  const validSchoolClassIdSet = React.useMemo(() => {
+    return new Set(allSchoolHomeroomClasses.map(c => c.id));
+  }, [allSchoolHomeroomClasses]);
+
+  // 🌟 Tổng số học sinh toàn trường thuộc các lớp hợp lệ (chính xác 103 em: 1A1: 30, 1A2: 45, 1A3: 28)
+  const totalSchoolStudentsCount = React.useMemo(() => {
+    return students.filter(s => 
+      Boolean(s.classId && validSchoolClassIdSet.has(s.classId)) &&
+      s.classId !== 'class-1791592764810' &&
+      !s.classId.startsWith('class-sub-')
+    ).length;
+  }, [students, validSchoolClassIdSet]);
+
+  // 🌟 Lọc lấy danh sách Lớp thực tế đang hiển thị theo bộ lọc
   const statsHomeroomClasses = React.useMemo(() => {
-    return displayedClasses.filter(c => c.teacherRole === 'homeroom' || !c.teacherRole);
+    return displayedClasses.filter(c => (c.teacherRole === 'homeroom' || !c.teacherRole) && !c.id.startsWith('class-sub-'));
   }, [displayedClasses]);
 
+  // 🌟 Sĩ số của các lớp đang hiển thị theo bộ lọc
   const statsTotalStudents = React.useMemo(() => {
     return statsHomeroomClasses.reduce((sum, c) => {
-      return sum + students.filter(s => s.classId === c.id).length;
+      if (c.id === 'class-1791592764810' || c.id.startsWith('class-sub-')) return sum;
+      return sum + students.filter(s => s.classId === c.id && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-')).length;
     }, 0);
   }, [statsHomeroomClasses, students]);
 
@@ -1529,8 +1676,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               <div>
                 <span className="text-[10px] font-black text-indigo-100 uppercase tracking-wider block">TỔNG LỚP ĐANG QUẢN LÝ</span>
                 <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
-                  {statsHomeroomClasses.length} <span className="text-xs font-bold text-cyan-100 uppercase">LỚP HỌC</span>
+                  {allSchoolHomeroomClasses.length} <span className="text-xs font-bold text-cyan-100 uppercase">LỚP HỌC</span>
                 </div>
+                {statsHomeroomClasses.length !== allSchoolHomeroomClasses.length && (
+                  <div className="text-[10px] font-bold text-amber-200 mt-0.5 flex items-center gap-1">
+                    <span>⚡ Đang hiển thị:</span>
+                    <span className="bg-white/20 px-1.5 py-0.2 rounded-md">{statsHomeroomClasses.length} lớp</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1542,8 +1695,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               <div>
                 <span className="text-[10px] font-black text-emerald-100 uppercase tracking-wider block">TỔNG SỐ HỌC SINH CÁC LỚP</span>
                 <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
-                  {statsTotalStudents} <span className="text-xs font-bold text-emerald-100 uppercase">EM HỌC SINH</span>
+                  {totalSchoolStudentsCount} <span className="text-xs font-bold text-emerald-100 uppercase">EM HỌC SINH</span>
                 </div>
+                {statsHomeroomClasses.length !== allSchoolHomeroomClasses.length && (
+                  <div className="text-[10px] font-bold text-teal-100 mt-0.5 flex items-center gap-1">
+                    <span>⚡ Đang lọc:</span>
+                    <span className="bg-white/20 px-1.5 py-0.2 rounded-md">{statsTotalStudents} em</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1558,7 +1717,10 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               <div className="flex items-center justify-between mt-auto pt-1">
                 <div>
                   <div className="text-lg font-black text-white mt-1">Bảng Tổng Hợp</div>
-                  <div className="text-[11px] text-amber-100 font-semibold">{statsHomeroomClasses.length} lớp học đang hoạt động</div>
+                  <div className="text-[11px] text-amber-100 font-semibold">
+                    {allSchoolHomeroomClasses.length} lớp học đang hoạt động
+                    {statsHomeroomClasses.length !== allSchoolHomeroomClasses.length && ` (Lọc: ${statsHomeroomClasses.length})`}
+                  </div>
                 </div>
                 <button
                   onClick={() => setIsClassStatsModalOpen(true)}
@@ -1614,7 +1776,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     const cSch = (c.schoolName || '').trim().toLowerCase();
                     const teacher = allUsers.find(u => 
                       (c.teacherUsername && u.username.toLowerCase() === c.teacherUsername.toLowerCase()) ||
-                      (c.teacherName && u.fullName && c.teacherName.toLowerCase() === u.fullName.toLowerCase())
+                      (u.role !== 'admin' && u.username?.toLowerCase() !== 'adminquantri' && c.teacherName && u.fullName && c.teacherName.toLowerCase() === u.fullName.toLowerCase())
                     );
                     const tSch = (teacher?.schoolName || '').trim().toLowerCase();
                     return cSch === targetNorm || cSch.includes(targetNorm) || tSch === targetNorm || tSch.includes(targetNorm);
@@ -1640,128 +1802,353 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
           )}
 
-          {/* 🏛️ BỘ LỌC DÀNH CHO TÀI KHOẢN TRƯỜNG & BAN GIÁM HIỆU: LỌC THEO PHÂN HIỆU HOẶC ĐIỂM TRƯỜNG */}
-          {(isSchoolScopeAccount || isSuperAdmin) && (availableBranches.length > 0 || availableCampuses.length > 0) && (
-            <div className="p-3 bg-gradient-to-r from-sky-50/80 via-teal-50/80 to-emerald-50/80 rounded-2xl border border-teal-200 shadow-2xs space-y-1.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* 🏛️ BỘ LỌC & SẮP XẾP DÀNH CHO QUẢN TRỊ TRƯỜNG & SUPER ADMIN: PHÂN HIỆU • ĐIỂM TRƯỜNG • KHỐI LỚP */}
+          {(isSchoolScopeAccount || isSuperAdmin) && (classes.length > 0 || availableBranches.length > 0 || availableCampuses.length > 0) && (
+            <div className="p-3.5 sm:p-4 bg-gradient-to-r from-sky-50/90 via-teal-50/90 to-emerald-50/90 rounded-2xl border border-teal-200/90 shadow-2xs space-y-3">
+              {/* Tiêu đề & Công cụ đặt lại */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-teal-200/60">
                 <div className="flex items-center gap-2">
-                  <span className="p-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-lg shadow-2xs">
-                    <MapPin className="w-3.5 h-3.5" />
+                  <span className="p-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white rounded-xl shadow-xs">
+                    <SlidersHorizontal className="w-4 h-4" />
                   </span>
                   <div>
-                    <span className="text-xs font-black text-teal-950 uppercase tracking-tight">
-                      QUẢN TRỊ TRƯỜNG • LỌC THEO PHÂN HIỆU / ĐIỂM TRƯỜNG
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs sm:text-sm font-black text-teal-950 uppercase tracking-tight">
+                        QUẢN TRỊ TRƯỜNG • BỘ LỌC & SẮP XẾP LỚP HỌC
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-300">
+                        {displayedClasses.length} / {classes.length} Lớp
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-teal-800 font-semibold">
+                      Lọc và sắp xếp các lớp theo Phân hiệu, Điểm trường và Khối lớp
+                    </p>
                   </div>
                 </div>
-                {(selectedBranchFilter !== 'all' || selectedCampusFilter !== 'all') && (
+
+                {/* Các nút thao tác reset */}
+                {(selectedBranchFilter !== 'all' || selectedCampusFilter !== 'all' || selectedGradeFilter !== 'all' || classSortBy !== 'grade' || classSortOrder !== 'asc') && (
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedBranchFilter('all');
                       setSelectedCampusFilter('all');
+                      setSelectedGradeFilter('all');
+                      setClassSortBy('grade');
+                      setClassSortOrder('asc');
                     }}
-                    className="text-[10px] font-bold text-teal-700 hover:text-teal-900 bg-white px-2 py-0.5 rounded-lg border border-teal-200 shadow-2xs"
+                    className="text-xs font-bold text-teal-800 hover:text-teal-950 bg-white px-3 py-1 rounded-xl border border-teal-300 shadow-2xs hover:bg-teal-50 transition-all flex items-center gap-1.5"
+                    title="Đặt lại toàn bộ các bộ lọc và thứ tự sắp xếp về mặc định"
                   >
-                    🔄 Đặt lại bộ lọc
+                    <RotateCcw className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Đặt lại bộ lọc & sắp xếp</span>
                   </button>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 pt-0.5">
-                {/* Cấp 1: Phân hiệu */}
+              {/* KHỐI 1: CÁC TIÊU CHÍ LỌC (PHÂN HIỆU, ĐIỂM TRƯỜNG, KHỐI LỚP) */}
+              <div className="space-y-2">
+                {/* 1. Lọc theo Phân hiệu */}
                 {(availableBranches.length > 0 || hasUnassignedBranch) && (
-                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
-                    <span className="text-[11px] font-bold text-teal-900 uppercase whitespace-nowrap">
-                      🏛️ Phân hiệu:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedBranchFilter('all')}
-                      className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                        selectedBranchFilter === 'all'
-                          ? 'bg-teal-600 text-white shadow-2xs'
-                          : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
-                      }`}
-                    >
-                      Tất cả
-                    </button>
-                    {availableBranches.map(br => (
+                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin py-0.5">
+                    <div className="flex items-center gap-1 min-w-[95px] shrink-0 text-[11px] font-black text-teal-900 uppercase">
+                      <span>🏛️</span>
+                      <span>Phân hiệu:</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
                       <button
-                        key={br}
                         type="button"
-                        onClick={() => setSelectedBranchFilter(br)}
-                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                          selectedBranchFilter === br
-                            ? 'bg-teal-600 text-white shadow-2xs ring-1 ring-teal-400'
+                        onClick={() => setSelectedBranchFilter('all')}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                          selectedBranchFilter === 'all'
+                            ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-xs ring-2 ring-teal-300'
                             : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
                         }`}
                       >
-                        {br}
+                        Tất cả ({classes.length})
                       </button>
-                    ))}
-                    {hasUnassignedBranch && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBranchFilter('__unassigned__')}
-                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                          selectedBranchFilter === '__unassigned__'
-                            ? 'bg-amber-600 text-white shadow-2xs ring-1 ring-amber-400'
-                            : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
-                        }`}
-                      >
-                        ⚠️ Chưa gán (Null)
-                      </button>
-                    )}
+                      {availableBranches.map(br => {
+                        const countInBranch = classes.filter(c => (c.branch || '').trim() === br).length;
+                        return (
+                          <button
+                            key={br}
+                            type="button"
+                            onClick={() => setSelectedBranchFilter(br)}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                              selectedBranchFilter === br
+                                ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-xs ring-2 ring-teal-300'
+                                : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
+                            }`}
+                          >
+                            <span>{br}</span>
+                            <span className="ml-1 opacity-80 text-[10.5px]">({countInBranch})</span>
+                          </button>
+                        );
+                      })}
+                      {hasUnassignedBranch && (() => {
+                        const countUnassigned = classes.filter(c => !c.branch || !c.branch.trim()).length;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedBranchFilter('__unassigned__')}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                              selectedBranchFilter === '__unassigned__'
+                                ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
+                                : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+                            }`}
+                          >
+                            <span>⚠️ Chưa gán</span>
+                            <span className="ml-1 text-[10.5px]">({countUnassigned})</span>
+                          </button>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
 
-                {/* Cấp 2: Điểm trường */}
+                {/* 2. Lọc theo Điểm trường */}
                 {(availableCampuses.length > 0 || hasUnassignedCampus) && (
-                  <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
-                    <span className="text-[11px] font-bold text-sky-900 uppercase whitespace-nowrap">
-                      📍 Điểm:
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCampusFilter('all')}
-                      className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                        selectedCampusFilter === 'all'
-                          ? 'bg-sky-600 text-white shadow-2xs'
-                          : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
-                      }`}
-                    >
-                      Tất cả
-                    </button>
-                    {availableCampuses.map(cp => (
+                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin py-0.5">
+                    <div className="flex items-center gap-1 min-w-[95px] shrink-0 text-[11px] font-black text-sky-900 uppercase">
+                      <span>📍</span>
+                      <span>Điểm trường:</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
                       <button
-                        key={cp}
                         type="button"
-                        onClick={() => setSelectedCampusFilter(cp)}
-                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                          selectedCampusFilter === cp
-                            ? 'bg-sky-600 text-white shadow-2xs ring-1 ring-sky-400'
+                        onClick={() => setSelectedCampusFilter('all')}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                          selectedCampusFilter === 'all'
+                            ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-xs ring-2 ring-sky-300'
                             : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
                         }`}
                       >
-                        {cp}
+                        Tất cả
                       </button>
-                    ))}
-                    {hasUnassignedCampus && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCampusFilter('__unassigned__')}
-                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                          selectedCampusFilter === '__unassigned__'
-                            ? 'bg-amber-600 text-white shadow-2xs ring-1 ring-amber-400'
-                            : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
-                        }`}
-                      >
-                        ⚠️ Chưa gán (Null)
-                      </button>
-                    )}
+                      {availableCampuses.map(cp => {
+                        const countInCampus = classes.filter(c => {
+                          if (selectedBranchFilter !== 'all' && (c.branch || '').trim() !== selectedBranchFilter) return false;
+                          return (c.campus || '').trim() === cp;
+                        }).length;
+                        return (
+                          <button
+                            key={cp}
+                            type="button"
+                            onClick={() => setSelectedCampusFilter(cp)}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                              selectedCampusFilter === cp
+                                ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-xs ring-2 ring-sky-300'
+                                : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
+                            }`}
+                          >
+                            <span>{cp}</span>
+                            <span className="ml-1 opacity-80 text-[10.5px]">({countInCampus})</span>
+                          </button>
+                        );
+                      })}
+                      {hasUnassignedCampus && (() => {
+                        const countUnassignedCp = classes.filter(c => {
+                          if (selectedBranchFilter !== 'all' && (c.branch || '').trim() !== selectedBranchFilter) return false;
+                          return !c.campus || !c.campus.trim();
+                        }).length;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCampusFilter('__unassigned__')}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                              selectedCampusFilter === '__unassigned__'
+                                ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
+                                : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+                            }`}
+                          >
+                            <span>⚠️ Chưa gán</span>
+                            <span className="ml-1 text-[10.5px]">({countUnassignedCp})</span>
+                          </button>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
+
+                {/* 3. Lọc theo Khối lớp (MỚI THEO YÊU CẦU) */}
+                {availableGrades.length > 0 && (
+                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin py-0.5">
+                    <div className="flex items-center gap-1 min-w-[95px] shrink-0 text-[11px] font-black text-indigo-900 uppercase">
+                      <span>🎓</span>
+                      <span>Khối lớp:</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGradeFilter('all')}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                          selectedGradeFilter === 'all'
+                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs ring-2 ring-indigo-300'
+                            : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
+                        }`}
+                      >
+                        Tất cả khối ({classes.length})
+                      </button>
+                      {availableGrades.map(gr => {
+                        const countInGrade = classes.filter(c => {
+                          if (selectedBranchFilter === '__unassigned__') {
+                            if (c.branch && c.branch.trim()) return false;
+                          } else if (selectedBranchFilter !== 'all' && (c.branch || '').trim().toLowerCase() !== selectedBranchFilter.trim().toLowerCase()) {
+                            return false;
+                          }
+                          if (selectedCampusFilter === '__unassigned__') {
+                            if (c.campus && c.campus.trim()) return false;
+                          } else if (selectedCampusFilter !== 'all' && (c.campus || '').trim().toLowerCase() !== selectedCampusFilter.trim().toLowerCase()) {
+                            return false;
+                          }
+                          return getClassGradeLabel(c) === gr;
+                        }).length;
+
+                        return (
+                          <button
+                            key={gr}
+                            type="button"
+                            onClick={() => setSelectedGradeFilter(gr)}
+                            className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-2xs ${
+                              selectedGradeFilter === gr
+                                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs ring-2 ring-indigo-300'
+                                : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
+                            }`}
+                          >
+                            <span>{gr}</span>
+                            <span className="ml-1 opacity-80 text-[10.5px]">({countInGrade})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* KHỐI 2: CÔNG CỤ SẮP XẾP LỚP HỌC (THEO PHÂN HIỆU, ĐIỂM TRƯỜNG, KHỐI LỚP) */}
+              <div className="pt-2.5 border-t border-teal-200/60 flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1 text-[11px] font-black text-teal-950 uppercase shrink-0">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-teal-700" />
+                    <span>Sắp xếp theo:</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* Sắp xếp theo Khối */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (classSortBy === 'grade') {
+                          setClassSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setClassSortBy('grade');
+                          setClassSortOrder('asc');
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 shadow-2xs ${
+                        classSortBy === 'grade'
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white ring-2 ring-indigo-300 shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-indigo-50 border border-slate-200'
+                      }`}
+                      title="Sắp xếp lớp theo Khối (Khối 1 -> 5)"
+                    >
+                      <span>🎓</span>
+                      <span>Khối lớp</span>
+                      {classSortBy === 'grade' && (
+                        <span className="text-[10px]">{classSortOrder === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </button>
+
+                    {/* Sắp xếp theo Phân hiệu */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (classSortBy === 'branch') {
+                          setClassSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setClassSortBy('branch');
+                          setClassSortOrder('asc');
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 shadow-2xs ${
+                        classSortBy === 'branch'
+                          ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white ring-2 ring-teal-300 shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-teal-50 border border-slate-200'
+                      }`}
+                      title="Sắp xếp lớp theo Phân hiệu"
+                    >
+                      <span>🏛️</span>
+                      <span>Phân hiệu</span>
+                      {classSortBy === 'branch' && (
+                        <span className="text-[10px]">{classSortOrder === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </button>
+
+                    {/* Sắp xếp theo Điểm trường */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (classSortBy === 'campus') {
+                          setClassSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setClassSortBy('campus');
+                          setClassSortOrder('asc');
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 shadow-2xs ${
+                        classSortBy === 'campus'
+                          ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white ring-2 ring-sky-300 shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-sky-50 border border-slate-200'
+                      }`}
+                      title="Sắp xếp lớp theo Điểm trường"
+                    >
+                      <span>📍</span>
+                      <span>Điểm trường</span>
+                      {classSortBy === 'campus' && (
+                        <span className="text-[10px]">{classSortOrder === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </button>
+
+                    {/* Sắp xếp theo Tên lớp */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (classSortBy === 'name') {
+                          setClassSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                        } else {
+                          setClassSortBy('name');
+                          setClassSortOrder('asc');
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 shadow-2xs ${
+                        classSortBy === 'name'
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white ring-2 ring-purple-300 shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-purple-50 border border-slate-200'
+                      }`}
+                      title="Sắp xếp theo Tên lớp (A - Z)"
+                    >
+                      <span>🔤</span>
+                      <span>Tên lớp</span>
+                      {classSortBy === 'name' && (
+                        <span className="text-[10px]">{classSortOrder === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Nút Đảo Chiều Sắp Xếp */}
+                <button
+                  type="button"
+                  onClick={() => setClassSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-white text-teal-900 hover:bg-teal-50 border border-teal-300 shadow-2xs transition-all flex items-center gap-1.5 shrink-0"
+                  title="Đảo chiều sắp xếp (Tăng dần / Giảm dần)"
+                >
+                  <ArrowUpDown className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Thứ tự:</span>
+                  <strong className="text-teal-700">
+                    {classSortOrder === 'asc' ? 'Tăng dần (A ➜ Z / 1 ➜ 5)' : 'Giảm dần (Z ➜ A / 5 ➜ 1)'}
+                  </strong>
+                </button>
               </div>
             </div>
           )}
@@ -1778,6 +2165,18 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
 
             // Giáo viên đang được chọn (nếu có)
             const activeTeacherObj = relevantTeachers.find(t => t.username === adminTeacherFilter);
+
+            // Các lớp thuộc giáo viên đang chọn (nếu đang lọc theo GV)
+            const activeTeacherClasses = adminTeacherFilter === 'all'
+              ? allSchoolHomeroomClasses
+              : classes.filter(c => 
+                  (c.teacherUsername && c.teacherUsername.toLowerCase() === adminTeacherFilter.toLowerCase()) ||
+                  (activeTeacherObj && c.teacherName && c.teacherName.toLowerCase() === activeTeacherObj.fullName.toLowerCase())
+                );
+            const activeTeacherClassIds = new Set(activeTeacherClasses.map(c => c.id));
+            const activeTeacherStudentsCount = adminTeacherFilter === 'all'
+              ? totalSchoolStudentsCount
+              : students.filter(s => Boolean(s.classId && activeTeacherClassIds.has(s.classId))).length;
 
             return (
               <div className="p-2.5 sm:p-3 bg-gradient-to-r from-amber-50/80 via-indigo-50/70 to-purple-50/80 rounded-2xl border border-indigo-200/90 shadow-2xs space-y-2">
@@ -1797,11 +2196,17 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         </span>
                       </div>
                       <div className="text-[10px] text-slate-500 font-medium">
-                        Tổng số: <strong className="text-indigo-700">{classes.length} lớp</strong> • <strong className="text-emerald-700">{students.length} học sinh</strong>
-                        {activeTeacherObj && (
-                          <span className="ml-2 font-bold text-indigo-900 bg-white/90 px-2 py-0.5 rounded-md border border-indigo-200">
-                            Đang lọc: {activeTeacherObj.fullName}
-                          </span>
+                        {adminTeacherFilter === 'all' ? (
+                          <>
+                            Tổng số: <strong className="text-indigo-700">{allSchoolHomeroomClasses.length} lớp</strong> • <strong className="text-emerald-700">{totalSchoolStudentsCount} học sinh</strong>
+                          </>
+                        ) : (
+                          <>
+                            Giáo viên <strong className="text-indigo-900">{activeTeacherObj?.fullName || adminTeacherFilter}</strong>: <strong className="text-indigo-700">{activeTeacherClasses.length} lớp</strong> • <strong className="text-emerald-700">{activeTeacherStudentsCount} học sinh</strong>
+                            <span className="ml-2 font-bold text-indigo-900 bg-white/90 px-2 py-0.5 rounded-md border border-indigo-200">
+                              Toàn trường: {allSchoolHomeroomClasses.length} lớp • {totalSchoolStudentsCount} HS
+                            </span>
+                          </>
                         )}
                       </div>
                     </div>
@@ -1817,7 +2222,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                         className="px-2.5 py-1 text-xs font-bold text-slate-700 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-xl shadow-2xs transition-all flex items-center gap-1"
                       >
                         <span>🌐</span>
-                        <span>Xem tất cả lớp ({classes.length})</span>
+                        <span>Xem tất cả ({allSchoolHomeroomClasses.length} lớp • {totalSchoolStudentsCount} HS)</span>
                       </button>
                     )}
 
@@ -1959,7 +2364,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                           }`}
                         >
                           <span>🌟</span>
-                          <span>Tất cả ({classes.length} lớp)</span>
+                          <span>Tất cả ({allSchoolHomeroomClasses.length} lớp • {totalSchoolStudentsCount} HS)</span>
                         </button>
 
                         {/* Danh sách các giáo viên sau khi phân nhóm và tìm kiếm */}
@@ -1968,6 +2373,8 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                             (c.teacherUsername && c.teacherUsername.toLowerCase() === t.username.toLowerCase()) ||
                             (c.teacherName && c.teacherName.toLowerCase() === t.fullName.toLowerCase())
                           );
+                          const tClassIds = new Set(tClasses.map(c => c.id));
+                          const tStudentsCount = students.filter(s => Boolean(s.classId && tClassIds.has(s.classId))).length;
                           const isSelected = adminTeacherFilter === t.username;
                           const isGuest = isGuestTeacher(t);
 
@@ -1983,12 +2390,12 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                                     ? 'bg-indigo-50/70 text-indigo-950 hover:bg-indigo-100 border border-indigo-200 font-extrabold'
                                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                               }`}
-                              title={`Tài khoản: ${t.username} • Đơn vị: ${t.schoolName || 'Chưa rõ'} • Số lớp: ${tClasses.length}`}
+                              title={`Tài khoản: ${t.username} • Đơn vị: ${t.schoolName || 'Chưa rõ'} • Số lớp: ${tClasses.length} • Sĩ số: ${tStudentsCount} học sinh`}
                             >
                               <span className="text-[11px]">{isSelected ? '✓' : isGuest ? '🌱' : '🏫'}</span>
                               <span>{t.fullName}</span>
                               <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                {tClasses.length} lớp
+                                {tClasses.length} lớp{tStudentsCount > 0 ? ` • ${tStudentsCount} HS` : ''}
                               </span>
                             </button>
                           );
@@ -2219,27 +2626,55 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
             </div>
           )}
 
-          {/* TÌM KIẾM NHANH LỚP HỌC */}
-          <div className="relative mb-4 max-w-lg">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-400" />
+          {/* TÌM KIẾM NHANH LỚP HỌC & THANH SẮP XẾP NHANH */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="relative flex-1 min-w-[280px] max-w-lg">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                value={classSearchQuery}
+                onChange={(e) => setClassSearchQuery(e.target.value)}
+                placeholder="Nhập tên lớp, giáo viên, phân hiệu, điểm trường..."
+                className="block w-full pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-shadow"
+              />
+              {classSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setClassSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <X className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors" />
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              value={classSearchQuery}
-              onChange={(e) => setClassSearchQuery(e.target.value)}
-              placeholder="Nhập tên lớp hoặc tên giáo viên chủ nhiệm để tìm kiếm..."
-              className="block w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-shadow"
-            />
-            {classSearchQuery && (
+
+            {/* Quick Sort Bar bên cạnh ô tìm kiếm */}
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-indigo-200 shadow-2xs">
+              <span className="text-xs font-black text-slate-600 flex items-center gap-1 uppercase">
+                <ArrowUpDown className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Sắp xếp:</span>
+              </span>
+              <select
+                value={classSortBy}
+                onChange={(e) => setClassSortBy(e.target.value as any)}
+                className="text-xs font-bold text-indigo-950 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none cursor-pointer hover:bg-slate-100"
+              >
+                <option value="grade">🎓 Khối lớp</option>
+                <option value="branch">🏛️ Phân hiệu</option>
+                <option value="campus">📍 Điểm trường</option>
+                <option value="name">🔤 Tên lớp (A-Z)</option>
+              </select>
               <button
                 type="button"
-                onClick={() => setClassSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setClassSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-all border border-indigo-200 flex items-center gap-1"
+                title={classSortOrder === 'asc' ? 'Đang tăng dần (A-Z / 1-5). Click đổi sang giảm dần' : 'Đang giảm dần (Z-A / 5-1). Click đổi sang tăng dần'}
               >
-                <X className="h-4 w-4 text-slate-400 hover:text-slate-600 transition-colors" />
+                <span>{classSortOrder === 'asc' ? '▲ Tăng dần' : '▼ Giảm dần'}</span>
               </button>
-            )}
+            </div>
           </div>
 
           {/* Grid Thẻ Lớp Học LỚN, RÕ NÉT kèm Ảnh Đại Diện To Rõ */}
@@ -6744,12 +7179,23 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </table>
             </div>
             
-            <div className="pt-4 pb-2 mt-2 border-t border-slate-100 flex justify-between items-center shrink-0">
+            <div className="pt-4 pb-2 mt-2 border-t border-slate-100 flex flex-wrap justify-between items-center gap-2 shrink-0">
               <div className="text-xs font-bold text-slate-500">
                 Tổng số lớp: <span className="text-indigo-600">{statsHomeroomClasses.length}</span>
+                {statsHomeroomClasses.length !== allSchoolHomeroomClasses.length && (
+                  <span className="text-slate-400 font-normal"> / {allSchoolHomeroomClasses.length} toàn trường</span>
+                )}
               </div>
               <div className="text-sm font-black text-slate-800">
-                Tổng số học sinh toàn trường: <span className="text-emerald-600">{statsTotalStudents} Em</span>
+                {statsHomeroomClasses.length !== allSchoolHomeroomClasses.length ? (
+                  <>
+                    Đang hiển thị: <span className="text-indigo-600">{statsTotalStudents} Em</span> • Toàn trường: <span className="text-emerald-600">{totalSchoolStudentsCount} Em</span>
+                  </>
+                ) : (
+                  <>
+                    Tổng số học sinh toàn trường: <span className="text-emerald-600">{totalSchoolStudentsCount} Em</span>
+                  </>
+                )}
               </div>
             </div>
           </div>

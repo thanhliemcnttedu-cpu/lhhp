@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { playNoiseAlertSound } from '../../utils/audio';
 import { NavigationMenuId } from './Sidebar';
+import { getOfficialDisplayName, getOfficialRoleTitle } from '../../utils/accountIdentity';
 
 interface TopBarProps {
   currentView: NavigationMenuId;
@@ -126,13 +127,24 @@ export const TopBar: React.FC<TopBarProps> = ({
     teacherRole, setTeacherRole, subjectTeacherConfig,
     currentUser, allUsers, switchUserAccount, logoutUser, 
     setIsAuthModalOpen, setIsAccountManagerOpen, isGithubModalOpen, setIsGithubModalOpen,
-    dbSyncStatus, lastDbSyncTime, syncDatabaseNow, isAdmin,
+    dbSyncStatus, lastDbSyncTime, syncDatabaseNow, isAdmin, isSchoolAdmin,
     isDemo, isBgh, canManageAccounts, setIsRegistrationModalOpen, demoWarningMessage
   } = useClassroom();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [currentTimeStr, setCurrentTimeStr] = useState('13:13');
+
+  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
+  const isSchoolAdminAccount = Boolean(
+    currentUser?.role === 'school_admin' || 
+    currentUser?.isSchoolAdmin || 
+    isSchoolAdmin ||
+    currentUser?.role === 'bgh' || 
+    currentUser?.isBgh ||
+    isBgh
+  );
+  const isManagementAdmin = isSuperAdmin || isSchoolAdminAccount;
 
   // Đảm bảo không áp dụng CSS zoom gây lỗi khoảng trắng
   useEffect(() => {
@@ -240,10 +252,16 @@ export const TopBar: React.FC<TopBarProps> = ({
           <h2 className="text-xs sm:text-sm md:text-base font-black text-slate-900 tracking-tight leading-tight truncate">
             <span className="sm:hidden">{viewInfo.shortTitle || viewInfo.title}</span>
             <span className="hidden sm:inline">{viewInfo.title}</span>
-            {currentView !== 'dashboard' && currentView !== 'classes' && activeClass && (
-              <span className="text-indigo-600 font-extrabold ml-1.5 hidden md:inline-block">
-                {activeClass.name.trim().toLowerCase().startsWith('lớp') ? activeClass.name.trim() : `Lớp ${activeClass.name.trim()}`}
-              </span>
+            {currentView !== 'dashboard' && currentView !== 'classes' && (
+              isManagementAdmin ? (
+                <span className="text-indigo-600 font-extrabold ml-1.5 hidden md:inline-block uppercase">
+                  {isSuperAdmin && currentView === 'data' ? 'HỆ THỐNG & NHÀ TRƯỜNG' : 'TOÀN TRƯỜNG'}
+                </span>
+              ) : activeClass ? (
+                <span className="text-indigo-600 font-extrabold ml-1.5 hidden md:inline-block">
+                  {activeClass.name.trim().toLowerCase().startsWith('lớp') ? activeClass.name.trim() : `Lớp ${activeClass.name.trim()}`}
+                </span>
+              ) : null
             )}
           </h2>
           <p className="text-[9.5px] sm:text-[10.5px] text-slate-500 font-medium leading-tight truncate hidden sm:block mt-0.5">
@@ -254,38 +272,28 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Zone 2: Status Pill, Role Switcher, Class Selector, Profile & Quick Actions */}
       <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 shrink-0">
-        {/* Role Control: ADMIN has switchable toggle to preview/inspect GVCN and GVBM views. TEACHERS have fixed locked role badges. */}
-        {isAdmin ? (
-          <div className="flex items-center p-0.5 sm:p-1 bg-slate-100 rounded-2xl border border-indigo-200/90 shadow-2xs">
-            <span className="text-[10px] font-black text-indigo-700 px-2 uppercase hidden 2xl:inline">
-              XEM THEO:
-            </span>
-            <button
-              onClick={() => handleSwitchRole('homeroom')}
-              className={`px-2 sm:px-2.5 py-1 text-xs font-black rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 uppercase ${
-                teacherRole === 'homeroom'
-                  ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/25'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-              }`}
-              title="Quản trị viên xem giao diện Giáo viên chủ nhiệm: Điểm danh, Infographic, Sơ đồ lớp, Thời khóa biểu lớp"
-            >
-              <span>🏫</span>
-              <span className="hidden 2xl:inline">GV CHỦ NHIỆM</span>
-              <span className="2xl:hidden">GVCN</span>
-            </button>
-            <button
-              onClick={() => handleSwitchRole('subject')}
-              className={`px-2 sm:px-2.5 py-1 text-xs font-black rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 uppercase ${
-                teacherRole === 'subject'
-                  ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/25'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-              }`}
-              title="Quản trị viên xem giao diện Giáo viên bộ môn: Khởi tạo lớp bộ môn, sắp TKB nhiều lớp, chấm sao thi đua"
-            >
-              <span>💻</span>
-              <span className="hidden 2xl:inline">GV BỘ MÔN</span>
-              <span className="2xl:hidden">GVBM</span>
-            </button>
+        {/* Role Control: Quản trị viên tối cao & Quản trị nhà trường chỉ tổng hợp lớp GV Chủ nhiệm, loại bỏ nút xem GV Bộ môn trên TopBar để tránh nhầm lẫn */}
+        {isManagementAdmin ? (
+          <div className="flex items-center">
+            {isSuperAdmin ? (
+              <div 
+                className="px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-black rounded-xl bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs flex items-center gap-1 sm:gap-1.5 uppercase shrink-0"
+                title="Tài khoản Quản trị viên Tối cao: Quản trị hệ thống, tổng hợp số liệu các lớp Giáo viên chủ nhiệm"
+              >
+                <span>🛡️</span>
+                <span className="hidden sm:inline">QUẢN TRỊ TỐI CAO</span>
+                <span className="sm:hidden">ADMIN</span>
+              </div>
+            ) : (
+              <div 
+                className="px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-black rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs flex items-center gap-1 sm:gap-1.5 uppercase shrink-0"
+                title="Tài khoản Quản trị Nhà trường: Tổng hợp toàn bộ số liệu các lớp Giáo viên chủ nhiệm trong trường"
+              >
+                <span>🏫</span>
+                <span className="hidden sm:inline">QUẢN TRỊ NHÀ TRƯỜNG</span>
+                <span className="sm:hidden">QUẢN TRỊ</span>
+              </div>
+            )}
           </div>
         ) : (
           /* Teachers have locked role badge: cannot switch roles without logging out and logging in to proper account */
@@ -376,70 +384,72 @@ export const TopBar: React.FC<TopBarProps> = ({
           </span>
         )}
 
-        {/* Class Selector Dropdown Pill matching PDF: Purple rounded-2xl */}
-        <div className="relative shrink-0">
-          <button
-            onClick={() => setIsClassDropdownOpen(!isClassDropdownOpen)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-sm shadow-indigo-600/20 transition-all hover-zoom-btn uppercase shrink-0"
-          >
-            <div className="w-4 h-4 rounded-md bg-white/20 flex items-center justify-center font-black text-xs">
-              <School className="w-3 h-3 text-white" />
-            </div>
-            <span>{activeClass?.name}</span>
-            <span className="text-[10px] text-indigo-200 font-bold hidden 2xl:inline uppercase">
-              {activeClass?.grade} • {currentClassStudents.length} HS
-            </span>
-            <ChevronDown className="w-3 h-3 text-indigo-200" />
-          </button>
-
-          {isClassDropdownOpen && (
-            <div 
-              className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-              onMouseLeave={() => setIsClassDropdownOpen(false)}
+        {/* Class Selector Dropdown: Chỉ dành cho Giáo viên chủ nhiệm & Giáo viên bộ môn. Ẩn hoàn toàn với Quản trị tối cao & Quản trị nhà trường */}
+        {!isManagementAdmin && (
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setIsClassDropdownOpen(!isClassDropdownOpen)}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-sm shadow-indigo-600/20 transition-all hover-zoom-btn uppercase shrink-0"
             >
-              <div className="px-3.5 py-1 text-[11px] font-black text-slate-400 uppercase tracking-wider">
-                CHỌN LỚP HỌC
+              <div className="w-4 h-4 rounded-md bg-white/20 flex items-center justify-center font-black text-xs">
+                <School className="w-3 h-3 text-white" />
               </div>
-              {classes.map(cls => (
-                <button
-                  key={cls.id}
-                  onClick={() => {
-                    setActiveClassId(cls.id);
-                    setIsClassDropdownOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2 text-xs md:text-sm text-left hover:bg-slate-50 transition-colors uppercase ${
-                    cls.id === activeClassId ? 'bg-indigo-50 text-indigo-700 font-black' : 'text-slate-700 font-bold'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span 
-                      className="w-3 h-3 rounded-full shrink-0" 
-                      style={{ backgroundColor: cls.color }}
-                    />
-                    <span className="font-black">{cls.name}</span>
-                    <span className="text-xs text-slate-400 font-normal">· {cls.grade}</span>
-                  </div>
-                  {cls.id === activeClassId && (
-                    <span className="text-[11px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full uppercase">
-                      ĐANG CHỌN
-                    </span>
-                  )}
-                </button>
-              ))}
-              <div className="border-t border-slate-100 mt-1.5 pt-1.5 px-2">
-                <button
-                  onClick={() => {
-                    setIsClassDropdownOpen(false);
-                    onNavigate('classes');
-                  }}
-                  className="w-full text-left px-2 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 font-black rounded-xl transition-colors uppercase"
-                >
-                  + QUẢN LÝ HOẶC TẠO LỚP MỚI
-                </button>
+              <span>{activeClass?.name}</span>
+              <span className="text-[10px] text-indigo-200 font-bold hidden 2xl:inline uppercase">
+                {activeClass?.grade} • {currentClassStudents.length} HS
+              </span>
+              <ChevronDown className="w-3 h-3 text-indigo-200" />
+            </button>
+
+            {isClassDropdownOpen && (
+              <div 
+                className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                onMouseLeave={() => setIsClassDropdownOpen(false)}
+              >
+                <div className="px-3.5 py-1 text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                  CHỌN LỚP HỌC
+                </div>
+                {classes.map(cls => (
+                  <button
+                    key={cls.id}
+                    onClick={() => {
+                      setActiveClassId(cls.id);
+                      setIsClassDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3.5 py-2 text-xs md:text-sm text-left hover:bg-slate-50 transition-colors uppercase ${
+                      cls.id === activeClassId ? 'bg-indigo-50 text-indigo-700 font-black' : 'text-slate-700 font-bold'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span 
+                        className="w-3 h-3 rounded-full shrink-0" 
+                        style={{ backgroundColor: cls.color }}
+                      />
+                      <span className="font-black">{cls.name}</span>
+                      <span className="text-xs text-slate-400 font-normal">· {cls.grade}</span>
+                    </div>
+                    {cls.id === activeClassId && (
+                      <span className="text-[11px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full uppercase">
+                        ĐANG CHỌN
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <div className="border-t border-slate-100 mt-1.5 pt-1.5 px-2">
+                  <button
+                    onClick={() => {
+                      setIsClassDropdownOpen(false);
+                      onNavigate('classes');
+                    }}
+                    className="w-full text-left px-2 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 font-black rounded-xl transition-colors uppercase"
+                  >
+                    + QUẢN LÝ HOẶC TẠO LỚP MỚI
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Quick AI Assistant Button */}
         <button
@@ -478,27 +488,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             <img 
               src={currentUser?.avatar || teacherProfile.avatar} 
-              alt={currentUser?.fullName || teacherProfile.name}
+              alt={getOfficialDisplayName(currentUser, allUsers) || teacherProfile.name}
               className="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover ring-2 ring-indigo-200 group-hover:ring-indigo-600 transition-all bg-slate-100 shadow-2xs shrink-0"
               referrerPolicy="no-referrer"
             />
             <div className="hidden md:block text-left">
               <div className="text-[11px] font-black text-slate-800 leading-tight flex items-center gap-1">
-                <span>{currentUser?.fullName || teacherProfile.name}</span>
+                <span>{getOfficialDisplayName(currentUser, allUsers) || teacherProfile.name}</span>
                 <ChevronDown className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-700" />
               </div>
-              <div className="text-[9.5px] text-slate-400 leading-none truncate max-w-[120px]">
-                {currentUser?.role === 'admin' 
-                  ? 'Tài khoản quản trị Cao nhất' 
-                  : (currentUser?.role === 'bgh' || currentUser?.isBgh)
-                  ? 'Ban Giám Hiệu'
-                  : (currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin)
-                  ? 'Quản trị Nhà trường'
-                  : (currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin)
-                  ? 'Quản trị GV Cá nhân'
-                  : currentUser?.role === 'homeroom' 
-                  ? 'GV Chủ nhiệm' 
-                  : 'GV Bộ môn'}
+              <div className="text-[9.5px] text-slate-400 leading-none truncate max-w-[150px]">
+                {getOfficialRoleTitle(currentUser)}
               </div>
             </div>
           </button>
@@ -513,12 +513,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <div className="flex items-center gap-2.5">
                   <img 
                     src={currentUser?.avatar || teacherProfile.avatar} 
-                    alt={currentUser?.fullName || teacherProfile.name}
+                    alt={getOfficialDisplayName(currentUser, allUsers) || teacherProfile.name}
                     className="w-10 h-10 rounded-full border border-indigo-200 object-cover bg-white shrink-0"
                   />
                   <div className="min-w-0">
                     <div className="text-xs font-black text-slate-900 truncate">
-                      {currentUser?.fullName || teacherProfile.name}
+                      {getOfficialDisplayName(currentUser, allUsers) || teacherProfile.name}
                     </div>
                     <div className="text-[11px] font-mono text-slate-500 font-bold truncate">
                       @{currentUser?.username}
@@ -536,17 +536,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                         ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
                         : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                     }`}>
-                      {currentUser?.role === 'admin' 
-                        ? 'Tài khoản quản trị Cao nhất' 
-                        : (currentUser?.role === 'bgh' || currentUser?.isBgh)
-                        ? 'Ban Giám Hiệu'
-                        : (currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin)
-                        ? 'Quản trị Nhà trường'
-                        : (currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin)
-                        ? 'Quản trị GV Cá nhân'
-                        : currentUser?.role === 'homeroom' 
-                        ? 'Giáo viên chủ nhiệm' 
-                        : 'Giáo viên bộ môn'}
+                      {getOfficialRoleTitle(currentUser)}
                     </span>
                   </div>
                 </div>
@@ -581,18 +571,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                     <span>Quản trị tài khoản & DB</span>
                   </button>
                 )}
-
-                <button
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    if (onOpenProfile) onOpenProfile();
-                    else onNavigate('settings');
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors uppercase"
-                >
-                  <Users className="w-4 h-4 text-slate-500" />
-                  <span>Cài đặt & Hồ sơ cá nhân</span>
-                </button>
 
                 <button
                   onClick={() => {

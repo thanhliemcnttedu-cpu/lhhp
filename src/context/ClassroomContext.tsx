@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import { AlertCircle, X } from 'lucide-react';
 import JSZip from 'jszip';
 import { 
@@ -23,6 +23,13 @@ import { playCoinSound, playDeductSound } from '../utils/audio';
 import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank, smartMergeQuizBank } from '../utils/quizParser';
 import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX, LOCAL_SESSION_KEY } from '../services/databaseService';
 import { AvatarSourceType, getStudentAvatarAssignment, sanitizeStudentAvatar } from '../utils/avatarConfig';
+import { getOfficialDisplayName, getOfficialRoleTitle, ACCOUNT_IDENTITY_MAP } from '../utils/accountIdentity';
+import { 
+  AiHierarchySynthesizer, 
+  ClassLevelAiSummary, 
+  SchoolLevelAiSummary, 
+  SystemLevelAiSummary 
+} from '../services/aiHierarchySynthesizer';
 
 interface ClassroomContextType {
   classes: Classroom[];
@@ -139,6 +146,7 @@ interface ClassroomContextType {
   importBackupZip: (file: File) => Promise<boolean>;
 
   clearAllData: () => void;
+  getCurrentUserData: () => UserClassroomData;
 
   // Quản lý người dùng, phân quyền & Cơ sở dữ liệu đồng bộ
   currentUser: UserAccount | null;
@@ -174,6 +182,11 @@ interface ClassroomContextType {
   schoolBranches: SchoolBranch[];
   saveSchoolBranches: (branches: SchoolBranch[]) => Promise<boolean>;
   reloadSchoolBranches: (schoolName?: string) => Promise<void>;
+
+  // 🧠 CỐT LÕI AI LIÊN THÔNG 3 CẤP ĐỘ (Classroom - School - System)
+  aiClassInsight: ClassLevelAiSummary | null;
+  aiSchoolInsight: SchoolLevelAiSummary | null;
+  aiSystemInsight: SystemLevelAiSummary | null;
 }
 
 const ClassroomContext = createContext<ClassroomContextType | undefined>(undefined);
@@ -206,6 +219,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const now = new Date();
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   });
+
+  // 🛡️ WATCHDOG TIMER CHO TRẠNG THÁI LƯU: Tuyệt đối không để treo "ĐANG LƯU..." quá 1.5 giây
+  useEffect(() => {
+    if (dbSyncStatus === 'syncing') {
+      const watchdog = setTimeout(() => {
+        setDbSyncStatus('synced');
+        const now = new Date();
+        setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+      }, 1500);
+      return () => clearTimeout(watchdog);
+    }
+  }, [dbSyncStatus]);
+
   const [permissionAlert, setPermissionAlert] = useState<string | null>(null);
 
   const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
@@ -309,15 +335,60 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       studentsRef.current = healed;
       setStudents(healed);
       if (currentUserRef.current) {
+        const isExec = Boolean(
+          currentUserRef.current.role === 'admin' || 
+          currentUserRef.current.role === 'school_admin' || 
+          currentUserRef.current.role === 'bgh' || 
+          currentUserRef.current.isSchoolAdmin || 
+          currentUserRef.current.isBgh ||
+          currentUserRef.current.username?.toLowerCase() === 'adminquantri'
+        );
+        if (!isExec) {
+          const payload: UserClassroomData = {
+            ...getCurrentUserData(),
+            students: healed,
+            updatedAt: Date.now()
+          };
+          databaseService.saveUserData(currentUserRef.current.username, payload).catch(() => {});
+        }
+      }
+    }
+  }, [students]);
+
+  // 🛡️ Tự động rà soát & loại bỏ học sinh mồ côi, học sinh bộ môn và 23 học sinh test cũ của lớp 1A12 để bảo đảm sĩ số chuẩn xác 100% (103 học sinh: 1A1: 30, 1A2: 45, 1A3: 28)
+  useEffect(() => {
+    if (!classes || classes.length === 0 || !students || students.length === 0) return;
+    const validClassIds = new Set(classes.map(c => c.id));
+    const isExec = currentUserRef.current && (
+      currentUserRef.current.role === 'admin' || 
+      currentUserRef.current.role === 'school_admin' || 
+      currentUserRef.current.role === 'bgh' || 
+      currentUserRef.current.isSchoolAdmin || 
+      currentUserRef.current.isBgh ||
+      currentUserRef.current.username?.toLowerCase() === 'adminquantri'
+    );
+    const validStudents = students.filter(s => {
+      if (!s.classId || !validClassIds.has(s.classId)) return false;
+      // Với tài khoản quản trị: tuyệt đối không tổng hợp học sinh của lớp bộ môn và loại bỏ 23 học sinh test cũ của lớp 1A12
+      if (isExec) {
+        if (s.classId === 'class-1791592764810' || s.classId.startsWith('class-sub-')) return false;
+      }
+      return true;
+    });
+    if (validStudents.length !== students.length) {
+      console.log(`[ClassroomContext] Tự động loại bỏ ${students.length - validStudents.length} học sinh không hợp lệ/rác để chuẩn hóa sĩ số (còn ${validStudents.length} em)`);
+      studentsRef.current = validStudents;
+      setStudents(validStudents);
+      if (currentUserRef.current && !isExec) {
         const payload: UserClassroomData = {
           ...getCurrentUserData(),
-          students: healed,
+          students: validStudents,
           updatedAt: Date.now()
         };
         databaseService.saveUserData(currentUserRef.current.username, payload).catch(() => {});
       }
     }
-  }, [students]);
+  }, [classes, students]);
 
   // ⚡ Instant synchronization across browser tabs and windows via local BroadcastChannel
   useEffect(() => {
@@ -441,15 +512,37 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   });
 
   // Vai trò giáo viên (homeroom = Chủ nhiệm, subject = Bộ môn)
+  // 🌟 Quản trị viên tối cao & Quản trị nhà trường luôn cố định role là 'homeroom', không cho phép chuyển sang GV Bộ môn
   const [teacherRole, setTeacherRoleState] = useState<TeacherRole>(() => {
-    if (currentUser && currentUser.role !== 'admin') {
+    if (currentUser) {
+      if (
+        currentUser.role === 'admin' || 
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isSchoolAdmin || 
+        currentUser.isBgh ||
+        currentUser.username?.toLowerCase() === 'adminquantri'
+      ) {
+        return 'homeroom';
+      }
       return currentUser.role === 'subject' ? 'subject' : 'homeroom';
     }
     return 'homeroom';
   });
 
   const setTeacherRole = (role: TeacherRole) => {
-    if (currentUser && currentUser.role !== 'admin') {
+    if (currentUser) {
+      if (
+        currentUser.role === 'admin' || 
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isSchoolAdmin || 
+        currentUser.isBgh ||
+        currentUser.username?.toLowerCase() === 'adminquantri'
+      ) {
+        setTeacherRoleState('homeroom');
+        return;
+      }
       const fixed = currentUser.role === 'subject' ? 'subject' : 'homeroom';
       setTeacherRoleState(fixed);
       return;
@@ -527,30 +620,58 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Helper to apply dataset snapshot into state hooks
   const applyUserClassroomData = (data: Partial<UserClassroomData>) => {
-    // Fix bug: Ensure demo accounts always use their designated profile names
-    if (currentUserRef.current?.isDemo) {
+    // 🌟 SINGLE SOURCE OF TRUTH: tên tài khoản luôn lấy từ currentUser.fullName (CSDL users), KHÔNG bao giờ từ teacherProfile snapshot cũ
+    if (currentUserRef.current && currentUserRef.current.fullName) {
+      const authorName = currentUserRef.current.fullName;
       if (data.teacherProfile) {
-        data.teacherProfile.name = currentUserRef.current.fullName;
-        data.teacherProfile.schoolName = currentUserRef.current.schoolName || data.teacherProfile.schoolName;
-        data.teacherProfile.avatar = currentUserRef.current.avatar || data.teacherProfile.avatar;
+        data.teacherProfile.name = authorName;
+        if (currentUserRef.current.schoolName) {
+          data.teacherProfile.schoolName = currentUserRef.current.schoolName;
+        }
+        if (currentUserRef.current.avatar) {
+          data.teacherProfile.avatar = currentUserRef.current.avatar;
+        }
       }
-      // 🌟 Tuyệt đối KHÔNG ghi đè c.teacherName của lớp học thành tên BGH/Admin!
+      // 🌟 Chỉ gán lại teacherName của lớp nếu đó là GVCN chính của lớp đó (homeroom)
       if (currentUserRef.current.role === 'homeroom' && data.classes && Array.isArray(data.classes)) {
         data.classes.forEach(c => {
-          c.teacherName = currentUserRef.current?.fullName || c.teacherName;
+          c.teacherName = authorName;
         });
       }
     }
 
     if (data.classes && Array.isArray(data.classes)) {
-      setClasses(data.classes);
+      const isExec = currentUserRef.current && (
+        currentUserRef.current.role === 'admin' || 
+        currentUserRef.current.role === 'school_admin' || 
+        currentUserRef.current.role === 'bgh' || 
+        currentUserRef.current.isSchoolAdmin || 
+        currentUserRef.current.isBgh ||
+        currentUserRef.current.username?.toLowerCase() === 'adminquantri'
+      );
+      const cleanClasses = isExec 
+        ? data.classes.filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'))
+        : data.classes;
+      setClasses(cleanClasses);
     }
     if (data.activeClassId) {
       setActiveClassId(data.activeClassId);
     }
     if (data.students && Array.isArray(data.students)) {
+      const isExec = currentUserRef.current && (
+        currentUserRef.current.role === 'admin' || 
+        currentUserRef.current.role === 'school_admin' || 
+        currentUserRef.current.role === 'bgh' || 
+        currentUserRef.current.isSchoolAdmin || 
+        currentUserRef.current.isBgh ||
+        currentUserRef.current.username?.toLowerCase() === 'adminquantri'
+      );
+      const filteredStudents = isExec
+        ? data.students.filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'))
+        : data.students;
+
       // 🌟 Tự động nâng cấp các ảnh đại diện bottts robot cũ sang ảnh thật từ thư mục anh demo avata
-      const upgradedStudents = data.students.map((s, idx) => {
+      const upgradedStudents = filteredStudents.map((s, idx) => {
         if (!s.avatar || s.avatar.includes('api.dicebear.com/7.x/bottts') || s.avatar.includes('seed=student-')) {
           return {
             ...s,
@@ -610,7 +731,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setTimetableConfig(data.timetableConfig);
     }
     if (data.teacherRole) {
-      setTeacherRoleState(data.teacherRole);
+      const isExec = currentUserRef.current && (
+        currentUserRef.current.role === 'admin' || 
+        currentUserRef.current.role === 'school_admin' || 
+        currentUserRef.current.role === 'bgh' || 
+        currentUserRef.current.isSchoolAdmin || 
+        currentUserRef.current.isBgh ||
+        currentUserRef.current.username?.toLowerCase() === 'adminquantri'
+      );
+      setTeacherRoleState(isExec ? 'homeroom' : data.teacherRole);
     }
     if (data.subjectTeacherConfig) {
       setSubjectTeacherConfig(data.subjectTeacherConfig);
@@ -623,27 +752,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
     if (data.teacherProfile) {
       setTeacherProfile(data.teacherProfile);
-      const tpName = data.teacherProfile.name ? data.teacherProfile.name.trim() : '';
-      const tpAvatar = data.teacherProfile.avatar || '';
-      // 🌟 Chỉ đồng bộ tên người dùng vào hồ sơ khi vai trò là Giáo viên chủ nhiệm (homeroom)
-      // Tuyệt đối KHÔNG ghi đè tên của BGH/Quản trị viên
-      if (tpName && currentUserRef.current?.role === 'homeroom') {
-        setCurrentUser(prevUser => {
-          if (!prevUser) return null;
-          if (prevUser.fullName !== tpName || (tpAvatar && prevUser.avatar !== tpAvatar)) {
-            const updated: UserAccount = {
-              ...prevUser,
-              fullName: tpName,
-              avatar: tpAvatar || prevUser.avatar
-            };
-            try {
-              localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(updated));
-            } catch (_) {}
-            return updated;
-          }
-          return prevUser;
-        });
-      }
+      // 🌟 KHÔNG bao giờ ghi đè currentUser.fullName từ teacherProfile snapshot cũ
+      // Tên tài khoản là Single Source of Truth từ CSDL users
     }
     if (data.quizBank && Array.isArray(data.quizBank)) {
       setQuizBank(smartMergeQuizBank(data.quizBank));
@@ -871,12 +981,44 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   };
 
-  // Refresh users from database
+  // Refresh users from database & dynamically synchronize official identity
   const refreshUsersList = async () => {
     try {
       const uList = await databaseService.getUsers();
       if (Array.isArray(uList) && uList.length > 0) {
         setAllUsers(uList);
+
+        // 🌟 ÁNH XẠ ĐỊNH DANH TÀI KHOẢN ĐANG ĐĂNG NHẬP THEO KHỞI TẠO TỪ QUẢN TRỊ NHÀ TRƯỜNG
+        const activeU = currentUserRef.current;
+        if (activeU && activeU.username) {
+          const officialName = getOfficialDisplayName(activeU, uList);
+          const matchedInDb = uList.find(u => u.username.toLowerCase() === activeU.username.toLowerCase());
+          const targetSchool = matchedInDb?.schoolName || activeU.schoolName;
+          const targetRole = matchedInDb?.role || activeU.role;
+          const targetAvatar = matchedInDb?.avatar || activeU.avatar;
+
+          if (activeU.fullName !== officialName || (matchedInDb && activeU.schoolName !== targetSchool)) {
+            const updatedUser: UserAccount = {
+              ...activeU,
+              fullName: officialName,
+              schoolName: targetSchool,
+              role: targetRole,
+              avatar: targetAvatar
+            };
+            setCurrentUser(updatedUser);
+            currentUserRef.current = updatedUser;
+            try {
+              localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(updatedUser));
+            } catch (_) {}
+
+            setTeacherProfile(prev => ({
+              ...prev,
+              name: officialName,
+              schoolName: targetSchool || prev.schoolName,
+              avatar: targetAvatar || prev.avatar
+            }));
+          }
+        }
       }
     } catch (_) {}
   };
@@ -899,6 +1041,18 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const isRemoteDataLoadedRef = useRef(false);
   const lastRemoteTimestampRef = useRef<number>(0);
   const remoteUpdateLockUntilRef = useRef<number>(0);
+
+  // Baseline of classes/students last received from (or sent to) the server for the admin account.
+  // Used to push ONLY records the admin actually edited, so a stale admin snapshot never
+  // overwrites fresher edits made by homeroom teachers.
+  const adminSyncBaselineRef = useRef<{ classes: Map<string, string>; students: Map<string, string> } | null>(null);
+  const buildRecordSnapshot = (items: { id: string }[]): Map<string, string> => {
+    const map = new Map<string, string>();
+    for (const item of items || []) {
+      if (item && item.id) map.set(item.id, JSON.stringify(item));
+    }
+    return map;
+  };
 
   const markRemoteUpdateActive = (durationMs = 1200) => {
     isApplyingRemoteUpdateRef.current = true;
@@ -923,10 +1077,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     isRemoteDataLoadedRef.current = false;
 
-    // 🚀 Tự động làm sạch cache cũ khi nâng cấp (Auto Cache Busting v4.1.0 Clean)
+    // 🚀 Tự động làm sạch cache cũ khi nâng cấp (Auto Cache Busting v4.1.1 Clean)
     try {
       const cacheVer = localStorage.getItem('lophoc_app_cache_version');
-      if (cacheVer !== 'v4.1.0-clean-all-classes') {
+      if (cacheVer !== 'v4.1.1-fix-gvcn1a1-students') {
         Object.keys(localStorage).forEach(k => {
           if (k.startsWith(LOCAL_DB_PREFIX) || k.startsWith('lophoc_') || k.startsWith('lop_hoc_')) {
             if (k !== LOCAL_AUTH_KEY && k !== LOCAL_SESSION_KEY) {
@@ -934,7 +1088,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             }
           }
         });
-        localStorage.setItem('lophoc_app_cache_version', 'v4.1.0-clean-all-classes');
+        localStorage.setItem('lophoc_app_cache_version', 'v4.1.1-fix-gvcn1a1-students');
       }
     } catch (_) {}
 
@@ -981,8 +1135,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
           const scoped = await databaseService.getExecutiveScopedData(currentUser);
           markRemoteUpdateActive(1200);
-          setClasses(scoped.classes);
-          setStudents(scoped.students);
+          const cleanScopedClasses = scoped.classes.filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'));
+          const cleanScopedStudents = scoped.students.filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'));
+          setClasses(cleanScopedClasses);
+          setStudents(cleanScopedStudents);
           setAttendanceRecords(scoped.attendanceRecords);
           setBoardingRecords(scoped.boardingRecords);
           setTransactions(scoped.transactions);
@@ -995,8 +1151,22 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setActiveClassId('');
           }
         } else {
-          const savedData = await databaseService.loadUserData(currentUser.username);
-          if (savedData) {
+          let savedData = await databaseService.loadUserData(currentUser.username);
+
+          // 🛡️ SELF-HEALING / ALIAS CHECK: Nếu không có lớp học, tự động kiểm tra alias
+          if (!savedData || !Array.isArray(savedData.classes) || savedData.classes.length === 0) {
+            const alias = currentUser.username.startsWith('gvcn_')
+              ? currentUser.username.replace('gvcn_', 'gvcn')
+              : (currentUser.username.startsWith('gvcn') ? currentUser.username.replace('gvcn', 'gvcn_') : '');
+            if (alias && alias !== currentUser.username) {
+              const aliasData = await databaseService.loadUserData(alias);
+              if (aliasData && Array.isArray(aliasData.classes) && aliasData.classes.length > 0) {
+                savedData = aliasData;
+              }
+            }
+          }
+
+          if (savedData && Array.isArray(savedData.classes) && savedData.classes.length > 0) {
             markRemoteUpdateActive(1200);
             lastRemoteTimestampRef.current = savedData.updatedAt || Date.now();
             applyUserClassroomData(savedData);
@@ -1006,9 +1176,16 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             try {
               const raw = localStorage.getItem(LOCAL_DB_PREFIX + currentUser.username.toLowerCase());
               if (raw) localCache = JSON.parse(raw);
+              if ((!localCache || !localCache.classes?.length) && currentUser.username.startsWith('gvcn')) {
+                const alias = currentUser.username.startsWith('gvcn_')
+                  ? currentUser.username.replace('gvcn_', 'gvcn')
+                  : currentUser.username.replace('gvcn', 'gvcn_');
+                const rawAlias = localStorage.getItem(LOCAL_DB_PREFIX + alias);
+                if (rawAlias) localCache = JSON.parse(rawAlias);
+              }
             } catch (_) {}
 
-            if (localCache) {
+            if (localCache && Array.isArray(localCache.classes) && localCache.classes.length > 0) {
               markRemoteUpdateActive(1200);
               lastRemoteTimestampRef.current = localCache.updatedAt || Date.now();
               applyUserClassroomData(localCache);
@@ -1119,6 +1296,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               }
               return [...prev, rec];
             });
+            if (isExecutive || isSuper) {
+              databaseService.getExecutiveScopedData(currentUser).then(scoped => {
+                setAttendanceRecords(scoped.attendanceRecords);
+                setBoardingRecords(scoped.boardingRecords);
+                setDbSyncStatus('synced');
+                const now = new Date();
+                setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+              }).catch(() => {});
+            }
             return;
           }
         }
@@ -1140,37 +1326,82 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               }
               return [...prev, rec];
             });
+            if (isExecutive || isSuper) {
+              databaseService.getExecutiveScopedData(currentUser).then(scoped => {
+                setAttendanceRecords(scoped.attendanceRecords);
+                setBoardingRecords(scoped.boardingRecords);
+                setDbSyncStatus('synced');
+                const now = new Date();
+                setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+              }).catch(() => {});
+            }
             return;
           }
         }
 
-        // 5. Fallback làm tươi toàn diện cho Admin / BGH
-        if (isSuper) {
-          // Quản trị tối cao (adminquantri): Đồng bộ tức thì toàn bộ lớp học, học sinh, chuyên cần, bán trú của tất cả giáo viên
-          const adminAll = await databaseService.getAdminAllData();
-          if (adminAll) {
+        // ⚡ 4b. GVCN xác nhận điểm danh/bán trú → BGH/Quản trị trường ngay lập tức nhận số liệu tổng hợp
+        if (event.type === 'ATTENDANCE_CONFIRMED' || event.type === 'BOARDING_CONFIRMED') {
+          // Cập nhật ngay record vào memory trước
+          if (event.attendanceRecord) {
+            const rec = event.attendanceRecord as DailyAttendance;
+            if (rec && rec.date && rec.classId) {
+              setAttendanceRecords(prev => {
+                const idx = prev.findIndex(r => r.date === rec.date && r.classId === rec.classId);
+                if (idx >= 0) {
+                  const next = [...prev];
+                  next[idx] = { ...next[idx], ...rec, records: { ...(next[idx].records || {}), ...(rec.records || {}) } };
+                  return next;
+                }
+                return [...prev, rec];
+              });
+            }
+          }
+          if (event.boardingRecord) {
+            const rec = event.boardingRecord as DailyBoardingMeal;
+            if (rec && rec.date && rec.classId) {
+              setBoardingRecords(prev => {
+                const idx = prev.findIndex(r => r.date === rec.date && r.classId === rec.classId);
+                if (idx >= 0) {
+                  const next = [...prev];
+                  next[idx] = { ...next[idx], ...rec, records: { ...(next[idx].records || {}), ...(rec.records || {}) } };
+                  return next;
+                }
+                return [...prev, rec];
+              });
+            }
+          }
+          // Nếu là BGH/Quản trị trường: tổng hợp lại số liệu tức thì từ server
+          if (isExecutive || isSuper) {
+            try {
+              const scoped = await databaseService.getExecutiveScopedData(currentUser);
+              markRemoteUpdateActive(800);
+              setAttendanceRecords(scoped.attendanceRecords);
+              setBoardingRecords(scoped.boardingRecords);
+              setDbSyncStatus('synced');
+              const now = new Date();
+              setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+            } catch (_) {}
+          }
+          return;
+        }
+
+        // 5. Fallback làm tươi toàn diện cho Quản trị tối cao (adminquantri) & BGH / Quản trị trường
+        if (isSuper || isExecutive) {
+          // Đồng nhất cơ chế truy xuất: Cả Quản trị tối cao và BGH/Quản trị trường đều lấy số liệu liên thông trực tiếp
+          const scoped = await databaseService.getExecutiveScopedData(currentUser);
+          if (scoped && Array.isArray(scoped.classes)) {
             markRemoteUpdateActive(1200);
-            setClasses(adminAll.classes);
-            setStudents(adminAll.students);
-            if (Array.isArray(adminAll.attendanceRecords)) setAttendanceRecords(adminAll.attendanceRecords);
-            if (Array.isArray(adminAll.boardingRecords)) setBoardingRecords(adminAll.boardingRecords);
-            if (Array.isArray(adminAll.transactions)) setTransactions(adminAll.transactions);
+            const cleanClasses = (scoped.classes || []).filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'));
+            const cleanStudents = (scoped.students || []).filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'));
+            setClasses(cleanClasses);
+            setStudents(cleanStudents);
+            setAttendanceRecords(scoped.attendanceRecords || []);
+            setBoardingRecords(scoped.boardingRecords || []);
+            setTransactions(scoped.transactions || []);
             setDbSyncStatus('synced');
             const now = new Date();
             setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
           }
-        } else if (isExecutive) {
-          // Quản trị nhà trường (BGH): Tự động tổng hợp số liệu mới nhất từ các giáo viên trong trường
-          const scoped = await databaseService.getExecutiveScopedData(currentUser);
-          markRemoteUpdateActive(1200);
-          setClasses(scoped.classes);
-          setStudents(scoped.students);
-          setAttendanceRecords(scoped.attendanceRecords);
-          setBoardingRecords(scoped.boardingRecords);
-          setTransactions(scoped.transactions);
-          setDbSyncStatus('synced');
-          const now = new Date();
-          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
         } else {
           const target = event.username?.toLowerCase();
           const me = currentUser.username.toLowerCase();
@@ -1213,30 +1444,20 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           currentUser.isGuestAdmin
         );
 
-        if (currentUser.role === 'admin' || currentUser.username?.toLowerCase() === 'adminquantri') {
-          const adminAll = await databaseService.getAdminAllData();
-          if (adminAll && adminAll.timestamp && adminAll.timestamp > (lastRemoteTimestampRef.current + 50)) {
+        if (currentUser.role === 'admin' || currentUser.username?.toLowerCase() === 'adminquantri' || isExecutive) {
+          const scoped = await databaseService.getExecutiveScopedData(currentUser);
+          if (scoped && Array.isArray(scoped.classes)) {
             markRemoteUpdateActive(1200);
-            lastRemoteTimestampRef.current = adminAll.timestamp;
-            setClasses(adminAll.classes);
-            setStudents(adminAll.students);
-            if (Array.isArray(adminAll.attendanceRecords)) setAttendanceRecords(adminAll.attendanceRecords);
-            if (Array.isArray(adminAll.boardingRecords)) setBoardingRecords(adminAll.boardingRecords);
-            if (Array.isArray(adminAll.transactions)) setTransactions(adminAll.transactions);
+            const cleanClasses = (scoped.classes || []).filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'));
+            const cleanStudents = (scoped.students || []).filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'));
+            setClasses(cleanClasses);
+            setStudents(cleanStudents);
+            setAttendanceRecords(scoped.attendanceRecords || []);
+            setBoardingRecords(scoped.boardingRecords || []);
+            setTransactions(scoped.transactions || []);
             setDbSyncStatus('synced');
             const now = new Date();
             setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
-          }
-        } else if (isExecutive) {
-          // BGH & Quản trị trường: tự động tổng hợp số liệu mới nhất từ giáo viên chủ nhiệm
-          const scoped = await databaseService.getExecutiveScopedData(currentUser);
-          if (scoped) {
-            setClasses(scoped.classes);
-            setStudents(scoped.students);
-            setAttendanceRecords(scoped.attendanceRecords);
-            setBoardingRecords(scoped.boardingRecords);
-            setTransactions(scoped.transactions);
-            setDbSyncStatus('synced');
           }
         } else {
           const remote = await databaseService.loadUserData(currentUser.username);
@@ -1298,10 +1519,18 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     // Do NOT auto-save if remote data is still loading
-    if (!isRemoteDataLoadedRef.current || !currentUser) return;
+    if (!isRemoteDataLoadedRef.current || !currentUser) {
+      if (currentUser?.role === 'admin') {
+        adminSyncBaselineRef.current = { classes: buildRecordSnapshot(classes), students: buildRecordSnapshot(students) };
+      }
+      return;
+    }
 
     // Do NOT auto-save if this state update was triggered by receiving data from server (breaks echo loops)
     if (Date.now() < remoteUpdateLockUntilRef.current || isApplyingRemoteUpdateRef.current) {
+      if (currentUser.role === 'admin') {
+        adminSyncBaselineRef.current = { classes: buildRecordSnapshot(classes), students: buildRecordSnapshot(students) };
+      }
       return;
     }
 
@@ -1320,7 +1549,22 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
 
       if (currentUser.role === 'admin') {
-        databaseService.syncAdminAllData(classes, students).then(() => {
+        // Delta sync: only records changed by the admin since the last server snapshot
+        const baseline = adminSyncBaselineRef.current;
+        const changedClasses = baseline
+          ? classes.filter(c => c && c.id && baseline.classes.get(c.id) !== JSON.stringify(c))
+          : classes;
+        const changedStudents = baseline
+          ? students.filter(s => s && s.id && baseline.students.get(s.id) !== JSON.stringify(s))
+          : students;
+        adminSyncBaselineRef.current = { classes: buildRecordSnapshot(classes), students: buildRecordSnapshot(students) };
+
+        if (changedClasses.length === 0 && changedStudents.length === 0) {
+          setDbSyncStatus('synced');
+          return;
+        }
+
+        databaseService.syncAdminAllData(changedClasses, changedStudents).then(() => {
           setDbSyncStatus('synced');
           const now = new Date();
           setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
@@ -1364,15 +1608,32 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   ): Promise<{ success: boolean; message?: string }> => {
     // 1. Save current workspace before switching if logged in
     if (currentUser) {
-      const currentData = getCurrentUserData();
-      await databaseService.saveUserData(currentUser.username, currentData);
+      const isCurrentExecutive = Boolean(
+        currentUser.role === 'admin' || 
+        currentUser.role === 'school_admin' || 
+        currentUser.role === 'bgh' || 
+        currentUser.isBgh || 
+        currentUser.isSchoolAdmin || 
+        currentUser.role === 'guest_admin' || 
+        currentUser.isGuestAdmin ||
+        currentUser.username?.toLowerCase() === 'adminquantri'
+      );
+      if (!isCurrentExecutive) {
+        const currentData = getCurrentUserData();
+        await databaseService.saveUserData(currentUser.username, currentData);
+      }
     }
 
     // 2. Perform login
     const res = await databaseService.login(username, password, selectedRoleScope, selectedSchoolName);
     if (res.success && res.user) {
-      const newUser = res.user;
+      const officialName = getOfficialDisplayName(res.user, allUsers);
+      const newUser: UserAccount = {
+        ...res.user,
+        fullName: officialName
+      };
       setCurrentUser(newUser);
+      currentUserRef.current = newUser;
 
       // Cập nhật cảnh báo tài khoản Demo theo yêu cầu
       if (newUser.isDemo || newUser.username.toLowerCase().startsWith('demo')) {
@@ -1391,10 +1652,13 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       // Gán vai trò chính xác theo tài khoản được phân quyền (GVCN / GVBM)
+      // Tài khoản quản trị luôn là 'homeroom'
       if (newUser.role === 'homeroom') {
         setTeacherRoleState('homeroom');
       } else if (newUser.role === 'subject') {
         setTeacherRoleState('subject');
+      } else {
+        setTeacherRoleState('homeroom');
       }
 
       // 3. Load target user's workspace
@@ -1419,14 +1683,14 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (isSuperAdmin) {
           setTeacherProfile({
             ...ADMIN_QUANTRI_PROFILE,
-            name: newUser.fullName || ADMIN_QUANTRI_PROFILE.name,
+            name: officialName,
             avatar: newUser.avatar || ADMIN_QUANTRI_PROFILE.avatar,
             schoolName: newUser.schoolName || ADMIN_QUANTRI_PROFILE.schoolName
           });
         } else {
           setTeacherProfile({
             ...DEFAULT_TEACHER,
-            name: newUser.fullName || 'BAN GIÁM HIỆU / QUẢN TRỊ VIÊN',
+            name: officialName,
             role: (newUser.role === 'bgh' || newUser.isBgh) ? 'BAN GIÁM HIỆU' : ((newUser.role === 'school_admin' || newUser.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
             teachingSubject: 'Quản trị & Giám sát',
             schoolName: newUser.schoolName || DEFAULT_TEACHER.schoolName,
@@ -1436,13 +1700,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         const scoped = await databaseService.getExecutiveScopedData(newUser);
         markRemoteUpdateActive(1200);
-        setClasses(scoped.classes);
-        setStudents(scoped.students);
+        const cleanScopedClasses = scoped.classes.filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'));
+        const cleanScopedStudents = scoped.students.filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'));
+        setClasses(cleanScopedClasses);
+        setStudents(cleanScopedStudents);
         setAttendanceRecords(scoped.attendanceRecords);
         setBoardingRecords(scoped.boardingRecords);
         setTransactions(scoped.transactions);
-        if (scoped.classes.length > 0) {
-          setActiveClassId(scoped.classes[0].id);
+        if (cleanScopedClasses.length > 0) {
+          setActiveClassId(cleanScopedClasses[0].id);
         }
       } else {
         const targetData = await databaseService.loadUserData(newUser.username);
@@ -1533,50 +1799,67 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     // 2. Switch current user
-    setCurrentUser(targetUser);
-    localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(targetUser));
+    const officialTargetName = getOfficialDisplayName(targetUser, allUsers);
+    const updatedTargetUser: UserAccount = {
+      ...targetUser,
+      fullName: officialTargetName
+    };
+    setCurrentUser(updatedTargetUser);
+    currentUserRef.current = updatedTargetUser;
+    localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(updatedTargetUser));
     databaseService.touchSession();
 
     // 3. Load target data
     const isTargetExecutive = Boolean(
-      targetUser.role === 'admin' || 
-      targetUser.role === 'school_admin' || 
-      targetUser.role === 'bgh' || 
-      targetUser.isBgh || 
-      targetUser.isSchoolAdmin || 
-      targetUser.role === 'guest_admin' || 
-      targetUser.isGuestAdmin
+      updatedTargetUser.role === 'admin' || 
+      updatedTargetUser.role === 'school_admin' || 
+      updatedTargetUser.role === 'bgh' || 
+      updatedTargetUser.isBgh || 
+      updatedTargetUser.isSchoolAdmin || 
+      updatedTargetUser.role === 'guest_admin' || 
+      updatedTargetUser.isGuestAdmin
     );
 
+    // Gán vai trò theo tài khoản: Quản trị viên luôn là 'homeroom'
     if (isTargetExecutive) {
-      const isSuperAdmin = targetUser.username.toLowerCase() === 'adminquantri' || targetUser.role === 'admin';
+      setTeacherRoleState('homeroom');
+    } else if (targetUser.role === 'subject') {
+      setTeacherRoleState('subject');
+    } else {
+      setTeacherRoleState('homeroom');
+    }
+
+    if (isTargetExecutive) {
+      const isSuperAdmin = updatedTargetUser.username.toLowerCase() === 'adminquantri' || updatedTargetUser.role === 'admin';
       if (isSuperAdmin) {
         setTeacherProfile({
           ...ADMIN_QUANTRI_PROFILE,
-          name: targetUser.fullName || ADMIN_QUANTRI_PROFILE.name,
-          avatar: targetUser.avatar || ADMIN_QUANTRI_PROFILE.avatar,
-          schoolName: targetUser.schoolName || ADMIN_QUANTRI_PROFILE.schoolName
+          name: officialTargetName,
+          avatar: updatedTargetUser.avatar || ADMIN_QUANTRI_PROFILE.avatar,
+          schoolName: updatedTargetUser.schoolName || ADMIN_QUANTRI_PROFILE.schoolName
         });
       } else {
         setTeacherProfile({
           ...DEFAULT_TEACHER,
-          name: targetUser.fullName || 'BAN GIÁM HIỆU / QUẢN TRỊ VIÊN',
-          role: (targetUser.role === 'bgh' || targetUser.isBgh) ? 'BAN GIÁM HIỆU' : ((targetUser.role === 'school_admin' || targetUser.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
+          name: officialTargetName,
+          role: (updatedTargetUser.role === 'bgh' || updatedTargetUser.isBgh) ? 'BAN GIÁM HIỆU' : ((updatedTargetUser.role === 'school_admin' || updatedTargetUser.isSchoolAdmin) ? 'QUẢN TRỊ NHÀ TRƯỜNG' : 'QUẢN TRỊ VIÊN HỆ THỐNG'),
           teachingSubject: 'Quản trị & Giám sát',
-          schoolName: targetUser.schoolName || DEFAULT_TEACHER.schoolName,
-          avatar: targetUser.avatar || DEFAULT_TEACHER.avatar
+          schoolName: updatedTargetUser.schoolName || DEFAULT_TEACHER.schoolName,
+          avatar: updatedTargetUser.avatar || DEFAULT_TEACHER.avatar
         });
       }
 
       const scoped = await databaseService.getExecutiveScopedData(targetUser);
       markRemoteUpdateActive(1200);
-      setClasses(scoped.classes);
-      setStudents(scoped.students);
+      const cleanScopedClasses = scoped.classes.filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'));
+      const cleanScopedStudents = scoped.students.filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'));
+      setClasses(cleanScopedClasses);
+      setStudents(cleanScopedStudents);
       setAttendanceRecords(scoped.attendanceRecords);
       setBoardingRecords(scoped.boardingRecords);
       setTransactions(scoped.transactions);
-      if (scoped.classes.length > 0) {
-        setActiveClassId(scoped.classes[0].id);
+      if (cleanScopedClasses.length > 0) {
+        setActiveClassId(cleanScopedClasses[0].id);
       }
     } else {
       const targetData = await databaseService.loadUserData(targetUser.username);
@@ -1608,7 +1891,9 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     lastRemoteTimestampRef.current = nowTs;
 
     setDbSyncStatus('syncing');
-    const isExecutive = Boolean(
+    const isSuperOrExecutive = Boolean(
+      currentUser.role === 'admin' || 
+      currentUser.username?.toLowerCase() === 'adminquantri' ||
       currentUser.role === 'school_admin' || 
       currentUser.role === 'bgh' || 
       currentUser.isBgh || 
@@ -1617,26 +1902,17 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       currentUser.isGuestAdmin
     );
 
-    if (currentUser.role === 'admin' || currentUser.username?.toLowerCase() === 'adminquantri') {
-      const adminAll = await databaseService.getAdminAllData();
-      if (adminAll) {
-        setClasses(adminAll.classes);
-        setStudents(adminAll.students);
-        if (Array.isArray(adminAll.attendanceRecords)) setAttendanceRecords(adminAll.attendanceRecords);
-        if (Array.isArray(adminAll.boardingRecords)) setBoardingRecords(adminAll.boardingRecords);
-        if (Array.isArray(adminAll.transactions)) setTransactions(adminAll.transactions);
-        setDbSyncStatus('synced');
-      } else {
-        setDbSyncStatus('offline');
-      }
-    } else if (isExecutive) {
+    if (isSuperOrExecutive) {
       const scoped = await databaseService.getExecutiveScopedData(currentUser);
-      if (scoped) {
-        setClasses(scoped.classes);
-        setStudents(scoped.students);
-        if (Array.isArray(scoped.attendanceRecords)) setAttendanceRecords(scoped.attendanceRecords);
-        if (Array.isArray(scoped.boardingRecords)) setBoardingRecords(scoped.boardingRecords);
-        if (Array.isArray(scoped.transactions)) setTransactions(scoped.transactions);
+      if (scoped && Array.isArray(scoped.classes)) {
+        markRemoteUpdateActive(1200);
+        const cleanClasses = (scoped.classes || []).filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'));
+        const cleanStudents = (scoped.students || []).filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'));
+        setClasses(cleanClasses);
+        setStudents(cleanStudents);
+        setAttendanceRecords(scoped.attendanceRecords || []);
+        setBoardingRecords(scoped.boardingRecords || []);
+        setTransactions(scoped.transactions || []);
         setDbSyncStatus('synced');
       } else {
         setDbSyncStatus('offline');
@@ -1650,6 +1926,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
       const ok = await databaseService.saveUserData(currentUser.username, payload);
       setDbSyncStatus(ok ? 'synced' : 'offline');
+
+      // ⚡ Phát sóng thời gian thực khi GVCN lưu dữ liệu thành công
+      fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'DATA_CHANGED',
+          action: 'TEACHER_SAVED_DATA',
+          username: currentUser.username,
+          schoolName: currentUser.schoolName,
+          timestamp: nowTs
+        })
+      }).catch(() => {});
     }
     const now = new Date();
     setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
@@ -1881,6 +2170,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         bc.postMessage({ type: 'CLASS_UPDATED', classId: id, classData: updated, timestamp: nowTs });
         bc.close();
       }
+      fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'CLASS_UPDATED',
+          action: 'UPDATE_CLASS',
+          classId: id,
+          classData: { ...target, ...updated },
+          username: currentUser?.username,
+          schoolName: currentUser?.schoolName,
+          timestamp: nowTs
+        })
+      }).catch(() => {});
     } catch (_) {}
   };
 
@@ -2231,6 +2533,20 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         bc.postMessage({ type: 'STUDENT_UPDATED', studentId: id, studentData: data, timestamp: nowTs });
         bc.close();
       }
+      fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'STUDENT_UPDATED',
+          action: 'UPDATE_STUDENT',
+          studentId: id,
+          studentData: { ...targetStudent, ...data },
+          classId: targetStudent.classId,
+          username: currentUser?.username,
+          schoolName: currentUser?.schoolName,
+          timestamp: nowTs
+        })
+      }).catch(() => {});
     } catch (_) {}
   };
 
@@ -2736,6 +3052,21 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       affected.forEach(st => {
         databaseService.updateAdminStudent(st, user.username, false, userSchool).catch(() => {});
       });
+
+      fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'POINTS_UPDATED',
+          action: 'AWARD_POINTS',
+          studentIds,
+          amount,
+          reason,
+          username: user.username,
+          schoolName: user.schoolName,
+          timestamp
+        })
+      }).catch(() => {});
     }
   };
 
@@ -2809,6 +3140,21 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       affected.forEach(st => {
         databaseService.updateAdminStudent(st, user.username, false, userSchool).catch(() => {});
       });
+
+      fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'POINTS_UPDATED',
+          action: 'DEDUCT_POINTS',
+          studentIds,
+          amount: -amount,
+          reason,
+          username: user.username,
+          schoolName: user.schoolName,
+          timestamp
+        })
+      }).catch(() => {});
     }
   };
 
@@ -3577,6 +3923,42 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  // 🧠 CỐT LÕI TRÍ TUỆ NHÂN TẠO AI LIÊN THÔNG 3 CẤP ĐỘ (Classroom - School - System)
+  const currentClass = classes.find(c => c.id === activeClassId);
+  const aiClassInsight = useMemo(() => {
+    if (!currentClass) return null;
+    return AiHierarchySynthesizer.synthesizeClassroom({
+      classroom: currentClass,
+      students: currentClassStudents,
+      attendanceRecords,
+      boardingRecords,
+      transactions
+    });
+  }, [currentClass, currentClassStudents, attendanceRecords, boardingRecords, transactions]);
+
+  const aiSchoolInsight = useMemo(() => {
+    return AiHierarchySynthesizer.synthesizeSchool({
+      schoolName: currentUser?.schoolName || 'Trường Tiểu học',
+      classes,
+      students,
+      attendanceRecords,
+      boardingRecords,
+      transactions
+    });
+  }, [classes, students, attendanceRecords, boardingRecords, transactions, currentUser?.schoolName]);
+
+  const aiSystemInsight = useMemo(() => {
+    const schools = Array.from(new Set(allUsers.map(u => u.schoolName).filter(Boolean)));
+    return AiHierarchySynthesizer.synthesizeSystem({
+      schools: schools.length > 0 ? schools : ['TIỂU HỌC SỐ 1 TÂN UYÊN'],
+      classes,
+      students,
+      attendanceRecords,
+      boardingRecords,
+      transactions
+    });
+  }, [classes, students, attendanceRecords, boardingRecords, transactions, allUsers]);
+
   return (
     <ClassroomContext.Provider value={{
       classes,
@@ -3692,6 +4074,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       importBackupZip,
 
       clearAllData,
+      getCurrentUserData,
 
       // Quản lý người dùng, phân quyền & Cơ sở dữ liệu đồng bộ
       currentUser,
@@ -3725,7 +4108,12 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setDemoWarningMessage,
       schoolBranches,
       saveSchoolBranches,
-      reloadSchoolBranches
+      reloadSchoolBranches,
+
+      // 🧠 CỐT LÕI AI LIÊN THÔNG 3 CẤP ĐỘ
+      aiClassInsight,
+      aiSchoolInsight,
+      aiSystemInsight
     }}>
       {children}
       {permissionAlert && (

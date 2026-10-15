@@ -6,7 +6,8 @@ import {
   School, Laptop, Check, Search, ShieldCheck, FileSpreadsheet,
   FileUp, ArrowDownToLine, AlertTriangle, Sparkles, History, Eye, EyeOff, Copy,
   Activity, Calendar, Clock, Filter, RotateCcw, GitBranch,
-  FolderTree, Building2, Plus, Crown, ArrowRightLeft, FileText
+  FolderTree, Building2, Plus, Crown, ArrowRightLeft, FileText,
+  ArrowUpDown, Layers, ArrowDownAZ, ArrowUpAZ, GraduationCap, SlidersHorizontal
 } from 'lucide-react';
 import { UserAccount, UserRole, SchoolEntity } from '../../types';
 import { databaseService, DatabaseStats, AuditLogItem, UserSummaryItem } from '../../services/databaseService';
@@ -40,8 +41,11 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
   // 🎯 QUYỀN HẠN PHÂN CẤP 3 NHÓM CHÍNH (Yêu cầu e, c, d)
   const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
   const isSchoolAdmin = currentUser?.role === 'school_admin' || Boolean(currentUser?.isSchoolAdmin) || currentUser?.role === 'bgh' || Boolean(currentUser?.isBgh);
-  const isGuestAdmin = currentUser?.role === 'guest_admin' || Boolean(currentUser?.isGuestAdmin) || currentUser?.username?.toLowerCase() === 'admin';
+  const isGuestAdmin = !isSuperAdmin && (currentUser?.role === 'guest_admin' || Boolean(currentUser?.isGuestAdmin) || currentUser?.username?.toLowerCase() === 'admin');
   const currentSchoolScope = currentUser?.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
+
+  // Lựa chọn nhánh quản trị hiển thị (Nhánh 1: Trường học | Nhánh 2: GV Cá nhân)
+  const [selectedAdminBranch, setSelectedAdminBranch] = useState<'branch1' | 'branch2'>('branch1');
 
   // Quản lý CSDL Trường Học
   const [schoolsList, setSchoolsList] = useState<SchoolEntity[]>([]);
@@ -57,6 +61,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     adminFullName: ''
   });
   const [showSchoolPassword, setShowSchoolPassword] = useState(false);
+  const [createAdminAccount, setCreateAdminAccount] = useState(false);
   const [provisionedSchoolInfo, setProvisionedSchoolInfo] = useState<{
     schoolName: string;
     code: string;
@@ -65,8 +70,25 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     fullName: string;
   } | null>(null);
 
+  // 🏛️ Modal cấp nhanh tài khoản BGH cho trường chưa có tài khoản
+  const [provisionModalOpen, setProvisionModalOpen] = useState(false);
+  const [provisioningSchool, setProvisioningSchool] = useState<SchoolEntity | null>(null);
+  const [provisionFormData, setProvisionFormData] = useState({ adminUsername: '', adminPassword: '123456', adminFullName: '' });
+  const [showProvisionPassword, setShowProvisionPassword] = useState(false);
+  const [isProvisioning, setIsProvisioning] = useState(false);
+  const [provisionedResult, setProvisionedResult] = useState<{
+    schoolName: string; code: string; username: string; password?: string; fullName: string;
+  } | null>(null);
+
   // Tenant categorization filter: Trường học vs Giáo viên vãng lai vs Demo
   const [tenantFilter, setTenantFilter] = useState<string>('all');
+
+  // 🏷️ Bộ lọc tài khoản mới (Khối & Vai trò)
+  const [gradeFilter, setGradeFilter] = useState<'all' | '1' | '2' | '3' | '4' | '5' | 'other'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'homeroom' | 'subject' | 'bgh' | 'admin'>('all');
+
+  // 🔀 Tùy chọn sắp xếp tài khoản (Theo khối, theo lớp, họ tên, ngày tạo)
+  const [sortBy, setSortBy] = useState<'grade_class_asc' | 'grade_class_desc' | 'name_asc' | 'name_desc' | 'created_desc'>('grade_class_asc');
 
   // Academic Year Reset states
   const [schoolResetModalOpen, setSchoolResetModalOpen] = useState(false);
@@ -338,7 +360,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       setSchoolFormData(prev => ({ ...prev, name: nameVal }));
       return;
     }
-    // Gợi ý mã trường và username BGH nếu chưa nhập
+    // Gợi ý mã trường từ tên trường
     const slug = nameVal
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -349,20 +371,18 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     const words = slug.split(/\s+/).filter(Boolean);
     const letters = words.map(w => w[0]).join('');
     const suggestedCode = letters ? `TH_${letters}`.slice(0, 10) : '';
-    const suggestedUsername = letters ? `bgh_${letters.toLowerCase()}` : '';
 
     setSchoolFormData(prev => ({
       ...prev,
       name: nameVal,
-      code: prev.code ? prev.code : suggestedCode,
-      adminUsername: prev.adminUsername ? prev.adminUsername : suggestedUsername,
-      adminFullName: prev.adminFullName ? prev.adminFullName : (nameVal ? `Ban Giám Hiệu ${nameVal}` : '')
+      code: prev.code ? prev.code : suggestedCode
     }));
   };
 
   const handleStartCreateSchool = () => {
     setEditingSchool(null);
     setProvisionedSchoolInfo(null);
+    setCreateAdminAccount(false);
     setSchoolFormData({
       name: '',
       code: '',
@@ -375,6 +395,73 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     setSchoolModalOpen(true);
   };
 
+  const handleOpenProvisionModal = (school: SchoolEntity) => {
+    setProvisioningSchool(school);
+    setProvisionedResult(null);
+    const suggestedUser = school.code
+      ? `bgh_${school.code.replace('TH_', '').toLowerCase()}`
+      : `bgh_${school.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toLowerCase()}`;
+    setProvisionFormData({
+      adminUsername: suggestedUser,
+      adminPassword: '123456',
+      adminFullName: `Ban Giám Hiệu ${school.name}`
+    });
+    setShowProvisionPassword(false);
+    setProvisionModalOpen(true);
+  };
+
+  const handleProvisionAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!provisioningSchool) return;
+    if (!provisionFormData.adminUsername.trim()) {
+      showNotify('error', 'Vui lòng nhập tên đăng nhập cho tài khoản BGH.');
+      return;
+    }
+    setIsProvisioning(true);
+    try {
+      const res = await databaseService.provisionSchoolAdmin(provisioningSchool.id, {
+        adminUsername: provisionFormData.adminUsername.trim().toLowerCase(),
+        adminPassword: provisionFormData.adminPassword.trim() || '123456',
+        adminFullName: provisionFormData.adminFullName.trim() || `Ban Giám Hiệu ${provisioningSchool.name}`
+      });
+      if (res.success) {
+        setProvisionedResult({
+          schoolName: provisioningSchool.name,
+          code: provisioningSchool.code,
+          username: provisionFormData.adminUsername.trim().toLowerCase(),
+          password: provisionFormData.adminPassword.trim() || '123456',
+          fullName: provisionFormData.adminFullName.trim() || `Ban Giám Hiệu ${provisioningSchool.name}`
+        });
+        showNotify('success', res.message || 'Đã cấp tài khoản BGH thành công!');
+        loadSchools();
+        onRefreshUsers();
+      } else {
+        showNotify('error', res.message || 'Không thể cấp tài khoản BGH.');
+      }
+    } catch (err: any) {
+      showNotify('error', err?.message || 'Lỗi khi cấp tài khoản BGH.');
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
+
+  const handleStartCreateGuestTeacher = () => {
+    setEditingUser(null);
+    setFormData({
+      username: '',
+      password: '123',
+      fullName: '',
+      role: 'homeroom',
+      phone: '',
+      email: '',
+      assignedClassName: 'Lớp Tự Do',
+      subjectName: 'Toán, Tiếng Việt',
+      schoolName: 'Giáo Viên Cá Nhân',
+      tenantType: 'guest'
+    });
+    setActiveTab('add');
+  };
+
   const handleStartEditSchool = (school: SchoolEntity) => {
     setEditingSchool(school);
     setProvisionedSchoolInfo(null);
@@ -384,8 +471,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       address: school.address || '',
       phone: school.phone || '',
       adminUsername: school.adminUsername || '',
-      adminPassword: school.adminPassword || '123456',
-      adminFullName: school.adminFullName || `Ban Giám Hiệu ${school.name}`
+      adminPassword: '',
+      adminFullName: school.adminFullName || ''
     });
     setSchoolModalOpen(true);
   };
@@ -400,13 +487,9 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       showNotify('error', 'Vui lòng nhập mã trường học.');
       return;
     }
-    if (!editingSchool) {
+    if (createAdminAccount && !editingSchool) {
       if (!schoolFormData.adminUsername.trim()) {
-        showNotify('error', 'Vui lòng nhập tên đăng nhập của Ban Giám Hiệu.');
-        return;
-      }
-      if (!schoolFormData.adminPassword?.trim()) {
-        showNotify('error', 'Vui lòng nhập mật khẩu khởi tạo cho Ban Giám Hiệu.');
+        showNotify('error', 'Vui lòng nhập tên đăng nhập cho tài khoản Quản trị BGH.');
         return;
       }
     }
@@ -415,7 +498,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       if (editingSchool) {
         const res = await databaseService.updateSchool(editingSchool.id, schoolFormData);
         if (res.success) {
-          showNotify('success', 'Đã cập nhật thông tin trường thành công!');
+          showNotify('success', 'Đã cập nhật thông tin CSDL trường thành công!');
           setSchoolModalOpen(false);
           loadSchools();
           onRefreshUsers();
@@ -423,28 +506,29 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           showNotify('error', res.message || 'Không thể cập nhật trường.');
         }
       } else {
-        const res = await databaseService.createSchool(schoolFormData);
+        const res = await databaseService.createSchool({ ...schoolFormData, createAccount: createAdminAccount });
         if (res.success) {
-          showNotify('success', 'Đã khởi tạo cơ sở dữ liệu trường học và cấp tài khoản BGH thành công!');
-          loadSchools();
-          onRefreshUsers();
-          if (res.adminAccount) {
+          if (createAdminAccount && res.adminAccount) {
             setProvisionedSchoolInfo({
-              schoolName: res.school?.name || schoolFormData.name,
-              code: res.school?.code || schoolFormData.code,
+              schoolName: schoolFormData.name,
+              code: schoolFormData.code,
               username: res.adminAccount.username,
-              password: res.adminAccount.password || schoolFormData.adminPassword || '123456',
-              fullName: res.adminAccount.fullName || schoolFormData.adminFullName || `Ban Giám Hiệu ${schoolFormData.name}`
+              password: res.adminAccount.password,
+              fullName: res.adminAccount.fullName
             });
+            showNotify('success', `Đã khởi tạo CSDL & cấp tài khoản BGH cho trường "${schoolFormData.name}" thành công!`);
           } else {
+            showNotify('success', `Đã khởi tạo cơ sở dữ liệu trường "${schoolFormData.name}" thành công! Chưa cấp tài khoản BGH.`);
             setSchoolModalOpen(false);
           }
+          loadSchools();
+          onRefreshUsers();
         } else {
           showNotify('error', res.message || 'Không thể tạo trường mới.');
         }
       }
     } catch (err: any) {
-      showNotify('error', err?.message || 'Lỗi khi lưu thông tin trường.');
+      showNotify('error', err?.message || 'Lỗi khi lưu thông tin CSDL trường.');
     } finally {
       setLoading(false);
     }
@@ -708,7 +792,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         });
         if (res.success) {
           showNotify('success', 'Đã cập nhật thông tin tài khoản thành công!');
-          onRefreshUsers();
+          setLoading(false);
+          await onRefreshUsers();
           setActiveTab('accounts');
         } else {
           showNotify('error', res.message || 'Không thể cập nhật tài khoản.');
@@ -734,7 +819,10 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         });
         if (res.success) {
           showNotify('success', `Đã thêm tài khoản "${formData.username}" thành công!`);
-          onRefreshUsers();
+          setLoading(false);
+          await onRefreshUsers();
+          setTenantFilter('all');
+          setSearchTerm('');
           setActiveTab('accounts');
         } else {
           showNotify('error', res.message || 'Không thể tạo tài khoản.');
@@ -744,7 +832,8 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
       showNotify('error', err?.message || 'Lỗi kết nối khi lưu tài khoản.');
     } finally {
       setLoading(false);
-      loadStats();
+      loadStats().catch(() => {});
+      loadSummaries().catch(() => {});
     }
   };
 
@@ -1070,7 +1159,9 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           const classOrSubject = getVal(['lớp', 'môn', 'phụ trách', 'bộ môn', 'chủ nhiệm']);
           const phone = getVal(['điện thoại', 'sđt', 'phone', 'mobile']);
           const email = getVal(['email', 'thư điện tử']);
-          const schoolName = getVal(['trường', 'đơn vị', 'school']) || (schoolsList[0]?.name || 'TRƯỜNG HỌC HẠNH PHÚC DEMO');
+          const parsedSchool = getVal(['trường', 'đơn vị', 'school']);
+          const defaultSchool = isSchoolAdmin ? currentSchoolScope : (schoolsList[0]?.name || 'TIỂU HỌC SỐ 1 TÂN UYÊN');
+          const schoolName = isSchoolAdmin ? currentSchoolScope : (parsedSchool || defaultSchool);
 
           // Chuẩn hóa username: không dấu, viết thường, không khoảng cách
           const cleanUsername = usernameRaw
@@ -1152,15 +1243,19 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         email: item.email,
         assignedClassName: item.assignedClassName,
         subjectName: item.subjectName,
-        schoolName: item.schoolName
+        schoolName: isSchoolAdmin ? currentSchoolScope : (item.schoolName || currentSchoolScope),
+        tenantType: isSchoolAdmin ? ('school' as const) : ('school' as const)
       }));
 
       const res = await databaseService.createUsersBulk(payload);
       if (res.success) {
         showNotify('success', `Tạo thành công ${res.count} tài khoản giáo viên mới vào hệ thống!`);
         setImportPreviewList([]);
-        onRefreshUsers();
-        loadStats();
+        setLoading(false);
+        await onRefreshUsers();
+        setTenantFilter('all');
+        setSearchTerm('');
+        loadStats().catch(() => {});
         setActiveTab('accounts');
       } else {
         showNotify('error', res.message || 'Lỗi khi tạo tài khoản đồng loạt.');
@@ -1172,24 +1267,96 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     }
   };
 
+  // Danh sách giáo viên cá nhân thuộc Nhánh 2 (quản trị trực tiếp bởi @adminquantri)
+  const guestUsers = allUsers.filter(u => {
+    const isGuest = u.tenantType === 'guest' || 
+      (!u.schoolName && !u.isDemo) || 
+      (u.schoolName && (u.schoolName.toLowerCase().includes('cá nhân') || u.schoolName.toLowerCase().includes('vãng lai')));
+    return isGuest && !u.isDemo && u.role !== 'admin' && u.username.toLowerCase() !== 'adminquantri';
+  });
+
   const scopedUsers = allUsers.filter(u => {
     if (isSchoolAdmin) {
-      return (u.schoolName === currentSchoolScope) && u.role !== 'admin' && !u.isGuestAdmin && u.username.toLowerCase() !== 'adminquantri';
+      const sTarget = (currentSchoolScope || '').trim().toLowerCase();
+      const uSchool = (u.schoolName || '').trim().toLowerCase();
+      return (uSchool === sTarget) && u.role !== 'admin' && !u.isGuestAdmin && u.username.toLowerCase() !== 'adminquantri';
     }
-    if (isGuestAdmin) {
+    if (isGuestAdmin && !isSuperAdmin) {
       return (u.tenantType === 'guest') && u.role !== 'admin' && !u.isSchoolAdmin && u.username.toLowerCase() !== 'adminquantri';
     }
     return true;
   });
 
+  // 🏫 Helper trích xuất số khối (1, 2, 3, 4, 5) từ thông tin tài khoản giáo viên
+  const getUserGrade = (u: UserAccount): number | null => {
+    if (u.role === 'homeroom' && u.assignedClassName) {
+      const str = u.assignedClassName.trim();
+      const m = str.match(/(?:lớp|khối|\s|^)([1-5])(?:[a-zA-Z]|\s|$)/i) || str.match(/([1-5])/);
+      if (m && m[1]) return parseInt(m[1], 10);
+    }
+    return null;
+  };
+
+  // 🏫 Helper chuẩn hóa khóa sắp xếp theo Khối & Lớp: 1A1 < 1A2 < 1A10 < 2A1 < ... < 5A15
+  const getUserClassSortKey = (u: UserAccount): string => {
+    if (u.role === 'homeroom' && u.assignedClassName) {
+      const str = u.assignedClassName.trim();
+      const m = str.match(/([1-5])\s*([a-zA-Z]+)\s*(\d*)/);
+      if (m) {
+        const grade = m[1];
+        const section = (m[2] || '').toUpperCase();
+        const num = m[3] ? m[3].padStart(3, '0') : '000';
+        return `GRADE_${grade}_SECTION_${section}_${num}`;
+      }
+      const numMatch = str.match(/([1-5])/);
+      if (numMatch) {
+        return `GRADE_${numMatch[1]}_${str.toUpperCase()}`;
+      }
+      return `GRADE_9_${str.toUpperCase()}`;
+    }
+    if (u.role === 'subject') return `Z_SUBJECT_${(u.subjectName || '').toUpperCase()}`;
+    if (u.role === 'bgh' || u.isBgh) return 'A_BGH';
+    if (u.role === 'school_admin' || u.isSchoolAdmin) return 'A_SCHOOL_ADMIN';
+    if (u.role === 'admin') return '0_ADMIN';
+    return 'Z_OTHER';
+  };
+
   const filteredUsers = scopedUsers.filter(u => {
-    const matchSearch = 
-      u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.phone && u.phone.includes(searchTerm)) ||
-      (u.assignedClassName && u.assignedClassName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (u.subjectName && u.subjectName.toLowerCase().includes(searchTerm.toLowerCase()));
+    const term = searchTerm.trim().toLowerCase();
+    const matchSearch = !term ||
+      (u.fullName && u.fullName.toLowerCase().includes(term)) ||
+      (u.username && u.username.toLowerCase().includes(term)) ||
+      (u.phone && u.phone.includes(term)) ||
+      (u.assignedClassName && u.assignedClassName.toLowerCase().includes(term)) ||
+      (u.subjectName && u.subjectName.toLowerCase().includes(term)) ||
+      (u.schoolName && u.schoolName.toLowerCase().includes(term));
     if (!matchSearch) return false;
+
+    // 2. Lọc theo Khối (Grade Filter)
+    if (gradeFilter !== 'all') {
+      const g = getUserGrade(u);
+      if (gradeFilter === 'other') {
+        if (g !== null) return false;
+      } else {
+        const targetG = parseInt(gradeFilter, 10);
+        if (g !== targetG) return false;
+      }
+    }
+
+    // 3. Lọc theo Vai trò (Role Filter)
+    if (roleFilter !== 'all') {
+      if (roleFilter === 'bgh') {
+        if (!(u.role === 'bgh' || u.isBgh || u.role === 'school_admin' || u.isSchoolAdmin)) return false;
+      } else if (roleFilter === 'homeroom') {
+        if (u.role !== 'homeroom') return false;
+      } else if (roleFilter === 'subject') {
+        if (u.role !== 'subject') return false;
+      } else if (roleFilter === 'admin') {
+        if (u.role !== 'admin' && u.username.toLowerCase() !== 'adminquantri') return false;
+      } else if (u.role !== roleFilter) {
+        return false;
+      }
+    }
 
     if (!isSuperAdmin) return true; // School admin only sees scoped users of their school
 
@@ -1218,20 +1385,26 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
     }
     return true;
   }).sort((a, b) => {
-    const roleOrder: Record<string, number> = {
-      'admin': 1,
-      'school_admin': 2,
-      'guest_admin': 3,
-      'bgh': 4,
-      'homeroom': 5,
-      'subject': 6
-    };
-    
-    const orderA = roleOrder[a.role] || 99;
-    const orderB = roleOrder[b.role] || 99;
-    
-    if (orderA !== orderB) return orderA - orderB;
-    return (a.fullName || '').localeCompare(b.fullName || '');
+    if (sortBy === 'grade_class_asc') {
+      const keyA = getUserClassSortKey(a);
+      const keyB = getUserClassSortKey(b);
+      return keyA.localeCompare(keyB, undefined, { numeric: true, sensitivity: 'base' });
+    }
+    if (sortBy === 'grade_class_desc') {
+      const keyA = getUserClassSortKey(a);
+      const keyB = getUserClassSortKey(b);
+      return keyB.localeCompare(keyA, undefined, { numeric: true, sensitivity: 'base' });
+    }
+    if (sortBy === 'name_asc') {
+      return (a.fullName || '').localeCompare(b.fullName || '', 'vi');
+    }
+    if (sortBy === 'name_desc') {
+      return (b.fullName || '').localeCompare(a.fullName || '', 'vi');
+    }
+    if (sortBy === 'created_desc') {
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    }
+    return 0;
   });
 
   // Dữ liệu lớp & học sinh thực tế theo phân quyền
@@ -1324,7 +1497,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>{isSchoolAdmin ? 'GV Trong Trường' : (isGuestAdmin ? 'GV Cá Nhân' : 'Tài Khoản')} ({scopedUsers.length})</span>
+              <span>{isSuperAdmin ? 'Tất Cả Tài Khoản' : (isSchoolAdmin ? 'GV Trong Trường' : (isGuestAdmin ? 'GV Cá Nhân' : 'Tài Khoản'))} ({scopedUsers.length})</span>
             </button>
 
             <button
@@ -1443,30 +1616,51 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
         {/* Tab 0: Super Admin Tree View & School Database Management (Yêu cầu e) */}
         {activeTab === 'schools' && isSuperAdmin && (
           <div className="flex-1 overflow-y-auto p-5 md:p-7 flex flex-col space-y-5">
-            {/* Top Bar for School Management */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-rose-50 to-indigo-50 p-4 rounded-2xl border border-rose-200">
+            {/* Top Bar for School & Guest Management */}
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border transition-all ${
+              selectedAdminBranch === 'branch1'
+                ? 'bg-gradient-to-r from-rose-50 to-indigo-50 border-rose-200'
+                : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
+            }`}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
-                  <Building2 className="w-5 h-5" />
+                <div className={`w-10 h-10 rounded-2xl text-white flex items-center justify-center font-black shrink-0 shadow-xs ${
+                  selectedAdminBranch === 'branch1' ? 'bg-rose-600' : 'bg-purple-600'
+                }`}>
+                  {selectedAdminBranch === 'branch1' ? <Building2 className="w-5 h-5" /> : <Users className="w-5 h-5" />}
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-900 uppercase">
-                    Quản Lý Danh Mục & Cơ Sở Dữ Liệu Trường Học
+                    {selectedAdminBranch === 'branch1'
+                      ? 'Quản Lý Danh Mục & Cơ Sở Dữ Liệu Trường Học (Nhánh 1)'
+                      : 'Quản Lý Cơ Sở Dữ Liệu Giáo Viên Cá Nhân (Nhánh 2)'}
                   </h3>
                   <p className="text-xs text-slate-600">
-                    Khởi tạo CSDL mới cho trường, phân bổ tài khoản quản trị trường, sao lưu và đồng bộ
+                    {selectedAdminBranch === 'branch1'
+                      ? 'Khởi tạo CSDL mới cho trường, phân bổ tài khoản quản trị trường, sao lưu và đồng bộ'
+                      : 'Tài khoản quản trị phụ trách: @adminquantri (Super Admin) • Quản trị toàn diện giáo viên độc lập / vãng lai'}
                   </p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleStartCreateSchool}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Khởi Tạo CSDL Trường Mới</span>
-              </button>
+              {selectedAdminBranch === 'branch1' ? (
+                <button
+                  type="button"
+                  onClick={handleStartCreateSchool}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Khởi Tạo CSDL Trường Mới</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleStartCreateGuestTeacher}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ Thêm GV Cá Nhân Mới</span>
+                </button>
+              )}
             </div>
 
             <div className="flex flex-col lg:flex-row gap-5 flex-1 min-h-0">
@@ -1479,19 +1673,31 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
 
                 <div className="text-xs font-mono space-y-1.5 pl-2 border-l-2 border-slate-700">
                   <div className="text-rose-400 font-bold flex items-center gap-1.5">
-                    <span>👑 [Hệ Thống] (admin)</span>
+                    <span>👑 [Hệ Thống] (adminquantri)</span>
                   </div>
 
                   <div className="pl-4 space-y-2 border-l border-slate-700 ml-2 mt-1">
                     {/* Nhánh 1: CSDL Trường học */}
-                    <div className="space-y-1">
-                      <div className="text-blue-300 font-bold flex items-center gap-1.5">
-                        <span>📁 Nhánh 1: Nhà Trường ({schoolsList.length})</span>
+                    <div 
+                      onClick={() => setSelectedAdminBranch('branch1')}
+                      className={`space-y-1 p-2 rounded-xl cursor-pointer transition-all ${
+                        selectedAdminBranch === 'branch1' 
+                          ? 'bg-blue-950/80 border border-blue-500/50 text-blue-200 shadow-xs' 
+                          : 'hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <div className="text-blue-300 font-bold flex items-center justify-between gap-1.5">
+                        <span className="flex items-center gap-1.5">
+                          <span>📁 Nhánh 1: Nhà Trường ({schoolsList.length})</span>
+                        </span>
+                        {selectedAdminBranch === 'branch1' && (
+                          <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.2 rounded-full font-sans font-bold">ĐANG CHỌN</span>
+                        )}
                       </div>
                       <div className="pl-4 space-y-1 text-slate-300 text-[11px]">
                         {schoolsList.length === 0 ? (
-                          <div className="py-2 text-[10.5px] text-slate-400 italic">
-                            Chưa có trường học nào. Nhấn nút "+ Khởi Tạo CSDL Trường Mới" bên trên.
+                          <div className="py-1 text-[10.5px] text-slate-400 italic">
+                            Chưa có trường học nào. Nhấn "+ Khởi tạo CSDL Trường Mới".
                           </div>
                         ) : (
                           schoolsList.map((s) => {
@@ -1513,123 +1719,351 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     </div>
 
                     {/* Nhánh 2: Giáo viên cá nhân */}
-                    <div className="space-y-1 mt-3">
-                      <div className="text-purple-300 font-bold flex items-center gap-1.5">
-                        <span>👤 Nhánh 2: GV Cá Nhân ({allUsers.filter(u => u.tenantType === 'guest').length})</span>
+                    <div 
+                      onClick={() => setSelectedAdminBranch('branch2')}
+                      className={`space-y-1 mt-2.5 p-2 rounded-xl cursor-pointer transition-all ${
+                        selectedAdminBranch === 'branch2' 
+                          ? 'bg-purple-950/80 border border-purple-500/50 text-purple-200 shadow-xs' 
+                          : 'hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <div className="text-purple-300 font-bold flex items-center justify-between gap-1.5">
+                        <span className="flex items-center gap-1.5">
+                          <span>👤 Nhánh 2: GV Cá Nhân ({guestUsers.length})</span>
+                        </span>
+                        {selectedAdminBranch === 'branch2' && (
+                          <span className="text-[9px] bg-purple-600 text-white px-1.5 py-0.2 rounded-full font-sans font-bold">ĐANG CHỌN</span>
+                        )}
                       </div>
                       <div className="pl-4 space-y-1 text-slate-300 text-[11px]">
                         <div className="flex flex-col py-1">
-                          <span>└── 🛡️ Phụ trách: <span className="text-purple-300">@admin_canhan</span></span>
+                          <span>└── 🛡️ Phụ trách: <span className="text-amber-300 font-bold">@adminquantri</span></span>
                         </div>
+                        {guestUsers.length === 0 ? (
+                          <div className="py-1 text-[10.5px] text-slate-400 italic">
+                            Chưa có GV cá nhân nào. Nhấn "+ Thêm GV Cá Nhân" để tạo.
+                          </div>
+                        ) : (
+                          guestUsers.map((u) => {
+                            return (
+                              <div key={u.id} className="flex flex-col py-1 hover:text-white border-b border-slate-800/50">
+                                <div className="flex items-center gap-1">
+                                  <span>├── 👨‍🏫</span>
+                                  <span className="font-bold text-slate-200 truncate" title={u.fullName}>{u.fullName}</span>
+                                </div>
+                                <div className="pl-5 text-[10px] text-slate-400">
+                                  TK: @{u.username} • {u.subjectName || (u.role === 'homeroom' ? `CN ${u.assignedClassName || ''}` : 'GV Bộ môn')}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: School Table */}
-              <div className="lg:w-2/3 flex-1 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white flex flex-col min-h-[250px]">
-                <div className="flex-1 overflow-auto">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
-                      <tr>
-                        <th className="py-2 px-2 text-center w-12">STT</th>
-                        <th className="py-2 px-2">Tên Trường Học</th>
-                        <th className="py-2 px-2">Mã Trường</th>
-                        <th className="py-2 px-2 hidden md:table-cell">Số Điện Thoại</th>
-                        <th className="py-2 px-2 text-right">Thao Tác</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {schoolsList.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="py-12 px-4 text-center">
-                            <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center space-y-3">
-                              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 flex items-center justify-center shadow-xs">
-                                <School className="w-6 h-6" />
-                              </div>
-                              <div>
-                                <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">
-                                  Chưa có CSDL Trường học nào
-                                </h4>
-                                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                  Hệ thống đang ở trạng thái CSDL trắng hoàn toàn. Hãy khởi tạo trường học đầu tiên để bắt đầu vận hành!
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={handleStartCreateSchool}
-                                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                              >
-                                <Plus className="w-4 h-4" />
-                                <span>Khởi Tạo Trường Đầu Tiên</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        schoolsList.map((school, idx) => (
-                          <tr key={school.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-2 px-2 text-center font-bold text-slate-400">{idx + 1}</td>
-                            <td className="py-2 px-2">
-                              <div className="font-black text-slate-900 flex items-center gap-1.5">
-                                <School className="w-4 h-4 text-blue-600 shrink-0" />
-                                <span>{school.name}</span>
-                              </div>
-                              <div className="text-[10px] font-mono text-amber-600 mt-0.5">TK: @{school.adminUsername || 'adminths1'}</div>
-                            </td>
-                            <td className="py-2 px-2 font-mono font-bold text-blue-700">{school.code}</td>
-                            <td className="py-2 px-2 text-slate-600 font-mono hidden md:table-cell">{school.phone || '—'}</td>
-                            <td className="py-2 px-2 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setTenantFilter('school');
-                                    setSearchTerm(school.name);
-                                    setActiveTab('accounts');
-                                  }}
-                                  className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition-colors"
-                                  title="Quản lý tài khoản thuộc trường"
-                                >
-                                  <Users className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleStartEditSchool(school)}
-                                  className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors"
-                                  title="Chỉnh sửa thông tin trường"
-                                >
-                                  <Edit3 className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={deletingSchoolId === school.id || loading}
-                                  onClick={() => handleDeleteSchool(school)}
-                                  className={`p-1.5 rounded-lg border transition-all ${
-                                    deletingSchoolId === school.id
-                                      ? 'bg-amber-50 text-amber-700 border-amber-300 cursor-not-allowed shadow-none'
-                                      : 'text-rose-500 hover:bg-rose-50 border-transparent hover:border-rose-200'
-                                  }`}
-                                  title={deletingSchoolId === school.id ? "Đang dọn dẹp dữ liệu..." : "Xóa CSDL trường này"}
-                                >
-                                  {deletingSchoolId === school.id ? (
-                                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 px-1.5 py-0.5 animate-pulse">
-                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                      <span>Đang dọn dẹp dữ liệu...</span>
-                                    </span>
-                                  ) : (
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  )}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+              {/* Right Column: Branch 1 (School) / Branch 2 (Guest Teacher) Management */}
+              <div className="lg:w-2/3 flex-1 flex flex-col space-y-3 min-h-[300px]">
+                {/* Branch Switcher Tabs */}
+                <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAdminBranch('branch1')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      selectedAdminBranch === 'branch1'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                    }`}
+                  >
+                    <School className="w-4 h-4" />
+                    <span>📁 Nhánh 1: CSDL Nhà Trường ({schoolsList.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAdminBranch('branch2')}
+                    className={`flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      selectedAdminBranch === 'branch2'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>👤 Nhánh 2: GV Cá Nhân ({guestUsers.length}) [Admin: @adminquantri]</span>
+                  </button>
                 </div>
+
+                {/* Nội dung tương ứng từng Nhánh */}
+                {selectedAdminBranch === 'branch1' ? (
+                  // Bảng Trường Học (Nhánh 1)
+                  <div className="flex-1 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white flex flex-col min-h-[250px]">
+                    <div className="flex-1 overflow-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+                          <tr>
+                            <th className="py-2 px-2 text-center w-12">STT</th>
+                            <th className="py-2 px-2">Tên Trường Học</th>
+                            <th className="py-2 px-2">Mã Trường</th>
+                            <th className="py-2 px-2 hidden md:table-cell">Số Điện Thoại</th>
+                            <th className="py-2 px-2 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                          {schoolsList.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="py-12 px-4 text-center">
+                                <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center space-y-3">
+                                  <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 flex items-center justify-center shadow-xs">
+                                    <School className="w-6 h-6" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                      Chưa có CSDL Trường học nào
+                                    </h4>
+                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                      Hệ thống đang ở trạng thái CSDL trắng hoàn toàn. Hãy khởi tạo trường học đầu tiên để bắt đầu vận hành!
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={handleStartCreateSchool}
+                                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Khởi Tạo Trường Đầu Tiên</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ) : (
+                            schoolsList.map((school, idx) => {
+                              const hasAdminAccount = !!(school.adminUsername && allUsers.some(u => u.username?.toLowerCase() === school.adminUsername?.toLowerCase()));
+                              return (
+                              <tr key={school.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="py-2 px-2 text-center font-bold text-slate-400">{idx + 1}</td>
+                                <td className="py-2 px-2">
+                                  <div className="font-black text-slate-900 flex items-center gap-1.5">
+                                    <School className="w-4 h-4 text-blue-600 shrink-0" />
+                                    <span>{school.name}</span>
+                                  </div>
+                                  <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                    {hasAdminAccount ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        TK: @{school.adminUsername}
+                                      </span>
+                                    ) : (
+                                      <>
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-1.5 py-0.5">
+                                          <AlertCircle className="w-3 h-3" />
+                                          Chưa cấp tài khoản BGH
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenProvisionModal(school)}
+                                          className="inline-flex items-center gap-0.5 text-[10px] font-black text-white bg-rose-500 hover:bg-rose-600 rounded-md px-1.5 py-0.5 transition-colors shadow-sm cursor-pointer"
+                                          title="Cấp tài khoản Quản trị BGH cho trường này"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                          Cấp tài khoản
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-2 px-2 font-mono font-bold text-blue-700">{school.code}</td>
+                                <td className="py-2 px-2 text-slate-600 font-mono hidden md:table-cell">{school.phone || '—'}</td>
+                                <td className="py-2 px-2 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    {!hasAdminAccount && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenProvisionModal(school)}
+                                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                                        title="Cấp tài khoản Ban Giám Hiệu"
+                                      >
+                                        <UserPlus className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setTenantFilter(`school_${school.id}`);
+                                        setSearchTerm('');
+                                        setActiveTab('accounts');
+                                      }}
+                                      className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition-colors"
+                                      title="Quản lý tài khoản thuộc trường"
+                                    >
+                                      <Users className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartEditSchool(school)}
+                                      className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors"
+                                      title="Chỉnh sửa thông tin trường"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={deletingSchoolId === school.id || loading}
+                                      onClick={() => handleDeleteSchool(school)}
+                                      className={`p-1.5 rounded-lg border transition-all ${
+                                        deletingSchoolId === school.id
+                                          ? 'bg-amber-50 text-amber-700 border-amber-300 cursor-not-allowed shadow-none'
+                                          : 'text-rose-500 hover:bg-rose-50 border-transparent hover:border-rose-200'
+                                      }`}
+                                      title={deletingSchoolId === school.id ? "Đang dọn dẹp dữ liệu..." : "Xóa CSDL trường này"}
+                                    >
+                                      {deletingSchoolId === school.id ? (
+                                        <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 px-1.5 py-0.5 animate-pulse">
+                                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                          <span>Đang dọn dẹp...</span>
+                                        </span>
+                                      ) : (
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  // Bảng Giáo Viên Cá Nhân (Nhánh 2) - Quản trị bởi @adminquantri
+                  <div className="flex-1 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white flex flex-col min-h-[250px]">
+                    <div className="flex-1 overflow-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+                          <tr>
+                            <th className="py-2 px-2 text-center w-12">STT</th>
+                            <th className="py-2 px-2">Họ & Tên Giáo Viên</th>
+                            <th className="py-2 px-2">Tên Đăng Nhập</th>
+                            <th className="py-2 px-2">Mật Khẩu</th>
+                            <th className="py-2 px-2">Môn / Lớp</th>
+                            <th className="py-2 px-2 hidden md:table-cell">Số Điện Thoại</th>
+                            <th className="py-2 px-2 text-right">Thao Tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 font-medium">
+                          {guestUsers.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="py-12 px-4 text-center">
+                                <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center space-y-3">
+                                  <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center shadow-xs">
+                                    <Users className="w-6 h-6" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">
+                                      Chưa có Giáo Viên Cá Nhân nào (Nhánh 2)
+                                    </h4>
+                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                      Tài khoản quản trị phụ trách: <strong className="text-amber-600">@adminquantri</strong>. Hãy thêm giáo viên cá nhân đầu tiên để bắt đầu vận hành Nhánh 2!
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={handleStartCreateGuestTeacher}
+                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <UserPlus className="w-4 h-4" />
+                                    <span>Thêm GV Cá Nhân Đầu Tiên</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ) : (
+                            guestUsers.map((u, idx) => (
+                              <tr key={u.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="py-2 px-2 text-center font-bold text-slate-400">{idx + 1}</td>
+                                <td className="py-2 px-2">
+                                  <div className="flex items-center gap-2">
+                                    <img 
+                                      src={u.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username} 
+                                      alt={u.fullName}
+                                      className="w-7 h-7 rounded-full border border-slate-200 object-cover bg-slate-50 shrink-0"
+                                    />
+                                    <div>
+                                      <div className="font-black text-slate-900">{u.fullName}</div>
+                                      <div className="text-[10px] text-purple-600 font-bold">Nhánh 2: GV Cá nhân</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-2 px-2">
+                                  <code className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 font-mono font-bold text-[11px] border border-slate-200">
+                                    @{u.username}
+                                  </code>
+                                </td>
+                                <td className="py-2 px-2">
+                                  <code className="px-2 py-0.5 rounded-lg bg-red-50 text-red-700 font-mono font-bold text-[11px] border border-red-200">
+                                    {u.password || '123456'}
+                                  </code>
+                                </td>
+                                <td className="py-2 px-2 text-slate-700">
+                                  {u.subjectName || (u.role === 'homeroom' ? `CN ${u.assignedClassName || ''}` : 'GV Bộ môn')}
+                                </td>
+                                <td className="py-2 px-2 text-slate-600 font-mono hidden md:table-cell">
+                                  {u.phone || '—'}
+                                </td>
+                                <td className="py-2 px-2 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleQuickSwitch(u.username)}
+                                      className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10.5px] border border-indigo-200 transition-colors"
+                                      title="Đăng nhập trực tiếp vào không gian làm việc của GV"
+                                    >
+                                      Đăng nhập
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenTransferModal(u)}
+                                      className="p-1.5 rounded-lg text-purple-600 hover:bg-purple-50 border border-transparent hover:border-purple-200 transition-colors"
+                                      title="Gán / Chuyển giáo viên này vào một Nhà Trường (Nhánh 1)"
+                                    >
+                                      <Building2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartEdit(u)}
+                                      className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors"
+                                      title="Chỉnh sửa thông tin giáo viên"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleResetPassword(u)}
+                                      className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-200 transition-colors"
+                                      title="Đặt lại mật khẩu cho giáo viên"
+                                    >
+                                      <KeyRound className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteUser(u)}
+                                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors"
+                                      title="Xóa tài khoản giáo viên này"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1647,9 +2081,19 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Tìm tài khoản, họ tên, lớp, môn..."
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Tìm tài khoản, họ tên, trường, lớp, môn..."
+                    className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200 transition-colors"
+                      title="Xóa từ khóa tìm kiếm"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
                 {selectedUserIds.length > 0 && (
                   <button
@@ -1712,7 +2156,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               <div className="flex flex-wrap items-center gap-2 mb-3 bg-slate-100/70 p-1.5 rounded-2xl border border-slate-200/80">
                 <button
                   type="button"
-                  onClick={() => setTenantFilter('all')}
+                  onClick={() => { setTenantFilter('all'); setSearchTerm(''); }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                     tenantFilter === 'all'
                       ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
@@ -1723,7 +2167,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTenantFilter('admin_super')}
+                  onClick={() => { setTenantFilter('admin_super'); setSearchTerm(''); }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                     tenantFilter === 'admin_super'
                       ? 'bg-rose-600 text-white shadow-xs'
@@ -1749,7 +2193,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     <button
                       key={sch.id}
                       type="button"
-                      onClick={() => setTenantFilter(isSelected ? 'all' : filterKey)}
+                      onClick={() => { setTenantFilter(isSelected ? 'all' : filterKey); setSearchTerm(''); }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                         isSelected
                           ? isDemo
@@ -1767,7 +2211,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 })}
                 <button
                   type="button"
-                  onClick={() => setTenantFilter('guest')}
+                  onClick={() => { setTenantFilter('guest'); setSearchTerm(''); }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                     tenantFilter === 'guest'
                       ? 'bg-purple-600 text-white shadow-xs'
@@ -1790,7 +2234,7 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 <div className="flex items-center gap-2">
                   <School className="w-4 h-4 text-blue-600 shrink-0" />
                   <span>
-                    Phạm vi quản trị: <strong>{currentSchoolScope}</strong> ({scopedUsers.length} tài khoản) • Bạn chỉ có quyền xem và quản lý các tài khoản thuộc trường của mình.
+                    Phạm vi quản trị: <strong>{currentSchoolScope}</strong> ({scopedUsers.length} tài khoản) • Bạn có toàn quyền quản lý, sắp xếp và lọc tài khoản giáo viên thuộc trường của mình.
                   </span>
                 </div>
                 <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-blue-200 text-blue-800 shrink-0">
@@ -1799,13 +2243,177 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
               </div>
             )}
 
+            {/* 🎯 BỘ LỌC TÀI KHOẢN THEO KHỐI, THEO VAI TRÒ & SẮP XẾP THEO LỚP HỌC (Yêu cầu Quản trị tối cao & Quản trị trường) */}
+            <div className="mb-3.5 p-3 bg-white border border-slate-200 rounded-2xl shadow-xs flex flex-col gap-2.5 shrink-0">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* 1. LỌC THEO KHỐI (1 ĐẾN 5) */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-black uppercase text-slate-400 flex items-center gap-1 mr-1">
+                    <Layers className="w-3.5 h-3.5 text-indigo-500" />
+                    Lọc Khối:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setGradeFilter('all')}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      gradeFilter === 'all'
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Tất cả khối ({scopedUsers.length})
+                  </button>
+                  {[1, 2, 3, 4, 5].map((g) => {
+                    const countInGrade = scopedUsers.filter(u => getUserGrade(u) === g).length;
+                    const isActive = gradeFilter === String(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setGradeFilter(isActive ? 'all' : (String(g) as any))}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1 cursor-pointer ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700'
+                        }`}
+                        title={`Lọc danh sách chỉ hiển thị giáo viên phụ trách Khối ${g}`}
+                      >
+                        <span>Khối {g}</span>
+                        <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold ${
+                          isActive ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          {countInGrade}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => setGradeFilter(gradeFilter === 'other' ? 'all' : 'other')}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1 cursor-pointer ${
+                      gradeFilter === 'other'
+                        ? 'bg-slate-700 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title="Lọc tài khoản Giáo viên bộ môn, Ban Giám Hiệu, Quản trị không gán theo khối lớp cụ thể"
+                  >
+                    <span>Bộ Môn / Khác</span>
+                    <span className={`text-[10px] px-1 py-0.2 rounded-full font-bold ${
+                      gradeFilter === 'other' ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {scopedUsers.filter(u => getUserGrade(u) === null).length}
+                    </span>
+                  </button>
+                </div>
+
+                {/* 2. SẮP XẾP DANH SÁCH (SORT BY) */}
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="text-[11px] font-black uppercase text-slate-400 flex items-center gap-1">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-emerald-500" />
+                    Sắp xếp:
+                  </span>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+                  >
+                    <option value="grade_class_asc">🔢 Khối & Lớp: 1A1 ➡️ 5A... (Tăng dần)</option>
+                    <option value="grade_class_desc">🔢 Khối & Lớp: 5A... ➡️ 1A1 (Giảm dần)</option>
+                    <option value="name_asc">🔤 Họ & Tên Giáo Viên (A ➡️ Z)</option>
+                    <option value="name_desc">🔤 Họ & Tên Giáo Viên (Z ➡️ A)</option>
+                    <option value="created_desc">⏱️ Tài khoản mới tạo gần nhất</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 3. LỌC THEO VAI TRÒ (ROLE) & NÚT RESET */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-black uppercase text-slate-400 flex items-center gap-1 mr-1">
+                    <Filter className="w-3.5 h-3.5 text-amber-500" />
+                    Vai Trò:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter('all')}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      roleFilter === 'all'
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Tất cả vai trò
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter(roleFilter === 'homeroom' ? 'all' : 'homeroom')}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1 cursor-pointer ${
+                      roleFilter === 'homeroom'
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700'
+                    }`}
+                  >
+                    <School className="w-3.5 h-3.5" />
+                    <span>GV Chủ nhiệm ({scopedUsers.filter(u => u.role === 'homeroom').length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter(roleFilter === 'subject' ? 'all' : 'subject')}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1 cursor-pointer ${
+                      roleFilter === 'subject'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700'
+                    }`}
+                  >
+                    <Laptop className="w-3.5 h-3.5" />
+                    <span>GV Bộ môn ({scopedUsers.filter(u => u.role === 'subject').length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter(roleFilter === 'bgh' ? 'all' : 'bgh')}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-black transition-all flex items-center gap-1 cursor-pointer ${
+                      roleFilter === 'bgh'
+                        ? 'bg-purple-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700'
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>BGH & Quản Trị ({scopedUsers.filter(u => u.role === 'school_admin' || u.isSchoolAdmin || u.role === 'bgh' || u.isBgh).length})</span>
+                  </button>
+                </div>
+
+                {/* Trạng thái hiển thị số lượng & Nút đặt lại bộ lọc */}
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="text-xs font-bold text-slate-500">
+                    Hiển thị: <strong className="text-indigo-700 font-black">{filteredUsers.length}</strong> / {scopedUsers.length} tài khoản
+                  </span>
+                  {(gradeFilter !== 'all' || roleFilter !== 'all' || sortBy !== 'grade_class_asc' || searchTerm !== '') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGradeFilter('all');
+                        setRoleFilter('all');
+                        setSortBy('grade_class_asc');
+                        setSearchTerm('');
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Xóa tất cả các bộ lọc và đưa về sắp xếp mặc định"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Đặt lại</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Table of Users */}
             <div className="flex-1 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
               <div className="overflow-x-auto h-full">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider sticky top-0 z-10">
                     <tr>
-                      <th className="py-2 px-2 text-center w-10 whitespace-nowrap">
+                      <th className="py-2.5 px-2 text-center w-10 whitespace-nowrap">
                         <input
                           type="checkbox"
                           className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
@@ -1814,15 +2422,36 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                           title="Chọn tất cả"
                         />
                       </th>
-                      <th className="py-2 px-2 text-center w-10 whitespace-nowrap">STT</th>
-                      <th className="py-2 px-2 whitespace-nowrap">Họ & Tên Giáo Viên</th>
-                      <th className="py-2 px-2 whitespace-nowrap">Tên Đăng Nhập</th>
-                      <th className="py-2 px-2 whitespace-nowrap">Mật Khẩu</th>
-                      <th className="py-2 px-2 text-center whitespace-nowrap">Vai Trò Được Gán</th>
-                      <th className="py-2 px-2 text-center whitespace-nowrap">Tài Khoản Cấp</th>
-                      <th className="py-2 px-2 text-center whitespace-nowrap">Chi Tiết</th>
-                      <th className="py-2 px-2 text-center whitespace-nowrap">Xem Chi Tiết Phân Quyền</th>
-                      <th className="py-2 px-2 text-right whitespace-nowrap">Thao Tác Quản Trị</th>
+                      <th className="py-2.5 px-2 text-center w-10 whitespace-nowrap">STT</th>
+                      <th 
+                        className="py-2.5 px-2 whitespace-nowrap cursor-pointer hover:text-indigo-600 transition-colors"
+                        onClick={() => setSortBy(sortBy === 'name_asc' ? 'name_desc' : 'name_asc')}
+                        title="Bấm để sắp xếp theo Họ & Tên"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span>Họ & Tên Giáo Viên</span>
+                          {sortBy === 'name_asc' && <ArrowDownAZ className="w-3.5 h-3.5 text-indigo-600" />}
+                          {sortBy === 'name_desc' && <ArrowUpAZ className="w-3.5 h-3.5 text-indigo-600" />}
+                        </div>
+                      </th>
+                      <th className="py-2.5 px-2 whitespace-nowrap">Tên Đăng Nhập</th>
+                      <th className="py-2.5 px-2 whitespace-nowrap">Mật Khẩu</th>
+                      <th className="py-2.5 px-2 text-center whitespace-nowrap">Vai Trò Được Gán</th>
+                      <th 
+                        className="py-2.5 px-2 text-center whitespace-nowrap cursor-pointer hover:text-indigo-600 transition-colors"
+                        onClick={() => setSortBy(sortBy === 'grade_class_asc' ? 'grade_class_desc' : 'grade_class_asc')}
+                        title="Bấm để đảo chiều sắp xếp theo Khối & Lớp"
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          <Layers className="w-3.5 h-3.5 text-indigo-500" />
+                          <span>Khối & Lớp / Môn Phụ Trách</span>
+                          {sortBy === 'grade_class_asc' && <ArrowUpDown className="w-3.5 h-3.5 text-indigo-600" />}
+                          {sortBy === 'grade_class_desc' && <ArrowUpDown className="w-3.5 h-3.5 text-amber-600 rotate-180" />}
+                        </div>
+                      </th>
+                      <th className="py-2.5 px-2 text-center whitespace-nowrap">Cấp Quản Trị</th>
+                      <th className="py-2.5 px-2 text-center whitespace-nowrap">Chi Tiết</th>
+                      <th className="py-2.5 px-2 text-right whitespace-nowrap">Thao Tác Quản Trị</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
@@ -1830,23 +2459,27 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                       const isSelf = currentUser ? u.id === currentUser.id : false;
                       const isDefaultAdmin = u.username.toLowerCase() === 'admin';
                       const getAccountLevel = (user: any) => {
-                        if (user.role === 'admin') return (user.schoolName?.toUpperCase().includes('DEMO') || user.schoolName?.toUpperCase().includes('DEMO')) ? 'Cấp 2' : 'Cấp 1';
-                        if (user.role === 'guest_admin' || user.isGuestAdmin || user.isSchoolAdmin) return 'Cấp 2';
-                        if (user.role === 'bgh' || user.isBgh) return 'Cấp 3';
-                        if (user.role === 'homeroom') return 'Cấp 5';
-                        if (user.role === 'subject') return 'Cấp 6';
-                        return 'Cấp 4';
+                        if (user.role === 'admin') return 'Cấp 1';
+                        if (user.role === 'school_admin' || user.isSchoolAdmin) return 'Cấp 2';
+                        if (user.role === 'bgh' || user.isBgh) return 'Cấp 2';
+                        if (user.role === 'guest_admin' || user.isGuestAdmin) return 'Cấp 2';
+                        if (user.role === 'homeroom') return 'Cấp 3';
+                        if (user.role === 'subject') return 'Cấp 4';
+                        return 'Cấp 3';
                       };
                       const accountLevel = getAccountLevel(u);
                       
                       const getRoleDescription = (user: any) => {
-                        if (user.role === 'admin') return 'Toàn quyền Hệ thống';
-                        if (user.role === 'guest_admin' || user.isGuestAdmin || user.isSchoolAdmin) return 'Quản trị Cấp Trường / Vùng';
-                        if (user.role === 'bgh' || user.isBgh) return 'Xem & Thống kê toàn trường';
-                        if (user.role === 'homeroom') return 'Quản lý toàn diện Lớp CN';
-                        if (user.role === 'subject') return 'Nhập điểm & Đánh giá Bộ Môn';
+                        if (user.role === 'admin') return 'Toàn quyền Hệ thống (Admin Super)';
+                        if (user.role === 'school_admin') return 'Quản trị trong nhà trường';
+                        if (user.role === 'bgh' || user.isBgh) return 'Ban Giám Hiệu (Toàn trường)';
+                        if (user.role === 'homeroom') return 'Giáo viên chủ nhiệm';
+                        if (user.role === 'subject') return 'Giáo viên bộ môn';
+                        if (user.role === 'guest_admin') return 'Quản trị cá nhân';
                         return 'Quyền hạn cơ bản';
                       };
+
+                      const uGrade = getUserGrade(u);
 
                       return (
                         <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
@@ -1898,25 +2531,37 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                               {u.role === 'admin' && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700 border border-rose-200 whitespace-nowrap">
                                   <ShieldCheck className="w-3 h-3" />
-                                  Quản trị viên
+                                  Quản trị tối cao
                                 </span>
                               )}
-                              {(u.role === 'bgh' || u.isBgh) && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
+                              {u.role === 'school_admin' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">
+                                  <Building2 className="w-3 h-3" />
+                                  Quản trị trong nhà trường
+                                </span>
+                              )}
+                              {(u.role === 'bgh' || u.isBgh) && u.role !== 'school_admin' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200 whitespace-nowrap">
                                   <ShieldAlert className="w-3 h-3" />
                                   Ban Giám Hiệu
                                 </span>
                               )}
                               {u.role === 'homeroom' && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-700 border border-indigo-200 whitespace-nowrap">
                                   <School className="w-3 h-3" />
-                                  GV Chủ nhiệm
+                                  Giáo viên chủ nhiệm
                                 </span>
                               )}
                               {u.role === 'subject' && (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                                   <Laptop className="w-3 h-3" />
-                                  GV Bộ môn
+                                  Giáo viên bộ môn
+                                </span>
+                              )}
+                              {u.role === 'guest_admin' && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200 whitespace-nowrap">
+                                  <Users className="w-3 h-3" />
+                                  Quản trị cá nhân
                                 </span>
                               )}
                               <div className="flex items-center gap-1">
@@ -1937,6 +2582,38 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                               </div>
                             </div>
                           </td>
+
+                          {/* 🏫 CỘT KHỐI & LỚP / MÔN PHỤ TRÁCH TRỰC QUAN */}
+                          <td className="py-2 px-2 text-center">
+                            {u.role === 'homeroom' ? (
+                              <div className="inline-flex flex-col items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-700 font-black text-[11px] border border-indigo-200 whitespace-nowrap shadow-2xs flex items-center gap-1.5">
+                                  <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+                                  {uGrade ? `Khối ${uGrade} • ` : ''}{u.assignedClassName || 'Chưa gán lớp'}
+                                </span>
+                              </div>
+                            ) : u.role === 'subject' ? (
+                              <div className="inline-flex flex-col items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-[11px] border border-emerald-200 whitespace-nowrap shadow-2xs flex items-center gap-1.5">
+                                  <Laptop className="w-3.5 h-3.5 text-emerald-600" />
+                                  Môn: {u.subjectName || 'Bộ môn'}
+                                </span>
+                              </div>
+                            ) : (u.role === 'school_admin' || u.role === 'bgh' || u.isBgh) ? (
+                              <span className="px-2.5 py-1 rounded-xl bg-purple-50 text-purple-700 font-bold text-[11px] border border-purple-200 whitespace-nowrap shadow-2xs flex items-center gap-1.5 justify-center">
+                                <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                                Quản trị Toàn Trường
+                              </span>
+                            ) : u.role === 'admin' ? (
+                              <span className="px-2.5 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-[11px] border border-rose-200 whitespace-nowrap shadow-2xs flex items-center gap-1.5 justify-center">
+                                <Crown className="w-3.5 h-3.5 text-rose-600" />
+                                Toàn Hệ Thống
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 font-medium">Chưa gán</span>
+                            )}
+                          </td>
+
                           <td className="py-2 px-2 text-center">
                             <span className="px-2 py-1 rounded-lg bg-orange-100 text-orange-800 font-black text-[11px] border border-orange-200 whitespace-nowrap shadow-xs">
                               {accountLevel}
@@ -1951,26 +2628,16 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                                   `🔒 Mật khẩu: ${u.password || (u.username.toLowerCase() === 'admin' ? 'Tanuyen@2026' : '123456')}`,
                                   `🛡️ Vai trò: ${u.role === 'admin' ? 'Quản trị hệ thống cấp cao' : u.role === 'school_admin' ? 'Quản trị nhà trường' : u.role === 'bgh' ? 'Ban giám hiệu' : u.role === 'homeroom' ? 'Giáo viên chủ nhiệm' : 'Giáo viên bộ môn'}`,
                                   `🏢 Thuộc đơn vị/trường: ${u.schoolName || (u.tenantType === 'guest' ? 'Giáo Viên Cá Nhân' : 'Chưa rõ khối')}`,
-                                  `📚 Phụ trách: ${u.role === 'homeroom' && u.assignedClassName ? 'Chủ nhiệm lớp ' + u.assignedClassName : u.role === 'subject' && u.subjectName ? 'Giảng dạy môn ' + u.subjectName : u.role === 'admin' ? 'Quản lý toàn bộ hệ thống' : u.role === 'school_admin' || u.role === 'bgh' ? 'Quản lý toàn trường' : 'Chưa gán'}`,
+                                  `📚 Phụ trách: ${u.role === 'homeroom' && u.assignedClassName ? 'Chủ nhiệm lớp ' + u.assignedClassName + (uGrade ? ` (Khối ${uGrade})` : '') : u.role === 'subject' && u.subjectName ? 'Giảng dạy môn ' + u.subjectName : u.role === 'admin' ? 'Quản lý toàn bộ hệ thống' : u.role === 'school_admin' || u.role === 'bgh' ? 'Quản lý toàn trường' : 'Chưa gán'}`,
                                   `⚙️ Chức năng: ${getRoleDescription(u)}`,
                                   `📞 SĐT: ${u.phone || 'Chưa cập nhật'}`
                                 ].join('\n');
                                 window.alert(`THÔNG TIN TÀI KHOẢN\n\n${details}`);
                               }}
-                              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] border border-indigo-200 transition-colors flex items-center gap-1 mx-auto whitespace-nowrap shadow-xs"
+                              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] border border-indigo-200 transition-colors flex items-center gap-1 mx-auto whitespace-nowrap shadow-xs cursor-pointer"
                             >
                               <FileText className="w-3.5 h-3.5" />
-                              Xem Chi Tiết
-                            </button>
-                          </td>
-                          <td className="py-2 px-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => showNotify('success', `Phân quyền chi tiết: ${getRoleDescription(u)}`)}
-                              className="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-[10px] border border-teal-200 transition-colors flex items-center gap-1 mx-auto whitespace-nowrap"
-                            >
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              {getRoleDescription(u)}
+                              Chi Tiết
                             </button>
                           </td>
                           <td className="py-2 px-2 text-right">
@@ -2107,157 +2774,194 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                   />
                 </div>
 
-                {/* Role selection (Theo quyền phân cấp: Super Admin, School Admin, Guest Admin) */}
+                {/* Role selection (Theo quyền phân cấp: Super Admin, School Admin, BGH, GVCN, GVBM) */}
                 <div className="md:col-span-2">
-                  <label className="block text-xs font-black text-slate-700 uppercase mb-2">
-                    Gán Vai Trò & Chức Năng Hoạt Động <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* GVCN */}
-                    <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
-                      formData.role === 'homeroom' 
-                        ? 'border-indigo-600 bg-indigo-50/60 shadow-xs' 
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <School className="w-4 h-4 text-indigo-600" />
-                          <span className="font-black text-xs text-slate-900 uppercase">GV CHỦ NHIỆM</span>
-                        </div>
-                        <input
-                          type="radio"
-                          name="role"
-                          checked={formData.role === 'homeroom'}
-                          onChange={() => setFormData({ ...formData, role: 'homeroom' })}
-                          className="w-4 h-4 text-indigo-600"
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-tight">
-                        Quản lý lớp chủ nhiệm, điểm danh, infographic, sơ đồ lớp 3D, thi đua.
-                      </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-black text-slate-700 uppercase">
+                      Gán Vai Trò & Phân Quyền Hoạt Động <span className="text-rose-500">*</span>
                     </label>
+                    <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                      {isSuperAdmin ? 'Admin Super: Toàn quyền tạo cho mọi trường' : 'Phân quyền trong đơn vị'}
+                    </span>
+                  </div>
 
-                    {/* GVBM */}
-                    <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
-                      formData.role === 'subject' 
-                        ? 'border-emerald-600 bg-emerald-50/60 shadow-xs' 
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <Laptop className="w-4 h-4 text-emerald-600" />
-                          <span className="font-black text-xs text-slate-900 uppercase">GV BỘ MÔN</span>
-                        </div>
-                        <input
-                          type="radio"
-                          name="role"
-                          checked={formData.role === 'subject'}
-                          onChange={() => setFormData({ ...formData, role: 'subject' })}
-                          className="w-4 h-4 text-emerald-600"
-                        />
-                      </div>
-                      <p className="text-[11px] text-slate-500 leading-tight">
-                        Quản lý nhiều lớp dạy (lên đến 20 lớp), TKB bộ môn theo mẫu, chấm sao.
-                      </p>
-                    </label>
-
-                    {/* Các quyền quản trị mở rộng chỉ dành cho Super Admin */}
-                    {isSuperAdmin && (
-                      <>
-                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
-                          formData.role === 'school_admin' 
-                            ? 'border-blue-600 bg-blue-50/60 shadow-xs' 
-                            : 'border-slate-200 hover:border-slate-300'
-                        }`}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-blue-600" />
-                              <span className="font-black text-xs text-slate-900 uppercase">QUẢN TRỊ TRƯỜNG</span>
+                  {/* 🏛️ 4 VAI TRÒ TRỰC THUỘC NHÀ TRƯỜNG */}
+                  <div className="mb-3">
+                    <div className="text-[11px] font-black text-indigo-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <School className="w-3.5 h-3.5" />
+                      <span>Vai Trò Trực Thuộc Nhà Trường</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      {/* 1. Quản trị trong nhà trường */}
+                      <label className={`p-3 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                        formData.role === 'school_admin' 
+                          ? 'border-blue-600 bg-blue-50/70 shadow-xs ring-1 ring-blue-600/30' 
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
+                              <span className="font-black text-xs text-slate-900 uppercase">Quản trị trong nhà trường</span>
                             </div>
                             <input
                               type="radio"
                               name="role"
                               checked={formData.role === 'school_admin'}
                               onChange={() => setFormData({ ...formData, role: 'school_admin', tenantType: 'school' })}
-                              className="w-4 h-4 text-blue-600"
+                              className="w-4 h-4 text-blue-600 shrink-0"
                             />
                           </div>
-                          <p className="text-[11px] text-slate-500 leading-tight">
-                            Quản lý toàn bộ GV, lớp, học sinh trong trường, cấp pass, reset năm học.
+                          <p className="text-[10.5px] text-slate-500 leading-snug">
+                            Toàn quyền quản lý CSDL, giáo viên, học sinh và phân hiệu của trường.
                           </p>
-                        </label>
+                        </div>
+                        <span className="text-[9px] font-black text-blue-700 bg-blue-100/80 px-1.5 py-0.5 rounded mt-2 self-start uppercase">
+                          Cấp Trường
+                        </span>
+                      </label>
 
-                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
-                          formData.role === 'guest_admin' 
-                            ? 'border-purple-600 bg-purple-50/60 shadow-xs' 
-                            : 'border-slate-200 hover:border-slate-300'
-                        }`}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-purple-600" />
-                              <span className="font-black text-xs text-slate-900 uppercase">QUẢN TRỊ CÁ NHÂN</span>
-                            </div>
-                            <input
-                              type="radio"
-                              name="role"
-                              checked={formData.role === 'guest_admin'}
-                              onChange={() => setFormData({ ...formData, role: 'guest_admin', tenantType: 'guest', schoolName: 'Giáo Viên Cá Nhân' })}
-                              className="w-4 h-4 text-purple-600"
-                            />
-                          </div>
-                          <p className="text-[11px] text-slate-500 leading-tight">
-                            Quản trị các tài khoản giáo viên tự do, tỉnh lẻ, không thuộc trường.
-                          </p>
-                        </label>
-
-                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
-                          formData.role === 'bgh' 
-                            ? 'border-amber-600 bg-amber-50/60 shadow-xs' 
-                            : 'border-slate-200 hover:border-slate-300'
-                        }`}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <ShieldAlert className="w-4 h-4 text-amber-600" />
-                              <span className="font-black text-xs text-slate-900 uppercase">BAN GIÁM HIỆU</span>
+                      {/* 2. Ban giám hiệu */}
+                      <label className={`p-3 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                        formData.role === 'bgh' 
+                          ? 'border-purple-600 bg-purple-50/70 shadow-xs ring-1 ring-purple-600/30' 
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5">
+                              <ShieldAlert className="w-4 h-4 text-purple-600 shrink-0" />
+                              <span className="font-black text-xs text-slate-900 uppercase">Ban giám hiệu</span>
                             </div>
                             <input
                               type="radio"
                               name="role"
                               checked={formData.role === 'bgh'}
-                              onChange={() => setFormData({ ...formData, role: 'bgh' })}
-                              className="w-4 h-4 text-amber-600"
+                              onChange={() => setFormData({ ...formData, role: 'bgh', tenantType: 'school' })}
+                              className="w-4 h-4 text-purple-600 shrink-0"
                             />
                           </div>
-                          <p className="text-[11px] text-slate-500 leading-tight">
-                            Xem toàn quyền mọi lớp, báo cáo, thi đua trường (không quản lý tài khoản).
+                          <p className="text-[10.5px] text-slate-500 leading-snug">
+                            Quan sát, xem số liệu, báo cáo, đánh giá và thống kê toàn trường.
                           </p>
-                        </label>
+                        </div>
+                        <span className="text-[9px] font-black text-purple-700 bg-purple-100/80 px-1.5 py-0.5 rounded mt-2 self-start uppercase">
+                          Ban Giám Hiệu
+                        </span>
+                      </label>
 
-                        <label className={`p-3.5 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
-                          formData.role === 'admin' 
-                            ? 'border-rose-600 bg-rose-50/60 shadow-xs' 
-                            : 'border-slate-200 hover:border-slate-300'
-                        }`}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                              <ShieldCheck className="w-4 h-4 text-rose-600" />
-                              <span className="font-black text-xs text-slate-900 uppercase">SUPER ADMIN</span>
+                      {/* 3. Giáo viên chủ nhiệm */}
+                      <label className={`p-3 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                        formData.role === 'homeroom' 
+                          ? 'border-indigo-600 bg-indigo-50/70 shadow-xs ring-1 ring-indigo-600/30' 
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5">
+                              <School className="w-4 h-4 text-indigo-600 shrink-0" />
+                              <span className="font-black text-xs text-slate-900 uppercase">Giáo viên chủ nhiệm</span>
                             </div>
                             <input
                               type="radio"
                               name="role"
-                              checked={formData.role === 'admin'}
-                              onChange={() => setFormData({ ...formData, role: 'admin' })}
-                              className="w-4 h-4 text-rose-600"
+                              checked={formData.role === 'homeroom'}
+                              onChange={() => setFormData({ ...formData, role: 'homeroom', tenantType: 'school' })}
+                              className="w-4 h-4 text-indigo-600 shrink-0"
                             />
                           </div>
-                          <p className="text-[11px] text-slate-500 leading-tight">
-                            Toàn quyền tối cao quản lý cây CSDL trường, tất cả tài khoản, reset pass, database.
+                          <p className="text-[10.5px] text-slate-500 leading-snug">
+                            Quản lý toàn diện lớp chủ nhiệm, học sinh, điểm danh và thi đua.
                           </p>
-                        </label>
-                      </>
-                    )}
+                        </div>
+                        <span className="text-[9px] font-black text-indigo-700 bg-indigo-100/80 px-1.5 py-0.5 rounded mt-2 self-start uppercase">
+                          Lớp Chủ Nhiệm
+                        </span>
+                      </label>
+
+                      {/* 4. Giáo viên bộ môn */}
+                      <label className={`p-3 rounded-2xl border-2 cursor-pointer flex flex-col justify-between transition-all ${
+                        formData.role === 'subject' 
+                          ? 'border-emerald-600 bg-emerald-50/70 shadow-xs ring-1 ring-emerald-600/30' 
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}>
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5">
+                              <Laptop className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span className="font-black text-xs text-slate-900 uppercase">Giáo viên bộ môn</span>
+                            </div>
+                            <input
+                              type="radio"
+                              name="role"
+                              checked={formData.role === 'subject'}
+                              onChange={() => setFormData({ ...formData, role: 'subject', tenantType: 'school' })}
+                              className="w-4 h-4 text-emerald-600 shrink-0"
+                            />
+                          </div>
+                          <p className="text-[10.5px] text-slate-500 leading-snug">
+                            Giảng dạy bộ môn (Tin học, Tiếng Anh...), chấm điểm, đánh giá.
+                          </p>
+                        </div>
+                        <span className="text-[9px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded mt-2 self-start uppercase">
+                          Bộ Môn
+                        </span>
+                      </label>
+                    </div>
                   </div>
+
+                  {/* 👑 VAI TRÒ HỆ THỐNG (CHỈ SUPER ADMIN THẤY) */}
+                  {isSuperAdmin && (
+                    <div>
+                      <div className="text-[11px] font-black text-rose-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Crown className="w-3.5 h-3.5" />
+                        <span>Vai Trò Quản Trị Hệ Thống (Cấp Cao)</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <label className={`p-3 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
+                          formData.role === 'guest_admin' 
+                            ? 'border-fuchsia-600 bg-fuchsia-50/70 shadow-xs' 
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}>
+                          <div className="flex items-center gap-2.5">
+                            <Users className="w-4 h-4 text-fuchsia-600 shrink-0" />
+                            <div>
+                              <div className="font-black text-xs text-slate-900 uppercase">Quản trị tài khoản cá nhân</div>
+                              <div className="text-[10.5px] text-slate-500">Quản trị khối giáo viên tự do, vãng lai không thuộc trường</div>
+                            </div>
+                          </div>
+                          <input
+                            type="radio"
+                            name="role"
+                            checked={formData.role === 'guest_admin'}
+                            onChange={() => setFormData({ ...formData, role: 'guest_admin', tenantType: 'guest', schoolName: 'Giáo Viên Cá Nhân' })}
+                            className="w-4 h-4 text-fuchsia-600 shrink-0"
+                          />
+                        </label>
+
+                        <label className={`p-3 rounded-2xl border-2 cursor-pointer flex items-center justify-between transition-all ${
+                          formData.role === 'admin' 
+                            ? 'border-rose-600 bg-rose-50/70 shadow-xs' 
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}>
+                          <div className="flex items-center gap-2.5">
+                            <ShieldCheck className="w-4 h-4 text-rose-600 shrink-0" />
+                            <div>
+                              <div className="font-black text-xs text-slate-900 uppercase">Quản trị tối cao (Super Admin)</div>
+                              <div className="text-[10.5px] text-slate-500">Toàn quyền cây CSDL trường, tất cả tài khoản, hệ thống</div>
+                            </div>
+                          </div>
+                          <input
+                            type="radio"
+                            name="role"
+                            checked={formData.role === 'admin'}
+                            onChange={() => setFormData({ ...formData, role: 'admin' })}
+                            className="w-4 h-4 text-rose-600 shrink-0"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Phân vùng lưu trữ: Nhà trường vs Giáo viên cá nhân */}
@@ -2716,15 +3420,31 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                             </div>
                           </td>
                           <td className="py-2 px-2 text-center">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                              u.role === 'admin'
-                                ? 'bg-rose-100 text-rose-700 border border-rose-200'
-                                : u.role === 'subject'
-                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                                : 'bg-indigo-100 text-indigo-700 border border-indigo-200'
-                            }`}>
-                              {u.role === 'admin' ? 'Quản trị' : u.role === 'subject' ? 'GV Bộ môn' : 'GV Chủ nhiệm'}
-                            </span>
+                            {u.role === 'admin' ? (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-700 border border-rose-200 whitespace-nowrap">
+                                Quản trị tối cao
+                              </span>
+                            ) : u.role === 'school_admin' ? (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-100 text-blue-700 border border-blue-200 whitespace-nowrap">
+                                Quản trị trong nhà trường
+                              </span>
+                            ) : (u.role === 'bgh' || (u as any).isBgh) ? (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200 whitespace-nowrap">
+                                Ban Giám Hiệu
+                              </span>
+                            ) : u.role === 'homeroom' ? (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-700 border border-indigo-200 whitespace-nowrap">
+                                Giáo viên chủ nhiệm
+                              </span>
+                            ) : u.role === 'subject' ? (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                Giáo viên bộ môn
+                              </span>
+                            ) : (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200 whitespace-nowrap">
+                                Quản trị cá nhân
+                              </span>
+                            )}
                           </td>
                           <td className="py-2 px-2">
                             <div className="flex flex-wrap gap-1 max-w-xs">
@@ -3858,9 +4578,11 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     </div>
                     <div>
                       <h3 className="text-sm font-black text-slate-900 uppercase">
-                        {editingSchool ? 'Chỉnh Sửa Thông Tin CSDL Trường' : 'Khởi Tạo Cơ Sở Dữ Liệu Trường Mới (SaaS)'}
+                        {editingSchool ? 'Chỉnh Sửa Thông Tin CSDL Trường' : 'Khởi Tạo Cơ Sở Dữ Liệu Trường Mới (Nhánh 1)'}
                       </h3>
-                      <p className="text-[11px] text-slate-500">Khởi tạo trường và cấp phát tài khoản quản trị Ban Giám Hiệu</p>
+                      <p className="text-[11px] text-slate-500">
+                        Khởi tạo danh mục & cơ sở dữ liệu trường học mới trong hệ thống
+                      </p>
                     </div>
                   </div>
                   <button
@@ -3873,11 +4595,11 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                 </div>
 
                 <form onSubmit={handleSaveSchool} className="space-y-4 pt-2">
-                  {/* Nhóm 1: Thông tin trường */}
+                  {/* Thông tin trường học */}
                   <div className="space-y-3">
                     <div className="text-[11px] font-black uppercase text-slate-500 flex items-center gap-1.5">
                       <School className="w-3.5 h-3.5 text-blue-600" />
-                      <span>1. THÔNG TIN TRƯỜNG HỌC</span>
+                      <span>THÔNG TIN CƠ SỞ DỮ LIỆU TRƯỜNG HỌC</span>
                     </div>
 
                     <div>
@@ -3937,74 +4659,99 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Nhóm 2: Cấp phát tài khoản Ban Giám Hiệu (BGH) */}
-                  <div className="p-3.5 bg-gradient-to-br from-indigo-50/70 to-purple-50/70 rounded-2xl border border-indigo-200/80 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[11px] font-black uppercase text-indigo-900 flex items-center gap-1.5">
-                        <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>2. TÀI KHOẢN QUẢN TRỊ (BAN GIÁM HIỆU)</span>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white uppercase">
-                        SaaS Tenant
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-600">
-                      Tài khoản BGH sẽ được cấp phát cho nhà trường để đăng nhập, tự tạo tài khoản GVCN/GVBM và quản lý toàn bộ cơ sở dữ liệu.
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-                          Tên Đăng Nhập (BGH) <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={schoolFormData.adminUsername}
-                          onChange={(e) => setSchoolFormData({ ...schoolFormData, adminUsername: e.target.value.toLowerCase() })}
-                          placeholder="bgh_hoasen"
-                          className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-mono font-bold text-indigo-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-                          Mật Khẩu Khởi Tạo <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showSchoolPassword ? "text" : "password"}
-                            value={schoolFormData.adminPassword}
-                            onChange={(e) => setSchoolFormData({ ...schoolFormData, adminPassword: e.target.value })}
-                            placeholder="123456"
-                            className="w-full pl-3 pr-8 py-1.5 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowSchoolPassword(!showSchoolPassword)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                          >
-                            {showSchoolPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
+                  {/* ✅ OPTIONAL: Checkbox cấp tài khoản BGH ngay khi tạo trường */}
+                  {!editingSchool && (
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setCreateAdminAccount(prev => !prev)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer ${
+                          createAdminAccount
+                            ? 'bg-indigo-50 border-b border-indigo-200'
+                            : 'bg-slate-50 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                          createAdminAccount
+                            ? 'bg-indigo-600 border-indigo-600'
+                            : 'bg-white border-slate-300'
+                        }`}>
+                          {createAdminAccount && <Check className="w-3 h-3 text-white" />}
                         </div>
-                      </div>
-                    </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-black text-slate-800">Đồng thời khởi tạo tài khoản Quản trị BGH</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            {createAdminAccount
+                              ? 'Sẽ tạo tài khoản Ban Giám Hiệu ngay bây giờ'
+                              : 'Có thể cấp tài khoản sau tại danh mục trường học'}
+                          </div>
+                        </div>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          createAdminAccount
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-slate-200 text-slate-500'
+                        }`}>
+                          {createAdminAccount ? 'BẬT' : 'TẮT'}
+                        </span>
+                      </button>
 
-                    <div>
-                      <label className="block text-[11px] font-black text-slate-700 uppercase mb-1">
-                        Họ & Tên Đại Diện BGH
-                      </label>
-                      <input
-                        type="text"
-                        value={schoolFormData.adminFullName}
-                        onChange={(e) => setSchoolFormData({ ...schoolFormData, adminFullName: e.target.value })}
-                        placeholder="Ban Giám Hiệu Trường Tiểu học Hoa Sen"
-                        className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
+                      {createAdminAccount && (
+                        <div className="p-4 space-y-3 bg-indigo-50/50">
+                          <div className="text-[11px] font-black uppercase text-indigo-700 flex items-center gap-1.5">
+                            <Crown className="w-3.5 h-3.5" />
+                            <span>THÔNG TIN TÀI KHOẢN BAN GIÁM HIỆU</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                Tên Đăng Nhập BGH <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={schoolFormData.adminUsername}
+                                onChange={(e) => setSchoolFormData({ ...schoolFormData, adminUsername: e.target.value.toLowerCase().replace(/\s/g,'') })}
+                                placeholder="bgh_hoasen"
+                                className="w-full px-3.5 py-2 rounded-xl border border-indigo-200 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                Mật Khẩu Khởi Tạo
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showSchoolPassword ? 'text' : 'password'}
+                                  value={schoolFormData.adminPassword}
+                                  onChange={(e) => setSchoolFormData({ ...schoolFormData, adminPassword: e.target.value })}
+                                  placeholder="123456"
+                                  className="w-full px-3.5 py-2 pr-10 rounded-xl border border-indigo-200 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowSchoolPassword(p => !p)}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                >
+                                  {showSchoolPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                              Họ Tên Đại Diện BGH
+                            </label>
+                            <input
+                              type="text"
+                              value={schoolFormData.adminFullName}
+                              onChange={(e) => setSchoolFormData({ ...schoolFormData, adminFullName: e.target.value })}
+                              placeholder={`Ban Giám Hiệu ${schoolFormData.name || '...'}`}
+                              className="w-full px-3.5 py-2 rounded-xl border border-indigo-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
                     <button
@@ -4017,10 +4764,20 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      className={`px-5 py-2 rounded-xl text-white text-xs font-black uppercase shadow-md transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                        createAdminAccount && !editingSchool
+                          ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20'
+                          : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
+                      }`}
                     >
                       <Check className="w-3.5 h-3.5" />
-                      <span>{editingSchool ? 'LƯU CSDL TRƯỜNG' : 'TẠO CSDL & CẤP TÀI KHOẢN BGH'}</span>
+                      <span>
+                        {editingSchool
+                          ? 'LƯU CSDL TRƯỜNG'
+                          : createAdminAccount
+                            ? 'TẠO CSDL & CẤP TK BGH'
+                            : 'KHỞI TẠO CSDL TRƯỜNG MỚI'}
+                      </span>
                     </button>
                   </div>
                 </form>
@@ -4438,6 +5195,178 @@ export const AccountManagementModal: React.FC<AccountManagementModalProps> = ({
           </div>
         </div>
       )}
+
+      {/* 🏛️ MODAL CẤP NHANH TÀI KHOẢN BGH CHO TRƯỜNG CHƯA CÓ TÀI KHOẢN */}
+      {provisionModalOpen && provisioningSchool && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center p-3 md:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md border border-slate-100 animate-in slide-in-from-bottom-4 duration-200 overflow-hidden">
+            
+            {/* Header */}
+            <div className="flex items-center gap-3 p-5 border-b border-slate-100 bg-gradient-to-r from-rose-50 to-indigo-50">
+              <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Cấp Tài Khoản Ban Giám Hiệu</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5 truncate">Trường: <strong className="text-slate-700">{provisioningSchool.name}</strong></p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setProvisionModalOpen(false); setProvisionedResult(null); }}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {provisionedResult ? (
+                /* Trạng thái đã cấp thành công - hiển thị thông tin bàn giao */
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-2xl bg-emerald-100 text-emerald-600">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm font-black text-slate-900">Cấp tài khoản thành công! 🎉</div>
+                    <div className="text-[11px] text-slate-500 mt-1">Bàn giao thông tin dưới đây cho Ban Giám Hiệu</div>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="text-[11px] font-black uppercase text-slate-500 w-28 shrink-0">Đơn vị</div>
+                      <div className="text-xs font-bold text-slate-800">{provisionedResult.schoolName}</div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="text-[11px] font-black uppercase text-slate-500 w-28 shrink-0">Mã trường</div>
+                      <div className="text-xs font-mono font-bold text-blue-700">{provisionedResult.code}</div>
+                    </div>
+                    <div className="h-px bg-slate-200" />
+                    <div className="flex items-center gap-2.5">
+                      <div className="text-[11px] font-black uppercase text-slate-500 w-28 shrink-0">Tài khoản BGH</div>
+                      <div className="text-xs font-mono font-black text-indigo-700">@{provisionedResult.username}</div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="text-[11px] font-black uppercase text-slate-500 w-28 shrink-0">Mật khẩu</div>
+                      <div className="text-xs font-mono font-bold text-rose-700 tracking-widest">{provisionedResult.password || '123456'}</div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <div className="text-[11px] font-black uppercase text-slate-500 w-28 shrink-0">Họ tên</div>
+                      <div className="text-xs font-bold text-slate-700">{provisionedResult.fullName}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const text = `THÔNG TIN BÀN GIAO - LỚP HỌC HẠNH PHÚC\n- Đơn vị: ${provisionedResult.schoolName}\n- Mã trường: ${provisionedResult.code}\n- Tài khoản BGH: ${provisionedResult.username}\n- Mật khẩu: ${provisionedResult.password || '123456'}\n- Cổng đăng nhập: Quản trị Nhà Trường (BGH)\n- Website: ${window.location.origin}`;
+                        navigator.clipboard.writeText(text);
+                        showNotify('success', 'Đã sao chép thông tin bàn giao!');
+                      }}
+                      className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Sao Chép Bàn Giao</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setProvisionModalOpen(false); setProvisionedResult(null); }}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-black uppercase transition-colors cursor-pointer"
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Form nhập thông tin tài khoản BGH */
+                <form onSubmit={handleProvisionAdmin} className="space-y-4">
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5 text-[11px] text-amber-800">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <span>Trường này <strong>chưa có tài khoản BGH</strong>. Điền thông tin bên dưới để cấp tài khoản bàn giao cho Ban Giám Hiệu.</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Tên Đăng Nhập BGH <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={provisionFormData.adminUsername}
+                      onChange={(e) => setProvisionFormData(p => ({ ...p, adminUsername: e.target.value.toLowerCase().replace(/\s/g, '') }))}
+                      placeholder="bgh_hoasen"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                      autoFocus
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Mật Khẩu Khởi Tạo
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showProvisionPassword ? 'text' : 'password'}
+                        value={provisionFormData.adminPassword}
+                        onChange={(e) => setProvisionFormData(p => ({ ...p, adminPassword: e.target.value }))}
+                        placeholder="123456"
+                        className="w-full px-3.5 py-2 pr-10 rounded-xl border border-slate-300 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowProvisionPassword(p => !p)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        {showProvisionPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                      Họ Tên Đại Diện BGH
+                    </label>
+                    <input
+                      type="text"
+                      value={provisionFormData.adminFullName}
+                      onChange={(e) => setProvisionFormData(p => ({ ...p, adminFullName: e.target.value }))}
+                      placeholder={`Ban Giám Hiệu ${provisioningSchool.name}`}
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    />
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2 text-[11px] text-blue-800">
+                    <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <span>Sau khi cấp, BGH đăng nhập bằng tài khoản trên để tự tạo GVCN, GVBM. Thực hiện <strong>đổi mật khẩu</strong> sau lần đăng nhập đầu tiên.</span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setProvisionModalOpen(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase transition-colors cursor-pointer"
+                    >
+                      Hủy Bỏ
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isProvisioning}
+                      className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isProvisioning ? (
+                        <><RefreshCw className="w-3.5 h-3.5 animate-spin" /><span>Đang cấp...</span></>
+                      ) : (
+                        <><UserPlus className="w-3.5 h-3.5" /><span>Cấp Tài Khoản BGH</span></>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

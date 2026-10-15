@@ -10,6 +10,7 @@ import confetti from 'canvas-confetti';
 import { callGeminiAi } from '../../services/aiService';
 import { APP_AUTHOR_INFO } from '../../data/initialData';
 import { SubjectTeacherDashboard } from './dashboard/SubjectTeacherDashboard';
+import { getOfficialDisplayName } from '../../utils/accountIdentity';
 
 interface DashboardViewProps {
   onNavigate: (viewId: any) => void;
@@ -22,9 +23,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const { 
     classes, activeClassId, setActiveClassId, students, currentClassStudents, 
-    currentDateAttendance, timetable, awardPoints,
+    currentDateAttendance, attendanceRecords, timetable, awardPoints,
     teacherProfile, teacherRole,
-    currentUser, isBgh, isSchoolAdmin, isAdmin
+    currentUser, isBgh, isSchoolAdmin, isAdmin, allUsers
   } = useClassroom();
 
   if (teacherRole === 'subject') {
@@ -60,7 +61,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return 'Chào buổi tối';
   };
 
-  // Metrics for active class
+  // Metrics for active class (Giáo viên chủ nhiệm)
   const totalStudents = currentClassStudents.length;
   const presentCount = currentClassStudents.filter(
     s => currentDateAttendance[s.id] === 'present'
@@ -75,6 +76,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const homeroomClasses = React.useMemo(() => {
     return classes.filter(c => {
       if (!c) return false;
+      if (c.id && c.id.startsWith('class-sub-')) return false;
       if (c.isHomeroom === true) return true;
       if (c.isHomeroom === false) return false;
       const r = String(c.teacherRole || '').toLowerCase();
@@ -87,12 +89,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [classes]);
 
   const homeroomClassIds = React.useMemo(() => new Set(homeroomClasses.map(c => c.id)), [homeroomClasses]);
-  const homeroomStudents = React.useMemo(() => students.filter(s => homeroomClassIds.has(s.classId)), [students, homeroomClassIds]);
+  const homeroomStudents = React.useMemo(() => 
+    students.filter(s => homeroomClassIds.has(s.classId) && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-')), 
+    [students, homeroomClassIds]
+  );
+
+  // Metrics: linh hoạt giữa vai trò Quản trị viên (Toàn trường) và Giáo viên (Lớp activeClass)
+  const displayTotalStudents = isManagementAccount ? homeroomStudents.length : totalStudents;
+  const displayPresentCount = React.useMemo(() => {
+    if (!isManagementAccount) return presentCount;
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    let count = 0;
+    attendanceRecords.forEach(att => {
+      if (att && att.date === todayStr && att.records) {
+        Object.entries(att.records).forEach(([sId, status]) => {
+          if (status === 'present' && homeroomStudents.some(s => s.id === sId)) count++;
+        });
+      }
+    });
+    return count;
+  }, [isManagementAccount, presentCount, attendanceRecords, homeroomStudents]);
+
+  const displayAttendanceRate = displayTotalStudents > 0 
+    ? Math.round((displayPresentCount / displayTotalStudents) * 100) 
+    : 100;
+
+  const displayTotalCoins = isManagementAccount
+    ? homeroomStudents.reduce((acc, s) => acc + (s.points || 0), 0)
+    : totalCoins;
+
+  const displayAvgCoins = displayTotalStudents > 0 
+    ? (displayTotalCoins / displayTotalStudents).toFixed(1) 
+    : '0';
 
   // Ranking of classes (management account ranks homeroom classes only)
   const rankingClassesPool = isManagementAccount ? homeroomClasses : classes;
   const classesRanking = rankingClassesPool.map(cls => {
-    const clsStudents = students.filter(s => s.classId === cls.id);
+    const clsStudents = students.filter(s => s.classId === cls.id && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'));
     const sumCoins = clsStudents.reduce((acc, s) => acc + (s.points || 0), 0);
     const avg = clsStudents.length > 0 ? (sumCoins / clsStudents.length).toFixed(1) : '0';
     const topSt = [...clsStudents].sort((a, b) => b.points - a.points)[0];
@@ -151,9 +185,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 1. Main Welcome Banner matching Requirement 5: TÊN GIÁO VIÊN, ĐƠN VỊ CÔNG TÁC, NĂM HỌC */}
       {(() => {
         const isManagementAccount = Boolean(isBgh || isSchoolAdmin || currentUser?.role === 'admin' || currentUser?.role === 'guest_admin');
+        const officialName = getOfficialDisplayName(currentUser, allUsers);
         const greetingUserName = isManagementAccount
-          ? (currentUser?.fullName || 'Ban Giám Hiệu')
-          : (activeClass?.teacherName || teacherProfile.name);
+          ? officialName
+          : (officialName || activeClass?.teacherName || teacherProfile.name);
         const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
         const displayAvatar = currentUser?.avatar || teacherProfile.avatar;
         const roleBadge = isBgh 
@@ -212,57 +247,59 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-          {/* Right 5 Quick Action Buttons in Uppercase */}
+          {/* Quick Action Buttons: Quản trị viên chỉ có nút Báo cáo Realtime. Ẩn 5 nút thao tác lớp (Điểm danh, Thêm HS, Vòng quay, Đổi xu, Infographic) vì là chức năng của GVCN */}
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1 sm:gap-1.5 shrink-0 pt-2 lg:pt-0 w-full lg:w-auto">
-            {isManagementAccount && (
+            {isManagementAccount ? (
               <button
                 onClick={() => onNavigate('reports')}
-                className="px-2.5 py-1.5 sm:py-1 bg-gradient-to-r from-indigo-900 to-indigo-700 hover:from-indigo-950 hover:to-indigo-800 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
+                className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-900 to-indigo-700 hover:from-indigo-950 hover:to-indigo-800 text-white rounded-xl font-black text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-900/30 hover-zoom-btn uppercase cursor-pointer"
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                <ShieldCheck className="w-4 h-4 text-amber-300" />
                 <span>BÁO CÁO REALTIME</span>
               </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => onNavigate('attendance')}
+                  className="px-2.5 py-1.5 sm:py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
+                >
+                  <CheckSquare className="w-3 h-3" />
+                  <span>ĐIỂM DANH</span>
+                </button>
+
+                <button
+                  onClick={() => onOpenAddStudent ? onOpenAddStudent() : onNavigate('students')}
+                  className="px-2.5 py-1.5 sm:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>THÊM HỌC SINH</span>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('wheel')}
+                  className="px-2.5 py-1.5 sm:py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>VÒNG QUAY</span>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('rewards')}
+                  className="px-2.5 py-1.5 sm:py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
+                >
+                  <Gift className="w-3 h-3" />
+                  <span>ĐỔI XU</span>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('infographic')}
+                  className="col-span-2 sm:col-span-1 px-2.5 py-1.5 sm:py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>INFOGRAPHIC</span>
+                </button>
+              </>
             )}
-
-            <button
-              onClick={() => onNavigate('attendance')}
-              className="px-2.5 py-1.5 sm:py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
-            >
-              <CheckSquare className="w-3 h-3" />
-              <span>ĐIỂM DANH</span>
-            </button>
-
-            <button
-              onClick={() => onOpenAddStudent ? onOpenAddStudent() : onNavigate('students')}
-              className="px-2.5 py-1.5 sm:py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
-            >
-              <Plus className="w-3 h-3" />
-              <span>THÊM HỌC SINH</span>
-            </button>
-
-            <button
-              onClick={() => onNavigate('wheel')}
-              className="px-2.5 py-1.5 sm:py-1 bg-sky-500 hover:bg-sky-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>VÒNG QUAY</span>
-            </button>
-
-            <button
-              onClick={() => onNavigate('rewards')}
-              className="px-2.5 py-1.5 sm:py-1 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
-            >
-              <Gift className="w-3 h-3" />
-              <span>ĐỔI XU</span>
-            </button>
-
-            <button
-              onClick={() => onNavigate('infographic')}
-              className="col-span-2 sm:col-span-1 px-2.5 py-1.5 sm:py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-black text-[10.5px] flex items-center justify-center gap-1 shadow-2xs hover-zoom-btn uppercase cursor-pointer"
-            >
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              <span>INFOGRAPHIC</span>
-            </button>
           </div>
         </div>
 
@@ -290,8 +327,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         );
       })()}
 
-      {/* 2. CLASS SELECTOR SWITCHER (When multiple classes exist - Yêu cầu 1) */}
-      {classes.length > 1 && (
+      {/* 2. CLASS SELECTOR SWITCHER: Chỉ dành cho Giáo viên khi có nhiều lớp. Quản trị viên quản trị vĩ mô toàn trường nên loại bỏ */}
+      {!isManagementAccount && classes.length > 1 && (
         <div className="bg-white rounded-xl p-2.5 px-3 border border-indigo-100 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-black">
@@ -336,7 +373,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
         {/* Card 1: Sĩ số */}
         <div 
-          onClick={() => onNavigate('students')}
+          onClick={() => onNavigate(isManagementAccount ? 'classes' : 'students')}
           className="bg-white rounded-xl p-2.5 px-3 border border-slate-200/80 shadow-2xs hover-zoom-card cursor-pointer group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-1">
@@ -350,14 +387,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div>
             <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">SĨ SỐ HỌC SINH</div>
             <div className="text-base sm:text-lg font-black text-indigo-950 tracking-tight font-mono leading-tight">
-              {totalStudents} <span className="text-[10px] font-bold text-slate-500 uppercase">HS ({activeClass ? `LỚP ${activeClass.name}` : 'CHƯA CÓ'})</span>
+              {displayTotalStudents} <span className="text-[10px] font-bold text-slate-500 uppercase">{isManagementAccount ? `HS (TOÀN TRƯỜNG • ${homeroomClasses.length} LỚP)` : `HS (${activeClass ? `LỚP ${activeClass.name}` : 'CHƯA CÓ'})`}</span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Hiện diện hôm nay */}
         <div 
-          onClick={() => onNavigate('attendance')}
+          onClick={() => onNavigate(isManagementAccount ? 'reports' : 'attendance')}
           className="bg-white rounded-xl p-2.5 px-3 border border-slate-200/80 shadow-2xs hover-zoom-card cursor-pointer group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-1">
@@ -365,20 +402,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <CheckSquare className="w-3.5 h-3.5" />
             </div>
             <span className="text-[10px] font-black text-emerald-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform uppercase">
-              ĐIỂM DANH <ArrowUpRight className="w-2.5 h-2.5" />
+              {isManagementAccount ? 'BÁO CÁO' : 'ĐIỂM DANH'} <ArrowUpRight className="w-2.5 h-2.5" />
             </span>
           </div>
           <div>
             <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">HIỆN DIỆN HÔM NAY</div>
             <div className="text-base sm:text-lg font-black text-emerald-600 tracking-tight font-mono leading-tight">
-              {presentCount}/{totalStudents} <span className="text-[10px] font-bold text-slate-500 uppercase">({attendanceRate}%)</span>
+              {displayPresentCount}/{displayTotalStudents} <span className="text-[10px] font-bold text-slate-500 uppercase">({displayAttendanceRate}%)</span>
             </div>
           </div>
         </div>
 
         {/* Card 3: Tổng xu thi đua */}
         <div 
-          onClick={() => onNavigate('rewards')}
+          onClick={() => onNavigate(isManagementAccount ? 'reports' : 'rewards')}
           className="bg-white rounded-xl p-2.5 px-3 border border-slate-200/80 shadow-2xs hover-zoom-card cursor-pointer group flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-1">
@@ -386,13 +423,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Award className="w-3.5 h-3.5" />
             </div>
             <span className="text-[10px] font-black text-rose-600 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform uppercase">
-              ĐỔI QUÀ <ArrowUpRight className="w-2.5 h-2.5" />
+              {isManagementAccount ? 'BÁO CÁO' : 'ĐỔI QUÀ'} <ArrowUpRight className="w-2.5 h-2.5" />
             </span>
           </div>
           <div>
             <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">TỔNG XU THI ĐUA</div>
             <div className="text-base sm:text-lg font-black text-rose-600 tracking-tight font-mono leading-tight">
-              {totalCoins} <span className="text-[10px] font-bold text-slate-500 uppercase">XU CẢ LỚP</span>
+              {displayTotalCoins} <span className="text-[10px] font-bold text-slate-500 uppercase">{isManagementAccount ? 'XU TOÀN TRƯỜNG' : 'XU CẢ LỚP'}</span>
             </div>
           </div>
         </div>
@@ -413,7 +450,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div>
             <div className="text-[9.5px] font-black text-slate-500 uppercase tracking-wider">TRUNG BÌNH / HỌC SINH</div>
             <div className="text-base sm:text-lg font-black text-purple-600 tracking-tight font-mono leading-tight">
-              {avgCoins} <span className="text-[10px] font-bold text-slate-500 uppercase">XU / EM</span>
+              {displayAvgCoins} <span className="text-[10px] font-bold text-slate-500 uppercase">XU / EM</span>
             </div>
           </div>
         </div>
@@ -731,9 +768,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 6. BANNER THÔNG TIN GIÁO VIÊN & TÁC GIẢ BẢN QUYỀN CỐ ĐỊNH (Yêu cầu 5 & 6) */}
       {(() => {
         const isManagementAccount = Boolean(isBgh || isSchoolAdmin || currentUser?.role === 'admin' || currentUser?.role === 'guest_admin');
+        const officialName = getOfficialDisplayName(currentUser, allUsers);
         const greetingUserName = isManagementAccount
-          ? (currentUser?.fullName || 'Ban Giám Hiệu')
-          : (activeClass?.teacherName || teacherProfile.name);
+          ? officialName
+          : (officialName || activeClass?.teacherName || teacherProfile.name);
         const displaySchoolName = currentUser?.schoolName || teacherProfile.schoolName || 'TRƯỜNG HỌC HẠNH PHÚC DEMO';
         const displayAvatar = currentUser?.avatar || teacherProfile.avatar;
 

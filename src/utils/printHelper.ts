@@ -52,8 +52,8 @@ export async function exportElementToPdf(
 
     const pageWidth = orientation === 'landscape' ? 297 : 210;
     const pageHeight = orientation === 'landscape' ? 210 : 297;
-    // Tinh chỉnh lề in ấn sắc nét (6mm), tối ưu tỷ lệ A4 không để giấy thừa
-    const margin = 6;
+    // Tinh chỉnh lề in ấn tối thiểu 0.25cm (2.5mm) theo chuẩn in ấn để tận dụng tối đa diện tích khổ A4
+    const margin = 2.5;
     const printableWidth = pageWidth - margin * 2;
     const printableHeight = pageHeight - margin * 2;
 
@@ -112,15 +112,24 @@ export async function exportElementToPdf(
   }
 }
 
+export interface ExportImageOptions {
+  forceA4Ratio?: boolean;
+  pixelRatio?: number;
+  width?: number;
+  backgroundColor?: string;
+}
+
 /**
  * Directly exports an HTML element to a high-resolution PNG image file.
  * Handles both 'portrait' and 'landscape' synthesized formats with 2x retina clarity.
+ * Supports forceA4Ratio to guarantee exact 297:210 (Landscape) or 210:297 (Portrait) A4 proportions.
  */
 export async function exportElementToImagePng(
   elementIdOrElement: string | HTMLElement,
   fileName = 'Bao_Cao_Tong_Hop.png',
   orientation: 'portrait' | 'landscape' = 'landscape',
-  title = 'Báo Cáo Điểm Danh Tổng Hợp'
+  title = 'Báo Cáo Điểm Danh Tổng Hợp',
+  options?: ExportImageOptions
 ): Promise<boolean> {
   const el = typeof elementIdOrElement === 'string'
     ? document.getElementById(elementIdOrElement)
@@ -132,10 +141,21 @@ export async function exportElementToImagePng(
   }
 
   try {
+    const targetWidth = options?.width || (orientation === 'landscape' ? 1414 : 1000);
+    const customStyle: Record<string, string> = options?.forceA4Ratio ? {
+      width: `${targetWidth}px`,
+      maxWidth: `${targetWidth}px`,
+      minWidth: `${targetWidth}px`,
+      margin: '0',
+      borderRadius: '0px',
+      boxShadow: 'none'
+    } : {};
+
     const dataUrl = await toPng(el, {
       quality: 1,
-      pixelRatio: 2, // High resolution for clear Vietnamese typography and tables
-      backgroundColor: '#ffffff',
+      pixelRatio: options?.pixelRatio || 2, // High resolution for clear Vietnamese typography and tables
+      backgroundColor: options?.backgroundColor || '#ffffff',
+      style: options?.forceA4Ratio ? customStyle : undefined,
       filter: (node) => {
         if (node instanceof HTMLElement) {
           if (
@@ -196,8 +216,8 @@ export async function exportMultipleElementsToPdf(
 
     const pageWidth = orientation === 'landscape' ? 297 : 210;
     const pageHeight = orientation === 'landscape' ? 210 : 297;
-    // Tinh chỉnh lề in ấn sắc nét (6mm), tối ưu tỷ lệ A4 không để giấy thừa
-    const margin = 6;
+    // Tinh chỉnh lề in ấn tối thiểu 0.25cm (2.5mm) theo chuẩn in ấn để tận dụng tối đa diện tích khổ A4
+    const margin = 2.5;
     const printableWidth = pageWidth - margin * 2;
     const printableHeight = pageHeight - margin * 2;
 
@@ -297,7 +317,7 @@ export async function printHtmlElement(
     pageStyle.textContent = `
       @page {
         size: A4 ${orientation};
-        margin: ${orientation === 'landscape' ? '8mm' : '10mm'};
+        margin: ${orientation === 'landscape' ? '2.5mm' : '3mm'};
       }
     `;
     printPortal.appendChild(pageStyle);
@@ -354,7 +374,7 @@ export function downloadPrintableHtml(
   <style>
     @page {
       size: A4 ${orientation};
-      margin: ${orientation === 'landscape' ? '8mm' : '10mm'};
+      margin: ${orientation === 'landscape' ? '2.5mm' : '3mm'};
     }
     * {
       box-sizing: border-box;
@@ -411,4 +431,35 @@ export function downloadPrintableHtml(
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Xuất lần lượt nhiều trang thành các ảnh PNG khổ ngang chuẩn A4 (2, 3 hoặc 4 ảnh).
+ * Tự động tải về tuần tự từng file ảnh sắc nét 2x Retina với tỷ lệ chuẩn 297mm x 210mm.
+ */
+export async function exportMultipleElementsToImagesPng(
+  elements: (HTMLElement | null)[],
+  baseFileName = 'Bao_Cao_A4_Ngang',
+  options?: ExportImageOptions
+): Promise<number> {
+  let count = 0;
+  const validElements = elements.filter(Boolean) as HTMLElement[];
+  if (validElements.length === 0) return 0;
+
+  for (let i = 0; i < validElements.length; i++) {
+    const el = validElements[i];
+    const pageIndex = i + 1;
+    const fileName = `${baseFileName}_Trang_${pageIndex}.png`;
+    const ok = await exportElementToImagePng(
+      el,
+      fileName,
+      'landscape',
+      `Báo Cáo Thống Kê Trang ${pageIndex}`,
+      { forceA4Ratio: true, pixelRatio: 2, ...options }
+    );
+    if (ok) count++;
+    // Đợi 400ms giữa các lần tải để trình duyệt tải đủ các ảnh mà không bị chặn pop-up
+    await new Promise(r => setTimeout(r, 400));
+  }
+  return count;
 }

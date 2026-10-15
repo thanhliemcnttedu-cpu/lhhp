@@ -10,6 +10,8 @@ import {
   insertSupabaseAuditLog,
   saveSupabaseSystemSettings
 } from './supabase';
+// 🧪 LOCAL SUPABASE SIMULATOR: Ghi song song dữ liệu khi chạy localhost:3000
+import { syncToLocalSupabaseSim } from './localSupabaseSim';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,6 +55,7 @@ export interface SchoolEntity {
   address?: string;
   phone?: string;
   adminUsername?: string;
+  adminFullName?: string;
   createdAt?: number;
 }
 
@@ -62,7 +65,7 @@ export interface AuditLogItem {
   username: string;
   userFullName: string;
   role: 'admin' | 'homeroom' | 'subject' | 'bgh' | 'school_admin' | 'guest_admin';
-  actionType: 'CREATE_CLASS' | 'UPDATE_CLASS' | 'DELETE_CLASS' | 'ADD_STUDENT' | 'UPDATE_STUDENT' | 'DELETE_STUDENT' | 'AWARD_POINTS' | 'ATTENDANCE' | 'RESTORE_DATA' | 'UPDATE_TIMETABLE' | 'BATCH_STUDENTS' | 'OTHER';
+  actionType: 'CREATE_CLASS' | 'UPDATE_CLASS' | 'DELETE_CLASS' | 'ADD_STUDENT' | 'UPDATE_STUDENT' | 'DELETE_STUDENT' | 'AWARD_POINTS' | 'ATTENDANCE' | 'RESTORE_DATA' | 'UPDATE_TIMETABLE' | 'BATCH_STUDENTS' | 'ACCOUNT_CREATE' | 'OTHER';
   description: string;
   details?: any;
 }
@@ -111,6 +114,21 @@ export const DEFAULT_USERS: UserAccountServer[] = [
     schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
     createdAt: Date.now(),
     status: 'active'
+  },
+  {
+    id: 'user-quantriths1tu',
+    username: 'quantriths1tu',
+    password: '123456',
+    fullName: 'Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN',
+    role: 'school_admin',
+    isSchoolAdmin: true,
+    tenantType: 'school',
+    email: 'quantriths1tu@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=quantriths1tu&backgroundColor=ffd5dc',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    createdAt: Date.now(),
+    status: 'active'
   }
 ];
 
@@ -122,8 +140,8 @@ function ensureDataDir() {
   }
 }
 
-export function loadDatabase(): DatabaseSchema {
-  if (dbMemoryCache) return dbMemoryCache;
+export function loadDatabase(forceReload = false): DatabaseSchema {
+  if (dbMemoryCache && !forceReload) return dbMemoryCache;
 
   ensureDataDir();
 
@@ -504,6 +522,21 @@ export function saveDatabase(data: DatabaseSchema): boolean {
     // Tự động phân cấp lưu trữ vào 4 thư mục riêng biệt (Yêu cầu A)
     syncPartitionDirectories(data);
 
+    // 🧪 LOCAL SUPABASE SIMULATOR: Ghi song song vào simulator khi chạy localhost
+    // CHỈ HOẠT ĐỘNG KHI NODE_ENV=development. KHÔNG ảnh hưởng production.
+    try {
+      syncToLocalSupabaseSim({
+        users: data.users,
+        schools: data.schools,
+        userData: data.userData,
+        auditLogs: data.auditLogs,
+        registrations: data.registrations
+      });
+    } catch (_simErr) {
+      // Lỗi simulator không được làm ảnh hưởng luồng lưu chính
+      console.warn('[LocalSupabaseSim] Lỗi sync không ảnh hưởng DB chính:', _simErr);
+    }
+
     // Tự động sao lưu an toàn một bản dự phòng tại data/backups
     try {
       const backupDir = path.join(DATA_DIR, 'backups');
@@ -719,12 +752,13 @@ export function createUser(payload: {
   username: string;
   password?: string;
   fullName: string;
-  role: 'admin' | 'homeroom' | 'subject';
+  role: 'admin' | 'homeroom' | 'subject' | 'bgh' | 'school_admin' | 'guest_admin';
   email?: string;
   phone?: string;
   assignedClassName?: string;
   subjectName?: string;
   schoolName?: string;
+  tenantType?: 'school' | 'guest';
 }): { success: boolean; user?: UserAccountServer; message?: string } {
   const db = loadDatabase();
   const cleanUsername = payload.username.trim().toLowerCase();
@@ -748,6 +782,10 @@ export function createUser(payload: {
     password: payload.password || '123456',
     fullName: payload.fullName.trim() || cleanUsername,
     role: payload.role,
+    isSchoolAdmin: payload.role === 'school_admin' || undefined,
+    isBgh: payload.role === 'bgh' || payload.role === 'school_admin' || undefined,
+    isGuestAdmin: payload.role === 'guest_admin' || undefined,
+    tenantType: payload.tenantType || (payload.role === 'guest_admin' ? 'guest' : 'school'),
     isDemo: isDemo || undefined,
     maxStudentsAllowed: isDemo ? 10 : undefined,
     email: payload.email || '',
@@ -759,6 +797,8 @@ export function createUser(payload: {
       ? `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}&backgroundColor=ffd5dc`
       : payload.role === 'subject'
       ? `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}&backgroundColor=b6e3f4`
+      : (payload.role === 'school_admin' || payload.role === 'bgh')
+      ? `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}&backgroundColor=bbf7d0`
       : `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}&backgroundColor=d1d4f9`,
     createdAt: Date.now(),
     status: 'active'
@@ -825,6 +865,7 @@ export function createUsersBulk(items: Array<{
       assignedClassName: item.assignedClassName?.trim() || (item.role === 'homeroom' ? 'Lớp mới' : undefined),
       subjectName: item.subjectName?.trim() || (item.role === 'subject' ? 'Tin học' : undefined),
       schoolName: item.schoolName?.trim() || 'Trường Tiểu học số 1 Tân Uyên',
+      tenantType: (item as any).tenantType || (isDemo ? 'demo' : 'school'),
       avatar: item.role === 'homeroom'
         ? `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}&backgroundColor=ffd5dc`
         : item.role === 'subject'
@@ -861,7 +902,14 @@ export function createUsersBulk(items: Array<{
 
 export function updateUser(id: string, updates: Partial<UserAccountServer>): { success: boolean; user?: UserAccountServer; message?: string } {
   const db = loadDatabase();
-  const index = db.users.findIndex(u => u.id === id || u.username.toLowerCase() === id.toLowerCase());
+  const cleanKey = (id || '').trim().toLowerCase();
+  const strippedKey = cleanKey.replace(/^user-/, '');
+  const index = db.users.findIndex(u => 
+    u.id.toLowerCase() === cleanKey || 
+    u.username.toLowerCase() === cleanKey ||
+    u.username.toLowerCase() === strippedKey ||
+    ('user-' + u.username.toLowerCase()) === cleanKey
+  );
 
   if (index === -1) {
     return { success: false, message: 'Không tìm thấy tài khoản người dùng.' };
@@ -890,6 +938,19 @@ export function updateUser(id: string, updates: Partial<UserAccountServer>): { s
     username: updates.username ? updates.username.trim().toLowerCase() : current.username,
     id: current.id, // preserve ID
   };
+
+  if (updates.role) {
+    updatedUser.role = updates.role;
+    updatedUser.isSchoolAdmin = updates.role === 'school_admin' || Boolean(updates.isSchoolAdmin);
+    updatedUser.isBgh = updates.role === 'bgh' || updates.role === 'school_admin' || Boolean(updates.isBgh);
+    updatedUser.isGuestAdmin = updates.role === 'guest_admin' || Boolean(updates.isGuestAdmin);
+    if (updates.role === 'school_admin' || updates.role === 'bgh' || updates.role === 'homeroom' || updates.role === 'subject') {
+      updatedUser.tenantType = 'school';
+    } else if (updates.role === 'guest_admin') {
+      updatedUser.tenantType = 'guest';
+    }
+  }
+
   const newCleanUsername = updatedUser.username.trim().toLowerCase();
 
   db.users[index] = updatedUser;
@@ -1040,7 +1101,14 @@ export function transferUserToSchool(usernameOrId: string, targetSchoolName: str
 
 export function deleteUser(id: string): { success: boolean; message?: string } {
   const db = loadDatabase();
-  const target = db.users.find(u => u.id === id);
+  const cleanKey = (id || '').trim().toLowerCase();
+  const strippedKey = cleanKey.replace(/^user-/, '');
+  const target = db.users.find(u => 
+    u.id.toLowerCase() === cleanKey || 
+    u.username.toLowerCase() === cleanKey ||
+    u.username.toLowerCase() === strippedKey ||
+    ('user-' + u.username.toLowerCase()) === cleanKey
+  );
 
   if (!target) {
     return { success: false, message: 'Không tìm thấy tài khoản để xóa.' };
@@ -1087,17 +1155,160 @@ export function resetPassword(id: string, newPassword = '123456'): { success: bo
 export function getUserData(username: string): any {
   const db = loadDatabase();
   const normalized = username.trim().toLowerCase();
-  return db.userData[normalized] || null;
+  let data = db.userData[normalized] || null;
+
+  // 1. Kiểm tra alias nếu dữ liệu rỗng (ví dụ gvcn1a1 <-> gvcn_1a1)
+  const alias = normalized.startsWith('gvcn_')
+    ? normalized.replace('gvcn_', 'gvcn')
+    : (normalized.startsWith('gvcn') ? normalized.replace('gvcn', 'gvcn_') : '');
+
+  if ((!data || !Array.isArray(data.classes) || data.classes.length === 0) && alias) {
+    const aliasData = db.userData[alias];
+    if (aliasData && Array.isArray(aliasData.classes) && aliasData.classes.length > 0) {
+      data = aliasData;
+      // Tự động khôi phục dữ liệu cho normalized
+      db.userData[normalized] = JSON.parse(JSON.stringify(aliasData));
+      saveDatabase(db);
+    }
+  }
+
+  // 2. Self-Healing thông minh: Nếu tài khoản giáo viên chủ nhiệm vẫn thiếu lớp hoặc học sinh,
+  // tự động tìm kiếm và khôi phục từ CSDL Quản trị nhà trường
+  if (!data || !Array.isArray(data.classes) || data.classes.length === 0 || !Array.isArray(data.students) || data.students.length === 0) {
+    const userObj = db.users.find(u => u.username.toLowerCase() === normalized || (alias && u.username.toLowerCase() === alias));
+    if (userObj && (userObj.role === 'homeroom' || !userObj.role)) {
+      const assigned = (userObj.assignedClassName || '').toLowerCase();
+      // Duyệt qua tất cả userData để tìm lớp học tương ứng
+      for (const owner of Object.keys(db.userData)) {
+        const oClasses = db.userData[owner]?.classes;
+        if (Array.isArray(oClasses)) {
+          const matchedClass = oClasses.find((c: any) =>
+            c && (
+              c.teacherUsername?.toLowerCase() === normalized ||
+              (alias && c.teacherUsername?.toLowerCase() === alias) ||
+              (assigned && c.name?.toLowerCase().includes(assigned)) ||
+              (userObj.fullName && c.teacherName?.toLowerCase().includes(userObj.fullName.toLowerCase()))
+            )
+          );
+
+          if (matchedClass) {
+            const oStudents = db.userData[owner]?.students || [];
+            const matchedStudents = oStudents.filter((s: any) => s && s.classId === matchedClass.id);
+            if (matchedStudents.length > 0) {
+              const healedData = {
+                classes: [{
+                  ...matchedClass,
+                  teacherUsername: normalized,
+                  teacherName: userObj.fullName || matchedClass.teacherName
+                }],
+                activeClassId: matchedClass.id,
+                students: matchedStudents.map((s: any) => ({ ...s, classId: matchedClass.id })),
+                attendanceRecords: db.userData[owner]?.attendanceRecords?.filter((r: any) => r.classId === matchedClass.id) || [],
+                boardingRecords: db.userData[owner]?.boardingRecords?.filter((r: any) => r.classId === matchedClass.id) || [],
+                transactions: db.userData[owner]?.transactions || [],
+                updatedAt: Date.now()
+              };
+
+              db.userData[normalized] = healedData;
+              if (alias) {
+                db.userData[alias] = JSON.parse(JSON.stringify(healedData));
+              }
+              saveDatabase(db);
+              data = healedData;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return data;
 }
 
 export function saveUserData(username: string, data: any): boolean {
   const db = loadDatabase();
   const normalized = username.trim().toLowerCase();
   
-  db.userData[normalized] = {
+  // 🛡️ BẢO TOÀN DỮ LIỆU TUYỆT ĐỐI (Zero Data Loss Protocol) cho tài khoản Quản trị & BGH:
+  // Nếu là tài khoản Quản trị (admin, quantriths1tu, school_admin, bgh):
+  // Không cho phép ghi đè phá hủy làm trống classes, students, attendanceRecords hoặc boardingRecords
+  const userObj = db.users.find(u => u.username.toLowerCase() === normalized);
+  const isExecutiveUser = userObj && (
+    userObj.role === 'admin' ||
+    userObj.role === 'school_admin' ||
+    userObj.role === 'bgh' ||
+    userObj.isSchoolAdmin ||
+    userObj.isBgh ||
+    normalized === 'adminquantri' ||
+    normalized === 'quantriths1tu'
+  );
+
+  const existingData = db.userData[normalized] || {};
+  let finalClasses = Array.isArray(data.classes) && data.classes.length > 0
+    ? data.classes
+    : (Array.isArray(existingData.classes) ? existingData.classes : []);
+  let finalStudents = Array.isArray(data.students) && data.students.length > 0
+    ? data.students
+    : (Array.isArray(existingData.students) ? existingData.students : []);
+
+  // Smart merge cho attendanceRecords và boardingRecords của Executive
+  let finalAttendance = Array.isArray(data.attendanceRecords) ? data.attendanceRecords : [];
+  let finalBoarding = Array.isArray(data.boardingRecords) ? data.boardingRecords : [];
+
+  if (isExecutiveUser) {
+    if (finalAttendance.length === 0 && Array.isArray(existingData.attendanceRecords)) {
+      finalAttendance = existingData.attendanceRecords;
+    } else if (Array.isArray(existingData.attendanceRecords)) {
+      const attMap = new Map<string, any>();
+      for (const a of existingData.attendanceRecords) {
+        if (a && a.date && a.classId) attMap.set(`${a.date}_${a.classId}`, a);
+      }
+      for (const a of finalAttendance) {
+        if (a && a.date && a.classId) {
+          const ex = attMap.get(`${a.date}_${a.classId}`);
+          attMap.set(`${a.date}_${a.classId}`, { ...ex, ...a, records: { ...(ex?.records || {}), ...(a.records || {}) } });
+        }
+      }
+      finalAttendance = Array.from(attMap.values());
+    }
+
+    if (finalBoarding.length === 0 && Array.isArray(existingData.boardingRecords)) {
+      finalBoarding = existingData.boardingRecords;
+    } else if (Array.isArray(existingData.boardingRecords)) {
+      const bMap = new Map<string, any>();
+      for (const b of existingData.boardingRecords) {
+        if (b && b.date && b.classId) bMap.set(`${b.date}_${b.classId}`, b);
+      }
+      for (const b of finalBoarding) {
+        if (b && b.date && b.classId) {
+          const ex = bMap.get(`${b.date}_${b.classId}`);
+          bMap.set(`${b.date}_${b.classId}`, { ...ex, ...b, records: { ...(ex?.records || {}), ...(b.records || {}) } });
+        }
+      }
+      finalBoarding = Array.from(bMap.values());
+    }
+  }
+
+  const payload = {
     ...data,
+    classes: finalClasses,
+    students: finalStudents,
+    attendanceRecords: finalAttendance,
+    boardingRecords: finalBoarding,
     updatedAt: Date.now()
   };
+
+  db.userData[normalized] = payload;
+
+  // Đồng bộ hai chiều cho alias (ví dụ gvcn1a1 <-> gvcn_1a1)
+  const alias = normalized.startsWith('gvcn_')
+    ? normalized.replace('gvcn_', 'gvcn')
+    : (normalized.startsWith('gvcn') ? normalized.replace('gvcn', 'gvcn_') : '');
+
+  if (alias) {
+    db.userData[alias] = JSON.parse(JSON.stringify(payload));
+  }
 
   const saved = saveDatabase(db);
 
@@ -1118,42 +1329,183 @@ export function getAdminAllData(): {
   teachers: any[];
   classes: any[];
   students: any[];
+  attendanceRecords?: any[];
+  boardingRecords?: any[];
+  transactions?: any[];
   userData: Record<string, any>;
   timestamp: number;
 } {
-  const db = loadDatabase();
+  const db = loadDatabase(true);
   const teachers = db.users
     .filter(u => u.role === 'homeroom') // Chỉ lấy giáo viên chủ nhiệm
     .map(({ password, ...u }) => u);
 
   const allClassesMap = new Map<string, any>();
   const allStudentsMap = new Map<string, any>();
+  const allAttendanceMap = new Map<string, any>();
+  const allBoardingMap = new Map<string, any>();
+  const allTransactions: any[] = [];
 
-  // 1. Collect classes and students from all teacher accounts
+  // 1. Collect classes, students, attendance, boarding, transactions from all teacher accounts
   for (const t of teachers) {
-    const uData = db.userData[t.username.toLowerCase()] || {};
+    const tUser = t.username.toLowerCase();
+    let uData = db.userData[tUser] || {};
+    if (!uData.classes || uData.classes.length === 0) {
+      const alias = tUser.startsWith('gvcn_')
+        ? tUser.replace('gvcn_', 'gvcn')
+        : (tUser.startsWith('gvcn') ? tUser.replace('gvcn', 'gvcn_') : '');
+      if (alias && db.userData[alias]?.classes?.length > 0) {
+        uData = db.userData[alias];
+      }
+    }
     const uClasses = Array.isArray(uData.classes) ? uData.classes : [];
     const uStudents = Array.isArray(uData.students) ? uData.students : [];
+    const uAttendance = Array.isArray(uData.attendanceRecords) ? uData.attendanceRecords : [];
+    const uBoarding = Array.isArray(uData.boardingRecords) ? uData.boardingRecords : [];
+    const uTransactions = Array.isArray(uData.transactions) ? uData.transactions : [];
 
     for (const c of uClasses) {
+      if (c.teacherRole === 'subject' || (c.id && c.id.startsWith('class-sub-'))) {
+        continue;
+      }
       const enrichedClass = {
         ...c,
+        schoolName: c.schoolName || t.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
         teacherUsername: c.teacherUsername || t.username,
-        teacherRole: c.teacherRole || t.role,
+        teacherRole: 'homeroom',
         teacherName: c.teacherName || t.fullName
       };
       allClassesMap.set(c.id, enrichedClass);
     }
 
     for (const s of uStudents) {
+      if (s.classId === 'class-1791592764810' || (s.classId && s.classId.startsWith('class-sub-'))) {
+        continue;
+      }
       allStudentsMap.set(s.id, {
         ...s,
         teacherUsername: s.teacherUsername || t.username
       });
     }
+
+    // Lấy tập ID các lớp mà giáo viên này thực sự làm chủ nhiệm (dựa theo c.teacherUsername hoặc sở hữu duy nhất)
+    const ownedClassIds = new Set(
+      uClasses
+        .filter((c: any) => {
+          if (!c || !c.id) return false;
+          const tUsername = (c.teacherUsername || '').trim().toLowerCase().replace('_', '');
+          const curUserNorm = tUser.replace('_', '');
+          return !tUsername || tUsername === curUserNorm;
+        })
+        .map((c: any) => c.id)
+    );
+
+    // Tổng hợp điểm danh chuyên cần từ đúng GVCN phụ trách lớp
+    for (const att of uAttendance) {
+      if (att && att.date && att.classId && ownedClassIds.has(att.classId)) {
+        const key = `${att.date}_${att.classId}`;
+        if (!allAttendanceMap.has(key)) {
+          allAttendanceMap.set(key, { ...att });
+        } else {
+          const ex = allAttendanceMap.get(key);
+          allAttendanceMap.set(key, {
+            ...ex,
+            ...att,
+            records: { ...(ex.records || {}), ...(att.records || {}) }
+          });
+        }
+      }
+    }
+
+    // Tổng hợp ăn bán trú từ đúng GVCN phụ trách lớp
+    for (const b of uBoarding) {
+      if (b && b.date && b.classId && ownedClassIds.has(b.classId)) {
+        const key = `${b.date}_${b.classId}`;
+        if (!allBoardingMap.has(key)) {
+          allBoardingMap.set(key, { ...b });
+        } else {
+          const ex = allBoardingMap.get(key);
+          allBoardingMap.set(key, {
+            ...ex,
+            ...b,
+            records: { ...(ex.records || {}), ...(b.records || {}) }
+          });
+        }
+      }
+    }
+
+    // Tổng hợp điểm xu thi đua
+    for (const tx of uTransactions) {
+      if (tx && tx.id) {
+        allTransactions.push(tx);
+      }
+    }
   }
 
-  // 2. Do NOT pull classes from admin accounts. Admin does not own classrooms, only manages.
+  // 1.5. Hợp nhất lớp và học sinh từ các tài khoản Quản trị nhà trường (school_admin) để liên thông đầy đủ
+  const schoolAdmins = db.users.filter(u => u.role === 'school_admin' || u.isSchoolAdmin);
+  for (const sa of schoolAdmins) {
+    const saData = db.userData[sa.username.toLowerCase()] || {};
+    const saClasses = Array.isArray(saData.classes) ? saData.classes : [];
+    const saStudents = Array.isArray(saData.students) ? saData.students : [];
+    const saAttendance = Array.isArray(saData.attendanceRecords) ? saData.attendanceRecords : [];
+    const saBoarding = Array.isArray(saData.boardingRecords) ? saData.boardingRecords : [];
+    const saTransactions = Array.isArray(saData.transactions) ? saData.transactions : [];
+
+    for (const c of saClasses) {
+      if (c.teacherRole === 'subject' || (c.id && c.id.startsWith('class-sub-'))) {
+        continue;
+      }
+      if (!allClassesMap.has(c.id)) {
+        allClassesMap.set(c.id, {
+          ...c,
+          teacherRole: 'homeroom',
+          schoolName: c.schoolName || sa.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN'
+        });
+      } else {
+        const existing = allClassesMap.get(c.id)!;
+        if (!existing.schoolName && (c.schoolName || sa.schoolName)) {
+          existing.schoolName = c.schoolName || sa.schoolName;
+        }
+      }
+    }
+
+    for (const s of saStudents) {
+      if (s.classId === 'class-1791592764810' || (s.classId && s.classId.startsWith('class-sub-'))) {
+        continue;
+      }
+      if (!allStudentsMap.has(s.id)) {
+        allStudentsMap.set(s.id, s);
+      }
+    }
+
+    for (const att of saAttendance) {
+      if (att && att.date && att.classId) {
+        const key = `${att.date}_${att.classId}`;
+        if (!allAttendanceMap.has(key)) {
+          allAttendanceMap.set(key, { ...att });
+        }
+      }
+    }
+
+    for (const b of saBoarding) {
+      if (b && b.date && b.classId) {
+        const key = `${b.date}_${b.classId}`;
+        if (!allBoardingMap.has(key)) {
+          allBoardingMap.set(key, { ...b });
+        }
+      }
+    }
+
+    for (const tx of saTransactions) {
+      if (tx && tx.id) {
+        allTransactions.push(tx);
+      }
+    }
+  }
+
+  // Sắp xếp lịch sử thi đua theo thời gian mới nhất
+  allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
   // Calculate the highest updatedAt timestamp across all teachers to prevent polling false-positives
   const maxTeacherUpdatedAt = Math.max(
@@ -1168,8 +1520,207 @@ export function getAdminAllData(): {
     teachers,
     classes: Array.from(allClassesMap.values()),
     students: Array.from(allStudentsMap.values()),
+    attendanceRecords: Array.from(allAttendanceMap.values()),
+    boardingRecords: Array.from(allBoardingMap.values()),
+    transactions: allTransactions,
     userData: db.userData,
     timestamp: maxTeacherUpdatedAt || Date.now()
+  };
+}
+
+/**
+ * ⚡ TỔNG HỢP DỮ LIỆU ĐA TẦNG CHO BAN GIÁM HIỆU & QUẢN TRỊ NHÀ TRƯỜNG (< 2ms):
+ * Tự động gom và đồng bộ toàn bộ lớp học, học sinh, điểm danh chuyên cần, bán trú và điểm thi đua
+ * của tất cả các giáo viên chủ nhiệm trong trường một cách trực tiếp từ bộ nhớ/CSDL máy chủ.
+ */
+export function getExecutiveScopedDataServer(currentUser: any): {
+  success: boolean;
+  classes: any[];
+  students: any[];
+  attendanceRecords: any[];
+  boardingRecords: any[];
+  transactions: any[];
+  teachers: any[];
+  timestamp: number;
+} {
+  const db = loadDatabase(true);
+  const isMasterAdmin = currentUser?.role === 'admin' || currentUser?.username?.toLowerCase() === 'adminquantri';
+  const targetSchool = (currentUser?.schoolName || '').trim().toLowerCase();
+
+  // 1. Lọc danh sách giáo viên phụ trách thuộc trường của currentUser
+  const scopedTeachers = db.users.filter(u => {
+    if (u.role !== 'homeroom') return false;
+    if (isMasterAdmin) return true;
+    const uSchool = (u.schoolName || '').trim().toLowerCase();
+    if (!targetSchool || !uSchool) return false;
+    return uSchool === targetSchool;
+  });
+
+  const allClassesMap = new Map<string, any>();
+  const allStudentsMap = new Map<string, any>();
+  const allAttendanceMap = new Map<string, any>();
+  const allBoardingMap = new Map<string, any>();
+  const allTransactions: any[] = [];
+
+  for (const t of scopedTeachers) {
+    const tUser = t.username.toLowerCase();
+    const alias = tUser.startsWith('gvcn_')
+      ? tUser.replace('gvcn_', 'gvcn')
+      : (tUser.startsWith('gvcn') ? tUser.replace('gvcn', 'gvcn_') : '');
+
+    let uData = db.userData[tUser] || {};
+    const aliasData = alias ? (db.userData[alias] || {}) : {};
+
+    // Gộp dữ liệu từ tài khoản chính và alias nếu có
+    const uClasses = Array.isArray(uData.classes) && uData.classes.length > 0 
+      ? uData.classes 
+      : (Array.isArray(aliasData.classes) ? aliasData.classes : []);
+    const uStudents = Array.isArray(uData.students) && uData.students.length > 0 
+      ? uData.students 
+      : (Array.isArray(aliasData.students) ? aliasData.students : []);
+    
+    // Gộp tất cả bản ghi điểm danh từ cả 2 tài khoản
+    const rawAtt = [...(Array.isArray(uData.attendanceRecords) ? uData.attendanceRecords : []), ...(Array.isArray(aliasData.attendanceRecords) ? aliasData.attendanceRecords : [])];
+    const rawBoarding = [...(Array.isArray(uData.boardingRecords) ? uData.boardingRecords : []), ...(Array.isArray(aliasData.boardingRecords) ? aliasData.boardingRecords : [])];
+    const rawTx = [...(Array.isArray(uData.transactions) ? uData.transactions : []), ...(Array.isArray(aliasData.transactions) ? aliasData.transactions : [])];
+
+    for (const c of uClasses) {
+      if (c.teacherRole === 'subject' || (c.id && c.id.startsWith('class-sub-'))) continue;
+      allClassesMap.set(c.id, {
+        ...c,
+        schoolName: c.schoolName || t.schoolName || currentUser?.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+        teacherUsername: c.teacherUsername || t.username,
+        teacherRole: 'homeroom',
+        teacherName: c.teacherName || t.fullName
+      });
+    }
+
+    for (const s of uStudents) {
+      if (s.classId === 'class-1791592764810' || (s.classId && s.classId.startsWith('class-sub-'))) continue;
+      allStudentsMap.set(s.id, { ...s, teacherUsername: s.teacherUsername || t.username });
+    }
+
+    // Lấy tập ID các lớp mà giáo viên này thực sự quản lý
+    const classIdList = uClasses.map((c: any) => c.id).filter(Boolean);
+    const ownedClassIds = new Set(classIdList);
+
+    for (const att of rawAtt) {
+      if (att && att.date && att.classId && (ownedClassIds.size === 0 || ownedClassIds.has(att.classId))) {
+        const key = `${att.date}_${att.classId}`;
+        if (!allAttendanceMap.has(key)) {
+          allAttendanceMap.set(key, { ...att });
+        } else {
+          const ex = allAttendanceMap.get(key);
+          allAttendanceMap.set(key, {
+            ...ex,
+            ...att,
+            records: { ...(ex.records || {}), ...(att.records || {}) }
+          });
+        }
+      }
+    }
+
+    for (const b of rawBoarding) {
+      if (b && b.date && b.classId && (ownedClassIds.size === 0 || ownedClassIds.has(b.classId))) {
+        const key = `${b.date}_${b.classId}`;
+        if (!allBoardingMap.has(key)) {
+          allBoardingMap.set(key, { ...b });
+        } else {
+          const ex = allBoardingMap.get(key);
+          allBoardingMap.set(key, {
+            ...ex,
+            ...b,
+            records: { ...(ex.records || {}), ...(b.records || {}) }
+          });
+        }
+      }
+    }
+
+    for (const tx of rawTx) {
+      if (tx && tx.id) allTransactions.push(tx);
+    }
+  }
+
+  // 🌟 Nạp bổ sung dữ liệu lớp học, học sinh, điểm danh, bán trú từ các tài khoản Quản trị nhà trường (school_admin)
+  const schoolAdminUsers = db.users.filter(u => {
+    if (!(u.role === 'school_admin' || u.isSchoolAdmin)) return false;
+    if (isMasterAdmin) return true;
+    const saSchool = (u.schoolName || '').trim().toLowerCase();
+    return Boolean(targetSchool && saSchool === targetSchool);
+  });
+
+  for (const sa of schoolAdminUsers) {
+    const saData = db.userData[sa.username.toLowerCase()] || {};
+    
+    // Nạp bổ sung lớp học nếu chưa có trong map
+    if (Array.isArray(saData.classes)) {
+      for (const c of saData.classes) {
+        if (c && c.id && !allClassesMap.has(c.id) && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-')) {
+          allClassesMap.set(c.id, {
+            ...c,
+            schoolName: c.schoolName || sa.schoolName || currentUser?.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+            teacherRole: 'homeroom'
+          });
+        }
+      }
+    }
+
+    // Nạp bổ sung học sinh nếu chưa có trong map
+    if (Array.isArray(saData.students)) {
+      for (const s of saData.students) {
+        if (s && s.id && !allStudentsMap.has(s.id) && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-')) {
+          allStudentsMap.set(s.id, s);
+        }
+      }
+    }
+
+    if (Array.isArray(saData.attendanceRecords)) {
+      for (const att of saData.attendanceRecords) {
+        if (att && att.date && att.classId) {
+          const key = `${att.date}_${att.classId}`;
+          if (!allAttendanceMap.has(key)) {
+            allAttendanceMap.set(key, { ...att });
+          } else {
+            const ex = allAttendanceMap.get(key);
+            allAttendanceMap.set(key, {
+              ...ex,
+              ...att,
+              records: { ...(ex.records || {}), ...(att.records || {}) }
+            });
+          }
+        }
+      }
+    }
+    if (Array.isArray(saData.boardingRecords)) {
+      for (const b of saData.boardingRecords) {
+        if (b && b.date && b.classId) {
+          const key = `${b.date}_${b.classId}`;
+          if (!allBoardingMap.has(key)) {
+            allBoardingMap.set(key, { ...b });
+          } else {
+            const ex = allBoardingMap.get(key);
+            allBoardingMap.set(key, {
+              ...ex,
+              ...b,
+              records: { ...(ex.records || {}), ...(b.records || {}) }
+            });
+          }
+        }
+      }
+    }
+  }
+
+  allTransactions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  return {
+    success: true,
+    classes: Array.from(allClassesMap.values()),
+    students: Array.from(allStudentsMap.values()),
+    attendanceRecords: Array.from(allAttendanceMap.values()),
+    boardingRecords: Array.from(allBoardingMap.values()),
+    transactions: allTransactions,
+    teachers: scopedTeachers.map(({ password, ...u }) => u),
+    timestamp: Date.now()
   };
 }
 
@@ -1186,6 +1737,8 @@ export function syncAdminClassroomData(classes: any[], students: any[]): { succe
   const studentsByClassId = new Map<string, any[]>();
   for (const s of students) {
     if (s.classId) {
+      // Student-only (delta) syncs must still reach the owning teacher even if the class itself is unchanged
+      classIdsToSync.add(s.classId);
       if (!studentsByClassId.has(s.classId)) {
         studentsByClassId.set(s.classId, []);
       }
@@ -1679,7 +2232,7 @@ export function getSchools(): SchoolEntity[] {
   return db.schools;
 }
 
-export function createSchool(data: Partial<SchoolEntity> & { adminPassword?: string; adminFullName?: string }) {
+export function createSchool(data: Partial<SchoolEntity> & { adminPassword?: string; adminFullName?: string; createAccount?: boolean }) {
   const db = loadDatabase();
   if (!Array.isArray(db.schools)) {
     db.schools = [...DEFAULT_SCHOOLS];
@@ -1695,10 +2248,6 @@ export function createSchool(data: Partial<SchoolEntity> & { adminPassword?: str
   }
 
   const schoolCode = data.code?.trim().toUpperCase() || `TH_${Date.now().toString().slice(-4)}`;
-  const cleanCodeSlug = schoolCode.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const bghUsername = (data.adminUsername?.trim() || `bgh_${cleanCodeSlug || Date.now().toString().slice(-4)}`).toLowerCase();
-  const bghPassword = data.adminPassword?.trim() || '123456';
-  const bghFullName = data.adminFullName?.trim() || `Ban Giám Hiệu ${cleanName}`;
 
   const newSchool: SchoolEntity = {
     id: data.id || `school_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -1706,19 +2255,117 @@ export function createSchool(data: Partial<SchoolEntity> & { adminPassword?: str
     code: schoolCode,
     address: data.address?.trim() || '',
     phone: data.phone?.trim() || '',
-    adminUsername: bghUsername,
+    adminUsername: (data.createAccount && data.adminUsername?.trim()) ? data.adminUsername.trim() : '',
     createdAt: Date.now()
   };
 
   db.schools.push(newSchool);
 
-  // 👑 TỰ ĐỘNG KHỞI TẠO TÀI KHOẢN QUẢN TRỊ BGH CHO NHÀ TRƯỜNG (SaaS Tenant Provisioning)
+  // Chỉ tạo tài khoản nếu có yêu cầu rõ ràng qua cờ createAccount === true (mặc định chỉ tạo CSDL trường mới)
+  let adminAccountResult: { username: string; password?: string; fullName: string; role: string; schoolName: string } | undefined = undefined;
+
+  if (data.createAccount && data.adminUsername?.trim()) {
+    const bghUsername = data.adminUsername.trim().toLowerCase();
+    const bghPassword = data.adminPassword?.trim() || '123456';
+    const bghFullName = data.adminFullName?.trim() || `Ban Giám Hiệu ${cleanName}`;
+
+    if (!Array.isArray(db.users)) {
+      db.users = [];
+    }
+    const existingUserIdx = db.users.findIndex(u => u.username.toLowerCase() === bghUsername);
+    const bghUser: UserAccountServer = {
+      id: `user-${bghUsername}`,
+      username: bghUsername,
+      password: bghPassword,
+      fullName: bghFullName,
+      role: 'school_admin',
+      isSchoolAdmin: true,
+      isBgh: true,
+      tenantType: 'school',
+      schoolName: cleanName,
+      email: `${bghUsername}@lophoc.edu.vn`,
+      phone: data.phone?.trim() || '',
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${bghUsername}&backgroundColor=bbf7d0`,
+      createdAt: Date.now(),
+      status: 'active'
+    };
+
+    if (existingUserIdx >= 0) {
+      db.users[existingUserIdx] = { ...db.users[existingUserIdx], ...bghUser, id: db.users[existingUserIdx].id };
+    } else {
+      db.users.push(bghUser);
+    }
+
+    if (!db.userData) db.userData = {};
+    if (!db.userData[bghUsername]) {
+      db.userData[bghUsername] = {
+        classes: [],
+        students: [],
+        subjectClasses: [],
+        schoolName: cleanName
+      };
+    }
+
+    if (isSupabaseConfigured()) {
+      try {
+        upsertSupabaseUser(bghUser).catch((err) => console.warn('[Supabase Sync BGH] Lỗi upsert user:', err));
+        saveSupabaseUserData(bghUsername, db.userData[bghUsername]).catch((err) => console.warn('[Supabase Sync BGH Data] Lỗi lưu user data:', err));
+      } catch (_) {}
+    }
+
+    adminAccountResult = {
+      username: bghUsername,
+      password: bghPassword,
+      fullName: bghFullName,
+      role: 'school_admin',
+      schoolName: cleanName
+    };
+  }
+
+  saveDatabase(db);
+
+  addAuditLog({
+    username: 'adminquantri',
+    userFullName: 'Quản trị viên Hệ thống Cấp cao',
+    role: 'admin',
+    actionType: 'OTHER',
+    description: `Khởi tạo cơ sở dữ liệu trường học mới: ${newSchool.name} (${newSchool.code})${data.createAccount ? ' kèm tài khoản BGH' : ' (chưa cấp tài khoản)'}`,
+    details: { school: newSchool }
+  });
+
+  return {
+    success: true,
+    school: newSchool,
+    adminAccount: adminAccountResult,
+    message: `Khởi tạo CSDL trường "${newSchool.name}" thành công.`
+  };
+}
+
+export function provisionSchoolAdmin(schoolId: string, data: { adminUsername: string; adminPassword?: string; adminFullName?: string; phone?: string }) {
+  const db = loadDatabase();
+  if (!Array.isArray(db.schools)) {
+    db.schools = [...DEFAULT_SCHOOLS];
+  }
+  const school = db.schools.find(s => s.id === schoolId);
+  if (!school) {
+    return { success: false, message: 'Không tìm thấy thông tin trường học.' };
+  }
+
+  const bghUsername = (data.adminUsername || '').trim().toLowerCase();
+  if (!bghUsername) {
+    return { success: false, message: 'Tên đăng nhập BGH không được để trống.' };
+  }
+
+  const bghPassword = data.adminPassword?.trim() || '123456';
+  const bghFullName = data.adminFullName?.trim() || `Ban Giám Hiệu ${school.name}`;
+
   if (!Array.isArray(db.users)) {
     db.users = [];
   }
+
   const existingUserIdx = db.users.findIndex(u => u.username.toLowerCase() === bghUsername);
   const bghUser: UserAccountServer = {
-    id: `user-${bghUsername}`,
+    id: existingUserIdx >= 0 ? db.users[existingUserIdx].id : `user-${bghUsername}`,
     username: bghUsername,
     password: bghPassword,
     fullName: bghFullName,
@@ -1726,9 +2373,9 @@ export function createSchool(data: Partial<SchoolEntity> & { adminPassword?: str
     isSchoolAdmin: true,
     isBgh: true,
     tenantType: 'school',
-    schoolName: cleanName,
+    schoolName: school.name,
     email: `${bghUsername}@lophoc.edu.vn`,
-    phone: data.phone?.trim() || '',
+    phone: data.phone?.trim() || school.phone || '',
     avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${bghUsername}&backgroundColor=bbf7d0`,
     createdAt: Date.now(),
     status: 'active'
@@ -1740,47 +2387,48 @@ export function createSchool(data: Partial<SchoolEntity> & { adminPassword?: str
     db.users.push(bghUser);
   }
 
-  // Khởi tạo không gian dữ liệu lớp học rỗng cho tài khoản BGH
+  school.adminUsername = bghUsername;
+  school.adminFullName = bghFullName;
+
   if (!db.userData) db.userData = {};
   if (!db.userData[bghUsername]) {
     db.userData[bghUsername] = {
       classes: [],
       students: [],
       subjectClasses: [],
-      schoolName: cleanName
+      schoolName: school.name
     };
   }
 
-  saveDatabase(db);
-
-  // ĐỒNG BỘ LÊN SUPABASE CLOUD NẾU ĐÃ CẤU HÌNH
   if (isSupabaseConfigured()) {
     try {
-      upsertSupabaseUser(bghUser).catch((err) => console.warn('[Supabase Sync BGH] Lỗi upsert user:', err));
-      saveSupabaseUserData(bghUsername, db.userData[bghUsername]).catch((err) => console.warn('[Supabase Sync BGH Data] Lỗi lưu user data:', err));
+      upsertSupabaseUser(bghUser).catch(err => console.warn('[Supabase Sync BGH]', err));
+      saveSupabaseUserData(bghUsername, db.userData[bghUsername]).catch(err => console.warn('[Supabase Sync BGH Data]', err));
     } catch (_) {}
   }
+
+  saveDatabase(db);
 
   addAuditLog({
     username: 'adminquantri',
     userFullName: 'Quản trị viên Hệ thống Cấp cao',
     role: 'admin',
-    actionType: 'OTHER',
-    description: `Khởi tạo cơ sở dữ liệu trường học mới: ${newSchool.name} (${newSchool.code}) và cấp phát tài khoản BGH @${bghUsername}`,
-    details: { school: newSchool, adminAccount: { username: bghUsername, fullName: bghFullName } }
+    actionType: 'ACCOUNT_CREATE',
+    description: `Cấp tài khoản Quản trị Ban Giám Hiệu cho trường ${school.name}: @${bghUsername}`,
+    details: { school, bghUser: { username: bghUsername, fullName: bghFullName } }
   });
 
   return {
     success: true,
-    school: newSchool,
+    school,
     adminAccount: {
-      username: bghUser.username,
-      password: bghUser.password,
-      fullName: bghUser.fullName,
-      role: bghUser.role,
-      schoolName: newSchool.name
+      username: bghUsername,
+      password: bghPassword,
+      fullName: bghFullName,
+      role: 'school_admin',
+      schoolName: school.name
     },
-    message: `Khởi tạo CSDL trường "${newSchool.name}" và cấp phát tài khoản BGH @${bghUsername} thành công.`
+    message: `Đã cấp tài khoản BGH (@${bghUsername}) cho trường "${school.name}" thành công!`
   };
 }
 
@@ -1920,13 +2568,13 @@ export function resetSchoolAcademicYear(
 
   const isMatching = (u: UserAccountServer) => {
     // Không bao giờ xóa tài khoản quản trị cốt lõi hệ thống
-    if (u.username === 'admin' || u.username === 'demogvcn' || u.username === 'demogvbm' || u.username === 'bgh') {
+    if (u.username === 'admin' || u.username === 'demogvcn' || u.username === 'demogvbm' || u.username === 'bgh' || u.username === 'adminquantri') {
       return false;
     }
 
     if (targetScope === 'guest') {
-      // Phân vùng cá nhân: không xóa tài khoản admin_canhan
-      if (u.username === 'admin_canhan' || u.role === 'guest_admin') {
+      // Phân vùng cá nhân: không xóa tài khoản quản trị admin_canhan hoặc adminquantri
+      if (u.username === 'admin_canhan' || u.username === 'adminquantri' || u.role === 'guest_admin') {
         return false;
       }
       return (u.tenantType || 'guest') === 'guest';
@@ -1964,8 +2612,8 @@ export function resetSchoolAcademicYear(
     db.users = db.users.filter(u => !usernamesToDelete.has(u.username.toLowerCase()));
 
     addAuditLog({
-      username: targetScope === 'guest' ? 'admin_canhan' : 'admin_truong',
-      userFullName: targetScope === 'guest' ? 'Quản trị Tài khoản Cá nhân' : 'Quản trị Nhà trường',
+      username: targetScope === 'guest' ? 'adminquantri' : 'admin_truong',
+      userFullName: targetScope === 'guest' ? 'Quản trị viên Hệ thống (GV Cá nhân)' : 'Quản trị Nhà trường',
       role: targetScope === 'guest' ? 'guest_admin' : 'school_admin',
       actionType: 'DELETE_CLASS',
       description: `[NĂM HỌC MỚI - TOÀN DIỆN ${targetScope.toUpperCase()}] Đã xóa ${usernamesToDelete.size} giáo viên, ${deletedClassCount} lớp và ${deletedStudentCount} học sinh.`,
@@ -1997,8 +2645,8 @@ export function resetSchoolAcademicYear(
     }
 
     addAuditLog({
-      username: targetScope === 'guest' ? 'admin_canhan' : 'admin_truong',
-      userFullName: targetScope === 'guest' ? 'Quản trị Tài khoản Cá nhân' : 'Quản trị Nhà trường',
+      username: targetScope === 'guest' ? 'adminquantri' : 'admin_truong',
+      userFullName: targetScope === 'guest' ? 'Quản trị viên Hệ thống (GV Cá nhân)' : 'Quản trị Nhà trường',
       role: targetScope === 'guest' ? 'guest_admin' : 'school_admin',
       actionType: 'DELETE_CLASS',
       description: `[NĂM HỌC MỚI - GIỮ GIÁO VIÊN ${targetScope.toUpperCase()}] Đã dọn sạch ${deletedClassCount} lớp và ${deletedStudentCount} học sinh của ${affectedUsers.length} giáo viên.`,

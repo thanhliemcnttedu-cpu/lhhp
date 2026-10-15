@@ -1,13 +1,13 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-10T00:34:13.591Z",
+  "lastSync": "2026-10-15T04:24:13.898Z",
   "users": [
     {
       "id": "user-adminquantri",
       "username": "adminquantri",
       "password": "Tanuyen@2026",
-      "fullName": "Quản trị viên Hệ thống Cấp cao",
+      "fullName": "Chử Thị Nghĩa",
       "role": "admin",
       "tenantType": "school",
       "email": "adminquantri@lophoc.edu.vn",
@@ -27,9 +27,1407 @@
     "githubBranch": "main",
     "autoPushGithub": true,
     "autoPullGithub": true,
-    "lastGithubPushAt": 1791587485940
+    "lastGithubPushAt": 1791994678605
   },
   "auditLogs": [
+    {
+      "id": "log-1792033494039-msfewd",
+      "timestamp": 1792033494039,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 3 xu cho 1 học sinh (Lý do: Khen thưởng +3 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1792033488546-e7nger",
+      "timestamp": 1792033488546,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Khen thưởng +5 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1792033480786-i44ijb",
+      "timestamp": 1792033480787,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Đàm Hà Anh"
+    },
+    {
+      "id": "log-1792027240183-mzmntf",
+      "timestamp": 1792027240183,
+      "username": "gvcn_1a3",
+      "userFullName": "Hoàng Thị Hương",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A3 Hoàng Thị Hương"
+    },
+    {
+      "id": "log-1792027160034-gb3j9o",
+      "timestamp": 1792027160034,
+      "username": "gvcn_1a3",
+      "userFullName": "Hoàng Thị Hương",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Hoàng Thị Hương)"
+    },
+    {
+      "id": "log-1792026715733-xc91su",
+      "timestamp": 1792026715733,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A2 Đỗ Thị Hải"
+    },
+    {
+      "id": "log-1792026686143-wzgggg",
+      "timestamp": 1792026686143,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Đỗ Thị Hải)"
+    },
+    {
+      "id": "log-1792026570557-slo0tt",
+      "timestamp": 1792026570557,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Trần Gia Bảo"
+    },
+    {
+      "id": "log-1792026363180-pcu1c2",
+      "timestamp": 1792026363180,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Khen thưởng +5 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1792026309447-tppdec",
+      "timestamp": 1792026309447,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1792026289021-hqkrw4",
+      "timestamp": 1792026289021,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1792026185042-aftsib",
+      "timestamp": 1792026185042,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1792026142570-dkdjll",
+      "timestamp": 1792026142570,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Lò Phương Tuệ Anh"
+    },
+    {
+      "id": "log-1792024086901-t5djoo",
+      "timestamp": 1792024086901,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1792024060859-tjsz1y",
+      "timestamp": 1792024060859,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Lê Thị Việt Hà)"
+    },
+    {
+      "id": "log-1792023643074-ycrv3j",
+      "timestamp": 1792023643074,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1791997993732-l7akxv",
+      "timestamp": 1791997993732,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791997982209-3x6w7m",
+      "timestamp": 1791997982209,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791997974112-m6a85m",
+      "timestamp": 1791997974112,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791997968409-n9zkb6",
+      "timestamp": 1791997968409,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 15 xu cho 1 học sinh (Lý do: Tặng 3 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791997957213-bdphc5",
+      "timestamp": 1791997957213,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 15 xu cho 1 học sinh (Lý do: Tặng 3 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791997886485-1j3d89",
+      "timestamp": 1791997886485,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Nguyễn Đức Anh"
+    },
+    {
+      "id": "log-1791997550664-45smdf",
+      "timestamp": 1791997550664,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Tặng 1 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791997431542-0falwx",
+      "timestamp": 1791997431542,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 15 xu cho 1 học sinh (Lý do: Đạt điểm 10 bài kiểm tra, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994457900-wbp6n8",
+      "timestamp": 1791994457900,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 15 xu cho 1 học sinh (Lý do: Đạt điểm 10 bài kiểm tra, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994363129-xc6fsa",
+      "timestamp": 1791994363129,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A1 Lê Thị Việt Hà"
+    },
+    {
+      "id": "log-1791994303026-4nvmr0",
+      "timestamp": 1791994303026,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A1 Lê Thị Việt Hà"
+    },
+    {
+      "id": "log-1791994248100-jps6qr",
+      "timestamp": 1791994248100,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "UPDATE_STUDENT",
+      "description": "Chỉnh sửa thông tin học sinh: Trịnh Hoài An"
+    },
+    {
+      "id": "log-1791994198735-e5xluk",
+      "timestamp": 1791994198735,
+      "username": "gvcn1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Lê Thị Việt Hà)"
+    },
+    {
+      "id": "log-1791994149651-ripyyb",
+      "timestamp": 1791994149651,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Tặng 1 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994146015-yjau50",
+      "timestamp": 1791994146015,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 1 xu cho 1 học sinh (Lý do: Khen thưởng +1 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994119453-ry453v",
+      "timestamp": 1791994119453,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 1 xu cho 1 học sinh (Lý do: Khen thưởng +1 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994116058-wtlld3",
+      "timestamp": 1791994116058,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Tặng 1 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994099079-3xj8pu",
+      "timestamp": 1791994099079,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1791994053668-410bag",
+      "timestamp": 1791994053668,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 1 xu cho 1 học sinh (Lý do: Khen thưởng +1 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791994047777-6d2nhe",
+      "timestamp": 1791994047777,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 5 xu cho 1 học sinh (Lý do: Tặng 1 ⭐ Ngôi sao khen ngợi môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1791983971438-bctm9e",
+      "timestamp": 1791983971438,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A5 Chử Thị Nghĩa"
+    },
+    {
+      "id": "log-1791982588058-lnpzah",
+      "timestamp": 1791982588058,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A15 Nguyễn Thị Thúy"
+    },
+    {
+      "id": "log-1791981882377-bibzm7",
+      "timestamp": 1791981882377,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Trang",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A15 Nguyễn Thị Thúy"
+    },
+    {
+      "id": "log-1791981877908-m5aquv",
+      "timestamp": 1791981877908,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A14 Nguyễn Thị Trang"
+    },
+    {
+      "id": "log-1791981714857-e1katu",
+      "timestamp": 1791981714857,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Quang Huy",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A13 Nguyễn Thị Hân"
+    },
+    {
+      "id": "log-1791981710989-uz31nw",
+      "timestamp": 1791981710989,
+      "username": "quantriths1tu",
+      "userFullName": "Hà Mạnh Dũng",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A12 Vũ Quang Huy"
+    },
+    {
+      "id": "log-1791981706920-l7kxaj",
+      "timestamp": 1791981706920,
+      "username": "quantriths1tu",
+      "userFullName": "Bùi Viết Nghiệp",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A11 Hà Mạnh Dũng"
+    },
+    {
+      "id": "log-1791981703418-uvsuvq",
+      "timestamp": 1791981703418,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thị Hạnh Huyền",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A10 Bùi Viết Nghiệp"
+    },
+    {
+      "id": "log-1791981699051-yl7b3x",
+      "timestamp": 1791981699051,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Huệ",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A9 Hoàng Thị Hạnh Huyền"
+    },
+    {
+      "id": "log-1791981695088-jnjcvi",
+      "timestamp": 1791981695088,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thủy",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A8 Nguyễn Thị Huệ"
+    },
+    {
+      "id": "log-1791981691171-p847j1",
+      "timestamp": 1791981691171,
+      "username": "quantriths1tu",
+      "userFullName": "Hà Văn Đông",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A7 Nguyễn Thị Thủy"
+    },
+    {
+      "id": "log-1791981686667-0ma9pi",
+      "timestamp": 1791981686667,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Minh",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A6 Hà Văn Đông"
+    },
+    {
+      "id": "log-1791981682540-8gzk0n",
+      "timestamp": 1791981682540,
+      "username": "quantriths1tu",
+      "userFullName": "Lưu Thị Phương Giang",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A5 Nguyễn Thị Minh"
+    },
+    {
+      "id": "log-1791981678683-klwpd8",
+      "timestamp": 1791981678683,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Trường Thành",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A4 Lưu Thị Phương Giang"
+    },
+    {
+      "id": "log-1791981674620-n8id96",
+      "timestamp": 1791981674620,
+      "username": "quantriths1tu",
+      "userFullName": "Phạm Thị Hường",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A3 Nguyễn Trường Thành"
+    },
+    {
+      "id": "log-1791981670555-a7s4hj",
+      "timestamp": 1791981670555,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Bích Hiền",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A2 Phạm Thị Hường"
+    },
+    {
+      "id": "log-1791981666475-emobha",
+      "timestamp": 1791981666475,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 5A1 Trần Thị Bích Hiền"
+    },
+    {
+      "id": "log-1791981417048-q7533o",
+      "timestamp": 1791981417048,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Văn Hoành",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A13 Vũ Quang Định"
+    },
+    {
+      "id": "log-1791981412199-ts7vhq",
+      "timestamp": 1791981412199,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Cao Thượng",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A12 Nguyễn Văn Hoành"
+    },
+    {
+      "id": "log-1791981410794-uzze99",
+      "timestamp": 1791981410794,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Luận",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A11 Nguyễn Cao Thượng"
+    },
+    {
+      "id": "log-1791981407378-24vkl0",
+      "timestamp": 1791981407378,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Văn Thắng",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A10 Trần Thị Luận"
+    },
+    {
+      "id": "log-1791981403506-5aq5io",
+      "timestamp": 1791981403506,
+      "username": "quantriths1tu",
+      "userFullName": "Lùng Thị Dung",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A9 Nguyễn Văn Thắng"
+    },
+    {
+      "id": "log-1791981398886-5kw988",
+      "timestamp": 1791981398886,
+      "username": "quantriths1tu",
+      "userFullName": "Lò Văn Nghiêm",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A8 Lùng Thị Dung"
+    },
+    {
+      "id": "log-1791981397612-ne12nv",
+      "timestamp": 1791981397612,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Loan",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A7 Lò Văn Nghiêm"
+    },
+    {
+      "id": "log-1791981393575-dgqey0",
+      "timestamp": 1791981393575,
+      "username": "quantriths1tu",
+      "userFullName": "Phạm Thị Nhã",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A6 Nguyễn Thị Loan"
+    },
+    {
+      "id": "log-1791981389499-r7edog",
+      "timestamp": 1791981389499,
+      "username": "quantriths1tu",
+      "userFullName": "Phạm Thị Thu Hằng",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A5 Phạm Thị Nhã"
+    },
+    {
+      "id": "log-1791981385058-e6lolp",
+      "timestamp": 1791981385058,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Hưng",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A4 Phạm Thị Thu Hằng"
+    },
+    {
+      "id": "log-1791981383326-yfgwni",
+      "timestamp": 1791981383326,
+      "username": "quantriths1tu",
+      "userFullName": "Lê Thị Hiền",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A3 Nguyễn Thị Hưng"
+    },
+    {
+      "id": "log-1791981378989-n4z5b9",
+      "timestamp": 1791981378989,
+      "username": "quantriths1tu",
+      "userFullName": "Trịnh Thị Cúc",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A2 Lê Thị Hiền"
+    },
+    {
+      "id": "log-1791981375068-8la6o4",
+      "timestamp": 1791981375068,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 4A1 Trịnh Thị Cúc"
+    },
+    {
+      "id": "log-1791980958501-zb0rpw",
+      "timestamp": 1791980958501,
+      "username": "quantriths1tu",
+      "userFullName": "Cao Thị Tâm",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A12 Hoàng Thị Lợi"
+    },
+    {
+      "id": "log-1791980954344-gxw6qp",
+      "timestamp": 1791980954344,
+      "username": "quantriths1tu",
+      "userFullName": "Loan Thị Tào",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A11 Cao Thị Tâm"
+    },
+    {
+      "id": "log-1791980950262-o3yyn4",
+      "timestamp": 1791980950262,
+      "username": "quantriths1tu",
+      "userFullName": "Tạ Thị Nhàn",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A10 Loan Thị Tào"
+    },
+    {
+      "id": "log-1791980949291-w9qsxg",
+      "timestamp": 1791980949291,
+      "username": "quantriths1tu",
+      "userFullName": "Đinh Thị Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A9 Tạ Thị Nhàn"
+    },
+    {
+      "id": "log-1791980944833-sn7jwr",
+      "timestamp": 1791980944833,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thắm",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A8 Đinh Thị Hà"
+    },
+    {
+      "id": "log-1791980940317-xy4ibk",
+      "timestamp": 1791980940317,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thị Chiên",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A7 Nguyễn Thị Thắm"
+    },
+    {
+      "id": "log-1791980936748-ydwixu",
+      "timestamp": 1791980936748,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thị Chiên",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A6 Nguyễn Thị Hoa"
+    },
+    {
+      "id": "log-1791980933248-jy1igv",
+      "timestamp": 1791980933248,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Bích Thảo",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A5 Hoàng Thị Chiên"
+    },
+    {
+      "id": "log-1791980929676-7nmbov",
+      "timestamp": 1791980929676,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Phượng",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A4 Nguyễn Thị Bích Thảo"
+    },
+    {
+      "id": "log-1791980925340-u005so",
+      "timestamp": 1791980925340,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Ninh",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A3 Vũ Thị Phượng"
+    },
+    {
+      "id": "log-1791980921297-xmtps8",
+      "timestamp": 1791980921297,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Ninh",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A2 Hồng Thị Hoa"
+    },
+    {
+      "id": "log-1791980916802-nklzqt",
+      "timestamp": 1791980916802,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thuận",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A1 Nguyễn Thị Ninh"
+    },
+    {
+      "id": "log-1791980905199-5dwedm",
+      "timestamp": 1791980905199,
+      "username": "quantriths1tu",
+      "userFullName": "Cao Thị Thoa",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A1 Nguyễn Thị Thuận"
+    },
+    {
+      "id": "log-1791980900827-0vlscs",
+      "timestamp": 1791980900827,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Hoa Lý",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A2 Cao Thị Thoa"
+    },
+    {
+      "id": "log-1791980899017-metqwr",
+      "timestamp": 1791980899017,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Huệ",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A3 Vũ Thị Hoa Lý"
+    },
+    {
+      "id": "log-1791980894273-bhui1k",
+      "timestamp": 1791980894273,
+      "username": "quantriths1tu",
+      "userFullName": "Đào Thị Hảo",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A4 Nguyễn Thị Huệ"
+    },
+    {
+      "id": "log-1791980889395-fsohcc",
+      "timestamp": 1791980889395,
+      "username": "quantriths1tu",
+      "userFullName": "Bùi Thị Hải",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A5 Đào Thị Hảo"
+    },
+    {
+      "id": "log-1791980887518-om2viv",
+      "timestamp": 1791980887518,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Thu Hải",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A6 Bùi Thị Hải"
+    },
+    {
+      "id": "log-1791980883572-otry0f",
+      "timestamp": 1791980883572,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Hải Yến",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A7 Trần Thị Thu Hải"
+    },
+    {
+      "id": "log-1791980882172-jkmnyc",
+      "timestamp": 1791980882172,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thanh Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A8 Nguyễn Hải Yến"
+    },
+    {
+      "id": "log-1791980877194-zwb2uw",
+      "timestamp": 1791980877194,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Vân",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A9 Hoàng Thanh Hà"
+    },
+    {
+      "id": "log-1791980872337-l3wgr9",
+      "timestamp": 1791980872337,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Hường",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A10 Trần Thị Vân"
+    },
+    {
+      "id": "log-1791980869076-6p9f4j",
+      "timestamp": 1791980869076,
+      "username": "quantriths1tu",
+      "userFullName": "Đào Thị Lý",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A11 Nguyễn Thị Hường"
+    },
+    {
+      "id": "log-1791980864561-c7o77q",
+      "timestamp": 1791980864561,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Soan",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A12 Đào Thị Lý"
+    },
+    {
+      "id": "log-1791980859622-6moyn2",
+      "timestamp": 1791980859622,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A13 Vũ Thị Soan"
+    },
+    {
+      "id": "log-1791980122679-totcuq",
+      "timestamp": 1791980122679,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1791980031034-bjtwxd",
+      "timestamp": 1791980031034,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1791796503083-p6lqct",
+      "timestamp": 1791796503083,
+      "username": "quantriths1tu",
+      "userFullName": "Cao Thị Tâm",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A12 Hoàng Thị Lợi"
+    },
+    {
+      "id": "log-1791796499371-jvhp3x",
+      "timestamp": 1791796499371,
+      "username": "quantriths1tu",
+      "userFullName": "Loan Thị Tào",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A11 Cao Thị Tâm"
+    },
+    {
+      "id": "log-1791796494996-ieuopq",
+      "timestamp": 1791796494996,
+      "username": "quantriths1tu",
+      "userFullName": "Tạ Thị Nhàn",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A10 Loan Thị Tào"
+    },
+    {
+      "id": "log-1791796490156-acepz7",
+      "timestamp": 1791796490156,
+      "username": "quantriths1tu",
+      "userFullName": "Đinh Thị Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A9 Tạ Thị Nhàn"
+    },
+    {
+      "id": "log-1791796485169-styist",
+      "timestamp": 1791796485169,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thắm",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A8 Đinh Thị Hà"
+    },
+    {
+      "id": "log-1791796481025-knnfjv",
+      "timestamp": 1791796481025,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thị Chiên",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A7 Nguyễn Thị Thắm"
+    },
+    {
+      "id": "log-1791796477523-oz54xn",
+      "timestamp": 1791796477523,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thị Chiên",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A6 Nguyễn Thị Hoa"
+    },
+    {
+      "id": "log-1791796473930-jyti0y",
+      "timestamp": 1791796473930,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Bích Thảo",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A5 Hoàng Thị Chiên"
+    },
+    {
+      "id": "log-1791796469798-2ztlok",
+      "timestamp": 1791796469798,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Phượng",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A4 Nguyễn Thị Bích Thảo"
+    },
+    {
+      "id": "log-1791796462821-2f8ub3",
+      "timestamp": 1791796462821,
+      "username": "quantriths1tu",
+      "userFullName": "Hồng Thị Hoa",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A3 Vũ Thị Phượng"
+    },
+    {
+      "id": "log-1791796458268-e6z2cg",
+      "timestamp": 1791796458268,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Ninh",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A2 Hồng Thị Hoa"
+    },
+    {
+      "id": "log-1791796451572-kd593x",
+      "timestamp": 1791796451572,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 3A1 Nguyễn Thị Ninh"
+    },
+    {
+      "id": "log-1791795727409-slkt2k",
+      "timestamp": 1791795727409,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Soan",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A7 Nguyễn Thị Thanh Hà"
+    },
+    {
+      "id": "log-1791795713860-bssy8z",
+      "timestamp": 1791795713860,
+      "username": "quantriths1tu",
+      "userFullName": "Đào Thị Lý",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A13 Vũ Thị Soan"
+    },
+    {
+      "id": "log-1791795710320-2nm4mc",
+      "timestamp": 1791795710320,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Hường",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A12 Đào Thị Lý"
+    },
+    {
+      "id": "log-1791795705955-r0y95d",
+      "timestamp": 1791795705955,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Vân",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A11 Nguyễn Thị Hường"
+    },
+    {
+      "id": "log-1791795702313-ltung2",
+      "timestamp": 1791795702313,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thanh Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A10 Trần Thị Vân"
+    },
+    {
+      "id": "log-1791795702004-ki3pl8",
+      "timestamp": 1791795702004,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Hải Yến",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A9 Hoàng Thanh Hà"
+    },
+    {
+      "id": "log-1791795697481-pahelr",
+      "timestamp": 1791795697481,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Thu Hải",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A8 Nguyễn Hải Yến"
+    },
+    {
+      "id": "log-1791795693515-aagan0",
+      "timestamp": 1791795693515,
+      "username": "quantriths1tu",
+      "userFullName": "Bùi Thị Hải",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A7 Trần Thị Thu Hải"
+    },
+    {
+      "id": "log-1791795690015-e7kfqw",
+      "timestamp": 1791795690015,
+      "username": "quantriths1tu",
+      "userFullName": "Đào Thị Hảo",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A6 Bùi Thị Hải"
+    },
+    {
+      "id": "log-1791795686862-m1orpg",
+      "timestamp": 1791795686862,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Huệ",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A5 Đào Thị Hảo"
+    },
+    {
+      "id": "log-1791795683248-5fcmlc",
+      "timestamp": 1791795683248,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Hoa Lý",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A4 Nguyễn Thị Huệ"
+    },
+    {
+      "id": "log-1791795678845-hcs1k4",
+      "timestamp": 1791795678845,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A3 Vũ Thị Hoa Lý"
+    },
+    {
+      "id": "log-1791792317389-f27yfg",
+      "timestamp": 1791792317389,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thanh Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A10 Trần Thị Vân"
+    },
+    {
+      "id": "log-1791792312109-kkw37v",
+      "timestamp": 1791792312109,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Hải Yến",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A9 Hoàng Thanh Hà"
+    },
+    {
+      "id": "log-1791792305947-rxg5ue",
+      "timestamp": 1791792305947,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Thu Hải",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A8 Nguyễn Hải Yến"
+    },
+    {
+      "id": "log-1791792300892-7mllz0",
+      "timestamp": 1791792300892,
+      "username": "quantriths1tu",
+      "userFullName": "Bùi Thị Hải",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A7 Trần Thị Thu Hải"
+    },
+    {
+      "id": "log-1791792296457-sqlin5",
+      "timestamp": 1791792296457,
+      "username": "quantriths1tu",
+      "userFullName": "Đào Thị Hảo",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A6 Bùi Thị Hải"
+    },
+    {
+      "id": "log-1791792290792-45uiu3",
+      "timestamp": 1791792290792,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Huệ",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A5 Đào Thị Hảo"
+    },
+    {
+      "id": "log-1791792286981-e2qyku",
+      "timestamp": 1791792286981,
+      "username": "quantriths1tu",
+      "userFullName": "Vũ Thị Hoa Lý",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A4 Nguyễn Thị Huệ"
+    },
+    {
+      "id": "log-1791792039913-ixfw97",
+      "timestamp": 1791792039913,
+      "username": "quantriths1tu",
+      "userFullName": "Cao Thị Thoa",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A3 Vũ Thị Hoa Lý"
+    },
+    {
+      "id": "log-1791792033283-v70x31",
+      "timestamp": 1791792033283,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thuận",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A2 Cao Thị Thoa"
+    },
+    {
+      "id": "log-1791792026838-izb7bk",
+      "timestamp": 1791792026838,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thuận",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A1 Nguyễn Thị Thuận"
+    },
+    {
+      "id": "log-1791787973219-27zmo1",
+      "timestamp": 1791787973219,
+      "username": "quantriths1tu",
+      "userFullName": "Đỗ Thị Lanh",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 2A1 Nguyễn Thị Thuận"
+    },
+    {
+      "id": "log-1791787968748-ds511y",
+      "timestamp": 1791787968748,
+      "username": "quantriths1tu",
+      "userFullName": "Tòng Thị Thi",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A13 Đỗ Thị Lanh"
+    },
+    {
+      "id": "log-1791787964235-tya95t",
+      "timestamp": 1791787964235,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Xuyên",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A12 Tòng Thị Thi"
+    },
+    {
+      "id": "log-1791787961016-m1yjxl",
+      "timestamp": 1791787961016,
+      "username": "quantriths1tu",
+      "userFullName": "Tống Thị Nhương",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A11 Nguyễn Thị Xuyên"
+    },
+    {
+      "id": "log-1791787957084-ahtgsw",
+      "timestamp": 1791787957084,
+      "username": "quantriths1tu",
+      "userFullName": "Phạm Thị Hoàn",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A10 Tống Thị Nhương"
+    },
+    {
+      "id": "log-1791787952352-79cbao",
+      "timestamp": 1791787952352,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thanh Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A9 Phạm Thị Hoàn"
+    },
+    {
+      "id": "log-1791787947425-u0cqsv",
+      "timestamp": 1791787947425,
+      "username": "quantriths1tu",
+      "userFullName": "Nguyễn Thị Thanh Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A8 Lò Thị Hoa"
+    },
+    {
+      "id": "log-1791787941921-jkv1pf",
+      "timestamp": 1791787941921,
+      "username": "quantriths1tu",
+      "userFullName": "Lê Thị Thủy",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A7 Nguyễn Thị Thanh Hà"
+    },
+    {
+      "id": "log-1791787932656-ab2az8",
+      "timestamp": 1791787932656,
+      "username": "quantriths1tu",
+      "userFullName": "Chử Thị Nghĩa",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A6 Lê Thị Thủy"
+    },
+    {
+      "id": "log-1791787260194-mvsidr",
+      "timestamp": 1791787260194,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A5 Chử Thị Nghĩa"
+    },
+    {
+      "id": "log-1791786549600-jzs6fm",
+      "timestamp": 1791786549600,
+      "username": "quantriths1tu",
+      "userFullName": "Trần Thị Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A5 Chử Thị Nghĩa"
+    },
+    {
+      "id": "log-1791786541783-6ut5id",
+      "timestamp": 1791786541783,
+      "username": "quantriths1tu",
+      "userFullName": "Hoàng Thị Hương",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A4 Trần Thị Hà"
+    },
+    {
+      "id": "log-1791786484635-7sfe58",
+      "timestamp": 1791786484635,
+      "username": "quantriths1tu",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A3 Hoàng Thị Hương"
+    },
+    {
+      "id": "log-1791786466816-p1rq84",
+      "timestamp": 1791786466816,
+      "username": "quantriths1tu",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A2 Đỗ Thị Hải"
+    },
+    {
+      "id": "log-1791786458867-o2y28o",
+      "timestamp": 1791786458867,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A1 Lê Thị Việt Hà"
+    },
+    {
+      "id": "log-1791784503290-8pk2kb",
+      "timestamp": 1791784503290,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1791780486932-1qar9g",
+      "timestamp": 1791780486932,
+      "username": "adminquantri",
+      "userFullName": "Lò Văn Nghiêm",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Lò Văn Nghiêm)"
+    },
+    {
+      "id": "log-1791780481219-dqzps6",
+      "timestamp": 1791780481219,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1791779023825-krvk2r",
+      "timestamp": 1791779023825,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Khởi tạo cơ sở dữ liệu trường học mới: TIỂU HỌC SỐ 1 TÂN UYÊN (TH_THS1TU) và cấp phát tài khoản BGH @bgh_thths1tu",
+      "details": {
+        "school": {
+          "id": "school_1791779023757_riyn",
+          "name": "TIỂU HỌC SỐ 1 TÂN UYÊN",
+          "code": "TH_THS1TU",
+          "address": "Thôn 21, xã Tân Uyên, tỉnh Lai Châu",
+          "phone": "0888358363",
+          "adminUsername": "bgh_thths1tu",
+          "createdAt": 1791779023757
+        },
+        "adminAccount": {
+          "username": "bgh_thths1tu",
+          "fullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN"
+        }
+      }
+    },
+    {
+      "id": "log-1791773513522-5ac0t0",
+      "timestamp": 1791773513522,
+      "username": "adminquantri",
+      "userFullName": "Lò Văn Nghiêm",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Lò Văn Nghiêm)"
+    },
+    {
+      "id": "log-1791609087937-16b4n1",
+      "timestamp": 1791609087938,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Khởi tạo cơ sở dữ liệu trường học mới: TIỂU HỌC SỐ 1 TÂN UYÊN (TH_THS1TU) và cấp phát tài khoản BGH @bgh_ths1tu",
+      "details": {
+        "school": {
+          "id": "school_1791609087887_wnpz",
+          "name": "TIỂU HỌC SỐ 1 TÂN UYÊN",
+          "code": "TH_THS1TU",
+          "address": "Xã Tân Uyên, tỉnh Lai Châu",
+          "phone": "",
+          "adminUsername": "bgh_ths1tu",
+          "createdAt": 1791609087887
+        },
+        "adminAccount": {
+          "username": "bgh_ths1tu",
+          "fullName": "Ban Giám Hiệu nhà trường"
+        }
+      }
+    },
+    {
+      "id": "log-1791609033703-3lhjim",
+      "timestamp": 1791609033703,
+      "username": "adminquantri",
+      "userFullName": "Lò Văn Nghiêm",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Lò Văn Nghiêm)"
+    },
+    {
+      "id": "log-1791608958221-tjw6v1",
+      "timestamp": 1791608958221,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "BATCH_STUDENTS",
+      "description": "Thêm mới danh sách 28 học sinh vào lớp 1A2 Đỗ Thị Hải"
+    },
+    {
+      "id": "log-1791608931135-zqkbsf",
+      "timestamp": 1791608931135,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "RESTORE_DATA",
+      "description": "Khôi phục độc lập dữ liệu từ file JSON Sao_Luu_Lop_Hoc_Hanh_Phuc_adminths1tu_school_admin_2026-10-10.json"
+    },
+    {
+      "id": "log-1791606708035-8g8k2m",
+      "timestamp": 1791606708035,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
     {
       "id": "log-1791587479374-m0uvcm",
       "timestamp": 1791587479374,
@@ -141,8 +1539,8 @@
     }
   ],
   "masterSummary": {
-    "totalUsers": 1,
-    "totalSchools": 0,
-    "totalClassesConfigured": 1
+    "totalUsers": 78,
+    "totalSchools": 1,
+    "totalClassesConfigured": 75
   }
 }

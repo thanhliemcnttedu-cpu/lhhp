@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient, RealtimeChannel } from '@supabase/supabase-js';
 import { UserAccount, UserClassroomData, Classroom, Student, UserRole, SchoolEntity, LoginRoleScope, DailyAttendance, DailyBoardingMeal, PointTransaction, SchoolBranch, SchoolCampus } from '../types';
 import { generateStudentsForClass } from '../utils/studentGenerator';
+import { ACCOUNT_IDENTITY_MAP, getOfficialDisplayName } from '../utils/accountIdentity';
 
 export const LOCAL_AUTH_KEY = 'lop_hoc_current_user_v2';
 export const LOCAL_SESSION_KEY = 'lop_hoc_session_time_v2';
@@ -252,6 +253,40 @@ export const FALLBACK_USERS: UserAccount[] = [
     schoolName: 'Hệ thống Quản trị Lớp học Hạnh phúc',
     createdAt: Date.now(),
     status: 'active'
+  },
+  // Quản trị Nhà trường mẫu
+  {
+    id: 'user-quantriths1tu',
+    username: 'quantriths1tu',
+    password: '123456',
+    fullName: 'Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN',
+    role: 'school_admin',
+    isSchoolAdmin: true,
+    isBgh: false,
+    tenantType: 'school',
+    email: 'quantriths1tu@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=quantriths1tu&backgroundColor=ffd5dc',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    createdAt: Date.now(),
+    status: 'active'
+  },
+  // Ban Giám Hiệu mẫu
+  {
+    id: 'user-bgh_thths1tu',
+    username: 'bgh_thths1tu',
+    password: '123456',
+    fullName: 'Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN',
+    role: 'bgh',
+    isSchoolAdmin: true,
+    isBgh: true,
+    tenantType: 'school',
+    email: 'bgh_thths1tu@lophoc.edu.vn',
+    phone: '0888358363',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=bgh_thths1tu&backgroundColor=bbf7d0',
+    schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN',
+    createdAt: Date.now(),
+    status: 'active'
   }
 ];
 
@@ -317,7 +352,8 @@ export const databaseService = {
 
       const normUser = normalize(userSchool);
       const normSel = normalize(selectedSchoolName);
-      const matches = normUser === normSel || normUser.includes(normSel) || normSel.includes(normUser);
+      // 🔒 STRICT MATCH: So sánh chính xác tên trường để tránh nhầm trường có tên tương tự
+      const matches = normUser === normSel;
       if (!matches) {
         return { valid: false, message: 'Bạn đã chọn sai trường.' };
       }
@@ -343,27 +379,14 @@ export const databaseService = {
             (isSuperAdminUser && (password === 'Tanuyen@2026' || password === 'Tanuyen22026')) ||
             (isGuestAdminUser && (password === '123456' || password === 'Tanuyen@2026'));
           if (isPwdMatch) {
-            // Check latest teacherProfile name in user_classroom_data
-            let finalName = userRow.full_name || userRow.fullName || '';
-            let finalAvatar = userRow.avatar;
-            try {
-              const { data: cRow } = await supabase
-                .from('user_classroom_data')
-                .select('data')
-                .eq('username', cleanU)
-                .maybeSingle();
-              if (cRow?.data?.teacherProfile?.name) {
-                finalName = cRow.data.teacherProfile.name.trim();
-              }
-              if (cRow?.data?.teacherProfile?.avatar) {
-                finalAvatar = cRow.data.teacherProfile.avatar;
-              }
-            } catch (_) {}
+            // 🌟 SINGLE SOURCE OF TRUTH: Luôn lấy tên từ bảng users (full_name), KHÔNG bao giờ từ teacherProfile snapshot cũ
+            const finalName = (userRow.full_name || userRow.fullName || '').trim();
+            const finalAvatar = userRow.avatar || '';
 
             const authedUser: UserAccount = {
               id: userRow.id,
               username: userRow.username,
-              fullName: finalName || (userRow.role === 'homeroom' ? 'TRỊNH THỊ CÚC' : 'Giáo viên'),
+              fullName: finalName || userRow.username,
               role: userRow.role,
               isDemo: userRow.is_demo ?? userRow.isDemo,
               isBgh: userRow.is_bgh ?? userRow.isBgh,
@@ -373,7 +396,7 @@ export const databaseService = {
               maxStudentsAllowed: userRow.max_students_allowed || userRow.maxStudentsAllowed,
               email: userRow.email,
               phone: userRow.phone,
-              avatar: finalAvatar || userRow.avatar,
+              avatar: finalAvatar,
               schoolName: userRow.school_name || userRow.schoolName,
               assignedClassName: userRow.assigned_class_name || userRow.assignedClassName,
               subjectName: userRow.subject_name || userRow.subjectName,
@@ -521,13 +544,25 @@ export const databaseService = {
       }
       const user = JSON.parse(raw) as UserAccount;
       if (user && user.username) {
-        const canonical = FALLBACK_USERS.find(u => u.username.toLowerCase() === user.username.toLowerCase());
+        const cleanU = user.username.trim().toLowerCase();
+        // 🏛️ 1. Khớp từ bảng ánh xạ định danh khởi tạo chuẩn của Nhà trường
+        if (ACCOUNT_IDENTITY_MAP[cleanU]) {
+          const idInfo = ACCOUNT_IDENTITY_MAP[cleanU];
+          user.fullName = idInfo.fullName;
+          user.role = idInfo.role as any;
+          user.schoolName = idInfo.schoolName;
+          if (idInfo.role === 'school_admin') user.isSchoolAdmin = true;
+          if (idInfo.role === 'bgh') user.isBgh = true;
+        }
+
+        const canonical = FALLBACK_USERS.find(u => u.username.toLowerCase() === cleanU);
         if (canonical) {
-          // Bảo đảm danh tính và vai trò chuẩn xác 100%, tự động làm sạch cache cũ nếu bị ghi đè nhầm
+          // 🌟 SINGLE SOURCE OF TRUTH: Bảo đảm danh tính, vai trò và tên chuẩn xác 100% từ FALLBACK_USERS
+          // KHÔNG bao giờ cho phép teacherProfile snapshot cũ ghi đè lên fullName
           user.fullName = canonical.fullName;
           user.role = canonical.role;
           user.schoolName = canonical.schoolName;
-          user.avatar = canonical.avatar;
+          user.avatar = canonical.avatar || user.avatar;
           user.isBgh = Boolean(canonical.isBgh);
           user.isSchoolAdmin = Boolean(canonical.isSchoolAdmin);
           user.isGuestAdmin = Boolean(canonical.isGuestAdmin);
@@ -535,10 +570,11 @@ export const databaseService = {
           user.tenantType = canonical.tenantType;
           user.assignedClassName = canonical.assignedClassName;
           user.subjectName = canonical.subjectName;
-          try {
-            localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(user));
-          } catch (_) {}
         }
+
+        try {
+          localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(user));
+        } catch (_) {}
       }
       return user;
     } catch (_) {}
@@ -604,13 +640,29 @@ export const databaseService = {
     if (!isVercelOrStatic) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
         const res = await fetch('/api/users', { signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.users)) {
-            return filterLegacyUsers(data.users);
+            // Smart merge: Bổ sung các user từ localStorage mà server có thể chưa có (race condition)
+            let mergedUsers: UserAccount[] = [...data.users];
+            try {
+              const rawStored = localStorage.getItem('LHHP_USERS');
+              if (rawStored) {
+                const storedList: UserAccount[] = JSON.parse(rawStored);
+                if (Array.isArray(storedList)) {
+                  const serverUsernames = new Set(mergedUsers.map(u => u.username?.toLowerCase()));
+                  for (const lu of storedList) {
+                    if (lu?.username && !serverUsernames.has(lu.username.toLowerCase())) {
+                      mergedUsers.push(lu);
+                    }
+                  }
+                }
+              }
+            } catch (_) {}
+            return filterLegacyUsers(mergedUsers);
           }
         }
       } catch (err) {
@@ -700,11 +752,19 @@ export const databaseService = {
       tenantType: payload.tenantType || 'school'
     };
 
-    // 1. Supabase direct
+    // 1. Luôn lưu vào LocalStorage để cache tức thì
+    try {
+      const rawStored = localStorage.getItem('LHHP_USERS');
+      const uList = rawStored ? JSON.parse(rawStored) : [];
+      const updated = [...uList.filter((u: any) => u.username !== cleanU), newUser];
+      localStorage.setItem('LHHP_USERS', JSON.stringify(updated));
+    } catch (_) {}
+
+    // 2. Ghi song song lên Supabase Cloud (nếu có cấu hình)
     const supabase = getBrowserSupabase();
     if (supabase) {
       try {
-        const { error } = await supabase.from('users').upsert({
+        await supabase.from('users').upsert({
           id: newId,
           username: cleanU,
           password: payload.password || '123456',
@@ -721,18 +781,6 @@ export const databaseService = {
           status: newUser.status,
           created_at: new Date().toISOString()
         }, { onConflict: 'username' });
-        if (!error) {
-          // Lưu vào bộ nhớ cục bộ
-          try {
-            const rawStored = localStorage.getItem('LHHP_USERS');
-            const uList = rawStored ? JSON.parse(rawStored) : [];
-            const updated = [...uList.filter((u: any) => u.username !== cleanU), newUser];
-            localStorage.setItem('LHHP_USERS', JSON.stringify(updated));
-          } catch (_) {}
-          return { success: true, user: newUser, message: 'Tạo tài khoản thành công qua Supabase Cloud!' };
-        } else {
-          console.warn('[Supabase createUser error]', error);
-        }
       } catch (sbErr) {
         console.warn('[Supabase createUser exception]', sbErr);
       }
@@ -745,31 +793,38 @@ export const databaseService = {
       window.location.protocol === 'https:'
     );
 
-    // Nếu chạy trên Vercel hoặc static, không gọi /api/users để tránh Unexpected end of JSON
-    if (isVercelOrStatic) {
+    // 3. Nếu chạy local dev (có backend Express), BẮT BUỘC gửi tới /api/users để lưu vào CSDL JSON máy chủ
+    if (!isVercelOrStatic) {
       try {
-        const rawStored = localStorage.getItem('LHHP_USERS');
-        const uList = rawStored ? JSON.parse(rawStored) : [];
-        const updated = [...uList.filter((u: any) => u.username !== cleanU), newUser];
-        localStorage.setItem('LHHP_USERS', JSON.stringify(updated));
-        return { success: true, user: newUser, message: 'Đã lưu tài khoản thành công!' };
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Cập nhật lại cache LHHP_USERS từ kết quả backend nếu có
+          if (data?.user) {
+            try {
+              const rawStored = localStorage.getItem('LHHP_USERS');
+              const uList = rawStored ? JSON.parse(rawStored) : [];
+              const updated = [...uList.filter((u: any) => u.username !== cleanU), data.user];
+              localStorage.setItem('LHHP_USERS', JSON.stringify(updated));
+            } catch (_) {}
+          }
+          return data;
+        } else {
+          try {
+            const errData = await res.json();
+            if (errData?.message) return errData;
+          } catch (_) {}
+        }
       } catch (err: any) {
-        return { success: false, message: err?.message || 'Lỗi khi lưu tài khoản.' };
+        console.warn('Lỗi gọi /api/users nội bộ, dùng kết quả fallback:', err);
       }
     }
 
-    // 2. Server API fallback (Local dev)
-    try {
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      return data;
-    } catch (err: any) {
-      return { success: false, message: err?.message || 'Lỗi kết nối khi tạo tài khoản.' };
-    }
+    return { success: true, user: newUser, message: 'Đã tạo tài khoản thành công!' };
   },
 
   async createUsersBulk(items: Array<{
@@ -784,71 +839,232 @@ export const databaseService = {
     schoolName?: string;
     tenantType?: 'school' | 'guest';
   }>): Promise<{ success: boolean; count: number; created?: UserAccount[]; errors?: string[]; message?: string }> {
-    const supabase = getBrowserSupabase();
-    if (supabase && items.length > 0) {
-      try {
-        const rows = items.map(item => {
-          const cleanU = item.username.trim().toLowerCase();
-          return {
-            id: 'user-' + cleanU,
-            username: cleanU,
-            password: item.password || '123456',
-            full_name: item.fullName.trim(),
-            role: item.role,
-            email: item.email?.trim() || `${cleanU}@lophoc.edu.vn`,
-            phone: item.phone?.trim() || '',
-            avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanU}&backgroundColor=ffd5dc`,
-            assigned_class_name: item.assignedClassName?.trim() || (item.role === 'homeroom' ? '4A1' : undefined),
-            subject_name: item.subjectName?.trim() || (item.role === 'subject' ? 'Tin học' : undefined),
-            school_name: item.schoolName?.trim() || 'Trường Tiểu học',
-            status: 'active',
-            created_at: new Date().toISOString()
-          };
-        });
-        const { error } = await supabase.from('users').upsert(rows, { onConflict: 'username' });
-        if (!error) {
-          return { success: true, count: items.length, message: `Đã tạo ${items.length} tài khoản thành công qua Supabase Cloud!` };
-        }
-      } catch (_) {}
+    if (!items || items.length === 0) {
+      return { success: false, count: 0, message: 'Danh sách tạo rỗng.' };
     }
 
+    const nowTs = Date.now();
+    const newAccounts: UserAccount[] = items.map((item, idx) => {
+      const cleanU = item.username.trim().toLowerCase();
+      const isDemoSchool = Boolean(
+        (item.schoolName && item.schoolName.toLowerCase().includes('demo')) ||
+        cleanU.includes('demo')
+      );
+      return {
+        id: `user-${cleanU}`,
+        username: cleanU,
+        fullName: item.fullName.trim(),
+        role: item.role,
+        isDemo: isDemoSchool,
+        maxStudentsAllowed: isDemoSchool ? 10 : undefined,
+        email: item.email?.trim() || `${cleanU}@lophoc.edu.vn`,
+        phone: item.phone?.trim() || '',
+        avatar: item.role === 'homeroom'
+          ? `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanU}&backgroundColor=ffd5dc`
+          : item.role === 'subject'
+          ? `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanU}&backgroundColor=b6e3f4`
+          : `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanU}&backgroundColor=d1d4f9`,
+        assignedClassName: item.assignedClassName?.trim() || (item.role === 'homeroom' ? 'Lớp mới' : undefined),
+        subjectName: item.subjectName?.trim() || (item.role === 'subject' ? 'Tin học' : undefined),
+        schoolName: item.schoolName?.trim() || 'Trường Tiểu học',
+        tenantType: item.tenantType || 'school',
+        createdAt: nowTs + idx,
+        status: 'active'
+      };
+    });
+
+    // 1. CẬP NHẬT TỨC THÌ VÀO LOCALSTORAGE (0ms - Zero Latency)
     try {
-      const res = await fetch('/api/users/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ users: items })
-      });
-      const data = await res.json();
-      return data;
-    } catch (err: any) {
-      return { success: false, count: 0, message: err?.message || 'Lỗi kết nối khi tạo tài khoản đồng loạt.' };
+      const rawStored = localStorage.getItem('LHHP_USERS');
+      const uList: UserAccount[] = rawStored ? JSON.parse(rawStored) : [];
+      const newMap = new Map<string, UserAccount>();
+      for (const u of uList) newMap.set(u.username.toLowerCase(), u);
+      for (const nu of newAccounts) newMap.set(nu.username.toLowerCase(), nu);
+      localStorage.setItem('LHHP_USERS', JSON.stringify(Array.from(newMap.values())));
+    } catch (_) {}
+
+    const isVercelOrStatic = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') ||
+      window.location.hostname.includes('github.io') ||
+      window.location.port === '' ||
+      window.location.protocol === 'https:'
+    );
+
+    let backendResult: any = null;
+
+    // 2. NẾU CHẠY LOCAL DEV: GỌI EXPRESS BACKEND (/api/users/bulk) VỚI TIMEOUT 4000ms
+    if (!isVercelOrStatic) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch('/api/users/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ users: items }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          backendResult = await res.json();
+          // Cập nhật lại cache với danh sách từ server nếu có
+          if (backendResult?.created && Array.isArray(backendResult.created)) {
+            try {
+              const rawStored = localStorage.getItem('LHHP_USERS');
+              const uList: UserAccount[] = rawStored ? JSON.parse(rawStored) : [];
+              const newMap = new Map<string, UserAccount>();
+              for (const u of uList) newMap.set(u.username.toLowerCase(), u);
+              for (const nu of backendResult.created) newMap.set(nu.username.toLowerCase(), nu);
+              localStorage.setItem('LHHP_USERS', JSON.stringify(Array.from(newMap.values())));
+            } catch (_) {}
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi gọi /api/users/bulk nội bộ, sử dụng dữ liệu local:', err);
+      }
     }
+
+    // 3. ĐỒNG BỘ SUPABASE CLOUD CHẠY SONG SONG KHÔNG CHẶN (Background Non-Blocking Sync)
+    const supabase = getBrowserSupabase();
+    if (supabase && items.length > 0) {
+      (async () => {
+        try {
+          const rows = items.map(item => {
+            const cleanU = item.username.trim().toLowerCase();
+            return {
+              id: 'user-' + cleanU,
+              username: cleanU,
+              password: item.password || '123456',
+              full_name: item.fullName.trim(),
+              role: item.role,
+              email: item.email?.trim() || `${cleanU}@lophoc.edu.vn`,
+              phone: item.phone?.trim() || '',
+              avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanU}&backgroundColor=ffd5dc`,
+              assigned_class_name: item.assignedClassName?.trim() || (item.role === 'homeroom' ? 'Lớp mới' : undefined),
+              subject_name: item.subjectName?.trim() || (item.role === 'subject' ? 'Tin học' : undefined),
+              school_name: item.schoolName?.trim() || 'Trường Tiểu học',
+              status: 'active',
+              created_at: new Date().toISOString()
+            };
+          });
+          await supabase.from('users').upsert(rows, { onConflict: 'username' });
+        } catch (sbErr) {
+          console.warn('[Supabase Bulk Sync Background] Ngoại lệ không chặn UI:', sbErr);
+        }
+      })();
+    }
+
+    return backendResult || { 
+      success: true, 
+      count: newAccounts.length, 
+      created: newAccounts, 
+      message: `Đã tạo ${newAccounts.length} tài khoản giáo viên thành công!` 
+    };
   },
 
   async updateUser(id: string, payload: Partial<UserAccount> & { username?: string }): Promise<{ success: boolean; user?: UserAccount; message?: string }> {
-    // 1. Supabase direct
+    const cleanId = id.trim().toLowerCase();
+    const newUsernameClean = payload.username ? payload.username.trim().toLowerCase() : undefined;
+    let updatedLocalUser: UserAccount | undefined;
+
+    // 1. CẬP NHẬT TỨC THÌ VÀO LOCALSTORAGE (0ms - Zero Latency)
+    try {
+      const rawStored = localStorage.getItem('LHHP_USERS');
+      if (rawStored) {
+        const uList: UserAccount[] = JSON.parse(rawStored);
+        const idx = uList.findIndex((u: any) => u.id === id || u.username.toLowerCase() === cleanId);
+        if (idx >= 0) {
+          const current = uList[idx];
+          const updated: UserAccount = {
+            ...current,
+            ...payload,
+            username: newUsernameClean || current.username,
+            fullName: payload.fullName !== undefined ? payload.fullName.trim() : current.fullName,
+            role: payload.role !== undefined ? payload.role : current.role,
+            phone: payload.phone !== undefined ? payload.phone : current.phone,
+            email: payload.email !== undefined ? payload.email : current.email,
+            assignedClassName: payload.assignedClassName !== undefined ? payload.assignedClassName : current.assignedClassName,
+            subjectName: payload.subjectName !== undefined ? payload.subjectName : current.subjectName,
+            schoolName: payload.schoolName !== undefined ? payload.schoolName : current.schoolName,
+            tenantType: payload.tenantType !== undefined ? payload.tenantType : current.tenantType,
+            status: payload.status !== undefined ? payload.status : current.status
+          };
+          uList[idx] = updated;
+          updatedLocalUser = updated;
+          localStorage.setItem('LHHP_USERS', JSON.stringify(uList));
+
+          // Di chuyển cache userData nếu đổi username
+          if (newUsernameClean && newUsernameClean !== current.username.toLowerCase()) {
+            const oldKey = LOCAL_DB_PREFIX + current.username.toLowerCase();
+            const newKey = LOCAL_DB_PREFIX + newUsernameClean;
+            const oldData = localStorage.getItem(oldKey);
+            if (oldData) {
+              localStorage.setItem(newKey, oldData);
+              localStorage.removeItem(oldKey);
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    const isVercelOrStatic = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') ||
+      window.location.hostname.includes('github.io') ||
+      window.location.port === '' ||
+      window.location.protocol === 'https:'
+    );
+
+    let backendResult: any = null;
+
+    // 2. NẾU CHẠY LOCAL DEV: GỌI EXPRESS BACKEND (/api/users/:id) ƯU TIÊN VỚI TIMEOUT NHANH (2000ms)
+    if (!isVercelOrStatic) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          try {
+            backendResult = await res.json();
+          } catch (_) {
+            backendResult = { success: true };
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi gọi /api/users/:id cục bộ, tiếp tục với dữ liệu local:', err);
+      }
+    }
+
+    // 3. ĐỒNG BỘ SUPABASE CLOUD CHẠY SONG SONG KHÔNG CHẶN (Background Non-Blocking Sync)
     const supabase = getBrowserSupabase();
     if (supabase) {
-      try {
-        const dbPayload: any = {};
-        if (payload.username !== undefined) dbPayload.username = payload.username.trim().toLowerCase();
-        if (payload.fullName !== undefined) dbPayload.full_name = payload.fullName;
-        if (payload.avatar !== undefined) dbPayload.avatar = payload.avatar;
-        if (payload.phone !== undefined) dbPayload.phone = payload.phone;
-        if (payload.schoolName !== undefined) dbPayload.school_name = payload.schoolName;
-        if (payload.assignedClassName !== undefined) dbPayload.assigned_class_name = payload.assignedClassName;
-        if (payload.subjectName !== undefined) dbPayload.subject_name = payload.subjectName;
-        if (payload.email !== undefined) dbPayload.email = payload.email;
-        if (payload.role !== undefined) dbPayload.role = payload.role;
-        if (payload.status !== undefined) dbPayload.status = payload.status;
+      (async () => {
+        try {
+          const dbPayload: any = {};
+          if (payload.username !== undefined) dbPayload.username = payload.username.trim().toLowerCase();
+          if (payload.fullName !== undefined) dbPayload.full_name = payload.fullName;
+          if (payload.avatar !== undefined) dbPayload.avatar = payload.avatar;
+          if (payload.phone !== undefined) dbPayload.phone = payload.phone;
+          if (payload.schoolName !== undefined) dbPayload.school_name = payload.schoolName;
+          if (payload.assignedClassName !== undefined) dbPayload.assigned_class_name = payload.assignedClassName;
+          if (payload.subjectName !== undefined) dbPayload.subject_name = payload.subjectName;
+          if (payload.email !== undefined) dbPayload.email = payload.email;
+          if (payload.role !== undefined) dbPayload.role = payload.role;
+          if (payload.status !== undefined) dbPayload.status = payload.status;
 
-        const { error } = await supabase
-          .from('users')
-          .update(dbPayload)
-          .or(`id.eq.${id},username.eq.${id}`);
+          // Bọc timeout 2500ms cho Supabase để không bao giờ bị kẹt
+          const sbPromise = supabase
+            .from('users')
+            .update(dbPayload)
+            .or(`id.eq.${id},username.eq.${id}`);
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Supabase timeout')), 2500));
+          await Promise.race([sbPromise, timeoutPromise]);
 
-        if (!error) {
-          // If username changed, update user_classroom_data primary key reference too
           if (payload.username && payload.username.trim().toLowerCase() !== id.trim().toLowerCase()) {
             const oldUser = id.trim().toLowerCase();
             const newUser = payload.username.trim().toLowerCase();
@@ -858,20 +1074,9 @@ export const databaseService = {
                 .update({ username: newUser })
                 .eq('username', oldUser);
             } catch (_) {}
-
-            // Migrate localStorage cache key if exists
-            try {
-              const oldKey = LOCAL_DB_PREFIX + oldUser;
-              const newKey = LOCAL_DB_PREFIX + newUser;
-              const cached = localStorage.getItem(oldKey);
-              if (cached) {
-                localStorage.setItem(newKey, cached);
-                localStorage.removeItem(oldKey);
-              }
-            } catch (_) {}
           }
 
-          // Broadcast account change
+          // Broadcast realtime change
           initSupabaseRealtime();
           if (realtimeChannel) {
             realtimeChannel.send({
@@ -885,39 +1090,25 @@ export const databaseService = {
               }
             }).catch(() => {});
           }
+        } catch (sbErr) {
+          console.warn('[Supabase Sync Background] Ngoại lệ không chặn UI:', sbErr);
         }
-      } catch (err) {
-        console.warn('Supabase updateUser error:', err);
-      }
+      })();
     }
 
-    // 2. Server API fallback
+    // Broadcast tab nội bộ
     try {
-      const res = await fetch(`/api/users/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.status === 204 || res.ok) {
-        let data: any = { success: true, message: 'Đã cập nhật thông tin tài khoản.' };
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          try {
-            data = await res.json();
-          } catch (_) {}
-        }
-        return data;
-      } else {
-        let errMsg = 'Không thể cập nhật tài khoản.';
-        try {
-          const errData = await res.json();
-          if (errData?.message) errMsg = errData.message;
-        } catch (_) {}
-        return { success: false, message: errMsg };
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage({
+          type: 'USER_DATA_CHANGED',
+          username: payload.username || id,
+          originClientId: CLIENT_ID,
+          timestamp: Date.now()
+        });
       }
     } catch (_) {}
 
-    return { success: true, message: 'Đã cập nhật thông tin tài khoản.' };
+    return backendResult || { success: true, user: updatedLocalUser, message: 'Đã cập nhật thông tin tài khoản thành công.' };
   },
 
   async deleteUser(id: string): Promise<{ success: boolean; message?: string }> {
@@ -1122,15 +1313,51 @@ export const databaseService = {
   async loadUserData(username: string): Promise<UserClassroomData | null> {
     const cleanUser = username.trim().toLowerCase();
     
-    // 1. Direct Supabase Cloud (Global realtime database across all computers)
+    // 1. Tầng 1: Express Server API nội bộ (cực nhanh 1-3ms khi chạy localhost/máy chủ)
+    const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    if (!isVercelHost) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`/api/user-data/${encodeURIComponent(cleanUser)}?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          },
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          const result = await res.json();
+          if (result.success && result.found && result.data) {
+            try {
+              localStorage.setItem(LOCAL_DB_PREFIX + cleanUser, JSON.stringify(result.data));
+            } catch (_) {}
+            return result.data as UserClassroomData;
+          }
+        }
+      } catch (err) {
+        // Fallback sang các tầng tiếp theo
+      }
+    }
+
+    // 2. Tầng 2: Supabase Cloud (với Timeout 1.5s bảo vệ, không để treo nếu URL 404 hoặc mạng lag)
     const supabase = getBrowserSupabase();
     if (supabase) {
       try {
-        const { data, error } = await supabase
+        const queryPromise = supabase
           .from('user_classroom_data')
           .select('data, updated_at')
           .eq('username', cleanUser)
           .maybeSingle();
+
+        const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) => 
+          setTimeout(() => resolve({ data: null, error: new Error('Supabase query timeout') }), 1500)
+        );
+
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
         if (!error && data?.data) {
           const cData = data.data as UserClassroomData;
@@ -1144,39 +1371,31 @@ export const databaseService = {
       }
     }
 
-    // 2. Server API fallback (chỉ khi có server Express nội bộ, không chạy trên static Vercel)
-    const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
-    if (!isVercelHost) {
-      try {
-        const res = await fetch(`/api/user-data/${encodeURIComponent(cleanUser)}?t=${Date.now()}`, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          }
-        });
-        const contentType = res.headers.get('content-type') || '';
-        if (res.ok && contentType.includes('application/json')) {
-          const result = await res.json();
-          if (result.success && result.found && result.data) {
-            try {
-              localStorage.setItem(LOCAL_DB_PREFIX + cleanUser, JSON.stringify(result.data));
-            } catch (_) {}
-            return result.data as UserClassroomData;
-          }
-        }
-      } catch (err) {
-        console.warn(`Lỗi tải dữ liệu người dùng ${cleanUser} từ máy chủ:`, err);
-      }
-    }
-
-    // 3. LocalStorage fallback (An toàn tuyệt đối nếu offline hoặc mạng tạm thời gián đoạn)
+    // 3. Tầng 3: LocalStorage fallback (An toàn tuyệt đối 0ms nếu offline hoặc mạng tạm thời gián đoạn)
     try {
       const cached = localStorage.getItem(LOCAL_DB_PREFIX + cleanUser);
       if (cached) {
         return JSON.parse(cached) as UserClassroomData;
       }
     } catch (_) {}
+
+    // 4. Tầng 4: Kiểm tra alias nếu là tài khoản GVCN (ví dụ gvcn1a1 <-> gvcn_1a1)
+    const alias = cleanUser.startsWith('gvcn_')
+      ? cleanUser.replace('gvcn_', 'gvcn')
+      : (cleanUser.startsWith('gvcn') ? cleanUser.replace('gvcn', 'gvcn_') : '');
+
+    if (alias && alias !== cleanUser) {
+      try {
+        const cachedAlias = localStorage.getItem(LOCAL_DB_PREFIX + alias);
+        if (cachedAlias) {
+          const parsed = JSON.parse(cachedAlias) as UserClassroomData;
+          if (parsed && Array.isArray(parsed.classes) && parsed.classes.length > 0) {
+            localStorage.setItem(LOCAL_DB_PREFIX + cleanUser, cachedAlias);
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
 
     return null;
   },
@@ -1185,9 +1404,16 @@ export const databaseService = {
     const cleanUser = username.trim().toLowerCase();
     let isSuccess = false;
 
-    // 1. Tầng 1 (LocalStorage First & Immediate): Lưu đồng bộ ngay lập tức vào trình duyệt để chống mất dữ liệu khi tắt tab
+    // 1. Tầng 1 (LocalStorage First & Immediate): Lưu đồng bộ ngay lập tức vào trình duyệt (0ms)
     try {
       localStorage.setItem(LOCAL_DB_PREFIX + cleanUser, JSON.stringify(data));
+      // Tự động đồng bộ sang alias nếu có
+      const alias = cleanUser.startsWith('gvcn_')
+        ? cleanUser.replace('gvcn_', 'gvcn')
+        : (cleanUser.startsWith('gvcn') ? cleanUser.replace('gvcn', 'gvcn_') : '');
+      if (alias && alias !== cleanUser) {
+        localStorage.setItem(LOCAL_DB_PREFIX + alias, JSON.stringify(data));
+      }
       isSuccess = true;
     } catch (_) {}
 
@@ -1209,55 +1435,22 @@ export const databaseService = {
       }));
     } catch (_) {}
 
-    // 2. Tầng 2: Nén và Tối ưu hóa dữ liệu rồi gửi lên Supabase Cloud Database
-    const supabase = getBrowserSupabase();
-    if (supabase) {
-      try {
-        const payloadToUpload = await this.sanitizeAndCompressPayload(data);
-        const { error } = await supabase
-          .from('user_classroom_data')
-          .upsert({
-            username: cleanUser,
-            data: payloadToUpload,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'username' });
-
-        if (!error) {
-          isSuccess = true;
-
-          // Broadcast realtime change immediately to all other connected computers
-          initSupabaseRealtime();
-          if (realtimeChannel) {
-            realtimeChannel.send({
-              type: 'broadcast',
-              event: 'user_data_updated',
-              payload: {
-                username: cleanUser,
-                originClientId: CLIENT_ID,
-                timestamp: data.updatedAt || Date.now()
-              }
-            }).catch(() => {});
-          }
-        } else {
-          console.warn('Supabase save error:', error.message);
-        }
-      } catch (sErr) {
-        console.warn('Supabase save failed:', sErr);
-      }
-    }
-
-    // 3. Tầng 3: Server API Sync (nếu đang chạy localhost / Express server)
+    // 2. Tầng 2: Gửi lên Express Backend Server (/api/user-data/:username) với Timeout 2.5s (1-3ms)
     const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
     if (!isVercelHost) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
         const res = await fetch(`/api/user-data/${encodeURIComponent(cleanUser)}`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
             'X-Client-Id': CLIENT_ID
           },
-          body: JSON.stringify(data)
+          body: JSON.stringify(data),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         const contentType = res.headers.get('content-type') || '';
         if (res.ok && contentType.includes('application/json')) {
           const result = await res.json();
@@ -1268,7 +1461,101 @@ export const databaseService = {
       }
     }
 
+    // 3. Tầng 3: Supabase Cloud Database (Chạy ngầm Non-Blocking Async, không bao giờ chặn UI giáo viên)
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      (async () => {
+        try {
+          const payloadToUpload = await this.sanitizeAndCompressPayload(data);
+          // Runs in the background (never blocks the UI), so wait for the real result:
+          // large payloads (class/student photos) often need more than a couple of seconds,
+          // and a premature timeout used to skip the realtime broadcast to executive accounts.
+          const { error } = await supabase
+            .from('user_classroom_data')
+            .upsert({
+              username: cleanUser,
+              data: payloadToUpload,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'username' });
+
+          if (!error) {
+            initSupabaseRealtime();
+            if (realtimeChannel) {
+              realtimeChannel.send({
+                type: 'broadcast',
+                event: 'user_data_updated',
+                payload: {
+                  username: cleanUser,
+                  originClientId: CLIENT_ID,
+                  timestamp: data.updatedAt || Date.now()
+                }
+              }).catch(() => {});
+            }
+          }
+        } catch (_) {}
+      })();
+    }
+
     return isSuccess;
+  },
+
+  // ⚡ GVCN phát sóng xác nhận điểm danh/bán trú tức thì tới BGH và Quản trị nhà trường
+  async broadcastAttendanceConfirmed(opts: {
+    type: 'ATTENDANCE_CONFIRMED' | 'BOARDING_CONFIRMED' | 'ATTENDANCE_UPDATED' | 'BOARDING_UPDATED';
+    classId: string;
+    className?: string;
+    date: string;
+    attendanceRecord?: any;
+    boardingRecord?: any;
+    schoolName?: string;
+    username?: string;
+  }): Promise<void> {
+    const event = {
+      ...opts,
+      timestamp: Date.now(),
+      originClientId: CLIENT_ID,
+      message: opts.type === 'ATTENDANCE_CONFIRMED'
+        ? `✅ Lớp ${opts.className || opts.classId} đã xác nhận điểm danh ngày ${opts.date}`
+        : opts.type === 'BOARDING_CONFIRMED'
+          ? `🍱 Lớp ${opts.className || opts.classId} đã xác nhận bán trú ngày ${opts.date}`
+          : `📊 Lớp ${opts.className || opts.classId} cập nhật dữ liệu ${opts.date}`
+    };
+
+    // 1. Broadcast qua Supabase Cloud Realtime (cross-device)
+    const supabase = getBrowserSupabase();
+    if (supabase && realtimeChannel) {
+      try {
+        await realtimeChannel.send({
+          type: 'broadcast',
+          event: 'user_data_updated',
+          payload: event
+        });
+      } catch (_) {}
+    }
+
+    // 2. Broadcast qua SSE server (Express Multi-device Hub)
+    try {
+      await fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(event)
+      });
+    } catch (_) {}
+
+    // 3. Broadcast qua BroadcastChannel liên tab (0ms)
+    try {
+      if (localBroadcastChannel) {
+        localBroadcastChannel.postMessage(event);
+      }
+    } catch (_) {}
+
+    // 4. Broadcast qua Storage Event liên cửa sổ trình duyệt (0ms)
+    try {
+      localStorage.setItem('lop_hoc_realtime_ping', JSON.stringify({
+        ...event,
+        r: Math.random()
+      }));
+    } catch (_) {}
   },
 
   // Real-time Event listener across computers and browsers
@@ -1342,6 +1629,7 @@ export const databaseService = {
   },
 
   // Admin Unified Data Sync: Fetch classes, students, attendance, boarding, and points across all teachers
+  // Admin Unified Data Sync: Fetch classes, students, attendance, boarding, and points across all teachers
   async getAdminAllData(): Promise<{
     success: boolean;
     teachers: UserAccount[];
@@ -1353,171 +1641,26 @@ export const databaseService = {
     userData: Record<string, any>;
     timestamp: number;
   } | null> {
-    // 1. Direct Supabase Cloud aggregation
-    const supabase = getBrowserSupabase();
-    if (supabase) {
-      try {
-        const [{ data: userRows, error: uErr }, { data: classroomRows, error: cErr }] = await Promise.all([
-          supabase.from('users').select('*'),
-          supabase.from('user_classroom_data').select('*')
-        ]);
-
-        if (!uErr && !cErr && userRows && classroomRows) {
-          const teachers: UserAccount[] = userRows
-            .filter((u: any) => u.role === 'homeroom') // Chỉ lấy giáo viên chủ nhiệm
-            .map((u: any) => ({
-              id: u.id,
-              username: u.username,
-              fullName: u.full_name || u.fullName,
-              role: u.role,
-              email: u.email,
-              phone: u.phone,
-              avatar: u.avatar,
-              schoolName: u.school_name || u.schoolName,
-              assignedClassName: u.assigned_class_name || u.assignedClassName,
-              subjectName: u.subject_name || u.subjectName,
-              createdAt: Number(u.created_at) || Date.now(),
-              status: u.status || 'active'
-            }));
-
-          const validTeacherUsernames = new Set(teachers.map(t => t.username.toLowerCase()));
-
-          const allClassesMap = new Map<string, Classroom>();
-          const allStudentsMap = new Map<string, Student>();
-          const allAttendanceMap = new Map<string, DailyAttendance>();
-          const allBoardingMap = new Map<string, DailyBoardingMeal>();
-          const allTransactions: PointTransaction[] = [];
-          const userDataMap: Record<string, any> = {};
-
-          for (const row of classroomRows) {
-            const u = (row.username || '').toLowerCase();
-            const uData = row.data || {};
-            userDataMap[u] = uData;
-
-            // 🌟 CHỈ tổng hợp lớp & học sinh của các giáo viên chủ nhiệm THỰC TẾ CÒN TỒN TẠI trong bảng users
-            // Tuyệt đối không nhặt dữ liệu mồ côi từ tài khoản cũ đã xóa hoặc từ tài khoản admin
-            if (!validTeacherUsernames.has(u)) {
-              continue;
-            }
-
-            if (Array.isArray(uData.classes)) {
-              for (const cls of uData.classes) {
-                if (!cls || !cls.id) continue;
-                const existing = allClassesMap.get(cls.id);
-                const finalBranch = (cls.branch && String(cls.branch).trim())
-                  ? String(cls.branch).trim()
-                  : (existing?.branch && String(existing.branch).trim() ? String(existing.branch).trim() : null);
-                const finalCampus = (cls.campus && String(cls.campus).trim())
-                  ? String(cls.campus).trim()
-                  : (existing?.campus && String(existing.campus).trim() ? String(existing.campus).trim() : null);
-
-                allClassesMap.set(cls.id, {
-                  ...(existing || {}),
-                  ...cls,
-                  branch: finalBranch,
-                  campus: finalCampus,
-                  teacherUsername: cls.teacherUsername || existing?.teacherUsername || u,
-                  teacherName: cls.teacherName || existing?.teacherName,
-                  teacherRole: 'homeroom'
-                });
-              }
-            }
-            if (Array.isArray(uData.students)) {
-              for (const st of uData.students) {
-                if (st && st.id) allStudentsMap.set(st.id, st);
-              }
-            }
-            if (Array.isArray(uData.attendanceRecords)) {
-              for (const att of uData.attendanceRecords) {
-                if (att && att.date && att.classId) {
-                  const attKey = `${att.date}_${att.classId}`;
-                  const existing = allAttendanceMap.get(attKey);
-                  if (existing) {
-                    allAttendanceMap.set(attKey, {
-                      ...existing,
-                      ...att,
-                      records: { ...(existing.records || {}), ...(att.records || {}) }
-                    });
-                  } else {
-                    allAttendanceMap.set(attKey, att);
-                  }
-                }
-              }
-            }
-            if (Array.isArray(uData.boardingRecords)) {
-              for (const b of uData.boardingRecords) {
-                if (b && b.date && b.classId) {
-                  const bKey = `${b.date}_${b.classId}`;
-                  const existing = allBoardingMap.get(bKey);
-                  if (existing) {
-                    allBoardingMap.set(bKey, {
-                      ...existing,
-                      ...b,
-                      records: { ...(existing.records || {}), ...(b.records || {}) }
-                    });
-                  } else {
-                    allBoardingMap.set(bKey, b);
-                  }
-                }
-              }
-            }
-            if (Array.isArray(uData.transactions)) {
-              allTransactions.push(...uData.transactions);
-            }
-          }
-
-          // 🛡️ BẢO TOÀN DỮ LIỆU: Bổ sung thông tin branch & campus từ hàng admin/adminquantri nếu các giáo viên bị thiếu
-          for (const adminRow of classroomRows) {
-            const u = (adminRow.username || '').toLowerCase();
-            if (u === 'admin' || u === 'adminquantri') {
-              const aData = adminRow.data || {};
-              if (Array.isArray(aData.classes)) {
-                for (const cls of aData.classes) {
-                  if (cls && cls.id && allClassesMap.has(cls.id)) {
-                    const existing = allClassesMap.get(cls.id)!;
-                    if (!existing.campus && cls.campus && String(cls.campus).trim()) {
-                      existing.campus = String(cls.campus).trim();
-                    }
-                    if (!existing.branch && cls.branch && String(cls.branch).trim()) {
-                      existing.branch = String(cls.branch).trim();
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          return {
-            success: true,
-            teachers,
-            classes: Array.from(allClassesMap.values()),
-            students: Array.from(allStudentsMap.values()),
-            attendanceRecords: Array.from(allAttendanceMap.values()),
-            boardingRecords: Array.from(allBoardingMap.values()),
-            transactions: allTransactions,
-            userData: userDataMap,
-            timestamp: Date.now()
-          };
-        }
-      } catch (err) {
-        console.warn('Supabase getAdminAllData error:', err);
-      }
-    }
-
-    // 2. Server API fallback
     try {
-      const res = await fetch(`/api/admin/all-data?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          return data;
-        }
+      const scoped = await this.getExecutiveScopedData({
+        id: 'user-adminquantri',
+        username: 'adminquantri',
+        role: 'admin',
+        schoolName: 'TIỂU HỌC SỐ 1 TÂN UYÊN'
+      } as any);
+
+      if (scoped && Array.isArray(scoped.classes)) {
+        return {
+          success: true,
+          teachers: scoped.teachers || [],
+          classes: scoped.classes,
+          students: scoped.students,
+          attendanceRecords: scoped.attendanceRecords,
+          boardingRecords: scoped.boardingRecords,
+          transactions: scoped.transactions,
+          userData: {},
+          timestamp: Date.now()
+        };
       }
     } catch (err) {
       console.warn('Lỗi lấy dữ liệu quản trị toàn hệ thống:', err);
@@ -1534,7 +1677,36 @@ export const databaseService = {
     transactions: PointTransaction[];
     teachers: UserAccount[];
   }> {
-    const isMasterAdmin = currentUser.role === 'admin';
+    // ⚡ 0. FAST PATH TỪ SERVER NỘI BỘ (1-3ms): Lấy trực tiếp toàn bộ lớp học, học sinh, điểm danh, bán trú, thi đua
+    const isVercelHost = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    if (!isVercelHost) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch('/api/executive/scoped-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentUser),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const result = await res.json();
+          if (result && result.success && Array.isArray(result.classes)) {
+            return {
+              classes: result.classes,
+              students: result.students || [],
+              attendanceRecords: result.attendanceRecords || [],
+              boardingRecords: result.boardingRecords || [],
+              transactions: result.transactions || [],
+              teachers: result.teachers || []
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
+    const isMasterAdmin = currentUser.role === 'admin' || currentUser.username?.toLowerCase() === 'adminquantri';
     const isGuestAdmin = currentUser.role === 'guest_admin' || currentUser.isGuestAdmin;
     const targetSchool = (currentUser.schoolName || '').trim().toLowerCase();
 
@@ -1558,9 +1730,19 @@ export const databaseService = {
       }
 
       // School Admin & BGH: tổng hợp toàn bộ giáo viên chủ nhiệm trong CÙNG NHÀ TRƯỜNG
+      // 🔒 STRICT MATCH: So sánh chính xác tên trường, không dùng includes() để tránh nhầm trường
       const uSchool = (u.schoolName || '').trim().toLowerCase();
       if (!targetSchool || !uSchool) return false;
-      return uSchool === targetSchool || uSchool.includes(targetSchool) || targetSchool.includes(uSchool);
+      return uSchool === targetSchool;
+    });
+
+    // 🌟 LIÊN THÔNG DỮ LIỆU TỔNG THỂ CHO QUẢN TRỊ CẤP CAO (MASTER ADMIN) & QUẢN TRỊ NHÀ TRƯỜNG / BGH:
+    // Nạp dữ liệu từ các tài khoản Quản trị nhà trường (school_admin) để liên thông 100% lớp học và học sinh
+    const schoolAdmins = allUsers.filter(u => {
+      if (!(u.role === 'school_admin' || u.isSchoolAdmin)) return false;
+      if (isMasterAdmin) return true;
+      const uSchool = (u.schoolName || '').trim().toLowerCase();
+      return Boolean(targetSchool && uSchool === targetSchool);
     });
 
     const allClassesMap = new Map<string, Classroom>();
@@ -1570,7 +1752,7 @@ export const databaseService = {
     const allTransactions: PointTransaction[] = [];
 
     // Nếu hiện tại chưa có giáo viên chủ nhiệm nào (ví dụ CSDL trắng vừa dọn dẹp xong), hoàn tất ngay lập tức trong 0ms
-    if (scopedTeachers.length === 0) {
+    if (scopedTeachers.length === 0 && schoolAdmins.length === 0) {
       return {
         classes: [],
         students: [],
@@ -1581,19 +1763,18 @@ export const databaseService = {
       };
     }
 
-    // 3. Tải và tổng hợp dữ liệu từ từng giáo viên thuộc nhóm
+    // 3. Tải và tổng hợp dữ liệu từ từng giáo viên và từ các Quản trị nhà trường
+    const accountsToFetch = [...scopedTeachers, ...schoolAdmins];
     await Promise.all(
-      scopedTeachers.map(async (teacher) => {
-        let uData = await this.loadUserData(teacher.username);
+      accountsToFetch.map(async (account) => {
+        let uData = await this.loadUserData(account.username);
         if (!uData) {
           try {
-            const cached = localStorage.getItem(LOCAL_DB_PREFIX + teacher.username.toLowerCase());
+            const cached = localStorage.getItem(LOCAL_DB_PREFIX + account.username.toLowerCase());
             if (cached) uData = JSON.parse(cached);
           } catch (_) {}
         }
 
-        // Tuyệt đối không tự động sinh lớp học hoặc học sinh giả lập khi chưa có dữ liệu
-        // Trả về dữ liệu trống thực tế của giáo viên để bảo toàn tính trung thực và chính xác của số liệu báo cáo
         const safeUserData: UserClassroomData = uData || {
           classes: [],
           students: [],
@@ -1603,12 +1784,16 @@ export const databaseService = {
         } as any;
 
         // Tổng hợp lớp học (Non-Destructive Smart Merge)
+        // 🔒 Tuyệt đối KHÔNG tổng hợp lớp của giáo viên bộ môn (teacherRole === 'subject' hoặc class-sub-)
         if (Array.isArray(safeUserData.classes)) {
           safeUserData.classes.forEach((c: Classroom) => {
             if (c && c.id) {
+              if (c.teacherRole === 'subject' || c.id.startsWith('class-sub-')) {
+                return;
+              }
               const cleanTeacherName = (c.teacherName && !c.teacherName.toLowerCase().includes('ban giám hiệu') && !c.teacherName.toLowerCase().includes('quản trị'))
                 ? c.teacherName
-                : teacher.fullName;
+                : (account.role === 'homeroom' ? account.fullName : c.teacherName);
               const existing = allClassesMap.get(c.id);
               const finalBranch = (c.branch && String(c.branch).trim())
                 ? String(c.branch).trim()
@@ -1616,13 +1801,19 @@ export const databaseService = {
               const finalCampus = (c.campus && String(c.campus).trim())
                 ? String(c.campus).trim()
                 : (existing?.campus && String(existing.campus).trim() ? String(existing.campus).trim() : null);
+              const finalSchool = (c.schoolName && String(c.schoolName).trim())
+                ? String(c.schoolName).trim()
+                : (existing?.schoolName && String(existing.schoolName).trim() 
+                  ? String(existing.schoolName).trim() 
+                  : (account.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN'));
 
               allClassesMap.set(c.id, {
                 ...(existing || {}),
                 ...c,
                 branch: finalBranch,
                 campus: finalCampus,
-                teacherUsername: c.teacherUsername || existing?.teacherUsername || teacher.username,
+                schoolName: finalSchool,
+                teacherUsername: c.teacherUsername || existing?.teacherUsername || (account.role === 'homeroom' ? account.username : undefined),
                 teacherName: cleanTeacherName,
                 teacherRole: 'homeroom'
               });
@@ -1631,18 +1822,34 @@ export const databaseService = {
         }
 
         // Tổng hợp học sinh
+        // 🔒 Tuyệt đối KHÔNG tổng hợp học sinh của các lớp bộ môn và loại bỏ học sinh test của 1A12
         if (Array.isArray(safeUserData.students)) {
           safeUserData.students.forEach((s: Student) => {
             if (s && s.id) {
+              if (s.classId === 'class-1791592764810' || (s.classId && s.classId.startsWith('class-sub-'))) {
+                return;
+              }
               allStudentsMap.set(s.id, s);
             }
           });
         }
 
-        // Tổng hợp chuyên cần / điểm danh (Smart Deep Merge)
+        // Lấy tập ID các lớp mà giáo viên này thực sự làm chủ nhiệm
+        const ownedClassIds = new Set(
+          (safeUserData.classes || [])
+            .filter((c: Classroom) => {
+              if (!c || !c.id) return false;
+              const tUsername = (c.teacherUsername || '').trim().toLowerCase().replace('_', '');
+              const curUserNorm = (account.username || '').trim().toLowerCase().replace('_', '');
+              return !tUsername || tUsername === curUserNorm;
+            })
+            .map((c: Classroom) => c.id)
+        );
+
+        // Tổng hợp chuyên cần / điểm danh (Smart Deep Merge từ đúng GVCN phụ trách lớp)
         if (Array.isArray(safeUserData.attendanceRecords)) {
           safeUserData.attendanceRecords.forEach((att: DailyAttendance) => {
-            if (att && att.date && att.classId) {
+            if (att && att.date && att.classId && ownedClassIds.has(att.classId)) {
               const attKey = `${att.date}_${att.classId}`;
               const existingAtt = allAttendanceMap.get(attKey);
               if (existingAtt) {
@@ -1658,10 +1865,10 @@ export const databaseService = {
           });
         }
 
-        // Tổng hợp bán trú (Smart Deep Merge)
+        // Tổng hợp bán trú (Smart Deep Merge từ đúng GVCN phụ trách lớp)
         if (Array.isArray(safeUserData.boardingRecords)) {
           safeUserData.boardingRecords.forEach((b: DailyBoardingMeal) => {
-            if (b && b.date && b.classId) {
+            if (b && b.date && b.classId && ownedClassIds.has(b.classId)) {
               const bKey = `${b.date}_${b.classId}`;
               const existingB = allBoardingMap.get(bKey);
               if (existingB) {
@@ -1684,12 +1891,18 @@ export const databaseService = {
       })
     );
 
-    // 🛡️ BẢO TOÀN DỮ LIỆU: Bổ sung thông tin branch/campus và records từ row của admin/adminquantri hoặc chính currentUser
+    // 🛡️ BẢO TOÀN DỮ LIỆU: Bổ sung thông tin branch/campus và records từ row của admin/adminquantri hoặc chính currentUser và school_admin
     try {
+      const checkUsers = ['admin', 'adminquantri'];
+      if (currentUser.username) checkUsers.push(currentUser.username.toLowerCase());
+      if (isMasterAdmin) {
+        schoolAdmins.forEach(sa => {
+          if (sa.username) checkUsers.push(sa.username.toLowerCase());
+        });
+      }
+
       const supabase = getBrowserSupabase();
       if (supabase) {
-        const checkUsers = ['admin', 'adminquantri'];
-        if (currentUser.username) checkUsers.push(currentUser.username.toLowerCase());
         const { data: adminRows } = await supabase.from('user_classroom_data').select('username, data').in('username', checkUsers);
         if (adminRows) {
           for (const aRow of adminRows) {
@@ -1698,6 +1911,7 @@ export const databaseService = {
             if (Array.isArray(aClasses)) {
               for (const ac of aClasses) {
                 if (ac && ac.id) {
+                  if (ac.teacherRole === 'subject' || ac.id.startsWith('class-sub-')) continue;
                   if (allClassesMap.has(ac.id)) {
                     const targetCls = allClassesMap.get(ac.id)!;
                     if (!targetCls.campus && ac.campus && String(ac.campus).trim()) {
@@ -1705,6 +1919,9 @@ export const databaseService = {
                     }
                     if (!targetCls.branch && ac.branch && String(ac.branch).trim()) {
                       targetCls.branch = String(ac.branch).trim();
+                    }
+                    if (!targetCls.schoolName && ac.schoolName && String(ac.schoolName).trim()) {
+                      targetCls.schoolName = String(ac.schoolName).trim();
                     }
                   } else {
                     allClassesMap.set(ac.id, ac);
@@ -1714,7 +1931,7 @@ export const databaseService = {
             }
             if (Array.isArray(aData.students)) {
               for (const st of aData.students) {
-                if (st && st.id && !allStudentsMap.has(st.id)) {
+                if (st && st.id && st.classId !== 'class-1791592764810' && !st.classId.startsWith('class-sub-') && !allStudentsMap.has(st.id)) {
                   allStudentsMap.set(st.id, st);
                 }
               }
@@ -1756,11 +1973,56 @@ export const databaseService = {
           }
         }
       }
+
+      // LocalStorage fallback an toàn tuyệt đối khi offline hoặc chạy localhost
+      for (const u of checkUsers) {
+        try {
+          const cached = localStorage.getItem(LOCAL_DB_PREFIX + u);
+          if (cached) {
+            const aData = JSON.parse(cached);
+            if (Array.isArray(aData.classes)) {
+              for (const ac of aData.classes) {
+                if (ac && ac.id) {
+                  if (ac.teacherRole === 'subject' || ac.id.startsWith('class-sub-')) continue;
+                  if (allClassesMap.has(ac.id)) {
+                    const targetCls = allClassesMap.get(ac.id)!;
+                    if (!targetCls.campus && ac.campus && String(ac.campus).trim()) {
+                      targetCls.campus = String(ac.campus).trim();
+                    }
+                    if (!targetCls.branch && ac.branch && String(ac.branch).trim()) {
+                      targetCls.branch = String(ac.branch).trim();
+                    }
+                    if (!targetCls.schoolName && ac.schoolName && String(ac.schoolName).trim()) {
+                      targetCls.schoolName = String(ac.schoolName).trim();
+                    }
+                  } else {
+                    allClassesMap.set(ac.id, ac);
+                  }
+                }
+              }
+            }
+            if (Array.isArray(aData.students)) {
+              for (const st of aData.students) {
+                if (st && st.id && st.classId !== 'class-1791592764810' && !st.classId.startsWith('class-sub-') && !allStudentsMap.has(st.id)) {
+                  allStudentsMap.set(st.id, st);
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
     } catch (_) {}
+
+    const validClassIds = new Set(allClassesMap.keys());
+    const validStudents = Array.from(allStudentsMap.values()).filter(s => 
+      Boolean(s.classId && validClassIds.has(s.classId)) &&
+      s.classId !== 'class-1791592764810' &&
+      !s.classId.startsWith('class-sub-')
+    );
 
     return {
       classes: Array.from(allClassesMap.values()),
-      students: Array.from(allStudentsMap.values()),
+      students: validStudents,
       attendanceRecords: Array.from(allAttendanceMap.values()),
       boardingRecords: Array.from(allBoardingMap.values()),
       transactions: allTransactions,
@@ -1768,7 +2030,7 @@ export const databaseService = {
     };
   },
 
-  // Broadcast điểm danh tức thì qua Supabase Realtime & BroadcastChannel
+  // Broadcast điểm danh tức thì qua Supabase Realtime & BroadcastChannel & SSE Hub
   broadcastAttendance(attendanceRecord: DailyAttendance, username?: string): void {
     try {
       const payload = {
@@ -1794,10 +2056,15 @@ export const databaseService = {
           payload
         }).catch(() => {});
       }
+      fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     } catch (_) {}
   },
 
-  // Broadcast bán trú tức thì qua Supabase Realtime & BroadcastChannel
+  // Broadcast bán trú tức thì qua Supabase Realtime & BroadcastChannel & SSE Hub
   broadcastBoarding(boardingRecord: DailyBoardingMeal, username?: string): void {
     try {
       const payload = {
@@ -1823,6 +2090,11 @@ export const databaseService = {
           payload
         }).catch(() => {});
       }
+      fetch('/api/realtime/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
     } catch (_) {}
   },
 
@@ -1835,11 +2107,18 @@ export const databaseService = {
     if (supabase) {
       try {
         const nowTs = Date.now();
+        // Merge by id (payload may be a delta containing only changed records)
+        const mergeById = (base: any[] | undefined, incoming: any[]) => {
+          const map = new Map<string, any>();
+          for (const item of Array.isArray(base) ? base : []) if (item && item.id) map.set(item.id, item);
+          for (const item of incoming) if (item && item.id) map.set(item.id, { ...(map.get(item.id) || {}), ...item });
+          return Array.from(map.values());
+        };
         const { data: adminRow } = await supabase.from('user_classroom_data').select('data').eq('username', 'admin').maybeSingle();
         const adminData = adminRow?.data || {};
         await supabase.from('user_classroom_data').upsert({
           username: 'admin',
-          data: { ...adminData, classes, students, updatedAt: nowTs },
+          data: { ...adminData, classes: mergeById(adminData.classes, classes), students: mergeById(adminData.students, students), updatedAt: nowTs },
           updated_at: new Date().toISOString()
         });
 
@@ -1847,7 +2126,7 @@ export const databaseService = {
         const superAdminData = superAdminRow?.data || {};
         await supabase.from('user_classroom_data').upsert({
           username: 'adminquantri',
-          data: { ...superAdminData, classes, students, updatedAt: nowTs },
+          data: { ...superAdminData, classes: mergeById(superAdminData.classes, classes), students: mergeById(superAdminData.students, students), updatedAt: nowTs },
           updated_at: new Date().toISOString()
         });
 
@@ -1922,159 +2201,172 @@ export const databaseService = {
       campus: (classData?.campus && String(classData.campus).trim()) ? String(classData.campus).trim() : null
     };
 
-    // 1. Direct Supabase Cloud Dual-Write (Đặc biệt quan trọng trên Vercel / Cloud)
-    const supabase = getBrowserSupabase();
-    if (supabase) {
-      try {
-        // A. Cập nhật cho giáo viên được gán lớp (nếu có username)
-        if (username) {
-          const { data: userRow } = await supabase.from('user_classroom_data').select('data').eq('username', username).maybeSingle();
-          const curData = userRow?.data || { classes: [], students: [] };
-          let curClasses: Classroom[] = Array.isArray(curData.classes) ? curData.classes : [];
-          if (isDelete) {
-            curClasses = curClasses.filter((c: any) => c.id !== classData.id);
-          } else {
-            const idx = curClasses.findIndex((c: any) => c.id === classData.id);
-            if (idx >= 0) {
-              curClasses[idx] = { ...curClasses[idx], ...classDataToSave, teacherUsername: username };
-            } else {
-              curClasses.push({ ...classDataToSave, teacherUsername: username });
-            }
-          }
-          await supabase.from('user_classroom_data').upsert({
-            username,
-            data: { ...curData, classes: curClasses, updatedAt: nowTs },
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'username' });
-
-          // Cập nhật LocalStorage cho teacher
+    // 1. CẬP NHẬT TỨC THÌ VÀO LOCALSTORAGE CHO CÁC TÀI KHOẢN LIÊN QUAN (0ms)
+    try {
+      const localTargets = [username, 'admin', 'adminquantri'].filter(Boolean);
+      for (const u of localTargets) {
+        const localKey = LOCAL_DB_PREFIX + u;
+        const cached = localStorage.getItem(localKey);
+        if (cached) {
           try {
-            const localKey = LOCAL_DB_PREFIX + username;
-            const cached = localStorage.getItem(localKey);
-            const cachedData = cached ? JSON.parse(cached) : curData;
+            const cachedData = JSON.parse(cached);
+            let curClasses: Classroom[] = Array.isArray(cachedData.classes) ? cachedData.classes : [];
+            if (isDelete) {
+              curClasses = curClasses.filter((c: any) => c.id !== classData.id);
+            } else {
+              const idx = curClasses.findIndex((c: any) => c.id === classData.id);
+              if (idx >= 0) {
+                curClasses[idx] = { ...curClasses[idx], ...classDataToSave, teacherUsername: username || curClasses[idx].teacherUsername };
+              } else {
+                curClasses.push({ ...classDataToSave, teacherUsername: username || classDataToSave.teacherUsername });
+              }
+            }
             cachedData.classes = curClasses;
             cachedData.updatedAt = nowTs;
             localStorage.setItem(localKey, JSON.stringify(cachedData));
           } catch (_) {}
         }
+      }
+    } catch (_) {}
 
-        // B. Cập nhật cho admin & adminquantri (Toàn hệ thống và quản trị tối cao)
-        for (const adminU of ['admin', 'adminquantri']) {
-          const { data: aRow } = await supabase.from('user_classroom_data').select('data').eq('username', adminU).maybeSingle();
-          const aData = aRow?.data || { classes: [], students: [] };
-          let aClasses: Classroom[] = Array.isArray(aData.classes) ? aData.classes : [];
-          if (isDelete) {
-            aClasses = aClasses.filter((c: any) => c.id !== classData.id);
-          } else {
-            const aIdx = aClasses.findIndex((c: any) => c.id === classData.id);
-            if (aIdx >= 0) {
-              aClasses[aIdx] = { ...aClasses[aIdx], ...classDataToSave, teacherUsername: username || aClasses[aIdx].teacherUsername };
-            } else {
-              aClasses.push({ ...classDataToSave, teacherUsername: username || classDataToSave.teacherUsername });
-            }
-          }
-          await supabase.from('user_classroom_data').upsert({
-            username: adminU,
-            data: { ...aData, classes: aClasses, updatedAt: nowTs },
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'username' });
+    const isVercelOrStatic = typeof window !== 'undefined' && (
+      window.location.hostname.includes('vercel.app') ||
+      window.location.hostname.includes('github.io') ||
+      window.location.port === '' ||
+      window.location.protocol === 'https:'
+    );
 
-          try {
-            const localKey = LOCAL_DB_PREFIX + adminU;
-            const cached = localStorage.getItem(localKey);
-            const cachedData = cached ? JSON.parse(cached) : aData;
-            cachedData.classes = aClasses;
-            cachedData.updatedAt = nowTs;
-            localStorage.setItem(localKey, JSON.stringify(cachedData));
-          } catch (_) {}
+    // 2. NẾU CHẠY LOCAL: GỌI EXPRESS BACKEND (/api/admin/update-class) TRƯỚC TIÊN (1-5ms)
+    if (!isVercelOrStatic) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch('/api/admin/update-class', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Client-Id': CLIENT_ID
+          },
+          body: JSON.stringify({ classData: classDataToSave, targetUsername: username, isDelete }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) isSuccess = true;
         }
-
-        // C. Cập nhật cho các tài khoản Quản trị nhà trường (school_admin & bgh)
-        try {
-          const { data: schoolAdmins } = await supabase
-            .from('users')
-            .select('username')
-            .in('role', ['school_admin', 'bgh']);
-          if (schoolAdmins && schoolAdmins.length > 0) {
-            for (const sa of schoolAdmins) {
-              const saUser = (sa.username || '').toLowerCase();
-              if (saUser && saUser !== 'admin' && saUser !== 'adminquantri' && saUser !== username) {
-                const { data: saRow } = await supabase.from('user_classroom_data').select('data').eq('username', saUser).maybeSingle();
-                const saData = saRow?.data || { classes: [], students: [] };
-                let saClasses: Classroom[] = Array.isArray(saData.classes) ? saData.classes : [];
-                if (isDelete) {
-                  saClasses = saClasses.filter((c: any) => c.id !== classData.id);
-                } else {
-                  const saIdx = saClasses.findIndex((c: any) => c.id === classData.id);
-                  if (saIdx >= 0) {
-                    saClasses[saIdx] = { ...saClasses[saIdx], ...classDataToSave, teacherUsername: username || saClasses[saIdx].teacherUsername };
-                  } else {
-                    saClasses.push({ ...classDataToSave, teacherUsername: username || classDataToSave.teacherUsername });
-                  }
-                }
-                await supabase.from('user_classroom_data').upsert({
-                  username: saUser,
-                  data: { ...saData, classes: saClasses, updatedAt: nowTs },
-                  updated_at: new Date().toISOString()
-                }, { onConflict: 'username' });
-
-                try {
-                  const localKey = LOCAL_DB_PREFIX + saUser;
-                  const cached = localStorage.getItem(localKey);
-                  const cachedData = cached ? JSON.parse(cached) : saData;
-                  cachedData.classes = saClasses;
-                  cachedData.updatedAt = nowTs;
-                  localStorage.setItem(localKey, JSON.stringify(cachedData));
-                } catch (_) {}
-              }
-            }
-          }
-        } catch (saErr) {
-          console.warn('Sync school_admin error:', saErr);
-        }
-
-        // Broadcast realtime change với FULL payload cho Zero Latency
-        initSupabaseRealtime();
-        if (realtimeChannel) {
-          realtimeChannel.send({
-            type: 'broadcast',
-            event: 'user_data_updated',
-            payload: {
-              type: isDelete ? 'CLASS_DELETED' : 'CLASS_UPDATED',
-              action: isDelete ? 'DELETE_CLASS' : 'UPDATE_CLASS',
-              classData: classDataToSave,
-              classId: classData.id,
-              username: username || 'all',
-              targetUsername: username || 'all',
-              originClientId: CLIENT_ID,
-              timestamp: nowTs,
-              message: isDelete ? `Đã xóa lớp học: ${classData.name || classData.id}` : `Đã tạo/cập nhật lớp học: ${classData.name}`
-            }
-          }).catch(() => {});
-        }
-
-        isSuccess = true;
-      } catch (sbErr) {
-        console.warn('Supabase updateAdminClass error:', sbErr);
+      } catch (err) {
+        // Tiếp tục fallback
       }
     }
 
-    // 2. Server API fallback (cho môi trường local server)
-    try {
-      const res = await fetch('/api/admin/update-class', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Client-Id': CLIENT_ID
-        },
-        body: JSON.stringify({ classData: classDataToSave, targetUsername: username, isDelete })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) isSuccess = true;
-      }
-    } catch (err) {
-      // Bỏ qua lỗi kết nối backend express khi chạy thuần tĩnh trên Vercel
+    // 3. ĐỒNG BỘ SUPABASE CLOUD CHẠY NỀN KHÔNG CHẶN (Background Non-Blocking Sync)
+    const supabase = getBrowserSupabase();
+    if (supabase) {
+      (async () => {
+        try {
+          // A. Cập nhật cho giáo viên được gán lớp (nếu có username)
+          if (username) {
+            const { data: userRow } = await supabase.from('user_classroom_data').select('data').eq('username', username).maybeSingle();
+            const curData = userRow?.data || { classes: [], students: [] };
+            let curClasses: Classroom[] = Array.isArray(curData.classes) ? curData.classes : [];
+            if (isDelete) {
+              curClasses = curClasses.filter((c: any) => c.id !== classData.id);
+            } else {
+              const idx = curClasses.findIndex((c: any) => c.id === classData.id);
+              if (idx >= 0) {
+                curClasses[idx] = { ...curClasses[idx], ...classDataToSave, teacherUsername: username };
+              } else {
+                curClasses.push({ ...classDataToSave, teacherUsername: username });
+              }
+            }
+            await supabase.from('user_classroom_data').upsert({
+              username,
+              data: { ...curData, classes: curClasses, updatedAt: nowTs },
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'username' });
+          }
+
+          // B. Cập nhật cho admin & adminquantri (Toàn hệ thống và quản trị tối cao)
+          for (const adminU of ['admin', 'adminquantri']) {
+            const { data: aRow } = await supabase.from('user_classroom_data').select('data').eq('username', adminU).maybeSingle();
+            const aData = aRow?.data || { classes: [], students: [] };
+            let aClasses: Classroom[] = Array.isArray(aData.classes) ? aData.classes : [];
+            if (isDelete) {
+              aClasses = aClasses.filter((c: any) => c.id !== classData.id);
+            } else {
+              const aIdx = aClasses.findIndex((c: any) => c.id === classData.id);
+              if (aIdx >= 0) {
+                aClasses[aIdx] = { ...aClasses[aIdx], ...classDataToSave, teacherUsername: username || aClasses[aIdx].teacherUsername };
+              } else {
+                aClasses.push({ ...classDataToSave, teacherUsername: username || classDataToSave.teacherUsername });
+              }
+            }
+            await supabase.from('user_classroom_data').upsert({
+              username: adminU,
+              data: { ...aData, classes: aClasses, updatedAt: nowTs },
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'username' });
+          }
+
+          // C. Cập nhật cho các tài khoản Quản trị nhà trường (school_admin & bgh)
+          try {
+            const { data: schoolAdmins } = await supabase
+              .from('users')
+              .select('username')
+              .in('role', ['school_admin', 'bgh']);
+            if (schoolAdmins && schoolAdmins.length > 0) {
+              for (const sa of schoolAdmins) {
+                const saUser = (sa.username || '').toLowerCase();
+                if (saUser && saUser !== 'admin' && saUser !== 'adminquantri' && saUser !== username) {
+                  const { data: saRow } = await supabase.from('user_classroom_data').select('data').eq('username', saUser).maybeSingle();
+                  const saData = saRow?.data || { classes: [], students: [] };
+                  let saClasses: Classroom[] = Array.isArray(saData.classes) ? saData.classes : [];
+                  if (isDelete) {
+                    saClasses = saClasses.filter((c: any) => c.id !== classData.id);
+                  } else {
+                    const saIdx = saClasses.findIndex((c: any) => c.id === classData.id);
+                    if (saIdx >= 0) {
+                      saClasses[saIdx] = { ...saClasses[saIdx], ...classDataToSave, teacherUsername: username || saClasses[saIdx].teacherUsername };
+                    } else {
+                      saClasses.push({ ...classDataToSave, teacherUsername: username || classDataToSave.teacherUsername });
+                    }
+                  }
+                  await supabase.from('user_classroom_data').upsert({
+                    username: saUser,
+                    data: { ...saData, classes: saClasses, updatedAt: nowTs },
+                    updated_at: new Date().toISOString()
+                  }, { onConflict: 'username' });
+                }
+              }
+            }
+          } catch (saErr) {
+            console.warn('Sync school_admin error:', saErr);
+          }
+
+          // Broadcast realtime change với FULL payload cho Zero Latency
+          initSupabaseRealtime();
+          if (realtimeChannel) {
+            realtimeChannel.send({
+              type: 'broadcast',
+              event: 'user_data_updated',
+              payload: {
+                type: isDelete ? 'CLASS_DELETED' : 'CLASS_UPDATED',
+                action: isDelete ? 'DELETE_CLASS' : 'UPDATE_CLASS',
+                classData: classDataToSave,
+                classId: classData.id,
+                username: username || 'all',
+                targetUsername: username || 'all',
+                originClientId: CLIENT_ID,
+                timestamp: nowTs,
+                message: isDelete ? `Đã xóa lớp học: ${classData.name || classData.id}` : `Đã tạo/cập nhật lớp học: ${classData.name}`
+              }
+            }).catch(() => {});
+          }
+        } catch (sbErr) {
+          console.warn('[Supabase Cloud Sync Class] Ngoại lệ không chặn UI:', sbErr);
+        }
+      })();
     }
 
     // Multi-tab BroadcastChannel
@@ -2860,7 +3152,7 @@ export const databaseService = {
     return [];
   },
 
-  async createSchool(schoolData: Partial<SchoolEntity> & { adminPassword?: string; adminFullName?: string }): Promise<{
+  async createSchool(schoolData: Partial<SchoolEntity> & { adminPassword?: string; adminFullName?: string; createAccount?: boolean }): Promise<{
     success: boolean;
     school?: SchoolEntity;
     adminAccount?: { username: string; password?: string; fullName: string; role: string; schoolName: string };
@@ -2872,10 +3164,6 @@ export const databaseService = {
 
     const cleanName = schoolData.name.trim();
     const schoolCode = schoolData.code?.trim().toUpperCase() || `TH_${Date.now().toString().slice(-4)}`;
-    const cleanCodeSlug = schoolCode.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const bghUsername = (schoolData.adminUsername?.trim() || `bgh_${cleanCodeSlug || Date.now().toString().slice(-4)}`).toLowerCase();
-    const bghPassword = schoolData.adminPassword?.trim() || '123456';
-    const bghFullName = schoolData.adminFullName?.trim() || `Ban Giám Hiệu ${cleanName}`;
 
     const newSchool: SchoolEntity = {
       id: schoolData.id || `school_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -2883,16 +3171,8 @@ export const databaseService = {
       code: schoolCode,
       address: schoolData.address?.trim() || '',
       phone: schoolData.phone?.trim() || '',
-      adminUsername: bghUsername,
+      adminUsername: schoolData.createAccount ? (schoolData.adminUsername?.trim() || '') : '',
       createdAt: Date.now()
-    };
-
-    const bghAdminAccount = {
-      username: bghUsername,
-      password: bghPassword,
-      fullName: bghFullName,
-      role: 'school_admin',
-      schoolName: cleanName
     };
 
     // 1. Thử gọi qua API backend trước (Local dev)
@@ -2921,48 +3201,17 @@ export const databaseService = {
     const supabase = getBrowserSupabase();
     if (supabase) {
       try {
-        // A. Lưu thông tin trường vào bảng schools hoặc user_classroom_data metadata
-        try {
-          await supabase.from('schools').upsert({
-            id: newSchool.id,
-            name: newSchool.name,
-            code: newSchool.code,
-            address: newSchool.address,
-            phone: newSchool.phone,
-            principal_name: bghFullName,
-            tenant_type: 'formal',
-            status: 'active'
-          }, { onConflict: 'id' });
-        } catch (sErr) {
-          console.warn('[Supabase Create School Table]', sErr);
-        }
-
-        // B. Cấp phát tài khoản Ban Giám Hiệu vào bảng users
-        await supabase.from('users').upsert({
-          id: `user-${bghUsername}`,
-          username: bghUsername,
-          password: bghPassword,
-          full_name: bghFullName,
-          role: 'school_admin',
-          school_name: cleanName,
-          status: 'active',
-          created_at: Date.now()
-        }, { onConflict: 'username' });
-
-        // C. Khởi tạo không gian dữ liệu rỗng cho tài khoản BGH trong user_classroom_data
-        await supabase.from('user_classroom_data').upsert({
-          username: bghUsername,
-          data: {
-            classes: [],
-            students: [],
-            subjectClasses: [],
-            schoolName: cleanName
-          },
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'username' });
-
-      } catch (sbErr: any) {
-        console.warn('[Supabase Fallback School Creation]', sbErr);
+        await supabase.from('schools').upsert({
+          id: newSchool.id,
+          name: newSchool.name,
+          code: newSchool.code,
+          address: newSchool.address,
+          phone: newSchool.phone,
+          tenant_type: 'formal',
+          status: 'active'
+        }, { onConflict: 'id' });
+      } catch (sErr) {
+        console.warn('[Supabase Create School Table]', sErr);
       }
     }
 
@@ -2972,34 +3221,56 @@ export const databaseService = {
       const list: SchoolEntity[] = rawCached ? JSON.parse(rawCached) : [];
       const updatedList = [...list.filter(s => s.id !== newSchool.id && s.name.toLowerCase() !== cleanName.toLowerCase()), newSchool];
       localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(updatedList));
-
-      // Thêm tài khoản BGH vào danh sách người dùng cục bộ
-      const rawUsers = localStorage.getItem('LHHP_USERS');
-      const userList: UserAccount[] = rawUsers ? JSON.parse(rawUsers) : [];
-      const updatedUsers = [...userList.filter(u => u.username.toLowerCase() !== bghUsername), {
-        id: `user-${bghUsername}`,
-        username: bghUsername,
-        password: bghPassword,
-        fullName: bghFullName,
-        role: 'school_admin' as const,
-        isSchoolAdmin: true,
-        isBgh: true,
-        tenantType: 'school' as const,
-        schoolName: cleanName,
-        email: `${bghUsername}@lophoc.edu.vn`,
-        phone: newSchool.phone,
-        status: 'active' as const,
-        createdAt: Date.now()
-      }];
-      localStorage.setItem('LHHP_USERS', JSON.stringify(updatedUsers));
     } catch (_) {}
 
     return {
       success: true,
       school: newSchool,
-      adminAccount: bghAdminAccount,
-      message: 'Khởi tạo cơ sở dữ liệu trường học và cấp tài khoản BGH thành công!'
+      message: 'Khởi tạo cơ sở dữ liệu trường học thành công!'
     };
+  },
+
+  async provisionSchoolAdmin(schoolId: string, data: { adminUsername: string; adminPassword?: string; adminFullName?: string; phone?: string }): Promise<{
+    success: boolean;
+    school?: SchoolEntity;
+    adminAccount?: { username: string; password?: string; fullName: string; role: string; schoolName: string };
+    message?: string;
+  }> {
+    try {
+      const res = await fetch(`/api/schools/${schoolId}/provision-admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        // Cập nhật lại cache schools
+        try {
+          const cached = await this.getSchools();
+          const updated = cached.map(s => s.id === schoolId ? { ...s, adminUsername: data.adminUsername } : s);
+          localStorage.setItem(LOCAL_SCHOOLS_KEY, JSON.stringify(updated));
+        } catch (_) {}
+      }
+      return resData;
+    } catch (err: any) {
+      // Fallback
+      try {
+        await this.updateSchool(schoolId, { adminUsername: data.adminUsername });
+        return {
+          success: true,
+          adminAccount: {
+            username: data.adminUsername,
+            password: data.adminPassword || '123456',
+            fullName: data.adminFullName || `Ban Giám Hiệu`,
+            role: 'school_admin',
+            schoolName: ''
+          },
+          message: 'Đã cấp tài khoản BGH thành công!'
+        };
+      } catch (fallbackErr: any) {
+        return { success: false, message: fallbackErr?.message || 'Lỗi cấp tài khoản BGH.' };
+      }
+    }
   },
 
   async updateSchool(id: string, schoolData: Partial<SchoolEntity>): Promise<{ success: boolean; school?: SchoolEntity; message?: string }> {

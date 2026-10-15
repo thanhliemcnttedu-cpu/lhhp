@@ -36,7 +36,8 @@ function ClassroomApp() {
     switchUserAccount, refreshUsersList, isAuthModalOpen, 
     setIsAuthModalOpen, isAccountManagerOpen, setIsAccountManagerOpen,
     isGithubModalOpen, setIsGithubModalOpen,
-    isRegistrationModalOpen, setIsRegistrationModalOpen
+    isRegistrationModalOpen, setIsRegistrationModalOpen,
+    isBgh, isSchoolAdmin
   } = useClassroom();
   const [currentView, setCurrentView] = useState<NavigationMenuId>('dashboard');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -47,7 +48,7 @@ function ClassroomApp() {
     setIsMobileSidebarOpen(false);
   };
 
-  // If in Subject Teacher role, guard against accessing hidden menus: Điểm danh, Infographic, Sơ đồ lớp
+  // Guard: Nếu là GVBM, không cho vào Điểm danh, Sơ đồ, Infographic
   useEffect(() => {
     if (teacherRole === 'subject') {
       if (currentView === 'attendance' || currentView === 'seating' || currentView === 'infographic') {
@@ -55,6 +56,27 @@ function ClassroomApp() {
       }
     }
   }, [teacherRole, currentView]);
+
+  // Guard: Tài khoản quản lý vĩ mô (Admin/BGH/SchoolAdmin) không được vào trang lớp học trực tiếp
+  const isMacroAdmin = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.username?.toLowerCase() === 'adminquantri' ||
+    isSchoolAdmin ||
+    isBgh
+  );
+
+  useEffect(() => {
+    if (isMacroAdmin) {
+      const macroAdminForbidden: NavigationMenuId[] = [
+        'attendance', 'seating', 'schedule', 'infographic',
+        'rewards', 'certificate', 'picker', 'wheel', 'reel',
+        'noise', 'timer', 'settings'
+      ];
+      if (macroAdminForbidden.includes(currentView)) {
+        setCurrentView('dashboard');
+      }
+    }
+  }, [isMacroAdmin, currentView]);
 
   const renderCurrentView = () => {
     switch (currentView) {
@@ -97,8 +119,6 @@ function ClassroomApp() {
         return <ReportsDataView defaultTab="stats" />;
       case 'data':
         return <ReportsDataView defaultTab="data" />;
-      case 'settings':
-        return <ReportsDataView defaultTab="profile" />;
       case 'ai':
         return <AiAssistantView />;
       default:
@@ -130,7 +150,7 @@ function ClassroomApp() {
           currentView={currentView}
           onNavigate={handleNavigate}
           onOpenQuickNoise={() => handleNavigate('noise')}
-          onOpenProfile={() => handleNavigate('settings')}
+          onOpenProfile={() => handleNavigate('dashboard')}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
         />
 

@@ -405,14 +405,27 @@ export async function migrateLocalDatabaseToSupabase(localDb: DatabaseSchema): P
         updated_at: new Date().toISOString()
       }));
 
-      if (dataPayloads.length > 0) {
+      // Upsert in chunks of 5 to avoid HTTP payload size limits
+      const chunkSize = 5;
+      for (let i = 0; i < dataPayloads.length; i += chunkSize) {
+        const chunk = dataPayloads.slice(i, i + chunkSize);
         const { error: dataErr } = await client
           .from('user_classroom_data')
-          .upsert(dataPayloads, { onConflict: 'username' });
+          .upsert(chunk, { onConflict: 'username' });
         if (!dataErr) {
-          dataCount = dataPayloads.length;
+          dataCount += chunk.length;
         } else {
-          console.error('[Migration] Lỗi khi migrate userData:', dataErr.message);
+          // Fallback to one-by-one if chunk fails
+          for (const item of chunk) {
+            const { error: singleErr } = await client
+              .from('user_classroom_data')
+              .upsert(item, { onConflict: 'username' });
+            if (!singleErr) {
+              dataCount++;
+            } else {
+              console.error(`[Migration] Lỗi khi migrate userData cho ${item.username}:`, singleErr.message);
+            }
+          }
         }
       }
     }

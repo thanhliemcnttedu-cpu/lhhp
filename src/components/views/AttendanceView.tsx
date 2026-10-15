@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { useClassroom } from '../../context/ClassroomContext';
 import { AttendanceStatus, BoardingStatus } from '../../types';
+import { databaseService } from '../../services/databaseService';
 import { 
   CheckSquare, Calendar, Check, Clock, 
   Download, Sparkles, AlertCircle, HeartPulse, 
@@ -87,7 +88,8 @@ export const AttendanceView: React.FC = () => {
   const { 
     currentClassStudents, students, attendanceRecords, setStudentAttendance, 
     batchSetAttendance, activeClassId, classes, teacherProfile,
-    boardingRecords, setStudentBoarding, batchSetBoarding, syncDatabaseNow
+    boardingRecords, setStudentBoarding, batchSetBoarding, syncDatabaseNow,
+    currentUser
   } = useClassroom();
   
   const activeClass = classes.find(c => c.id === activeClassId);
@@ -229,6 +231,7 @@ export const AttendanceView: React.FC = () => {
     let excusedCount = 0;
     let unexcusedCount = 0;
 
+    const finalRecords: Record<string, string> = {};
     currentClassStudents.forEach(student => {
       const currentStatus = currentStatusMap[student.id];
       const isAbsent = currentStatus === 'sick' || currentStatus === 'excused' || currentStatus === 'unexcused' || currentStatus === 'other';
@@ -240,15 +243,33 @@ export const AttendanceView: React.FC = () => {
         else if (currentStatus === 'unexcused') unexcusedCount++;
         // Đảm bảo học sinh vắng bị khóa không ăn bán trú
         setStudentBoarding(student.id, 'not_eating', selectedDate);
+        finalRecords[student.id] = currentStatus;
       } else {
         // Tự động gán các học sinh còn lại là CÓ MẶT
         setStudentAttendance(student.id, 'present', selectedDate);
+        finalRecords[student.id] = 'present';
         newlyPresentCount++;
       }
     });
 
-    // Kích hoạt đồng bộ server tức thì để Quản trị trường nhận số liệu ngay
-    // syncDatabaseNow() removed to avoid saving stale React state
+    // ⚡ Lưu ngay dữ liệu vào CSDL máy chủ để BGH & Quản trị trường tổng hợp số liệu chuẩn xác 100%
+    try { syncDatabaseNow(); } catch (_) {}
+
+    // ⚡ Phát sóng realtime tức thì tới BGH / Quản trị nhà trường
+    const attendanceRecord = {
+      classId: activeClassId,
+      date: selectedDate,
+      records: finalRecords
+    };
+    databaseService.broadcastAttendanceConfirmed({
+      type: 'ATTENDANCE_CONFIRMED',
+      classId: activeClassId,
+      className: activeClass?.name,
+      date: selectedDate,
+      attendanceRecord,
+      schoolName: currentUser?.schoolName || teacherProfile.schoolName,
+      username: currentUser?.username
+    }).catch(() => {});
 
     // Trigger visual pulse animation on KPI report cards
     setStatsJustUpdated(true);
@@ -268,21 +289,40 @@ export const AttendanceView: React.FC = () => {
     let notEatingCount = 0;
     let absentCount = 0;
 
+    const finalBoardingRecords: Record<string, string> = {};
     currentClassStudents.forEach(st => {
       const isAbsent = isStudentAbsent(st.id);
       if (isAbsent) {
         setStudentBoarding(st.id, 'not_eating', selectedDate);
+        finalBoardingRecords[st.id] = 'not_eating';
         absentCount++;
       } else {
         const curB = currentBoardingMap[st.id] || 'eating';
         setStudentBoarding(st.id, curB, selectedDate);
+        finalBoardingRecords[st.id] = curB;
         if (curB === 'eating') eatingCount++;
         else notEatingCount++;
       }
     });
 
-    // Kích hoạt đồng bộ server tức thì để Quản trị trường nhận số liệu ngay
-    // syncDatabaseNow() removed to avoid saving stale React state
+    // ⚡ Lưu ngay dữ liệu vào CSDL máy chủ để BGH & Quản trị trường tổng hợp số liệu chuẩn xác 100%
+    try { syncDatabaseNow(); } catch (_) {}
+
+    // ⚡ Phát sóng realtime tức thì tới BGH / Quản trị nhà trường
+    const boardingRecord = {
+      classId: activeClassId,
+      date: selectedDate,
+      records: finalBoardingRecords
+    };
+    databaseService.broadcastAttendanceConfirmed({
+      type: 'BOARDING_CONFIRMED',
+      classId: activeClassId,
+      className: activeClass?.name,
+      date: selectedDate,
+      boardingRecord,
+      schoolName: currentUser?.schoolName || teacherProfile.schoolName,
+      username: currentUser?.username
+    }).catch(() => {});
 
     // Kích hoạt hiệu ứng tự động nhảy số liệu trên 4 thẻ báo cáo
     setStatsJustUpdated(true);

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useClassroom } from '../../context/ClassroomContext';
 import { APP_AUTHOR_INFO } from '../../data/initialData';
+import { getOfficialDisplayName, getOfficialRoleTitle } from '../../utils/accountIdentity';
 
 export type NavigationMenuId = 
   | 'dashboard'
@@ -57,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { 
     currentClassStudents, teacherProfile, teacherRole, setTeacherRole, 
-    subjectTeacherConfig, currentUser, isAdmin, canManageAccounts,
+    subjectTeacherConfig, currentUser, allUsers, isAdmin, isBgh, isSchoolAdmin, canManageAccounts,
     setIsAuthModalOpen, setIsAccountManagerOpen, setIsRegistrationModalOpen 
   } = useClassroom();
 
@@ -150,11 +151,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Database,
     },
     {
-      id: 'settings',
-      label: 'Cài đặt',
-      icon: Settings,
-    },
-    {
       id: 'ai',
       label: 'Trợ lý AI',
       icon: Brain,
@@ -163,8 +159,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   ];
 
-  // User requirement: Nếu chọn là giáo viên bộ môn sẽ không có các menu chức năng: ĐIỂM DANH, INFOGRAPHIC, SƠ ĐỒ LỚP
+  // Xác định role vĩ mô (quản lý nhà trường) — KHÔNG giảng dạy trực tiếp
+  // isAdmin đã bao gồm: admin, bgh, school_admin, guest_admin từ context
+  const isMacroAdmin = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.username?.toLowerCase() === 'adminquantri' ||
+    isSchoolAdmin ||
+    isBgh
+  );
+
+  // Danh sách menu chỉ dành cho tài khoản GVCN / GVBM (tính năng giảng dạy trực tiếp)
+  const CLASSROOM_ONLY_IDS: NavigationMenuId[] = [
+    'attendance', 'seating', 'schedule', 'infographic',
+    'rewards', 'certificate', 'picker', 'wheel', 'reel',
+    'noise', 'timer'
+  ];
+
   const MENU_ITEMS = ALL_MENU_ITEMS.filter(item => {
+    // Loại bỏ hoàn toàn mục "Cài đặt" với mọi role
+    if (item.id === 'settings') return false;
+
+    // Tài khoản quản lý vĩ mô: chỉ giữ menu quản trị cốt lõi
+    if (isMacroAdmin) {
+      if (CLASSROOM_ONLY_IDS.includes(item.id)) return false;
+      return true;
+    }
+
+    // Giáo viên bộ môn: ẩn thêm điểm danh, sơ đồ lớp, infographic
     if (teacherRole === 'subject') {
       if (item.id === 'attendance' || item.id === 'seating' || item.id === 'infographic') {
         return false;
@@ -227,66 +248,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Role Selection Switcher (User requirement: Chọn vai trò GVCN hay GVBM) */}
-        {!isEffectivelyCollapsed ? (
-          <div className="px-2.5 pt-2 pb-0.5 shrink-0">
-            <div className="p-0.5 bg-slate-100/90 rounded-xl border border-slate-200/80 flex items-center gap-1">
-              <button
-                onClick={() => setTeacherRole('homeroom')}
-                className={`flex-1 py-1 px-1.5 rounded-lg text-[9.5px] font-black tracking-tight transition-all flex items-center justify-center gap-1 uppercase ${
-                  teacherRole === 'homeroom'
-                    ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-                title="Chế độ Giáo viên chủ nhiệm: Đầy đủ điểm danh, sơ đồ lớp 3D, infographic"
-              >
-                <span>🏫</span>
-                <span>GVCN</span>
-              </button>
+        {/* Role Selection Switcher (Chỉ hiển thị với GVCN & GVBM, không dành cho Quản trị nhà trường) */}
+        {!isMacroAdmin && (
+          !isEffectivelyCollapsed ? (
+            <div className="px-2.5 pt-2 pb-0.5 shrink-0">
+              <div className="p-0.5 bg-slate-100/90 rounded-xl border border-slate-200/80 flex items-center gap-1">
+                <button
+                  onClick={() => setTeacherRole('homeroom')}
+                  className={`flex-1 py-1 px-1.5 rounded-lg text-[9.5px] font-black tracking-tight transition-all flex items-center justify-center gap-1 uppercase ${
+                    teacherRole === 'homeroom'
+                      ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/20'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
+                  title="Chế độ Giáo viên chủ nhiệm: Đầy đủ điểm danh, sơ đồ lớp 3D, infographic"
+                >
+                  <span>🏫</span>
+                  <span>GVCN</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setTeacherRole('subject');
+                    if (currentView === 'attendance' || currentView === 'seating' || currentView === 'infographic') {
+                      onNavigate('dashboard');
+                    }
+                  }}
+                  className={`flex-1 py-1 px-1.5 rounded-lg text-[9.5px] font-black tracking-tight transition-all flex items-center justify-center gap-1 uppercase ${
+                    teacherRole === 'subject'
+                      ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/20'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
+                  title="Chế độ Giáo viên bộ môn: Quản lý lớp dạy bộ môn, TKB bộ môn theo mẫu, chấm sao thi đua"
+                >
+                  <span>💻</span>
+                  <span>GV BỘ MÔN</span>
+                </button>
+              </div>
+              {teacherRole === 'subject' && (
+                <div className="mt-0.5 text-center">
+                  <span className="inline-block px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8.5px] font-black uppercase tracking-wider">
+                    Môn: {subjectTeacherConfig.subjectName}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-1.5 flex justify-center shrink-0">
               <button
                 onClick={() => {
-                  setTeacherRole('subject');
-                  if (currentView === 'attendance' || currentView === 'seating' || currentView === 'infographic') {
+                  const nextRole = teacherRole === 'homeroom' ? 'subject' : 'homeroom';
+                  setTeacherRole(nextRole);
+                  if (nextRole === 'subject' && (currentView === 'attendance' || currentView === 'seating' || currentView === 'infographic')) {
                     onNavigate('dashboard');
                   }
                 }}
-                className={`flex-1 py-1 px-1.5 rounded-lg text-[9.5px] font-black tracking-tight transition-all flex items-center justify-center gap-1 uppercase ${
-                  teacherRole === 'subject'
-                    ? 'bg-emerald-600 text-white shadow-xs shadow-emerald-600/20'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black shadow-2xs hover-zoom-btn ${
+                  teacherRole === 'subject' ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'
                 }`}
-                title="Chế độ Giáo viên bộ môn: Quản lý lớp dạy bộ môn, TKB bộ môn theo mẫu, chấm sao thi đua"
+                title={`Đang là ${teacherRole === 'subject' ? 'GV Bộ môn' : 'GV Chủ nhiệm'}. Nhấn để đổi vai trò.`}
               >
-                <span>💻</span>
-                <span>GV BỘ MÔN</span>
+                {teacherRole === 'subject' ? 'BM' : 'CN'}
               </button>
             </div>
-            {teacherRole === 'subject' && (
-              <div className="mt-0.5 text-center">
-                <span className="inline-block px-1.5 py-0.2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8.5px] font-black uppercase tracking-wider">
-                  Môn: {subjectTeacherConfig.subjectName}
-                </span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="p-1.5 flex justify-center shrink-0">
-            <button
-              onClick={() => {
-                const nextRole = teacherRole === 'homeroom' ? 'subject' : 'homeroom';
-                setTeacherRole(nextRole);
-                if (nextRole === 'subject' && (currentView === 'attendance' || currentView === 'seating' || currentView === 'infographic')) {
-                  onNavigate('dashboard');
-                }
-              }}
-              className={`w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-black shadow-2xs hover-zoom-btn ${
-                teacherRole === 'subject' ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'
-              }`}
-              title={`Đang là ${teacherRole === 'subject' ? 'GV Bộ môn' : 'GV Chủ nhiệm'}. Nhấn để đổi vai trò.`}
-            >
-              {teacherRole === 'subject' ? 'BM' : 'CN'}
-            </button>
-          </div>
+          )
         )}
 
         {/* Navigation Items */}
@@ -382,25 +405,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center gap-1.5 min-w-0">
                 <img 
                   src={currentUser?.avatar || teacherProfile.avatar} 
-                  alt={currentUser?.fullName || teacherProfile.name}
+                  alt={getOfficialDisplayName(currentUser, allUsers) || teacherProfile.name}
                   className="w-6 h-6 rounded-full border border-slate-200 object-cover bg-white shrink-0"
                 />
                 <div className="min-w-0">
                   <div className="text-[10.5px] font-black text-slate-800 truncate leading-tight">
-                    {currentUser?.fullName || teacherProfile.name}
+                    {getOfficialDisplayName(currentUser, allUsers) || teacherProfile.name}
                   </div>
                   <div className="text-[8.5px] font-bold text-slate-400 truncate leading-tight">
-                    {currentUser?.role === 'admin' 
-                      ? 'Tài khoản quản trị Cao nhất' 
-                      : (currentUser?.role === 'bgh' || currentUser?.isBgh)
-                      ? 'Ban Giám Hiệu'
-                      : (currentUser?.role === 'school_admin' || currentUser?.isSchoolAdmin)
-                      ? 'Quản trị Nhà trường'
-                      : (currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin)
-                      ? 'Quản trị GV Cá nhân'
-                      : currentUser?.role === 'homeroom' 
-                      ? 'GVCN Lớp ' + (currentUser?.assignedClassName || '4A1') 
-                      : 'GVBM ' + (currentUser?.subjectName || 'Tin học')}
+                    {getOfficialRoleTitle(currentUser)}
                   </div>
                 </div>
               </div>

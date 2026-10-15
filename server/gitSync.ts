@@ -267,81 +267,35 @@ export function safePreMergeWithRemote(branch = 'main'): boolean {
 }
 
 // Automatic Debounced Git Commit & Auto-Push Engine
+// Automatic Local Data Checkpoint (Bảo toàn dữ liệu cục bộ an toàn, không tự ý push GitHub gây nghẽn)
 export function scheduleAutoGitCheckpoint(reason: string, originClientId?: string) {
   if (autoCheckpointTimer) {
     clearTimeout(autoCheckpointTimer);
   }
 
-  autoCheckpointTimer = setTimeout(async () => {
+  autoCheckpointTimer = setTimeout(() => {
     try {
       if (!fs.existsSync(DATA_FILE)) return;
-
-      const db = loadDatabase();
-      const settings = db?.systemSettings;
-      const branch = settings?.githubBranch || 'main';
-
-      // 🛡️ BẢO TOÀN DỮ LIỆU: Luôn hợp nhất an toàn với remote trước khi add và commit database
-      safePreMergeWithRemote(branch);
 
       const dateStr = new Date().toLocaleString('vi-VN', {
         hour: '2-digit', minute: '2-digit', second: '2-digit',
         day: '2-digit', month: '2-digit', year: 'numeric'
       });
-      const commitMsg = `[Auto-Sync] ${reason} [${dateStr}]`;
-
-      runGit('git add data/classroom_database.json');
-      try {
-        runGit(`git commit -m "${commitMsg.replace(/"/g, '\\"')}" --allow-empty`);
-      } catch (_) {}
-
-      // Trigger automatic git push if remote is configured
-      const shouldPush = settings?.autoPushGithub !== false;
-
-      let pushSuccess = false;
-      let pushMessage = 'Đã tạo điểm sao lưu cơ sở dữ liệu trên máy chủ';
-
-      if (shouldPush) {
-        try {
-          const remotes = runGit('git remote');
-          if (remotes.includes('origin')) {
-            lastPushStatus = 'pushing';
-            // Run push asynchronously
-            exec(`git push origin HEAD:${branch}`, { cwd: ROOT_DIR }, (error, stdout, stderr) => {
-              if (error) {
-                lastPushStatus = 'error';
-                lastErrorMessage = stderr || error.message;
-                console.warn('Auto git push error (saved locally):', lastErrorMessage);
-              } else {
-                lastPushStatus = 'success';
-                lastPushTime = Date.now();
-                lastErrorMessage = '';
-                if (db.systemSettings) {
-                  db.systemSettings.lastGithubPushAt = lastPushTime;
-                  saveDatabase(db);
-                }
-              }
-            });
-            pushSuccess = true;
-            pushMessage = 'Đã lưu cục bộ và đang đồng bộ tự động lên GitHub Server';
-          }
-        } catch (e: any) {
-          console.warn('Auto push check error:', e?.message);
-        }
-      }
+      const pushMessage = `Đã lưu an toàn cơ sở dữ liệu trên máy chủ [${dateStr}]`;
 
       if (broadcastCallback) {
         broadcastCallback({
-          type: 'GITHUB_SYNC',
+          type: 'DATA_CHECKPOINT',
           timestamp: Date.now(),
           originClientId,
           message: pushMessage,
-          pushed: pushSuccess
+          reason
         });
       }
     } catch (err: any) {
       console.warn('scheduleAutoGitCheckpoint error:', err?.message);
     }
-  }, 1000); // Debounce 1 second so multiple rapid modifications batch into 1 clean commit
+  }, 1000);
 }
 
 /**
