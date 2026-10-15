@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-15T04:24:13.898Z",
+  "lastSync": "2026-10-15T04:40:23.297Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -1541,6 +1541,6 @@
   "masterSummary": {
     "totalUsers": 78,
     "totalSchools": 1,
-    "totalClassesConfigured": 75
+    "totalClassesConfigured": 73
   }
 }

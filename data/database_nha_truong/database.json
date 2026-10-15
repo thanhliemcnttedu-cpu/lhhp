@@ -1,7 +1,7 @@
 {
   "partition": "nha_truong",
   "title": "Cơ Sở Dữ Liệu Tổ Chức Nhà Trường (TIỂU HỌC SỐ 1 TÂN UYÊN & Các Trường)",
-  "lastSync": "2026-10-15T04:24:13.898Z",
+  "lastSync": "2026-10-15T04:40:23.297Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -8508,7 +8508,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792038253882
+      "updatedAt": 1792038980836
     },
     "gvcn_1a2": {
       "classes": [
@@ -10242,7 +10242,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792038252723
+      "updatedAt": 1792038981514
     },
     "gvcn_1a3": {
       "classes": [
@@ -10291,7 +10291,7 @@
           "teacherUsername": "gvcn_1a3"
         }
       ],
-      "activeClassId": "class-1791591487941",
+      "activeClassId": "class-4a1",
       "students": [
         {
           "id": "hs-1791608712196-0-z7g2",
@@ -11013,112 +11013,8 @@
       "doorPos": "right",
       "blackboardPos": "center",
       "seatingAssignments": {},
-      "attendanceRecords": [
-        {
-          "date": "2026-10-15",
-          "classId": "class-1791608320266",
-          "records": {
-            "hs-1791608350589-0-em9u": "present",
-            "hs-1791608958214-0-s09o": "present",
-            "hs-1791608350589-1-2z38": "present",
-            "hs-1791608958214-1-5i7t": "present",
-            "hs-1791608958214-2-uo9v": "present",
-            "hs-1791608958214-3-5r6j": "present",
-            "hs-1791608350589-4-sd4s": "present",
-            "hs-1791608958214-4-55dy": "present",
-            "hs-1791608350589-5-ds8d": "present",
-            "hs-1791608958214-5-2upw": "present",
-            "hs-1791608350589-6-grk0": "present",
-            "hs-1791608958214-6-d7f6": "present",
-            "hs-1791608350589-7-k5lq": "present",
-            "hs-1791608958214-7-cadu": "present",
-            "hs-1791608350589-8-4qgm": "present",
-            "hs-1791608958214-8-acte": "present",
-            "hs-1791608958214-9-3kan": "present",
-            "hs-1791608350589-10-e9pm": "present",
-            "hs-1791608958214-10-ro2r": "present",
-            "hs-1791608958214-11-akj9": "present",
-            "hs-1791608958214-12-t0lo": "present",
-            "hs-1791608350589-13-9s1d": "present",
-            "hs-1791608958214-13-w054": "present",
-            "hs-1791608350589-14-gs3y": "present",
-            "hs-1791608958214-14-35zb": "present",
-            "hs-1791608958214-15-oxds": "present",
-            "hs-1791608350589-16-p7js": "present",
-            "hs-1791608958214-16-4iad": "present",
-            "hs-1791608958214-17-vaen": "present",
-            "hs-1791608350589-18-5hsf": "present",
-            "hs-1791608958214-18-6ydx": "present",
-            "hs-1791608350589-19-u4av": "present",
-            "hs-1791608958214-19-3zd1": "present",
-            "hs-1791608958214-20-p1uq": "present",
-            "hs-1791608958214-21-eblf": "present",
-            "hs-1791608350589-22-wgv3": "present",
-            "hs-1791608958214-22-as6m": "present",
-            "hs-1791608350589-23-rqbo": "present",
-            "hs-1791608958214-23-zii0": "present",
-            "hs-1791608958214-24-f5se": "present",
-            "hs-1791608350589-25-qkne": "present",
-            "hs-1791608958214-25-ud9f": "present",
-            "hs-1791608958214-26-7c9t": "present",
-            "hs-1791608350589-27-a4pu": "present",
-            "hs-1791608958214-27-5971": "present"
-          }
-        }
-      ],
-      "boardingRecords": [
-        {
-          "date": "2026-10-15",
-          "classId": "class-1791608320266",
-          "records": {
-            "hs-1791608350589-0-em9u": "eating",
-            "hs-1791608958214-0-s09o": "eating",
-            "hs-1791608350589-1-2z38": "eating",
-            "hs-1791608958214-1-5i7t": "eating",
-            "hs-1791608958214-2-uo9v": "eating",
-            "hs-1791608958214-3-5r6j": "eating",
-            "hs-1791608350589-4-sd4s": "eating",
-            "hs-1791608958214-4-55dy": "eating",
-            "hs-1791608350589-5-ds8d": "eating",
-            "hs-1791608958214-5-2upw": "eating",
-            "hs-1791608350589-6-grk0": "eating",
-            "hs-1791608958214-6-d7f6": "eating",
-            "hs-1791608350589-7-k5lq": "eating",
-            "hs-1791608958214-7-cadu": "eating",
-            "hs-1791608350589-8-4qgm": "eating",
-            "hs-1791608958214-8-acte": "eating",
-            "hs-1791608958214-9-3kan": "eating",
-            "hs-1791608350589-10-e9pm": "eating",
-            "hs-1791608958214-10-ro2r": "eating",
-            "hs-1791608958214-11-akj9": "eating",
-            "hs-1791608958214-12-t0lo": "eating",
-            "hs-1791608350589-13-9s1d": "eating",
-            "hs-1791608958214-13-w054": "eating",
-            "hs-1791608350589-14-gs3y": "eating",
-            "hs-1791608958214-14-35zb": "eating",
-            "hs-1791608958214-15-oxds": "eating",
-            "hs-1791608350589-16-p7js": "eating",
-            "hs-1791608958214-16-4iad": "eating",
-            "hs-1791608958214-17-vaen": "eating",
-            "hs-1791608350589-18-5hsf": "eating",
-            "hs-1791608958214-18-6ydx": "eating",
-            "hs-1791608350589-19-u4av": "eating",
-            "hs-1791608958214-19-3zd1": "eating",
-            "hs-1791608958214-20-p1uq": "eating",
-            "hs-1791608958214-21-eblf": "eating",
-            "hs-1791608350589-22-wgv3": "eating",
-            "hs-1791608958214-22-as6m": "eating",
-            "hs-1791608350589-23-rqbo": "eating",
-            "hs-1791608958214-23-zii0": "eating",
-            "hs-1791608958214-24-f5se": "eating",
-            "hs-1791608350589-25-qkne": "eating",
-            "hs-1791608958214-25-ud9f": "eating",
-            "hs-1791608958214-26-7c9t": "eating",
-            "hs-1791608350589-27-a4pu": "eating",
-            "hs-1791608958214-27-5971": "eating"
-          }
-        }
-      ],
+      "attendanceRecords": [],
+      "boardingRecords": [],
       "timetable": [],
       "timetableConfig": {
         "morningPeriods": 4,
@@ -11378,12 +11274,12 @@
         }
       ],
       "teacherProfile": {
-        "name": "Hoàng Thị Hương",
+        "name": "Giáo viên",
         "birthDate": "",
         "role": "GIÁO VIÊN CHỦ NHIỆM",
         "teachingSubject": "Giáo viên chủ nhiệm",
-        "schoolName": "TIỂU HỌC SỐ 1 TÂN UYÊN",
-        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=gvcn1a3&backgroundColor=ffd5dc",
+        "schoolName": "",
+        "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Teacher&backgroundColor=ffd5dc",
         "phone": "",
         "zalo": "",
         "facebook": "",
@@ -11753,7 +11649,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792037376194
+      "updatedAt": 1792039223285
     },
     "gvcn_1a4": {
       "classes": [
