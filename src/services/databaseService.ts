@@ -1746,10 +1746,24 @@ export const databaseService = {
     });
 
     const allClassesMap = new Map<string, Classroom>();
+    const canonicalToIdMap = new Map<string, string>(); // canonicalName -> primary classId
+    const classAliasMap = new Map<string, string>();     // old/duplicate classId -> primary classId
     const allStudentsMap = new Map<string, Student>();
     const allAttendanceMap = new Map<string, DailyAttendance>();
     const allBoardingMap = new Map<string, DailyBoardingMeal>();
     const allTransactions: PointTransaction[] = [];
+
+    // Chuẩn hóa tên lớp để làm Canonical Key chống nhân đôi lớp (ví dụ: "1A2 Đỗ Thị Hải" -> "1a2_dothihai")
+    const getCanonicalKey = (name: string): string => {
+      if (!name) return '';
+      return name
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd');
+    };
 
     // Nếu hiện tại chưa có giáo viên chủ nhiệm nào (ví dụ CSDL trắng vừa dọn dẹp xong), hoàn tất ngay lập tức trong 0ms
     if (scopedTeachers.length === 0 && schoolAdmins.length === 0) {
@@ -1765,131 +1779,184 @@ export const databaseService = {
 
     // 3. Tải và tổng hợp dữ liệu từ từng giáo viên và từ các Quản trị nhà trường
     const accountsToFetch = [...scopedTeachers, ...schoolAdmins];
-    await Promise.all(
-      accountsToFetch.map(async (account) => {
-        let uData = await this.loadUserData(account.username);
-        if (!uData) {
-          try {
-            const cached = localStorage.getItem(LOCAL_DB_PREFIX + account.username.toLowerCase());
-            if (cached) uData = JSON.parse(cached);
-          } catch (_) {}
-        }
 
-        const safeUserData: UserClassroomData = uData || {
-          classes: [],
-          students: [],
-          attendanceRecords: [],
-          boardingRecords: [],
-          transactions: []
-        } as any;
-
-        // Tổng hợp lớp học (Non-Destructive Smart Merge)
-        // 🔒 Tuyệt đối KHÔNG tổng hợp lớp của giáo viên bộ môn (teacherRole === 'subject' hoặc class-sub-)
-        if (Array.isArray(safeUserData.classes)) {
-          safeUserData.classes.forEach((c: Classroom) => {
-            if (c && c.id) {
-              if (c.teacherRole === 'subject' || c.id.startsWith('class-sub-')) {
-                return;
+    // ⚡ BATCH FETCH TỐI ƯU SIÊU TỐC TỪ SUPABASE (Chỉ 1-2 truy vấn thay vì bắn 70 request lẻ tẻ gây timeout 1.5s)
+    const fetchedUserMap = new Map<string, UserClassroomData>();
+    const supabase = getBrowserSupabase();
+    if (supabase && accountsToFetch.length > 0) {
+      try {
+        const allUsernames = Array.from(new Set(accountsToFetch.map(a => (a.username || '').trim().toLowerCase())));
+        const CHUNK_SIZE = 40;
+        for (let i = 0; i < allUsernames.length; i += CHUNK_SIZE) {
+          const chunk = allUsernames.slice(i, i + CHUNK_SIZE);
+          const { data: rows, error } = await supabase
+            .from('user_classroom_data')
+            .select('username, data')
+            .in('username', chunk);
+          if (!error && Array.isArray(rows)) {
+            rows.forEach((r: any) => {
+              if (r && r.username && r.data) {
+                fetchedUserMap.set(r.username.trim().toLowerCase(), r.data as UserClassroomData);
               }
-              const cleanTeacherName = (c.teacherName && !c.teacherName.toLowerCase().includes('ban giám hiệu') && !c.teacherName.toLowerCase().includes('quản trị'))
-                ? c.teacherName
-                : (account.role === 'homeroom' ? account.fullName : c.teacherName);
-              const existing = allClassesMap.get(c.id);
-              const finalBranch = (c.branch && String(c.branch).trim())
-                ? String(c.branch).trim()
-                : (existing?.branch && String(existing.branch).trim() ? String(existing.branch).trim() : null);
-              const finalCampus = (c.campus && String(c.campus).trim())
-                ? String(c.campus).trim()
-                : (existing?.campus && String(existing.campus).trim() ? String(existing.campus).trim() : null);
-              const finalSchool = (c.schoolName && String(c.schoolName).trim())
-                ? String(c.schoolName).trim()
-                : (existing?.schoolName && String(existing.schoolName).trim() 
-                  ? String(existing.schoolName).trim() 
-                  : (account.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN'));
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Batch fetch user_classroom_data error:', err);
+      }
+    }
 
-              allClassesMap.set(c.id, {
-                ...(existing || {}),
-                ...c,
-                branch: finalBranch,
-                campus: finalCampus,
-                schoolName: finalSchool,
-                teacherUsername: c.teacherUsername || existing?.teacherUsername || (account.role === 'homeroom' ? account.username : undefined),
-                teacherName: cleanTeacherName,
-                teacherRole: 'homeroom'
-              });
+    // Duyệt qua toàn bộ danh sách tài khoản cần tổng hợp
+    for (const account of accountsToFetch) {
+      const uName = (account.username || '').trim().toLowerCase();
+      let uData = fetchedUserMap.get(uName);
+      if (!uData) {
+        try {
+          const cached = localStorage.getItem(LOCAL_DB_PREFIX + uName);
+          if (cached) uData = JSON.parse(cached);
+        } catch (_) {}
+      }
+
+      const safeUserData: UserClassroomData = uData || {
+        classes: [],
+        students: [],
+        attendanceRecords: [],
+        boardingRecords: [],
+        transactions: []
+      } as any;
+
+      // 🛡️ TỔNG HỢP LỚP HỌC (CANONICAL DEDUPLICATION & SMART MERGE)
+      // Loại trừ hoàn toàn lớp bộ môn (teacherRole === 'subject' hoặc class-sub-)
+      if (Array.isArray(safeUserData.classes)) {
+        safeUserData.classes.forEach((c: Classroom) => {
+          if (!c || !c.id) return;
+          if (c.teacherRole === 'subject' || c.id.startsWith('class-sub-')) return;
+
+          const cleanTeacherName = (c.teacherName && !c.teacherName.toLowerCase().includes('ban giám hiệu') && !c.teacherName.toLowerCase().includes('quản trị'))
+            ? c.teacherName
+            : (account.role === 'homeroom' ? account.fullName : c.teacherName);
+
+          const cKey = getCanonicalKey(c.name);
+          let targetId = c.id;
+
+          // Kiểm tra xem đã có lớp mang canonical name này chưa
+          if (cKey && canonicalToIdMap.has(cKey)) {
+            const existingId = canonicalToIdMap.get(cKey)!;
+            // Nếu lớp hiện tại là timestamp ID chuẩn (class-179...) còn ID trước đó là slug (class-1a2...) -> ưu tiên timestamp ID
+            if (c.id.startsWith('class-179') && !existingId.startsWith('class-179')) {
+              const oldCls = allClassesMap.get(existingId);
+              allClassesMap.delete(existingId);
+              canonicalToIdMap.set(cKey, c.id);
+              classAliasMap.set(existingId, c.id);
+              targetId = c.id;
+              if (oldCls) allClassesMap.set(targetId, oldCls);
+            } else {
+              targetId = existingId;
+              classAliasMap.set(c.id, existingId);
             }
+          } else if (cKey) {
+            canonicalToIdMap.set(cKey, c.id);
+          }
+
+          const existing = allClassesMap.get(targetId);
+          const finalBranch = (c.branch && String(c.branch).trim())
+            ? String(c.branch).trim()
+            : (existing?.branch && String(existing.branch).trim() ? String(existing.branch).trim() : null);
+          const finalCampus = (c.campus && String(c.campus).trim())
+            ? String(c.campus).trim()
+            : (existing?.campus && String(existing.campus).trim() ? String(existing.campus).trim() : null);
+          const finalSchool = (c.schoolName && String(c.schoolName).trim())
+            ? String(c.schoolName).trim()
+            : (existing?.schoolName && String(existing.schoolName).trim() 
+              ? String(existing.schoolName).trim() 
+              : (account.schoolName || 'TIỂU HỌC SỐ 1 TÂN UYÊN'));
+
+          allClassesMap.set(targetId, {
+            ...(existing || {}),
+            ...c,
+            id: targetId,
+            branch: finalBranch,
+            campus: finalCampus,
+            schoolName: finalSchool,
+            teacherUsername: c.teacherUsername || existing?.teacherUsername || (account.role === 'homeroom' ? account.username : undefined),
+            teacherName: cleanTeacherName || existing?.teacherName,
+            teacherRole: 'homeroom'
           });
-        }
+        });
+      }
 
-        // Tổng hợp học sinh
-        // 🔒 Tuyệt đối KHÔNG tổng hợp học sinh của các lớp bộ môn và loại bỏ học sinh test của 1A12
-        if (Array.isArray(safeUserData.students)) {
-          safeUserData.students.forEach((s: Student) => {
-            if (s && s.id) {
-              if (s.classId === 'class-1791592764810' || (s.classId && s.classId.startsWith('class-sub-'))) {
-                return;
-              }
-              allStudentsMap.set(s.id, s);
-            }
+      // 🛡️ TỔNG HỢP HỌC SINH (Mapping classId theo classAliasMap)
+      if (Array.isArray(safeUserData.students)) {
+        safeUserData.students.forEach((s: Student) => {
+          if (!s || !s.id) return;
+          if (s.classId === 'class-1791592764810' || (s.classId && s.classId.startsWith('class-sub-'))) return;
+          
+          const mappedClassId = classAliasMap.get(s.classId) || s.classId;
+          const existingS = allStudentsMap.get(s.id);
+
+          // Giữ điểm số thi đua cao nhất nếu có sự chênh lệch giữa các cache
+          const finalPoints = Math.max(s.points || 0, existingS?.points || 0);
+
+          allStudentsMap.set(s.id, {
+            ...(existingS || {}),
+            ...s,
+            classId: mappedClassId,
+            points: finalPoints
           });
-        }
+        });
+      }
 
-        // Lấy tập ID các lớp mà giáo viên này thực sự làm chủ nhiệm
-        const ownedClassIds = new Set(
-          (safeUserData.classes || [])
-            .filter((c: Classroom) => {
-              if (!c || !c.id) return false;
-              const tUsername = (c.teacherUsername || '').trim().toLowerCase().replace('_', '');
-              const curUserNorm = (account.username || '').trim().toLowerCase().replace('_', '');
-              return !tUsername || tUsername === curUserNorm;
-            })
-            .map((c: Classroom) => c.id)
-        );
+      // 🛡️ TỔNG HỢP ĐIỂM DANH (CHUYÊN CẦN)
+      if (Array.isArray(safeUserData.attendanceRecords)) {
+        safeUserData.attendanceRecords.forEach((att: DailyAttendance) => {
+          if (!att || !att.date || !att.classId) return;
+          const mappedClassId = classAliasMap.get(att.classId) || att.classId;
+          const attKey = `${att.date}_${mappedClassId}`;
+          const existingAtt = allAttendanceMap.get(attKey);
+          if (existingAtt) {
+            allAttendanceMap.set(attKey, {
+              ...existingAtt,
+              ...att,
+              classId: mappedClassId,
+              records: { ...(existingAtt.records || {}), ...(att.records || {}) }
+            });
+          } else {
+            allAttendanceMap.set(attKey, {
+              ...att,
+              classId: mappedClassId
+            });
+          }
+        });
+      }
 
-        // Tổng hợp chuyên cần / điểm danh (Smart Deep Merge từ đúng GVCN phụ trách lớp)
-        if (Array.isArray(safeUserData.attendanceRecords)) {
-          safeUserData.attendanceRecords.forEach((att: DailyAttendance) => {
-            if (att && att.date && att.classId && ownedClassIds.has(att.classId)) {
-              const attKey = `${att.date}_${att.classId}`;
-              const existingAtt = allAttendanceMap.get(attKey);
-              if (existingAtt) {
-                allAttendanceMap.set(attKey, {
-                  ...existingAtt,
-                  ...att,
-                  records: { ...(existingAtt.records || {}), ...(att.records || {}) }
-                });
-              } else {
-                allAttendanceMap.set(attKey, att);
-              }
-            }
-          });
-        }
+      // 🛡️ TỔNG HỢP BÁN TRÚ (BOARDING MEALS)
+      if (Array.isArray(safeUserData.boardingRecords)) {
+        safeUserData.boardingRecords.forEach((b: DailyBoardingMeal) => {
+          if (!b || !b.date || !b.classId) return;
+          const mappedClassId = classAliasMap.get(b.classId) || b.classId;
+          const bKey = `${b.date}_${mappedClassId}`;
+          const existingB = allBoardingMap.get(bKey);
+          if (existingB) {
+            allBoardingMap.set(bKey, {
+              ...existingB,
+              ...b,
+              classId: mappedClassId,
+              records: { ...(existingB.records || {}), ...(b.records || {}) }
+            });
+          } else {
+            allBoardingMap.set(bKey, {
+              ...b,
+              classId: mappedClassId
+            });
+          }
+        });
+      }
 
-        // Tổng hợp bán trú (Smart Deep Merge từ đúng GVCN phụ trách lớp)
-        if (Array.isArray(safeUserData.boardingRecords)) {
-          safeUserData.boardingRecords.forEach((b: DailyBoardingMeal) => {
-            if (b && b.date && b.classId && ownedClassIds.has(b.classId)) {
-              const bKey = `${b.date}_${b.classId}`;
-              const existingB = allBoardingMap.get(bKey);
-              if (existingB) {
-                allBoardingMap.set(bKey, {
-                  ...existingB,
-                  ...b,
-                  records: { ...(existingB.records || {}), ...(b.records || {}) }
-                });
-              } else {
-                allBoardingMap.set(bKey, b);
-              }
-            }
-          });
-        }
-
-        // Tổng hợp giao dịch điểm thi đua
-        if (Array.isArray(safeUserData.transactions)) {
-          allTransactions.push(...safeUserData.transactions);
-        }
-      })
-    );
+      // Tổng hợp giao dịch điểm thi đua
+      if (Array.isArray(safeUserData.transactions)) {
+        allTransactions.push(...safeUserData.transactions);
+      }
+    }
 
     // 🛡️ BẢO TOÀN DỮ LIỆU: Bổ sung thông tin branch/campus và records từ row của admin/adminquantri hoặc chính currentUser và school_admin
     try {
@@ -1901,73 +1968,84 @@ export const databaseService = {
         });
       }
 
-      const supabase = getBrowserSupabase();
-      if (supabase) {
-        const { data: adminRows } = await supabase.from('user_classroom_data').select('username, data').in('username', checkUsers);
-        if (adminRows) {
-          for (const aRow of adminRows) {
-            const aData = aRow?.data || {};
-            const aClasses = aData.classes;
-            if (Array.isArray(aClasses)) {
-              for (const ac of aClasses) {
-                if (ac && ac.id) {
-                  if (ac.teacherRole === 'subject' || ac.id.startsWith('class-sub-')) continue;
-                  if (allClassesMap.has(ac.id)) {
-                    const targetCls = allClassesMap.get(ac.id)!;
-                    if (!targetCls.campus && ac.campus && String(ac.campus).trim()) {
-                      targetCls.campus = String(ac.campus).trim();
-                    }
-                    if (!targetCls.branch && ac.branch && String(ac.branch).trim()) {
-                      targetCls.branch = String(ac.branch).trim();
-                    }
-                    if (!targetCls.schoolName && ac.schoolName && String(ac.schoolName).trim()) {
-                      targetCls.schoolName = String(ac.schoolName).trim();
-                    }
-                  } else {
-                    allClassesMap.set(ac.id, ac);
-                  }
-                }
+      const adminDataList: UserClassroomData[] = [];
+      for (const u of checkUsers) {
+        const d = fetchedUserMap.get(u);
+        if (d) adminDataList.push(d);
+      }
+
+      for (const aData of adminDataList) {
+        if (!aData) continue;
+        const aClasses = aData.classes;
+        if (Array.isArray(aClasses)) {
+          for (const ac of aClasses) {
+            if (!ac || !ac.id) continue;
+            if (ac.teacherRole === 'subject' || ac.id.startsWith('class-sub-')) continue;
+
+            const cKey = getCanonicalKey(ac.name);
+            const targetId = classAliasMap.get(ac.id) || (cKey ? canonicalToIdMap.get(cKey) : null) || ac.id;
+
+            if (allClassesMap.has(targetId)) {
+              const targetCls = allClassesMap.get(targetId)!;
+              if (!targetCls.campus && ac.campus && String(ac.campus).trim()) {
+                targetCls.campus = String(ac.campus).trim();
+              }
+              if (!targetCls.branch && ac.branch && String(ac.branch).trim()) {
+                targetCls.branch = String(ac.branch).trim();
+              }
+              if (!targetCls.schoolName && ac.schoolName && String(ac.schoolName).trim()) {
+                targetCls.schoolName = String(ac.schoolName).trim();
+              }
+            } else {
+              allClassesMap.set(targetId, { ...ac, id: targetId });
+              if (cKey) canonicalToIdMap.set(cKey, targetId);
+            }
+          }
+        }
+        if (Array.isArray(aData.students)) {
+          for (const st of aData.students) {
+            if (st && st.id && st.classId !== 'class-1791592764810' && !st.classId.startsWith('class-sub-')) {
+              const mappedClassId = classAliasMap.get(st.classId) || st.classId;
+              const existingS = allStudentsMap.get(st.id);
+              const finalPoints = Math.max(st.points || 0, existingS?.points || 0);
+              allStudentsMap.set(st.id, { ...(existingS || {}), ...st, classId: mappedClassId, points: finalPoints });
+            }
+          }
+        }
+        if (Array.isArray(aData.attendanceRecords)) {
+          for (const att of aData.attendanceRecords) {
+            if (att && att.date && att.classId) {
+              const mappedClassId = classAliasMap.get(att.classId) || att.classId;
+              const attKey = `${att.date}_${mappedClassId}`;
+              const existing = allAttendanceMap.get(attKey);
+              if (existing) {
+                allAttendanceMap.set(attKey, {
+                  ...existing,
+                  ...att,
+                  classId: mappedClassId,
+                  records: { ...(existing.records || {}), ...(att.records || {}) }
+                });
+              } else {
+                allAttendanceMap.set(attKey, { ...att, classId: mappedClassId });
               }
             }
-            if (Array.isArray(aData.students)) {
-              for (const st of aData.students) {
-                if (st && st.id && st.classId !== 'class-1791592764810' && !st.classId.startsWith('class-sub-') && !allStudentsMap.has(st.id)) {
-                  allStudentsMap.set(st.id, st);
-                }
-              }
-            }
-            if (Array.isArray(aData.attendanceRecords)) {
-              for (const att of aData.attendanceRecords) {
-                if (att && att.date && att.classId) {
-                  const attKey = `${att.date}_${att.classId}`;
-                  const existing = allAttendanceMap.get(attKey);
-                  if (existing) {
-                    allAttendanceMap.set(attKey, {
-                      ...existing,
-                      ...att,
-                      records: { ...(existing.records || {}), ...(att.records || {}) }
-                    });
-                  } else {
-                    allAttendanceMap.set(attKey, att);
-                  }
-                }
-              }
-            }
-            if (Array.isArray(aData.boardingRecords)) {
-              for (const b of aData.boardingRecords) {
-                if (b && b.date && b.classId) {
-                  const bKey = `${b.date}_${b.classId}`;
-                  const existing = allBoardingMap.get(bKey);
-                  if (existing) {
-                    allBoardingMap.set(bKey, {
-                      ...existing,
-                      ...b,
-                      records: { ...(existing.records || {}), ...(b.records || {}) }
-                    });
-                  } else {
-                    allBoardingMap.set(bKey, b);
-                  }
-                }
+          }
+        }
+        if (Array.isArray(aData.boardingRecords)) {
+          for (const b of aData.boardingRecords) {
+            if (b && b.date && b.classId) {
+              const mappedClassId = classAliasMap.get(b.classId) || b.classId;
+              const bKey = `${b.date}_${mappedClassId}`;
+              const existing = allBoardingMap.get(bKey);
+              if (existing) {
+                allBoardingMap.set(bKey, {
+                  ...existing,
+                  ...b,
+                  classId: mappedClassId,
+                  records: { ...(existing.records || {}), ...(b.records || {}) }
+                });
+              } else {
+                allBoardingMap.set(bKey, { ...b, classId: mappedClassId });
               }
             }
           }
@@ -1984,8 +2062,11 @@ export const databaseService = {
               for (const ac of aData.classes) {
                 if (ac && ac.id) {
                   if (ac.teacherRole === 'subject' || ac.id.startsWith('class-sub-')) continue;
-                  if (allClassesMap.has(ac.id)) {
-                    const targetCls = allClassesMap.get(ac.id)!;
+                  const cKey = getCanonicalKey(ac.name);
+                  const targetId = classAliasMap.get(ac.id) || (cKey ? canonicalToIdMap.get(cKey) : null) || ac.id;
+
+                  if (allClassesMap.has(targetId)) {
+                    const targetCls = allClassesMap.get(targetId)!;
                     if (!targetCls.campus && ac.campus && String(ac.campus).trim()) {
                       targetCls.campus = String(ac.campus).trim();
                     }
@@ -1996,15 +2077,19 @@ export const databaseService = {
                       targetCls.schoolName = String(ac.schoolName).trim();
                     }
                   } else {
-                    allClassesMap.set(ac.id, ac);
+                    allClassesMap.set(targetId, { ...ac, id: targetId });
+                    if (cKey) canonicalToIdMap.set(cKey, targetId);
                   }
                 }
               }
             }
             if (Array.isArray(aData.students)) {
               for (const st of aData.students) {
-                if (st && st.id && st.classId !== 'class-1791592764810' && !st.classId.startsWith('class-sub-') && !allStudentsMap.has(st.id)) {
-                  allStudentsMap.set(st.id, st);
+                if (st && st.id && st.classId !== 'class-1791592764810' && !st.classId.startsWith('class-sub-')) {
+                  const mappedClassId = classAliasMap.get(st.classId) || st.classId;
+                  const existingS = allStudentsMap.get(st.id);
+                  const finalPoints = Math.max(st.points || 0, existingS?.points || 0);
+                  allStudentsMap.set(st.id, { ...(existingS || {}), ...st, classId: mappedClassId, points: finalPoints });
                 }
               }
             }
