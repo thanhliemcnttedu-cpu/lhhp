@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "appName": "LỚP HỌC HẠNH PHÚC - CƠ SỞ DỮ LIỆU ĐỒNG BỘ GITHUB",
-  "lastSync": "2026-10-15T04:40:23.297Z",
+  "lastSync": "2026-10-15T05:21:18.657Z",
   "schools": [
     {
       "id": "school_1791779023757_riyn",
@@ -2724,11 +2724,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 3,
           "classId": "class-1791608320266",
           "birthDate": "12/10/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "Toán học": 3
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -2895,11 +2897,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 2,
           "classId": "class-1791608320266",
           "birthDate": "16/06/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 2
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -3995,7 +3999,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792038981514
+      "updatedAt": 1792041277927
     },
     "gvcn_1a1": {
       "classes": [
@@ -9863,7 +9867,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792039223285
+      "updatedAt": 1792041292383
     },
     "bgh_thths1tu": {
       "classes": [
@@ -13871,11 +13875,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 3,
           "classId": "class-1791608320266",
           "birthDate": "12/10/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "Toán học": 3
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -14051,11 +14057,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 2,
           "classId": "class-1791608320266",
           "birthDate": "16/06/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 2
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -15970,7 +15978,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792037307459
+      "updatedAt": 1792040996117
     },
     "quantriths1tu": {
       "classes": [
@@ -19978,11 +19986,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 3,
           "classId": "class-1791608320266",
           "birthDate": "12/10/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "Toán học": 3
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -20158,11 +20168,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 2,
           "classId": "class-1791608320266",
           "birthDate": "16/06/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 2
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -22077,7 +22089,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792037282599
+      "updatedAt": 1792040996117
     },
     "gvcn_1a12": {
       "classes": [
@@ -23534,7 +23546,7 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792039223285
+      "updatedAt": 1792041292383
     },
     "gvcn1a4": {
       "classes": [
@@ -24103,11 +24115,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-49.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 3,
           "classId": "class-1791608320266",
           "birthDate": "12/10/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "Toán học": 3
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -24274,11 +24288,13 @@
           "roles": [],
           "avatar": "/avatars/real_demo/boys/student-avatar-33.jpg",
           "gender": "Nữ",
-          "points": 0,
+          "points": 2,
           "classId": "class-1791608320266",
           "birthDate": "16/06/2020",
           "avatarScale": 1,
-          "subjectPoints": {},
+          "subjectPoints": {
+            "GHI CHUNG / NỀ NẾP": 2
+          },
           "avatarPosition": {
             "x": 0,
             "y": 0
@@ -25374,10 +25390,37 @@
         }
       ],
       "infographicConfig": null,
-      "updatedAt": 1792038981514
+      "updatedAt": 1792041277927
     }
   },
   "auditLogs": [
+    {
+      "id": "log-1792041678656-un026f",
+      "timestamp": 1792041678656,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1792040975981-rgrraz",
+      "timestamp": 1792040975982,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 3 xu cho 1 học sinh (Lý do: Trả lời đúng câu nhiều đáp án môn Toán học, Môn: Toán học)"
+    },
+    {
+      "id": "log-1792040842809-eml3by",
+      "timestamp": 1792040842810,
+      "username": "gvcn_1a2",
+      "userFullName": "Đỗ Thị Hải",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 2 xu cho 1 học sinh (Lý do: Thưởng trò chơi Tàu Vũ Trụ Khám Phá, Môn: GHI CHUNG / NỀ NẾP)"
+    },
     {
       "id": "log-1792033494039-msfewd",
       "timestamp": 1792033494039,
