@@ -53,6 +53,7 @@ interface ClassroomContextType {
   bulkAddStudents: (students: Array<{ name: string; gender: 'Nam' | 'Nữ'; birthDate?: string; group?: string; role?: string; roles?: string[] }>) => void;
   autoAssignRealAvatarsToClass: (classId?: string) => void;
   autoAssignAvatarsToClass: (classId?: string, type?: AvatarSourceType, overwrite?: boolean) => { updatedCount: number; totalCount: number };
+  batchUpdateStudentAvatars?: (updates: Array<{ studentId: string; avatar: string }>) => number;
   resetStudentsCoins: (studentIds?: string[], classId?: string) => void;
 
   subjects: Subject[];
@@ -174,6 +175,13 @@ interface ClassroomContextType {
   isDemo: boolean;
   isBgh: boolean;
   canManageAccounts: boolean;
+  // Quyền hạn tôn trọng Giáo viên chủ nhiệm (GVCN Autonomy & Permissions)
+  isSchoolAdminOrBgh: boolean;
+  canEvaluateEmulation: boolean;
+  canEditStudentAvatar: boolean;
+  canResetOrAssignCoins: boolean;
+  canCreateClassInfographic: boolean;
+  canConfigureCoinSubjects: boolean;
   isRegistrationModalOpen: boolean;
   setIsRegistrationModalOpen: (open: boolean) => void;
   demoWarningMessage: string | null;
@@ -247,6 +255,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const isGuestAdmin = Boolean(currentUser?.role === 'guest_admin' || currentUser?.isGuestAdmin);
   const isAdmin = Boolean(currentUser?.role === 'admin' || isBgh || isSchoolAdmin || isGuestAdmin);
   const canManageAccounts = Boolean(currentUser?.role === 'admin' || isSchoolAdmin || isGuestAdmin || isBgh);
+
+  // 🛡️ BẢO TOÀN TÔN TRỌNG QUYỀN GIÁO VIÊN CHỦ NHIỆM (GVCN AUTONOMY PROTOCOL)
+  // BGH & Quản trị nhà trường không được đánh giá thi đua, đổi/gán avatar, reset/gán xu, tạo infographic, cấu hình nhận xu
+  const isSchoolAdminOrBgh = !isSuperAdmin && Boolean(isSchoolAdmin || isBgh);
+  const canEvaluateEmulation = !isSchoolAdminOrBgh;
+  const canEditStudentAvatar = !isSchoolAdminOrBgh;
+  const canResetOrAssignCoins = !isSchoolAdminOrBgh;
+  const canCreateClassInfographic = !isSchoolAdminOrBgh;
+  const canConfigureCoinSubjects = !isSchoolAdminOrBgh;
 
   const currentUserRef = useRef<UserAccount | null>(currentUser);
   useEffect(() => {
@@ -585,6 +602,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const [infographicConfig, setInfographicConfig] = useState<any>(null);
   const updateInfographicConfig = (cfg: any) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền tạo hoặc chỉnh sửa Infographic lớp học.");
+      return;
+    }
     setInfographicConfig(cfg);
   };
 
@@ -1960,11 +1981,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     .filter(s => s.classId === (effectiveActiveClassId || activeClassId))
     .sort((a, b) => a.stt - b.stt);
 
-  // BGH check helper
+  // BGH & Quản trị nhà trường check helper
   const checkBghPermission = () => {
     if (isSuperAdmin) return true; // Supreme Privileges: Toàn quyền can thiệp CSDL
-    if (isBgh && !isSchoolAdmin && currentUser?.role !== 'admin') {
-      setPermissionAlert("Bạn chỉ có quyền xem thông tin, hãy tôn trọng tính chính xác của giáo viên đã cập nhật.");
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Bạn đang ở chế độ xem thông tin giám sát. Để tôn trọng quyền tự chủ của Giáo viên chủ nhiệm, thao tác này chỉ do GVCN thực hiện.");
       return false;
     }
     return true;
@@ -2474,6 +2495,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateStudent = (id: string, data: Partial<Student>) => {
+    if (isSchoolAdminOrBgh && (data.avatar !== undefined || data.originalAvatar !== undefined || data.points !== undefined || data.avatarScale !== undefined || data.avatarPosition !== undefined)) {
+      setPermissionAlert("Để tôn trọng quyền của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền thay đổi ảnh đại diện hoặc điểm/xu của học sinh.");
+      return;
+    }
     if (!checkBghPermission()) return;
     // Release anti-echo locks immediately so user actions always take precedence
     isApplyingRemoteUpdateRef.current = false;
@@ -2718,6 +2743,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const resetStudentsCoins = (studentIds?: string[], classId?: string) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền đặt lại (reset) hoặc gán xu của học sinh.");
+      return;
+    }
     if (!checkBghPermission()) return;
     const targetClassId = classId || activeClassId;
     setStudents(prev => prev.map(s => {
@@ -2816,6 +2845,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     type: AvatarSourceType = 'default',
     overwrite: boolean = false
   ): { updatedCount: number; totalCount: number } => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền tự động gán ảnh đại diện của học sinh.");
+      return { updatedCount: 0, totalCount: 0 };
+    }
     const cId = targetClassId || activeClassId;
     if (!cId) return { updatedCount: 0, totalCount: 0 };
     let updatedCount = 0;
@@ -2922,8 +2955,114 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     autoAssignAvatarsToClass(targetClassId, 'real_demo', true);
   };
 
+  // Cập nhật hàng loạt ảnh đại diện học sinh (từ ảnh chụp tập thể cả lớp hoặc công cụ cắt ghép)
+  const batchUpdateStudentAvatars = (
+    updates: Array<{ studentId: string; avatar: string }>
+  ): number => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền thay đổi hoặc gán ảnh đại diện của học sinh.");
+      return 0;
+    }
+    if (updates.length === 0) return 0;
+    const nowTs = Date.now();
+    isApplyingRemoteUpdateRef.current = false;
+    remoteUpdateLockUntilRef.current = 0;
+
+    const updateMap = new Map(updates.map(u => [u.studentId, u.avatar]));
+    const currentStudents = studentsRef.current.length > 0 ? studentsRef.current : students;
+
+    let updatedCount = 0;
+    const nextStudents = currentStudents.map(s => {
+      const newAvatar = updateMap.get(s.id);
+      if (newAvatar) {
+        updatedCount++;
+        return {
+          ...s,
+          avatar: newAvatar,
+          originalAvatar: newAvatar,
+          avatarScale: 1,
+          avatarPosition: { x: 0, y: 0 },
+          flipX: false
+        };
+      }
+      return s;
+    });
+
+    setStudents(nextStudents);
+    studentsRef.current = nextStudents;
+
+    const currentClass = classes.find(c => c.id === activeClassId);
+    logUserActivity(
+      'BATCH_AVATARS',
+      `Cập nhật ảnh đại diện từ ảnh tập thể cho ${updatedCount} học sinh lớp ${currentClass?.name || ''}`
+    );
+
+    lastRemoteTimestampRef.current = nowTs;
+
+    if (currentUser) {
+      setDbSyncStatus('syncing');
+      const userSchool = currentUser.schoolName || '';
+
+      // Đồng bộ từng học sinh được cập nhật lên server
+      updates.forEach(u => {
+        const targetStudent = nextStudents.find(s => s.id === u.studentId);
+        if (targetStudent) {
+          databaseService.updateAdminStudent(targetStudent, currentUser.username, false, userSchool).catch(() => {});
+        }
+      });
+
+      if (isSuperAdmin) {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).catch(() => {});
+        databaseService.syncAdminAllData(classesRef.current.length > 0 ? classesRef.current : classes, nextStudents).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      } else {
+        const payload: UserClassroomData = {
+          ...getCurrentUserData(),
+          students: nextStudents,
+          updatedAt: nowTs
+        };
+        databaseService.saveUserData(currentUser.username, payload).then(() => {
+          setDbSyncStatus('synced');
+          const now = new Date();
+          setLastDbSyncTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+        }).catch(() => {
+          setDbSyncStatus('offline');
+        });
+      }
+    }
+
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('lop_hoc_realtime_local');
+        bc.postMessage({ 
+          type: 'STUDENTS_BULK_UPDATED', 
+          classId: activeClassId, 
+          students: nextStudents, 
+          timestamp: nowTs 
+        });
+        bc.close();
+      }
+    } catch (_) {}
+
+    return updatedCount;
+  };
+
   // Subjects (Cấu hình nhận xu: Thêm, sửa, xóa, thiết lập áp dụng cho lớp/giáo viên)
   const addSubject = (name: string, color = '#3B82F6', icon = 'BookOpen') => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền cấu hình nhận xu.");
+      return;
+    }
     const trimmed = name.trim();
     if (!trimmed) return;
     const newSub: Subject = {
@@ -2943,14 +3082,26 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateSubject = (id: string, data: Partial<Subject>) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền cấu hình nhận xu.");
+      return;
+    }
     setSubjects(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
   };
 
   const deleteSubject = (id: string) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền cấu hình nhận xu.");
+      return;
+    }
     setSubjects(prev => prev.filter(s => s.id !== id));
   };
 
   const toggleSubjectApplied = (id: string, enabled?: boolean) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền cấu hình nhận xu.");
+      return;
+    }
     setSubjects(prev => prev.map(s => {
       if (s.id === id) {
         return { ...s, enabled: enabled !== undefined ? enabled : !s.enabled };
@@ -2960,6 +3111,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const setAppliedSubjects = (subjectIds: string[]) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền cấu hình nhận xu.");
+      return;
+    }
     const idSet = new Set(subjectIds);
     setSubjects(prev => prev.map(s => ({
       ...s,
@@ -2968,6 +3123,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const resetDefaultSubjects = () => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền cấu hình nhận xu.");
+      return;
+    }
     setSubjects([...INITIAL_SUBJECTS]);
   };
 
@@ -2982,6 +3141,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Points Award / Deduct (Lưu theo học sinh và theo môn, không làm mất tổng xu hiện tại)
   const awardPoints = (studentIds: string[], amount: number, reason: string, subjectName?: string) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền đánh giá điểm thi đua của học sinh.");
+      return;
+    }
     if (!checkBghPermission()) return;
     if (studentIds.length === 0 || amount <= 0) return;
     playCoinSound();
@@ -3071,6 +3234,10 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const deductPoints = (studentIds: string[], amount: number, reason: string, subjectName?: string) => {
+    if (isSchoolAdminOrBgh) {
+      setPermissionAlert("Để tôn trọng quyền chủ động của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền đánh giá điểm thi đua của học sinh.");
+      return;
+    }
     if (studentIds.length === 0 || amount <= 0) return;
     playDeductSound();
 
@@ -3982,6 +4149,7 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       bulkAddStudents,
       autoAssignRealAvatarsToClass,
       autoAssignAvatarsToClass,
+      batchUpdateStudentAvatars,
       resetStudentsCoins,
 
       subjects,
@@ -4102,6 +4270,12 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isDemo,
       isBgh,
       canManageAccounts,
+      isSchoolAdminOrBgh,
+      canEvaluateEmulation,
+      canEditStudentAvatar,
+      canResetOrAssignCoins,
+      canCreateClassInfographic,
+      canConfigureCoinSubjects,
       isRegistrationModalOpen,
       setIsRegistrationModalOpen,
       demoWarningMessage,

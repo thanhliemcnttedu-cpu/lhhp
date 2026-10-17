@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Upload, X, ZoomIn, ZoomOut, Check, Move, RotateCcw, 
-  Sparkles, Loader2, Camera, CameraOff, RefreshCw, FlipHorizontal, Info 
+  Sparkles, Loader2, Camera, CameraOff, RefreshCw, FlipHorizontal, Info, Users 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playCoinSound } from '../../utils/audio';
@@ -17,6 +17,7 @@ interface AvatarEditorModalProps {
   currentScale?: number;
   currentPosition?: { x: number; y: number };
   currentFlipX?: boolean;
+  onOpenGroupPhoto?: () => void;
   onClose: () => void;
   onSave: (
     croppedAvatarUrl: string, 
@@ -35,6 +36,7 @@ export const AvatarEditorModal: React.FC<AvatarEditorModalProps> = ({
   currentScale = 1,
   currentPosition = { x: 0, y: 0 },
   currentFlipX = false,
+  onOpenGroupPhoto,
   onClose,
   onSave
 }) => {
@@ -674,6 +676,32 @@ export const AvatarEditorModal: React.FC<AvatarEditorModalProps> = ({
                   </span>
                 </div>
               </button>
+
+              {/* Card 3: Crop from Class Group Photo */}
+              {onOpenGroupPhoto && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopCameraStream();
+                    handleSafeClose();
+                    onOpenGroupPhoto();
+                  }}
+                  className="group w-full p-4 rounded-2xl bg-white hover:bg-emerald-50/70 border-2 border-emerald-300 hover:border-emerald-500 text-left transition-all hover-zoom-btn shadow-sm flex items-center gap-3.5 relative overflow-hidden ring-1 ring-emerald-200"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-emerald-100 group-hover:bg-emerald-600 group-hover:text-white text-emerald-700 flex items-center justify-center transition-colors shrink-0 shadow-xs">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <strong className="text-xs font-black uppercase text-slate-800 group-hover:text-emerald-700 block transition-colors flex items-center gap-1.5">
+                      <span>CẮT TỪ ẢNH TẬP THỂ</span>
+                      <span className="px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase">MỚI</span>
+                    </strong>
+                    <span className="text-[11px] text-slate-500 block leading-snug font-medium mt-0.5">
+                      Tải ảnh chụp tập thể cả lớp và khoanh chọn khuôn mặt
+                    </span>
+                  </div>
+                </button>
+              )}
             </div>
 
             {/* Compact Info Advice Pill */}

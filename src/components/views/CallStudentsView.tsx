@@ -15,14 +15,15 @@ import {
 
 import { LuckyWheelView } from './LuckyWheelView';
 import { FilmReelView } from './FilmReelView';
+import { LuckyLensGame } from './picker/LuckyLensGame';
 import { handleAvatarImgError } from '../../utils/avatarConfig';
 
-export type CallGameType = 'wheel' | 'reel' | 'duck_race';
+export type CallGameType = 'wheel' | 'reel' | 'duck_race' | 'lucky_lens';
 
 export const CallStudentsView: React.FC<{ initialGame?: CallGameType }> = ({ initialGame = 'wheel' }) => {
   const { currentClassStudents, awardPoints, activeClassId, classes } = useClassroom();
   const [activeGame, setActiveGame] = useState<CallGameType>(
-    (initialGame as string) === 'photo_cards' || (initialGame as string) === 'lucky_lens' ? 'reel' : initialGame
+    (initialGame as string) === 'photo_cards' ? 'reel' : initialGame
   );
 
   const activeClass = classes.find(c => c.id === activeClassId);
@@ -82,6 +83,17 @@ export const CallStudentsView: React.FC<{ initialGame?: CallGameType }> = ({ ini
             <span>Đua Vịt</span>
             <span className="px-1 py-0.2 bg-amber-400 text-amber-950 text-[9px] rounded font-black">HOT</span>
           </button>
+
+          <button
+            onClick={() => setActiveGame('lucky_lens')}
+            className={`px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 hover-zoom-btn ${
+              activeGame === 'lucky_lens' ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <span>📸</span>
+            <span>Ống Kính</span>
+            <span className="px-1 py-0.2 bg-cyan-400 text-slate-950 text-[9px] rounded font-black">MỚI</span>
+          </button>
         </div>
       </div>
 
@@ -89,6 +101,7 @@ export const CallStudentsView: React.FC<{ initialGame?: CallGameType }> = ({ ini
       {activeGame === 'wheel' && <LuckyWheelView />}
       {activeGame === 'reel' && <FilmReelView />}
       {activeGame === 'duck_race' && <DuckRaceGame students={currentClassStudents} onAward={awardPoints} />}
+      {activeGame === 'lucky_lens' && <LuckyLensGame students={currentClassStudents} onAward={awardPoints} />}
     </div>
   );
 };
@@ -685,176 +698,4 @@ const PhotoCardsGame: React.FC<{ students: Student[]; onAward: (ids: string[], p
   );
 };
 
-/* ========================================================================= */
-/* GAME 5: ỐNG KÍNH MAY MẮN (LUCKY CAMERA LENS & SPOTLIGHT)                  */
-/* ========================================================================= */
-const LuckyLensGame: React.FC<{ students: Student[]; onAward: (ids: string[], pts: number, reason: string) => void }> = ({ students, onAward }) => {
-  const [isScanning, setIsScanning] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState<number>(0);
-  const [winner, setWinner] = useState<Student | null>(null);
-  const [flashActive, setFlashActive] = useState(false);
-  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
 
-  const filteredStudents = students.filter(s => {
-    if (selectedGroupFilter !== 'all' && (s.group || 'Tổ 1') !== selectedGroupFilter) return false;
-    return true;
-  });
-
-  const startScan = () => {
-    if (isScanning || filteredStudents.length === 0) return;
-    setIsScanning(true);
-    setWinner(null);
-    setFlashActive(false);
-
-    let speed = 50;
-    let count = 0;
-    const totalSteps = 30 + Math.floor(Math.random() * 15);
-
-    const step = () => {
-      const nextIdx = Math.floor(Math.random() * filteredStudents.length);
-      setFocusedIndex(nextIdx);
-      playTickSound(900);
-      count++;
-
-      if (count < totalSteps) {
-        speed += 10;
-        setTimeout(step, speed);
-      } else {
-        // Trigger camera snapshot flash!
-        playCameraShutterSound();
-        setFlashActive(true);
-        const winningStudent = filteredStudents[nextIdx];
-        setWinner(winningStudent);
-        setIsScanning(false);
-        playFanfareSound();
-        confetti({ particleCount: 75, spread: 80, origin: { y: 0.5 } });
-        setTimeout(() => setFlashActive(false), 300);
-      }
-    };
-
-    step();
-  };
-
-  return (
-    <div className="bg-slate-900 text-white rounded-3xl p-5 md:p-6 shadow-xl space-y-6 relative overflow-hidden border border-slate-800 hover-zoom-card">
-      {/* Camera Flash Overlay */}
-      {flashActive && (
-        <div className="absolute inset-0 bg-white z-50 pointer-events-none animate-in fade-in duration-75" />
-      )}
-
-      {/* Viewfinder Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping" />
-            <h3 className="text-base font-black text-white uppercase tracking-wider">
-              ỐNG KÍNH SĂN TÌM MAY MẮN • REC 4K
-            </h3>
-          </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Ống kính máy ảnh tự động lia và bắt trọn gương mặt học sinh may mắn trả lời câu hỏi!
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <select
-            value={selectedGroupFilter}
-            onChange={(e) => setSelectedGroupFilter(e.target.value)}
-            disabled={isScanning}
-            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-200"
-          >
-            <option value="all">Tất cả lớp học</option>
-            <option value="Tổ 1">Tổ 1</option>
-            <option value="Tổ 2">Tổ 2</option>
-            <option value="Tổ 3">Tổ 3</option>
-            <option value="Tổ 4">Tổ 4</option>
-          </select>
-
-          <button
-            onClick={startScan}
-            disabled={isScanning || filteredStudents.length === 0}
-            className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-2xl text-xs font-black shadow-md shadow-cyan-500/30 transition-all hover-zoom-btn flex items-center gap-2 disabled:opacity-50"
-          >
-            <Camera className="w-4 h-4 text-cyan-200" />
-            <span>{isScanning ? 'Đang lia ống kính...' : 'BẤM MÁY CHỤP NGẪU NHIÊN'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Grid of Student Faces with Viewfinder Target */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 relative">
-        {filteredStudents.map((st, idx) => {
-          const isFocused = focusedIndex === idx;
-
-          return (
-            <div
-              key={st.id}
-              className={`p-2.5 rounded-2xl bg-slate-800/80 border transition-all duration-150 flex flex-col items-center relative ${
-                isFocused
-                  ? 'border-cyan-400 ring-4 ring-cyan-500/50 scale-105 bg-slate-800 z-20 shadow-2xl'
-                  : 'border-slate-800 opacity-60'
-              }`}
-            >
-              {/* Camera Crosshair Target on Focused Student */}
-              {isFocused && (
-                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                  <div className="w-16 h-16 border-2 border-dashed border-cyan-400 rounded-full animate-spin" />
-                  <span className="absolute top-1 left-1 text-[9px] font-mono font-black text-cyan-400">TARGET</span>
-                  <span className="absolute bottom-1 right-1 text-[9px] font-mono font-black text-cyan-400">LOCK</span>
-                </div>
-              )}
-
-              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-700 bg-slate-900 mb-2">
-                <img src={st.avatar} alt={st.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => handleAvatarImgError(e, st.gender, st.name)} />
-              </div>
-              <span className="text-xs font-black truncate w-full text-center">{st.name}</span>
-              <span className="text-[10px] text-slate-400">#{st.stt}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Polaroid Snapshot Winner Reveal */}
-      {winner && (
-        <div className="p-5 rounded-3xl bg-white text-slate-900 border-4 border-amber-400 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in zoom-in-95 duration-200">
-          <div className="flex items-center gap-4">
-            <div className="relative p-2 bg-slate-100 rounded-2xl shadow-inner border border-slate-300">
-              <img src={winner.avatar} alt={winner.name} className="w-20 h-20 rounded-xl object-cover bg-white" onError={(e) => handleAvatarImgError(e, winner.gender, winner.name)} />
-              <span className="absolute bottom-1 right-1 bg-amber-400 text-amber-950 text-[10px] font-black px-1 rounded">
-                POLAROID
-              </span>
-            </div>
-
-            <div>
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black uppercase">
-                <Camera className="w-3 h-3" />
-                <span>BỨC ẢNH VÀNG CỦA TIẾT HỌC</span>
-              </div>
-              <h4 className="text-lg font-black text-slate-900 mt-1">{winner.name}</h4>
-              <p className="text-xs text-slate-500 font-semibold">STT: #{winner.stt} • {winner.group || 'Tổ 1'} • Hiện có: {winner.points} xu</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => {
-                onAward([winner.id], 3, 'Bắt trọn ống kính may mắn');
-                playCoinSound();
-                setWinner(null);
-              }}
-              className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/25 hover-zoom-btn"
-            >
-              +3 Xu Chụp Ảnh
-            </button>
-            <button
-              onClick={() => setWinner(null)}
-              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};

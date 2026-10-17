@@ -63,19 +63,19 @@ export const INITIAL_CLASSES: Classroom[] = [];
 // 3 Môn mặc định theo yêu cầu hệ thống
 export const DEFAULT_CORE_SUBJECTS: Subject[] = [
   { id: 'sub-general', name: 'GHI CHUNG / NỀ NẾP', icon: 'Star', color: '#F59E0B', enabled: true, isDefault: true },
-  { id: 'sub-toan', name: 'TOÁN', icon: 'Calculator', color: '#3B82F6', enabled: true, isDefault: true },
-  { id: 'sub-tiengviet', name: 'TIẾNG VIỆT', icon: 'BookOpen', color: '#EF4444', enabled: true, isDefault: true }
+  { id: 'sub-toan', name: 'TOÁN', icon: 'Calculator', color: '#3B82F6', enabled: false, isDefault: true },
+  { id: 'sub-tiengviet', name: 'TIẾNG VIỆT', icon: 'BookOpen', color: '#EF4444', enabled: false, isDefault: true }
 ];
 
 export const INITIAL_SUBJECTS: Subject[] = [
-  // 7 môn học mặc định cốt lõi dành cho Giáo viên chủ nhiệm (GVCN)
+  // 🌟 Mặc định ban đầu trên tài khoản GVCN: Chỉ cấu hình nhận xu ở môn GHI CHUNG / NỀ NẾP, các môn còn lại ở chế độ chưa cấu hình (enabled: false)
   { id: 'sub-general', name: 'GHI CHUNG / NỀ NẾP', icon: 'Star', color: '#F59E0B', enabled: true, isDefault: true },
-  { id: 'sub-toan', name: 'TOÁN', icon: 'Calculator', color: '#3B82F6', enabled: true, isDefault: true },
-  { id: 'sub-tiengviet', name: 'TIẾNG VIỆT', icon: 'BookOpen', color: '#EF4444', enabled: true, isDefault: true },
-  { id: 'sub-daoduc', name: 'ĐẠO ĐỨC', icon: 'Heart', color: '#E11D48', enabled: true, isDefault: true },
-  { id: 'sub-tnxh', name: 'TN & XÃ HỘI', icon: 'Compass', color: '#10B981', enabled: true, isDefault: true },
-  { id: 'sub-lichsu', name: 'LỊCH SỬ & ĐỊA LÝ', icon: 'Map', color: '#F97316', enabled: true, isDefault: true },
-  { id: 'sub-khoahoc', name: 'KHOA HỌC', icon: 'Atom', color: '#06B6D4', enabled: true, isDefault: true },
+  { id: 'sub-toan', name: 'TOÁN', icon: 'Calculator', color: '#3B82F6', enabled: false, isDefault: true },
+  { id: 'sub-tiengviet', name: 'TIẾNG VIỆT', icon: 'BookOpen', color: '#EF4444', enabled: false, isDefault: true },
+  { id: 'sub-daoduc', name: 'ĐẠO ĐỨC', icon: 'Heart', color: '#E11D48', enabled: false, isDefault: true },
+  { id: 'sub-tnxh', name: 'TN & XÃ HỘI', icon: 'Compass', color: '#10B981', enabled: false, isDefault: true },
+  { id: 'sub-lichsu', name: 'LỊCH SỬ & ĐỊA LÝ', icon: 'Map', color: '#F97316', enabled: false, isDefault: true },
+  { id: 'sub-khoahoc', name: 'KHOA HỌC', icon: 'Atom', color: '#06B6D4', enabled: false, isDefault: true },
   // Các môn học chuyên biệt / bộ môn (Giáo viên có thể tự do bật/tắt hoặc thêm mới theo nhu cầu)
   { id: 'sub-tienganh', name: 'TIẾNG ANH', icon: 'Globe', color: '#8B5CF6', enabled: false },
   { id: 'sub-tinhoc', name: 'TIN HỌC', icon: 'Monitor', color: '#6366F1', enabled: false },

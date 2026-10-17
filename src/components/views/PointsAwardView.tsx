@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useClassroom } from '../../context/ClassroomContext';
 import { 
   Award, PlusCircle, MinusCircle, Check, 
-  Search, BookOpen, Clock, Plus, Filter, Sparkles
+  Search, BookOpen, Clock, Plus, Filter, Sparkles, ShieldAlert
 } from 'lucide-react';
 import { handleAvatarImgError } from '../../utils/avatarConfig';
 
@@ -10,7 +10,8 @@ export const PointsAwardView: React.FC = () => {
   const { 
     currentClassStudents, criteria, addCriterion, 
     subjects, addSubject, awardPoints, deductPoints, 
-    transactions, activeClassId, teacherRole, subjectTeacherConfig
+    transactions, activeClassId, teacherRole, subjectTeacherConfig,
+    canEvaluateEmulation, canConfigureCoinSubjects
   } = useClassroom();
 
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -59,6 +60,7 @@ export const PointsAwardView: React.FC = () => {
   };
 
   const handleExecuteAward = () => {
+    if (!canEvaluateEmulation) return;
     if (selectedStudentIds.length === 0 || customAmount <= 0) return;
     const subName = isBySubject ? selectedSubject : undefined;
     awardPoints(selectedStudentIds, customAmount, customReason, subName);
@@ -66,6 +68,7 @@ export const PointsAwardView: React.FC = () => {
   };
 
   const handleExecuteDeduct = () => {
+    if (!canEvaluateEmulation) return;
     if (selectedStudentIds.length === 0 || customAmount <= 0) return;
     const subName = isBySubject ? selectedSubject : undefined;
     deductPoints(selectedStudentIds, customAmount, customReason, subName);
@@ -74,6 +77,7 @@ export const PointsAwardView: React.FC = () => {
 
   const handleCreateSubject = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canConfigureCoinSubjects) return;
     if (!newSubjectName.trim()) return;
     addSubject(newSubjectName.trim());
     setSelectedSubject(newSubjectName.trim());
@@ -103,6 +107,21 @@ export const PointsAwardView: React.FC = () => {
 
   return (
     <div className="p-2.5 sm:p-3.5 md:p-4 max-w-7xl mx-auto space-y-2.5 sm:space-y-3">
+      {/* Thông báo phân quyền BGH / Quản trị nhà trường */}
+      {!canEvaluateEmulation && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5 sm:p-4 flex items-start gap-3 text-amber-900 shadow-xs">
+          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-xs sm:text-sm font-black uppercase tracking-tight">
+              Chế độ Giám Sát / Theo Dõi Lịch Sử (Ban Giám Hiệu & Quản Trị Nhà Trường)
+            </h4>
+            <p className="text-xs text-amber-800 font-medium mt-1 leading-relaxed">
+              Để đảm bảo tôn trọng quyền chủ động của Giáo viên chủ nhiệm, tài khoản Ban Giám Hiệu và Quản trị nhà trường không có quyền đánh giá, cộng trừ điểm thi đua của học sinh. Thầy cô có thể theo dõi danh sách, tổng xu và lịch sử ghi nhận thi đua tại đây.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner */}
       <div className="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
@@ -126,8 +145,9 @@ export const PointsAwardView: React.FC = () => {
           <div className="flex items-center gap-2 flex-1 sm:flex-initial">
             <button
               onClick={handleExecuteAward}
-              disabled={selectedStudentIds.length === 0}
+              disabled={selectedStudentIds.length === 0 || !canEvaluateEmulation}
               className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all hover-zoom-btn uppercase"
+              title={!canEvaluateEmulation ? 'Chỉ GVCN mới có quyền đánh giá điểm thi đua' : undefined}
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>THƯỞNG +{customAmount} XU</span>
@@ -135,8 +155,9 @@ export const PointsAwardView: React.FC = () => {
 
             <button
               onClick={handleExecuteDeduct}
-              disabled={selectedStudentIds.length === 0}
+              disabled={selectedStudentIds.length === 0 || !canEvaluateEmulation}
               className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-black text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl shadow-xs transition-all hover-zoom-btn uppercase"
+              title={!canEvaluateEmulation ? 'Chỉ GVCN mới có quyền đánh giá điểm thi đua' : undefined}
             >
               <MinusCircle className="w-3.5 h-3.5" />
               <span>TRỪ -{customAmount} XU</span>
@@ -239,12 +260,14 @@ export const PointsAwardView: React.FC = () => {
                   <span>Gán theo môn học</span>
                 </label>
 
-                <button
-                  onClick={() => setIsAddingSubject(!isAddingSubject)}
-                  className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  + Thêm môn học
-                </button>
+                {canConfigureCoinSubjects && (
+                  <button
+                    onClick={() => setIsAddingSubject(!isAddingSubject)}
+                    className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    + Thêm môn học
+                  </button>
+                )}
               </div>
 
               {isAddingSubject && (

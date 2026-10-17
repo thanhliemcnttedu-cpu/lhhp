@@ -9,7 +9,7 @@ import {
   Edit3, Trash2, ArrowUp, ArrowDown, ZoomIn, ZoomOut,
   Maximize2, Minimize2, Plus, GripVertical, Type,
   AlignLeft, AlignCenter, AlignRight, Sliders, RotateCcw,
-  Move, MoveHorizontal, MoveVertical, Settings2, Crosshair
+  Move, MoveHorizontal, MoveVertical, Settings2, Crosshair, ShieldAlert
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { toPng } from 'html-to-image';
@@ -82,7 +82,8 @@ export const InfographicView: React.FC = () => {
     classes, activeClassId, setActiveClassId,
     students, currentClassStudents, teacherProfile,
     seatingColumns, deskCountsPerColumn, deskNumberingOrder, seatingAssignments, teacherDeskPos, doorPos,
-    timetable, timetableConfig
+    timetable, timetableConfig,
+    canCreateClassInfographic
   } = useClassroom();
 
   // Selected class for Infographic
@@ -2022,6 +2023,21 @@ export const InfographicView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+      {/* Thông báo phân quyền BGH / Quản trị nhà trường */}
+      {!canCreateClassInfographic && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 sm:p-5 flex items-start gap-3.5 text-amber-900 shadow-xs">
+          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-black uppercase tracking-tight">
+              Chế độ Giám Sát / Xem Mẫu Infographic (Ban Giám Hiệu & Quản Trị Nhà Trường)
+            </h4>
+            <p className="text-xs text-amber-800 font-medium mt-1 leading-relaxed">
+              Để đảm bảo tôn trọng quyền chủ động của Giáo viên chủ nhiệm, chức năng tạo và thiết kế Infographic báo cáo lớp học thuộc thẩm quyền của GVCN lớp. Tài khoản Ban Giám Hiệu và Quản trị nhà trường đang ở chế độ xem mẫu báo cáo.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner Toolbar */}
       <div className="bg-white/95 backdrop-blur-md p-5 rounded-3xl border border-indigo-100 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover-zoom-card">
         <div>
@@ -2046,41 +2062,47 @@ export const InfographicView: React.FC = () => {
         {/* Action Controls */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
           {/* Nút Bật/Tắt Chế độ chỉnh sửa Layer */}
-          <button
-            type="button"
-            onClick={() => setIsEditMode(!isEditMode)}
-            className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black rounded-2xl shadow-xs transition-all hover-zoom-btn ${
-              isEditMode 
-                ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/25 ring-2 ring-amber-300' 
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'
-            }`}
-            title="Bật/Tắt chế độ chỉnh sửa layer trực tiếp trên trang thiết kế"
-          >
-            <Edit3 className="w-4 h-4 shrink-0" />
-            <span className="truncate">{isEditMode ? 'ĐANG CHỈNH SỬA' : 'CHẾ ĐỘ THIẾT KẾ'}</span>
-          </button>
+          {canCreateClassInfographic && (
+            <button
+              type="button"
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black rounded-2xl shadow-xs transition-all hover-zoom-btn ${
+                isEditMode 
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/25 ring-2 ring-amber-300' 
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'
+              }`}
+              title="Bật/Tắt chế độ chỉnh sửa layer trực tiếp trên trang thiết kế"
+            >
+              <Edit3 className="w-4 h-4 shrink-0" />
+              <span className="truncate">{isEditMode ? 'ĐANG CHỈNH SỬA' : 'CHẾ ĐỘ THIẾT KẾ'}</span>
+            </button>
+          )}
 
           {/* Quản lý Layer */}
-          <button
-            type="button"
-            onClick={() => setIsLayerManagerOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-2xl shadow-xs transition-all hover-zoom-btn"
-            title="Mở danh sách các layer, khôi phục thành phần đã xóa hoặc thêm mới"
-          >
-            <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
-            <span className="truncate">LAYER ({layers.filter(l => l.visible).length})</span>
-          </button>
+          {canCreateClassInfographic && (
+            <button
+              type="button"
+              onClick={() => setIsLayerManagerOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-2xl shadow-xs transition-all hover-zoom-btn"
+              title="Mở danh sách các layer, khôi phục thành phần đã xóa hoặc thêm mới"
+            >
+              <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span className="truncate">LAYER ({layers.filter(l => l.visible).length})</span>
+            </button>
+          )}
 
           {/* Cấu hình Wizard */}
-          <button
-            type="button"
-            onClick={() => setIsConfigModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn uppercase"
-            title="Cấu hình số trang (1, 2, 3), khổ giấy A4 dọc/ngang, chọn mẫu sơ đồ và TKB"
-          >
-            <Wand2 className="w-4 h-4 text-amber-300 shrink-0" />
-            <span className="truncate">KHỔ & TRANG</span>
-          </button>
+          {canCreateClassInfographic && (
+            <button
+              type="button"
+              onClick={() => setIsConfigModalOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-indigo-700 rounded-2xl shadow-md shadow-indigo-600/20 transition-all hover-zoom-btn uppercase"
+              title="Cấu hình số trang (1, 2, 3), khổ giấy A4 dọc/ngang, chọn mẫu sơ đồ và TKB"
+            >
+              <Wand2 className="w-4 h-4 text-amber-300 shrink-0" />
+              <span className="truncate">KHỔ & TRANG</span>
+            </button>
+          )}
 
           {/* Nút Tải PNG */}
           <button

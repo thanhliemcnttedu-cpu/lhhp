@@ -10,8 +10,9 @@ import { MysteryGiftBoxGame } from './picker/MysteryGiftBoxGame';
 import { DuckRaceGame } from './picker/DuckRaceGame';
 import { GameHomeView } from './picker/GameHomeView';
 import { HeadTiltGame } from './picker/headtilt/HeadTiltGame';
+import { LuckyLensGame } from './picker/LuckyLensGame';
 
-export type PickerGameMode = 'dashboard' | 'wheel' | 'reel' | 'rocket' | 'mystery_box' | 'duck_race' | 'head_tilt';
+export type PickerGameMode = 'dashboard' | 'wheel' | 'reel' | 'rocket' | 'mystery_box' | 'duck_race' | 'head_tilt' | 'lucky_lens';
 
 interface RandomStudentPickerViewProps {
   initialGame?: PickerGameMode;
@@ -23,13 +24,13 @@ export const RandomStudentPickerView: React.FC<RandomStudentPickerViewProps> = (
   const { currentClassStudents, classes, activeClassId } = useClassroom();
   const activeClass = classes.find(c => c.id === activeClassId) || classes[0];
   const [activeGame, setActiveGame] = useState<PickerGameMode>(
-    (initialGame as string) === 'lucky_lens' || (initialGame as string) === 'photo_cards' ? 'reel' : initialGame
+    (initialGame as string) === 'photo_cards' ? 'reel' : initialGame
   );
 
   useEffect(() => {
     if (initialGame) {
       setActiveGame(
-        (initialGame as string) === 'lucky_lens' || (initialGame as string) === 'photo_cards' ? 'reel' : initialGame
+        (initialGame as string) === 'photo_cards' ? 'reel' : initialGame
       );
     }
   }, [initialGame]);
@@ -147,6 +148,20 @@ export const RandomStudentPickerView: React.FC<RandomStudentPickerViewProps> = (
             <span>QUIZ NGHIÊNG ĐẦU</span>
             <span className="px-1.5 py-0.2 bg-amber-400 text-purple-950 rounded-md text-[9px] font-black">AI</span>
           </button>
+
+          {/* Tab 7: Ống Kính May Mắn (HOT) */}
+          <button
+            onClick={() => setActiveGame('lucky_lens')}
+            className={`px-3 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all hover-zoom-btn uppercase cursor-pointer ${
+              activeGame === 'lucky_lens'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-600/30'
+                : 'text-cyan-700 hover:text-cyan-900 bg-cyan-50'
+            }`}
+          >
+            <span>📸</span>
+            <span>ỐNG KÍNH</span>
+            <span className="px-1.5 py-0.2 bg-cyan-400 text-slate-950 rounded-md text-[9px] font-black">HOT</span>
+          </button>
         </div>
       </div>
 
@@ -260,6 +275,23 @@ export const RandomStudentPickerView: React.FC<RandomStudentPickerViewProps> = (
             <span>Quay lại Game Dashboard</span>
           </button>
           <HeadTiltGame onBackToDashboard={() => setActiveGame('dashboard')} />
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* 7. ỐNG KÍNH MAY MẮN (LUCKY CAMERA LENS)                                */}
+      {/* ===================================================================== */}
+      {activeGame === 'lucky_lens' && (
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => setActiveGame('dashboard')}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Quay lại Game Dashboard</span>
+          </button>
+          <LuckyLensGame />
         </div>
       )}
 

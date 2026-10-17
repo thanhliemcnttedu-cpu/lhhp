@@ -8,10 +8,11 @@ import { AvatarEditorModal } from '../modals/AvatarEditorModal';
 import { ClassAvatarEditorModal } from '../modals/ClassAvatarEditorModal';
 import { ExportStudentListModal } from '../modals/ExportStudentListModal';
 import { AutoAssignAvatarModal } from '../modals/AutoAssignAvatarModal';
+import { GroupPhotoAvatarModal } from '../modals/GroupPhotoAvatarModal';
 import { InitSubjectClassesModal } from './classes/InitSubjectClassesModal';
 import { AvatarSourceType, handleAvatarImgError } from '../../utils/avatarConfig';
 import { 
-  Users, UserPlus, ClipboardPaste, Camera, 
+  Users, UserPlus, ClipboardPaste, Camera, Crop, 
   Trash2, Edit3, Search, Check, Plus, Minus,
   Sparkles, School, ArrowRight, RotateCcw,
   Star, Award, CheckCircle2, ChevronRight, X,
@@ -166,13 +167,14 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
     classes, activeClassId, setActiveClassId, addClass, bulkAddClasses, updateClass, deleteClass,
     bulkDeleteClasses, bulkUpdateClasses, deleteAllClasses,
     students, currentClassStudents, addStudent, updateStudent, deleteStudent, 
-    bulkAddStudents, autoAssignRealAvatarsToClass, autoAssignAvatarsToClass, clearClassStudents, resetStudentsCoins,
+    bulkAddStudents, autoAssignRealAvatarsToClass, autoAssignAvatarsToClass, batchUpdateStudentAvatars, clearClassStudents, resetStudentsCoins,
     awardPoints, deductPoints, subjects, addSubject, updateSubject, deleteSubject,
     toggleSubjectApplied, setAppliedSubjects, resetDefaultSubjects,
     criteria, teacherProfile, updateTeacherProfile, 
     teacherRole, subjectTeacherConfig, seedSample20SubjectClasses,
     isAdmin, allTeachers, allUsers, currentUser, syncDatabaseNow,
-    schoolBranches, saveSchoolBranches, reloadSchoolBranches
+    schoolBranches, saveSchoolBranches, reloadSchoolBranches,
+    canEvaluateEmulation, canEditStudentAvatar, canResetOrAssignCoins, canCreateClassInfographic, canConfigureCoinSubjects, isSchoolAdminOrBgh
   } = useClassroom();
 
   const [activeTabMode, setActiveTabMode] = useState<'classes' | 'students'>(mode);
@@ -740,6 +742,9 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
   // Auto Assign Avatar Modal states
   const [isAutoAssignAvatarModalOpen, setIsAutoAssignAvatarModalOpen] = useState(false);
   const [autoAssignInitialType, setAutoAssignInitialType] = useState<AvatarSourceType>('default');
+
+  // Group Photo Avatar Cropper Modal state
+  const [isGroupPhotoModalOpen, setIsGroupPhotoModalOpen] = useState(false);
 
   // Quick Award / Tặng Sao / Trừ Xu Modal (User Request 3)
   const [rewardingStudent, setRewardingStudent] = useState<Student | null>(null);
@@ -3020,14 +3025,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </div>
 
               {/* NÚT CẤU HÌNH NHẬN XU (User Request) */}
-              <button
-                onClick={() => setIsSubjectConfigOpen(true)}
-                className="px-3 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 border border-amber-300 rounded-xl text-[11px] font-black flex items-center gap-1.5 shadow-xs transition-all hover-zoom-btn self-start sm:self-auto uppercase tracking-wide cursor-pointer"
-                title="Mở bảng cấu hình nhận xu: Thêm, sửa, xóa và thiết lập danh sách môn học áp dụng"
-              >
-                <Settings className="w-3.5 h-3.5 text-amber-950" />
-                <span>⚙️ CẤU HÌNH NHẬN XU</span>
-              </button>
+              {canConfigureCoinSubjects && (
+                <button
+                  onClick={() => setIsSubjectConfigOpen(true)}
+                  className="px-3 py-1 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 border border-amber-300 rounded-xl text-[11px] font-black flex items-center gap-1.5 shadow-xs transition-all hover-zoom-btn self-start sm:self-auto uppercase tracking-wide cursor-pointer"
+                  title="Mở bảng cấu hình nhận xu: Thêm, sửa, xóa và thiết lập danh sách môn học áp dụng"
+                >
+                  <Settings className="w-3.5 h-3.5 text-amber-950" />
+                  <span>⚙️ CẤU HÌNH NHẬN XU</span>
+                </button>
+              )}
             </div>
 
             {/* Danh sách môn học đang áp dụng: Sắp xếp tự động thành 2 dòng khi nhiều môn, không cuộn ngang */}
@@ -3185,41 +3192,57 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   <span>TẢI FILE MẪU (.XLSX)</span>
                 </button>
 
-                <button
-                  onClick={() => setIsSubjectConfigOpen(true)}
-                  className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
-                  title="Cấu hình nhận xu: Thêm, sửa, xóa môn học và thiết lập danh sách áp dụng"
-                >
-                  <Settings className="w-3.5 h-3.5 text-amber-700" />
-                  <span>⚙️ CẤU HÌNH NHẬN XU</span>
-                </button>
+                {canConfigureCoinSubjects && (
+                  <button
+                    onClick={() => setIsSubjectConfigOpen(true)}
+                    className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
+                    title="Cấu hình nhận xu: Thêm, sửa, xóa môn học và thiết lập danh sách áp dụng"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-amber-700" />
+                    <span>⚙️ CẤU HÌNH NHẬN XU</span>
+                  </button>
+                )}
 
-                {/* 2 Nút Tự Động Gán Avatar Mẫu (Default & Real Demo) */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAutoAssignInitialType('default');
-                    setIsAutoAssignAvatarModalOpen(true);
-                  }}
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-blue-600/20 transition-all hover-zoom-btn uppercase shrink-0"
-                  title="Tự động chèn Avatar mặc định hoạt hình phân loại Nam/Nữ cho học sinh"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                  <span>🎨 GÁN AVATAR MẶC ĐỊNH</span>
-                </button>
+                {/* 2 Nút Tự Động Gán Avatar Mẫu & Cắt từ Ảnh Tập Thể (Chỉ dành cho GVCN) */}
+                {canEditStudentAvatar && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAutoAssignInitialType('default');
+                        setIsAutoAssignAvatarModalOpen(true);
+                      }}
+                      className="px-2.5 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-blue-600/20 transition-all hover-zoom-btn uppercase shrink-0"
+                      title="Tự động chèn Avatar mặc định hoạt hình phân loại Nam/Nữ cho học sinh"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                      <span>🎨 GÁN AVATAR MẶC ĐỊNH</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAutoAssignInitialType('real_demo');
-                    setIsAutoAssignAvatarModalOpen(true);
-                  }}
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-purple-600/20 transition-all hover-zoom-btn uppercase shrink-0"
-                  title="Tự động chèn Avatar ảnh thẻ thật demo từ kho thư mục máy tính cho học sinh"
-                >
-                  <Camera className="w-3.5 h-3.5 text-pink-200" />
-                  <span>📸 GÁN AVATAR ẢNH THẬT</span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAutoAssignInitialType('real_demo');
+                        setIsAutoAssignAvatarModalOpen(true);
+                      }}
+                      className="px-2.5 py-1.5 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-purple-600/20 transition-all hover-zoom-btn uppercase shrink-0"
+                      title="Tự động chèn Avatar ảnh thẻ thật demo từ kho thư mục máy tính cho học sinh"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-pink-200" />
+                      <span>📸 GÁN AVATAR ẢNH THẬT</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsGroupPhotoModalOpen(true)}
+                      className="px-2.5 py-1.5 bg-gradient-to-r from-teal-500 via-emerald-600 to-green-600 hover:from-teal-600 hover:to-green-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-emerald-600/20 transition-all hover-zoom-btn uppercase shrink-0"
+                      title="Tải lên ảnh chụp tập thể cả lớp, khoanh chọn từng khuôn mặt và ghép với học sinh trong danh sách"
+                    >
+                      <Crop className="w-3.5 h-3.5 text-emerald-100" />
+                      <span>👥 CẮT TỪ ẢNH TẬP THỂ</span>
+                    </button>
+                  </>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
@@ -3232,7 +3255,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   <span>XUẤT DS HỌC SINH</span>
                 </button>
 
-                {onNavigate && teacherRole !== 'subject' && (
+                {onNavigate && teacherRole !== 'subject' && canCreateClassInfographic && (
                   <button
                     onClick={() => onNavigate('infographic')}
                     className="px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg text-[11px] font-black flex items-center gap-1 shadow-sm shadow-indigo-600/20 transition-all hover-zoom-btn uppercase shrink-0"
@@ -3243,34 +3266,34 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   </button>
                 )}
 
-                {currentClassStudents.length > 0 && (
-                  <>
-                    <button
-                      onClick={() => setIsClassResetCoinsOpen(true)}
-                      className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
-                      title="Đặt lại toàn bộ số xu của tất cả học sinh trong lớp về mức 0"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
-                      <span>RESET XU CẢ LỚP VỀ 0</span>
-                    </button>
+                {currentClassStudents.length > 0 && canResetOrAssignCoins && (
+                  <button
+                    onClick={() => setIsClassResetCoinsOpen(true)}
+                    className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
+                    title="Đặt lại toàn bộ số xu của tất cả học sinh trong lớp về mức 0"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+                    <span>RESET XU CẢ LỚP VỀ 0</span>
+                  </button>
+                )}
 
-                    <button
-                      onClick={() => {
-                        if (selectedStudentIds.length > 0) {
-                          setIsBulkDeleteConfirmOpen(true);
-                        } else {
-                          setIsClearAllConfirmOpen(true);
-                        }
-                      }}
-                      className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
-                      title="Xóa danh sách học sinh đồng loạt"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                      <span>
-                        {selectedStudentIds.length > 0 ? `XÓA ${selectedStudentIds.length} EM ĐÃ CHỌN` : 'XÓA CẢ DANH SÁCH'}
-                      </span>
-                    </button>
-                  </>
+                {currentClassStudents.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (selectedStudentIds.length > 0) {
+                        setIsBulkDeleteConfirmOpen(true);
+                      } else {
+                        setIsClearAllConfirmOpen(true);
+                      }
+                    }}
+                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-black flex items-center gap-1 transition-all hover-zoom-btn uppercase shrink-0"
+                    title="Xóa danh sách học sinh đồng loạt"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                    <span>
+                      {selectedStudentIds.length > 0 ? `XÓA ${selectedStudentIds.length} EM ĐÃ CHỌN` : 'XÓA CẢ DANH SÁCH'}
+                    </span>
+                  </button>
                 )}
               </div>
             </div>
@@ -3294,20 +3317,22 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => {
-                    setBulkAwardMode('xu');
-                    setBulkAwardCoins(1);
-                    setBulkAwardSubject(activeEvalSubject || subjects[0]?.name || 'Toán');
-                    setBulkAwardReason('');
-                    setIsBulkAwardOpen(true);
-                  }}
-                  className="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all hover-zoom-btn uppercase"
-                  title="Gán xu hoặc trừ xu đồng loạt cho các học sinh đã chọn"
-                >
-                  <Coins className="w-3.5 h-3.5" />
-                  <span>GÁN XU HÀNG LOẠT</span>
-                </button>
+                {canResetOrAssignCoins && canEvaluateEmulation && (
+                  <button
+                    onClick={() => {
+                      setBulkAwardMode('xu');
+                      setBulkAwardCoins(1);
+                      setBulkAwardSubject(activeEvalSubject || subjects[0]?.name || 'Toán');
+                      setBulkAwardReason('');
+                      setIsBulkAwardOpen(true);
+                    }}
+                    className="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/25 transition-all hover-zoom-btn uppercase"
+                    title="Gán xu hoặc trừ xu đồng loạt cho các học sinh đã chọn"
+                  >
+                    <Coins className="w-3.5 h-3.5" />
+                    <span>GÁN XU HÀNG LOẠT</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => {
@@ -3332,14 +3357,16 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                   <span>👑 GÁN CHỨC VỤ</span>
                 </button>
 
-                <button
-                  onClick={() => setIsBulkResetCoinsOpen(true)}
-                  className="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white border border-white/25 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn uppercase"
-                  title="Đặt lại số xu của các em đã chọn về 0"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-amber-300" />
-                  <span>🔄 ĐẶT VỀ 0 XU</span>
-                </button>
+                {canResetOrAssignCoins && (
+                  <button
+                    onClick={() => setIsBulkResetCoinsOpen(true)}
+                    className="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white border border-white/25 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all hover-zoom-btn uppercase"
+                    title="Đặt lại số xu của các em đã chọn về 0"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-300" />
+                    <span>🔄 ĐẶT VỀ 0 XU</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => setIsBulkDeleteConfirmOpen(true)}
@@ -3593,35 +3620,39 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     {/* Bottom Action Buttons: Fast in-class actions with active subject */}
                     <div className="p-2 mx-2.5 mb-2.5 mt-1 bg-gradient-to-r from-indigo-50/50 via-sky-50/40 to-indigo-50/50 rounded-xl border border-indigo-100 flex items-center justify-between gap-1">
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleQuickAdd(student)}
-                          className="w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs flex items-center justify-center shadow-xs shadow-emerald-500/25 transition-all hover-zoom-btn shrink-0"
-                          title={`Cộng xu khen thưởng cho học sinh theo môn ${activeEvalSubject}`}
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
+                        {canEvaluateEmulation && (
+                          <>
+                            <button
+                              onClick={() => handleQuickAdd(student)}
+                              className="w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs flex items-center justify-center shadow-xs shadow-emerald-500/25 transition-all hover-zoom-btn shrink-0"
+                              title={`Cộng xu khen thưởng cho học sinh theo môn ${activeEvalSubject}`}
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
 
-                        <button
-                          onClick={() => handleQuickDeduct(student)}
-                          className="w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black text-xs flex items-center justify-center shadow-xs shadow-rose-500/25 transition-all hover-zoom-btn shrink-0"
-                          title={`Trừ xu nề nếp cho học sinh theo môn ${activeEvalSubject}`}
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
+                            <button
+                              onClick={() => handleQuickDeduct(student)}
+                              className="w-7.5 h-7.5 rounded-lg bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black text-xs flex items-center justify-center shadow-xs shadow-rose-500/25 transition-all hover-zoom-btn shrink-0"
+                              title={`Trừ xu nề nếp cho học sinh theo môn ${activeEvalSubject}`}
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
 
-                        {/* NÚT TẶNG SAO / KHEN THƯỞNG THEO MÔN (Yêu cầu 3) */}
-                        <button
-                          onClick={() => {
-                            setRewardingStudent(student);
-                            setRewardMode('sao');
-                            setCustomCoins(1);
-                            setSelectedSubjectForAward(activeEvalSubject || appliedSubjects[0]?.name || 'GHI CHUNG / NỀ NẾP');
-                          }}
-                          className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white font-black text-xs sm:text-sm flex items-center justify-center shadow-xs shadow-amber-500/30 transition-all hover-zoom-btn shrink-0"
-                          title="Tặng sao thi đua cho học sinh theo môn học"
-                        >
-                          <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
-                        </button>
+                            {/* NÚT TẶNG SAO / KHEN THƯỞNG THEO MÔN (Yêu cầu 3) */}
+                            <button
+                              onClick={() => {
+                                setRewardingStudent(student);
+                                setRewardMode('sao');
+                                setCustomCoins(1);
+                                setSelectedSubjectForAward(activeEvalSubject || appliedSubjects[0]?.name || 'GHI CHUNG / NỀ NẾP');
+                              }}
+                              className="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-white font-black text-xs sm:text-sm flex items-center justify-center shadow-xs shadow-amber-500/30 transition-all hover-zoom-btn shrink-0"
+                              title="Tặng sao thi đua cho học sinh theo môn học"
+                            >
+                              <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white" />
+                            </button>
+                          </>
+                        )}
 
                         {/* NÚT GÁN CHỨC VỤ NHANH (Yêu cầu 2: Tối đa 3 chức vụ) */}
                         <button
@@ -3690,7 +3721,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
       {/* ========================================================================= */}
       {/* MODAL: CẤU HÌNH NHẬN XU & MÔN HỌC ĐÁNH GIÁ (User Request: "CẤU HÌNH NHẬN XU") */}
       {/* ========================================================================= */}
-      {isSubjectConfigOpen && (
+      {isSubjectConfigOpen && canConfigureCoinSubjects && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-4xl lg:max-w-5xl w-full p-5 sm:p-6 space-y-4 max-h-[94vh] flex flex-col justify-between overflow-y-auto">
             {/* Header */}
@@ -6206,14 +6237,20 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-black text-indigo-950 truncate">Ảnh đại diện học sinh</div>
                       <p className="text-[10.5px] text-indigo-600">Đổi ảnh thật hoặc căn chỉnh khung hình</p>
-                      <button
-                        type="button"
-                        onClick={() => setAvatarEditingStudent(editingStudent)}
-                        className="mt-1 px-2.5 py-1 bg-white hover:bg-indigo-50 border border-indigo-300 rounded-lg text-[11px] font-bold text-indigo-700 flex items-center gap-1 transition-colors shadow-2xs hover-zoom-btn cursor-pointer"
-                      >
-                        <Camera className="w-3 h-3 text-indigo-600" />
-                        <span>Thu phóng & Cắt ảnh</span>
-                      </button>
+                      {canEditStudentAvatar ? (
+                        <button
+                          type="button"
+                          onClick={() => setAvatarEditingStudent(editingStudent)}
+                          className="mt-1 px-2.5 py-1 bg-white hover:bg-indigo-50 border border-indigo-300 rounded-lg text-[11px] font-bold text-indigo-700 flex items-center gap-1 transition-colors shadow-2xs hover-zoom-btn cursor-pointer"
+                        >
+                          <Camera className="w-3 h-3 text-indigo-600" />
+                          <span>Thu phóng & Cắt ảnh</span>
+                        </button>
+                      ) : (
+                        <span className="inline-block mt-1 text-[10px] text-slate-500 font-semibold italic">
+                          (Chỉ GVCN có quyền đổi ảnh)
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -6296,9 +6333,15 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
                       <label className="block text-[11px] font-bold text-slate-700 mb-0.5">Số xu thi đua</label>
                       <input
                         type="number"
+                        disabled={!canResetOrAssignCoins}
                         value={editingStudent.points}
                         onChange={(e) => setEditingStudent({ ...editingStudent, points: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-amber-900"
+                        className={`w-full px-3 py-1.5 border rounded-xl text-xs font-bold ${
+                          canResetOrAssignCoins 
+                            ? 'bg-slate-50 border-slate-200 text-amber-900' 
+                            : 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed'
+                        }`}
+                        title={!canResetOrAssignCoins ? 'Chỉ GVCN mới có quyền chỉnh sửa số xu' : undefined}
                       />
                     </div>
                   </div>
@@ -6988,6 +7031,7 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
           currentScale={avatarEditingStudent.avatarScale || 1}
           currentPosition={avatarEditingStudent.avatarPosition || { x: 0, y: 0 }}
           currentFlipX={avatarEditingStudent.flipX || false}
+          onOpenGroupPhoto={() => setIsGroupPhotoModalOpen(true)}
           onClose={() => setAvatarEditingStudent(null)}
           onSave={(croppedUrl, originalUrl, scale, position, flipX) => {
             const avatarData = {
@@ -7101,6 +7145,32 @@ export const ClassesStudentsView: React.FC<ClassesStudentsViewProps> = ({
           onConfirm={(type, overwrite) => {
             const res = autoAssignAvatarsToClass(activeClassId, type, overwrite);
             alert(`Đã hoàn tất tự động gán ảnh đại diện (${type === 'default' ? 'Mặc định' : 'Ảnh thật demo'}) cho ${res.updatedCount} học sinh lớp ${activeClass.name}!`);
+          }}
+        />
+      )}
+
+      {/* MODAL: CẮT & GHÉP ẢNH ĐẠI DIỆN TỪ ẢNH TẬP THỂ CẢ LỚP */}
+      {isGroupPhotoModalOpen && activeClass && (
+        <GroupPhotoAvatarModal
+          isOpen={isGroupPhotoModalOpen}
+          onClose={() => setIsGroupPhotoModalOpen(false)}
+          students={currentClassStudents}
+          classNameTitle={activeClass.name}
+          classImage={activeClass.originalAvatar || activeClass.avatar}
+          onSave={async (assignments) => {
+            if (batchUpdateStudentAvatars) {
+              batchUpdateStudentAvatars(assignments);
+            } else {
+              assignments.forEach(item => {
+                updateStudent(item.studentId, {
+                  avatar: item.avatar,
+                  originalAvatar: item.avatar,
+                  avatarScale: 1,
+                  avatarPosition: { x: 0, y: 0 },
+                  flipX: false
+                });
+              });
+            }
           }}
         />
       )}

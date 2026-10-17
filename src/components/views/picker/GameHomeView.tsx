@@ -5,7 +5,7 @@ import {
   Flame, Zap, Star, ShieldCheck
 } from 'lucide-react';
 
-export type GameDashboardTarget = 'wheel' | 'reel' | 'rocket' | 'mystery_box' | 'duck_race' | 'head_tilt';
+export type GameDashboardTarget = 'wheel' | 'reel' | 'rocket' | 'mystery_box' | 'duck_race' | 'head_tilt' | 'lucky_lens';
 
 interface GameItem {
   id: GameDashboardTarget;
@@ -179,6 +179,31 @@ export const GameHomeView: React.FC<GameHomeViewProps> = ({
           </div>
         </div>
       )
+    },
+    {
+      id: 'lucky_lens',
+      title: 'ỐNG KÍNH MAY MẮN',
+      subtitle: '(LUCKY CAMERA LENS)',
+      description: 'Những bức ảnh học sinh di chuyển ngẫu nhiên trên màn hình ống kính, tạo cảm giác tò mò, hào hứng chờ xem ai sẽ được bắt trọn vào khung hình may mắn!',
+      badge: 'HOT MỚI',
+      badgeColor: 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white',
+      gradient: 'from-cyan-500 via-blue-600 to-indigo-700',
+      ringColor: 'ring-cyan-400',
+      visualComponent: (
+        <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-full p-2.5 bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-700 shadow-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+          <div className="w-36 h-36 sm:w-42 sm:h-42 rounded-full bg-slate-950 border-4 border-cyan-400 shadow-2xl flex flex-col items-center justify-center relative overflow-hidden p-2">
+            {/* Viewfinder Lens graphics */}
+            <div className="absolute inset-2 rounded-full border border-dashed border-cyan-400/60 animate-spin [animation-duration:15s]" />
+            <div className="w-16 h-16 rounded-full bg-slate-900 border-2 border-cyan-300 flex items-center justify-center shadow-lg relative z-10 group-hover:scale-110 transition-transform">
+              <Camera className="w-8 h-8 text-cyan-300 animate-pulse" />
+            </div>
+            <div className="relative z-10 mt-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-mono font-black uppercase shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+              <span>REC 4K</span>
+            </div>
+          </div>
+        </div>
+      )
     }
   ];
 
@@ -193,7 +218,7 @@ export const GameHomeView: React.FC<GameHomeViewProps> = ({
           GAME GỌI TÊN HỌC SINH
         </h1>
         <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500">
-          LỚP <span className="text-indigo-600 font-black">{classNameName}</span> • SĨ SỐ: <span className="text-slate-800 font-black">{studentCount} HỌC SINH</span> • 6 TRÒ CHƠI GỌI TÊN & QUIZ TƯƠNG TÁC HÀO HỨNG!
+          LỚP <span className="text-indigo-600 font-black">{classNameName}</span> • SĨ SỐ: <span className="text-slate-800 font-black">{studentCount} HỌC SINH</span> • 7 TRÒ CHƠI GỌI TÊN & QUIZ TƯƠNG TÁC HÀO HỨNG!
         </p>
       </div>
 

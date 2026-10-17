@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-15T05:23:36.825Z",
+  "lastSync": "2026-10-17T07:31:06.898Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -30,6 +30,69 @@
     "lastGithubPushAt": 1792041816825
   },
   "auditLogs": [
+    {
+      "id": "log-1792222251820-cyk17k",
+      "timestamp": 1792222251820,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "AWARD_POINTS",
+      "description": "Cộng 10 xu cho 1 học sinh (Lý do: Khen thưởng +10 xu môn GHI CHUNG / NỀ NẾP, Môn: GHI CHUNG / NỀ NẾP)"
+    },
+    {
+      "id": "log-1792221725800-xwvhuy",
+      "timestamp": 1792221725800,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1792221141834-jixov4",
+      "timestamp": 1792221141834,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1792221132320-5jp9nu",
+      "timestamp": 1792221132320,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng xuất khỏi hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1792221115553-hm33i2",
+      "timestamp": 1792221115553,
+      "username": "adminquantri",
+      "userFullName": "Quản trị viên Hệ thống Cấp cao",
+      "role": "admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị viên Hệ thống Cấp cao)"
+    },
+    {
+      "id": "log-1792220218957-ljhrwo",
+      "timestamp": 1792220218957,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "BATCH_AVATARS",
+      "description": "Cập nhật ảnh đại diện từ ảnh tập thể cho 7 học sinh lớp 1A1 Lê Thị Việt Hà"
+    },
+    {
+      "id": "log-1792220055436-ua5733",
+      "timestamp": 1792220055436,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Lê Thị Việt Hà)"
+    },
     {
       "id": "log-1792041678656-un026f",
       "timestamp": 1792041678656,
@@ -1568,6 +1631,6 @@
   "masterSummary": {
     "totalUsers": 78,
     "totalSchools": 1,
-    "totalClassesConfigured": 69
+    "totalClassesConfigured": 70
   }
 }
