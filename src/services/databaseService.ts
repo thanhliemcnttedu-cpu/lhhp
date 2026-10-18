@@ -2288,7 +2288,8 @@ export const databaseService = {
 
     // 1. CẬP NHẬT TỨC THÌ VÀO LOCALSTORAGE CHO CÁC TÀI KHOẢN LIÊN QUAN (0ms)
     try {
-      const localTargets = [username, 'admin', 'adminquantri'].filter(Boolean);
+      const execAdmins = ['admin', 'adminquantri', 'quantriths1tu', 'bgh_thths1tu'];
+      const localTargets = Array.from(new Set([username, ...execAdmins].filter(Boolean)));
       for (const u of localTargets) {
         const localKey = LOCAL_DB_PREFIX + u;
         const cached = localStorage.getItem(localKey);
@@ -2310,6 +2311,33 @@ export const databaseService = {
             cachedData.updatedAt = nowTs;
             localStorage.setItem(localKey, JSON.stringify(cachedData));
           } catch (_) {}
+        }
+      }
+
+      // Quét toàn bộ localStorage để loại bỏ lớp này khỏi tài khoản GVCN cũ (nếu lớp được chuyển sang GVCN mới)
+      if (typeof window !== 'undefined' && window.localStorage && username) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(LOCAL_DB_PREFIX)) {
+            const uFromKey = key.slice(LOCAL_DB_PREFIX.length).toLowerCase();
+            // Nếu không phải tài khoản nhận lớp và không phải admin/bgh
+            if (uFromKey !== username.toLowerCase() && !execAdmins.includes(uFromKey) && !uFromKey.startsWith('bgh_') && !uFromKey.startsWith('quantri')) {
+              try {
+                const raw = localStorage.getItem(key);
+                if (raw) {
+                  const data = JSON.parse(raw);
+                  if (Array.isArray(data.classes) && data.classes.some((c: any) => c.id === classData.id)) {
+                    data.classes = data.classes.filter((c: any) => c.id !== classData.id);
+                    if (Array.isArray(data.students)) {
+                      data.students = data.students.filter((s: any) => s.classId !== classData.id);
+                    }
+                    data.updatedAt = nowTs;
+                    localStorage.setItem(key, JSON.stringify(data));
+                  }
+                }
+              } catch (_) {}
+            }
+          }
         }
       }
     } catch (_) {}

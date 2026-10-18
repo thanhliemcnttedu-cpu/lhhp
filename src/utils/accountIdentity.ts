@@ -148,3 +148,33 @@ export function getOfficialRoleTitle(
 
   return 'Giáo viên';
 }
+
+/**
+ * 🛡️ Kiểm tra tài khoản có thuộc 3 nhóm quản lý/quản trị bị giới hạn quyền can thiệp nghiệp vụ lớp học hay không:
+ * 1. Quản trị Nhà trường (school_admin / isSchoolAdmin)
+ * 2. Ban Giám Hiệu (bgh / isBgh)
+ * 3. Quản trị Tối cao / adminquantri (adminquantri / admin)
+ * 
+ * Theo quy định:
+ * - Không có quyền gán/cấu hình cán bộ lớp cho học sinh.
+ * - Không có quyền thay đổi ảnh đại diện (avatar) của học sinh.
+ * - Trong danh mục lớp học: Không có quyền cấu hình ảnh avatar của lớp, không có quyền Slogan / Khẩu hiệu, không có quyền Ban Đại Diện Cha Mẹ Học Sinh.
+ */
+export function isRestrictedAdminOrBgh(user: {
+  username?: string;
+  role?: string;
+  isBgh?: boolean;
+  isSchoolAdmin?: boolean;
+} | null | undefined): boolean {
+  if (!user) return false;
+  const cleanU = (user.username || '').trim().toLowerCase();
+  return Boolean(
+    cleanU === 'adminquantri' ||
+    cleanU === 'admin' ||
+    user.role === 'admin' ||
+    user.role === 'school_admin' ||
+    user.isSchoolAdmin ||
+    user.role === 'bgh' ||
+    user.isBgh
+  );
+}

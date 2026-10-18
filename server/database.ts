@@ -1910,12 +1910,47 @@ export function updateAdminClass(classData: any, targetUsername?: string, isDele
     }
 
     // Đồng thời cập nhật đồng bộ sang các tài khoản khác có chứa lớp này
+    const isExecutiveOrAdmin = (uName: string): boolean => {
+      const lower = uName.toLowerCase();
+      if (lower === 'admin' || lower === 'adminquantri' || lower === 'guest_admin' || lower.startsWith('quantri') || lower.startsWith('bgh_')) return true;
+      const uObj = db.users.find(u => u.username.toLowerCase() === lower);
+      if (uObj) {
+        return uObj.role === 'admin' || uObj.role === 'school_admin' || uObj.role === 'bgh' || Boolean(uObj.isSchoolAdmin) || Boolean(uObj.isBgh);
+      }
+      return false;
+    };
+
     for (const [otherUser, otherData] of Object.entries(db.userData)) {
-      if (otherUser !== username && Array.isArray((otherData as any)?.classes)) {
-        const oClasses = (otherData as any).classes;
-        const cIdx = oClasses.findIndex((c: any) => c.id === classData.id);
-        if (cIdx >= 0) {
-          oClasses[cIdx] = { ...oClasses[cIdx], ...classData, teacherUsername: username };
+      if (otherUser !== username && otherData && typeof otherData === 'object') {
+        const isExec = isExecutiveOrAdmin(otherUser);
+        let changed = false;
+
+        if (Array.isArray((otherData as any).classes)) {
+          const oClasses = (otherData as any).classes;
+          const cIdx = oClasses.findIndex((c: any) => c.id === classData.id);
+          if (cIdx >= 0) {
+            if (isExec) {
+              // Cấp Quản trị / BGH: Cập nhật thông tin lớp học mới nhất
+              oClasses[cIdx] = { ...oClasses[cIdx], ...classData, teacherUsername: username };
+              changed = true;
+            } else {
+              // Giáo viên chủ nhiệm khác: Lớp đã chuyển giao cho giáo viên khác => LOẠI BỎ KHỎI TÀI KHOẢN GVCN CŨ
+              (otherData as any).classes = oClasses.filter((c: any) => c.id !== classData.id);
+              changed = true;
+            }
+          }
+        }
+
+        // Nếu là GVCN khác và lớp đã chuyển giao => loại bỏ học sinh thuộc lớp này khỏi tài khoản GVCN cũ
+        if (!isExec && Array.isArray((otherData as any).students)) {
+          const origLen = (otherData as any).students.length;
+          (otherData as any).students = (otherData as any).students.filter((s: any) => s.classId !== classData.id);
+          if ((otherData as any).students.length !== origLen) {
+            changed = true;
+          }
+        }
+
+        if (changed) {
           (otherData as any).updatedAt = now;
           if (isSupabaseConfigured()) {
             saveSupabaseUserData(otherUser, otherData).catch(() => {});

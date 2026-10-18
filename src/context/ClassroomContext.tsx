@@ -23,7 +23,8 @@ import { playCoinSound, playDeductSound } from '../utils/audio';
 import { DEFAULT_QUESTIONS, loadQuizBank, saveQuizBank, smartMergeQuizBank } from '../utils/quizParser';
 import { databaseService, FALLBACK_USERS, LOCAL_AUTH_KEY, LOCAL_DB_PREFIX, LOCAL_SESSION_KEY } from '../services/databaseService';
 import { AvatarSourceType, getStudentAvatarAssignment, sanitizeStudentAvatar } from '../utils/avatarConfig';
-import { getOfficialDisplayName, getOfficialRoleTitle, ACCOUNT_IDENTITY_MAP } from '../utils/accountIdentity';
+import { getOfficialDisplayName, getOfficialRoleTitle, ACCOUNT_IDENTITY_MAP, isRestrictedAdminOrBgh } from '../utils/accountIdentity';
+import { extractSchoolBranchesFromClasses } from '../utils/schoolBranchHelper';
 import { 
   AiHierarchySynthesizer, 
   ClassLevelAiSummary, 
@@ -179,6 +180,11 @@ interface ClassroomContextType {
   isSchoolAdminOrBgh: boolean;
   canEvaluateEmulation: boolean;
   canEditStudentAvatar: boolean;
+  canAssignClassOfficer: boolean;
+  canEditClassAvatar: boolean;
+  canEditClassSlogan: boolean;
+  canEditParentCommittee: boolean;
+  isRestrictedAdminOrBgh: boolean;
   canResetOrAssignCoins: boolean;
   canCreateClassInfographic: boolean;
   canConfigureCoinSubjects: boolean;
@@ -188,7 +194,7 @@ interface ClassroomContextType {
   setDemoWarningMessage: (msg: string | null) => void;
   // Cấu hình Phân hiệu & Điểm trường trực thuộc (School Branches & Campuses)
   schoolBranches: SchoolBranch[];
-  saveSchoolBranches: (branches: SchoolBranch[]) => Promise<boolean>;
+  saveSchoolBranches: (branches: SchoolBranch[], schoolName?: string) => Promise<boolean>;
   reloadSchoolBranches: (schoolName?: string) => Promise<void>;
 
   // 🧠 CỐT LÕI AI LIÊN THÔNG 3 CẤP ĐỘ (Classroom - School - System)
@@ -257,10 +263,20 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const canManageAccounts = Boolean(currentUser?.role === 'admin' || isSchoolAdmin || isGuestAdmin || isBgh);
 
   // 🛡️ BẢO TOÀN TÔN TRỌNG QUYỀN GIÁO VIÊN CHỦ NHIỆM (GVCN AUTONOMY PROTOCOL)
-  // BGH & Quản trị nhà trường không được đánh giá thi đua, đổi/gán avatar, reset/gán xu, tạo infographic, cấu hình nhận xu
+  // Quản trị nhà trường, Ban Giám Hiệu và Admin Quản trị không được:
+  // - Gán/cấu hình cán bộ lớp cho học sinh
+  // - Thay đổi ảnh đại diện (avatar) của học sinh
+  // - Cấu hình ảnh avatar của lớp trong danh mục lớp học
+  // - Cấu hình Slogan / Khẩu hiệu lớp học (Hiển thị trên Infographic)
+  // - Cấu hình Ban Đại Diện Cha Mẹ Học Sinh
   const isSchoolAdminOrBgh = !isSuperAdmin && Boolean(isSchoolAdmin || isBgh);
+  const isRestrictedAdminOrBghUser = isRestrictedAdminOrBgh(currentUser);
   const canEvaluateEmulation = !isSchoolAdminOrBgh;
-  const canEditStudentAvatar = !isSchoolAdminOrBgh;
+  const canEditStudentAvatar = !isRestrictedAdminOrBghUser;
+  const canAssignClassOfficer = !isRestrictedAdminOrBghUser;
+  const canEditClassAvatar = !isRestrictedAdminOrBghUser;
+  const canEditClassSlogan = !isRestrictedAdminOrBghUser;
+  const canEditParentCommittee = !isRestrictedAdminOrBghUser;
   const canResetOrAssignCoins = !isSchoolAdminOrBgh;
   const canCreateClassInfographic = !isSchoolAdminOrBgh;
   const canConfigureCoinSubjects = !isSchoolAdminOrBgh;
@@ -442,31 +458,51 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // 🏛️ Cấu hình Phân hiệu & Điểm trường trực thuộc cho từng Trường học
   const [schoolBranches, setSchoolBranches] = useState<SchoolBranch[]>([]);
 
-  const reloadSchoolBranches = async (schoolName?: string) => {
+  const reloadSchoolBranches = async (schoolName?: string, currentClasses?: Classroom[]) => {
     const targetSchool = (schoolName || currentUser?.schoolName || '').trim();
     if (!targetSchool) {
       setSchoolBranches([]);
       return;
     }
-    const list = await databaseService.getSchoolBranches(targetSchool);
-    setSchoolBranches(list);
+    let list = await databaseService.getSchoolBranches(targetSchool);
+    // 🌟 FALLBACK THÔNG MINH: Nếu chưa có cấu hình trong DB nhưng danh sách lớp học đã có dữ liệu phân hiệu/điểm trường
+    const classesToCheck = currentClasses || classes;
+    if ((!list || list.length === 0) && classesToCheck && classesToCheck.length > 0) {
+      const extracted = extractSchoolBranchesFromClasses(classesToCheck);
+      if (extracted.length > 0) {
+        list = extracted;
+        databaseService.saveSchoolBranches(targetSchool, extracted).catch(() => {});
+      }
+    }
+    setSchoolBranches(list || []);
   };
 
-  const saveSchoolBranches = async (branches: SchoolBranch[]): Promise<boolean> => {
-    const targetSchool = (currentUser?.schoolName || '').trim();
+  const saveSchoolBranches = async (branches: SchoolBranch[], schoolName?: string): Promise<boolean> => {
+    const targetSchool = (schoolName || currentUser?.schoolName || '').trim();
     if (!targetSchool) return false;
     setSchoolBranches(branches);
     return await databaseService.saveSchoolBranches(targetSchool, branches);
   };
 
-  // Tự động tải danh mục phân hiệu & điểm trường khi đổi tài khoản / đổi trường
+  // Tự động tải và đồng bộ danh mục phân hiệu & điểm trường khi đổi tài khoản / đổi trường / cập nhật lớp
   useEffect(() => {
     if (currentUser?.schoolName) {
-      reloadSchoolBranches(currentUser.schoolName);
+      reloadSchoolBranches(currentUser.schoolName, classes);
     } else {
       setSchoolBranches([]);
     }
-  }, [currentUser?.schoolName]);
+  }, [currentUser?.username, currentUser?.schoolName, classes.length]);
+
+  // 🛡️ AUTO-SEED GUARD: Khi danh sách lớp học có dữ liệu mà schoolBranches đang rỗng, tự động trích xuất ngay lập tức
+  useEffect(() => {
+    if (schoolBranches.length === 0 && classes.length > 0 && currentUser?.schoolName) {
+      const extracted = extractSchoolBranchesFromClasses(classes);
+      if (extracted.length > 0) {
+        setSchoolBranches(extracted);
+        databaseService.saveSchoolBranches(currentUser.schoolName, extracted).catch(() => {});
+      }
+    }
+  }, [classes, schoolBranches.length, currentUser?.schoolName]);
 
   const [subjects, setSubjects] = useState<Subject[]>(INITIAL_SUBJECTS);
   const [criteria, setCriteria] = useState<PointCriterion[]>(INITIAL_CRITERIA);
@@ -655,12 +691,19 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
       // 🌟 Chỉ gán lại teacherName của lớp nếu đó là GVCN chính của lớp đó (homeroom)
       if (currentUserRef.current.role === 'homeroom' && data.classes && Array.isArray(data.classes)) {
+        const curU = (currentUserRef.current.username || '').trim().toLowerCase();
         data.classes.forEach(c => {
-          c.teacherName = authorName;
+          const tU = (c.teacherUsername || '').trim().toLowerCase();
+          // Chỉ gán nếu lớp thuộc về GVCN hiện tại hoặc chưa gán cho ai
+          if (!tU || tU === curU) {
+            c.teacherName = authorName;
+            c.teacherUsername = curU;
+          }
         });
       }
     }
 
+    let cleanClasses: Classroom[] = [];
     if (data.classes && Array.isArray(data.classes)) {
       const isExec = currentUserRef.current && (
         currentUserRef.current.role === 'admin' || 
@@ -670,14 +713,34 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         currentUserRef.current.isBgh ||
         currentUserRef.current.username?.toLowerCase() === 'adminquantri'
       );
-      const cleanClasses = isExec 
-        ? data.classes.filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'))
-        : data.classes;
+      if (isExec) {
+        cleanClasses = data.classes.filter(c => c && c.teacherRole !== 'subject' && !c.id.startsWith('class-sub-'));
+      } else if (currentUserRef.current?.role === 'homeroom') {
+        const curU = (currentUserRef.current.username || '').trim().toLowerCase();
+        // 🛡️ BẢO VỆ GVCN: Chỉ hiển thị các lớp mà GVCN này thực sự chủ nhiệm!
+        // Nếu một lớp có teacherUsername chỉ định cho giáo viên khác => TUYỆT ĐỐI LOẠI BỎ KHỎI TÀI KHOẢN NÀY
+        cleanClasses = data.classes.filter(c => {
+          if (!c) return false;
+          const tU = (c.teacherUsername || '').trim().toLowerCase();
+          if (tU && tU !== curU) return false;
+          return true;
+        });
+      } else {
+        cleanClasses = data.classes;
+      }
       setClasses(cleanClasses);
     }
     if (data.activeClassId) {
-      setActiveClassId(data.activeClassId);
+      // Đảm bảo activeClassId thuộc danh sách cleanClasses nếu có
+      if (cleanClasses.length > 0 && !cleanClasses.some(c => c.id === data.activeClassId)) {
+        setActiveClassId(cleanClasses[0].id);
+      } else {
+        setActiveClassId(data.activeClassId);
+      }
+    } else if (cleanClasses.length > 0) {
+      setActiveClassId(cleanClasses[0].id);
     }
+
     if (data.students && Array.isArray(data.students)) {
       const isExec = currentUserRef.current && (
         currentUserRef.current.role === 'admin' || 
@@ -687,9 +750,15 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         currentUserRef.current.isBgh ||
         currentUserRef.current.username?.toLowerCase() === 'adminquantri'
       );
-      const filteredStudents = isExec
+      let filteredStudents = isExec
         ? data.students.filter(s => s && s.classId !== 'class-1791592764810' && !s.classId.startsWith('class-sub-'))
         : data.students;
+
+      // 🛡️ Nếu là GVCN: Chỉ giữ học sinh thuộc các lớp mà GVCN này quản lý
+      if (currentUserRef.current?.role === 'homeroom' && cleanClasses.length > 0) {
+        const allowedClassIds = new Set(cleanClasses.map(c => c.id));
+        filteredStudents = filteredStudents.filter(s => s && allowedClassIds.has(s.classId));
+      }
 
       // 🌟 Tự động nâng cấp các ảnh đại diện bottts robot cũ sang ảnh thật từ thư mục anh demo avata
       const upgradedStudents = filteredStudents.map((s, idx) => {
@@ -2002,14 +2071,25 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Class methods
   const addClass = (cls: Omit<Classroom, 'id'>) => {
-    if (!checkBghPermission()) return;
     if (isDemo && classes.length >= 1) {
       alert('Tài khoản trải nghiệm (DEMO) chỉ được tạo tối đa 01 lớp học. Vui lòng liên hệ Quản trị viên để nâng cấp!');
       setIsRegistrationModalOpen(true);
       return;
     }
     const newId = `class-${Date.now()}`;
-    const newCls: Classroom = { ...cls, id: newId };
+    // 🛡️ BẢO TOÀN DỮ LIỆU: Quản trị nhà trường, BGH và adminquantri không cấu hình avatar riêng, slogan hoặc ban phụ huynh
+    const sanitizedCls: Omit<Classroom, 'id'> = isRestrictedAdminOrBghUser ? {
+      ...cls,
+      avatar: cls.avatar || 'https://api.dicebear.com/7.x/shapes/svg?seed=RocketClass&backgroundColor=6366f1',
+      slogan: '',
+      parentCommittee: {
+        head: { name: '', phone: '' },
+        deputy: { name: '', phone: '' },
+        member1: { name: '', phone: '' },
+        member2: { name: '', phone: '' }
+      }
+    } : cls;
+    const newCls: Classroom = { ...sanitizedCls, id: newId };
     const nextClasses = [...classes, newCls];
     setClasses(nextClasses);
     classesRef.current = nextClasses;
@@ -2129,13 +2209,32 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateClass = (id: string, updated: Partial<Classroom>) => {
-    if (!checkBghPermission()) return;
     // Release anti-echo locks immediately so user actions always take precedence
     isApplyingRemoteUpdateRef.current = false;
     remoteUpdateLockUntilRef.current = 0;
 
     const currentList = classesRef.current.length > 0 ? classesRef.current : classes;
-    const nextClasses = currentList.map(c => c.id === id ? { ...c, ...updated } : c);
+    const existing = currentList.find(c => c.id === id);
+
+    // 🛡️ NẾU LÀ TÀI KHOẢN QUẢN TRỊ NHÀ TRƯỜNG, BAN GIÁM HIỆU HOẶC ADMINQUANTRI:
+    // Tuyệt đối không cho phép thay đổi: avatar lớp, slogan, ban đại diện cha mẹ học sinh (bảo toàn dữ liệu của GVCN)
+    let cleanUpdated = { ...updated };
+    if (isRestrictedAdminOrBghUser && existing) {
+      if (updated.avatar !== undefined || updated.originalAvatar !== undefined || updated.avatarScale !== undefined || updated.avatarPosition !== undefined) {
+        cleanUpdated.avatar = existing.avatar;
+        cleanUpdated.originalAvatar = existing.originalAvatar;
+        cleanUpdated.avatarScale = existing.avatarScale;
+        cleanUpdated.avatarPosition = existing.avatarPosition;
+      }
+      if (updated.slogan !== undefined) {
+        cleanUpdated.slogan = existing.slogan;
+      }
+      if (updated.parentCommittee !== undefined) {
+        cleanUpdated.parentCommittee = existing.parentCommittee;
+      }
+    }
+
+    const nextClasses = currentList.map(c => c.id === id ? { ...c, ...cleanUpdated } : c);
     setClasses(nextClasses);
     classesRef.current = nextClasses;
 
@@ -2495,11 +2594,18 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateStudent = (id: string, data: Partial<Student>) => {
-    if (isSchoolAdminOrBgh && (data.avatar !== undefined || data.originalAvatar !== undefined || data.points !== undefined || data.avatarScale !== undefined || data.avatarPosition !== undefined)) {
-      setPermissionAlert("Để tôn trọng quyền của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền thay đổi ảnh đại diện hoặc điểm/xu của học sinh.");
+    if (isRestrictedAdminOrBghUser && (data.avatar !== undefined || data.originalAvatar !== undefined || data.avatarScale !== undefined || data.avatarPosition !== undefined)) {
+      setPermissionAlert("Để tôn trọng quyền tự chủ của Giáo viên chủ nhiệm, Quản trị nhà trường, Ban Giám Hiệu và Admin Quản trị không có quyền thay đổi ảnh đại diện của học sinh.");
       return;
     }
-    if (!checkBghPermission()) return;
+    if (isRestrictedAdminOrBghUser && (data.role !== undefined || data.roles !== undefined)) {
+      setPermissionAlert("Để tôn trọng quyền tự chủ của Giáo viên chủ nhiệm, Quản trị nhà trường, Ban Giám Hiệu và Admin Quản trị không có quyền cấu hình gán cán bộ lớp cho học sinh.");
+      return;
+    }
+    if (isSchoolAdminOrBgh && data.points !== undefined) {
+      setPermissionAlert("Để tôn trọng quyền của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền thay đổi điểm/xu của học sinh.");
+      return;
+    }
     // Release anti-echo locks immediately so user actions always take precedence
     isApplyingRemoteUpdateRef.current = false;
     remoteUpdateLockUntilRef.current = 0;
@@ -2845,8 +2951,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     type: AvatarSourceType = 'default',
     overwrite: boolean = false
   ): { updatedCount: number; totalCount: number } => {
-    if (isSchoolAdminOrBgh) {
-      setPermissionAlert("Để tôn trọng quyền của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền tự động gán ảnh đại diện của học sinh.");
+    if (isRestrictedAdminOrBghUser) {
+      setPermissionAlert("Để tôn trọng quyền tự chủ của Giáo viên chủ nhiệm, Quản trị nhà trường, Ban Giám Hiệu và Admin Quản trị không có quyền tự động gán ảnh đại diện của học sinh.");
       return { updatedCount: 0, totalCount: 0 };
     }
     const cId = targetClassId || activeClassId;
@@ -2959,8 +3065,8 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const batchUpdateStudentAvatars = (
     updates: Array<{ studentId: string; avatar: string }>
   ): number => {
-    if (isSchoolAdminOrBgh) {
-      setPermissionAlert("Để tôn trọng quyền của Giáo viên chủ nhiệm, Ban Giám Hiệu và Quản trị nhà trường không có quyền thay đổi hoặc gán ảnh đại diện của học sinh.");
+    if (isRestrictedAdminOrBghUser) {
+      setPermissionAlert("Để tôn trọng quyền tự chủ của Giáo viên chủ nhiệm, Quản trị nhà trường, Ban Giám Hiệu và Admin Quản trị không có quyền thay đổi hoặc gán ảnh đại diện của học sinh.");
       return 0;
     }
     if (updates.length === 0) return 0;
@@ -4273,6 +4379,11 @@ export const ClassroomProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isSchoolAdminOrBgh,
       canEvaluateEmulation,
       canEditStudentAvatar,
+      canAssignClassOfficer,
+      canEditClassAvatar,
+      canEditClassSlogan,
+      canEditParentCommittee,
+      isRestrictedAdminOrBgh: isRestrictedAdminOrBghUser,
       canResetOrAssignCoins,
       canCreateClassInfographic,
       canConfigureCoinSubjects,

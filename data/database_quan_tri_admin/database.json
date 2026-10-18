@@ -1,7 +1,7 @@
 {
   "partition": "quan_tri_admin",
   "title": "Cơ Sở Dữ Liệu Quản Trị Tối Cao Hệ Thống",
-  "lastSync": "2026-10-17T07:31:06.898Z",
+  "lastSync": "2026-10-18T14:14:31.641Z",
   "users": [
     {
       "id": "user-adminquantri",
@@ -30,6 +30,69 @@
     "lastGithubPushAt": 1792041816825
   },
   "auditLogs": [
+    {
+      "id": "log-1792331717403-ajliyt",
+      "timestamp": 1792331717403,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A7 Nguyễn Thị Thanh Hà"
+    },
+    {
+      "id": "log-1792330856696-5r7f42",
+      "timestamp": 1792330856696,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A7 Nguyễn Thị Thanh Hà"
+    },
+    {
+      "id": "log-1792329708750-4gvk5p",
+      "timestamp": 1792329708750,
+      "username": "bgh_thths1tu",
+      "userFullName": "Nguyễn Thị Thanh Hà",
+      "role": "bgh",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A7 Nguyễn Thị Thanh Hà"
+    },
+    {
+      "id": "log-1792329512074-401c9t",
+      "timestamp": 1792329512496,
+      "username": "gvcn_1a1",
+      "userFullName": "Lê Thị Việt Hà",
+      "role": "homeroom",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Lê Thị Việt Hà)"
+    },
+    {
+      "id": "log-1792329466749-0jqd34",
+      "timestamp": 1792329466749,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "UPDATE_CLASS",
+      "description": "Chỉnh sửa thông tin lớp: 1A7 Nguyễn Thị Thanh Hà"
+    },
+    {
+      "id": "log-1792329444095-q7cmcb",
+      "timestamp": 1792329444096,
+      "username": "bgh_thths1tu",
+      "userFullName": "Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "bgh",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Ban Giám Hiệu TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
+    {
+      "id": "log-1792327667670-k0xgud",
+      "timestamp": 1792327667670,
+      "username": "quantriths1tu",
+      "userFullName": "Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN",
+      "role": "school_admin",
+      "actionType": "OTHER",
+      "description": "Đăng nhập vào hệ thống (Quản trị TIỂU HỌC SỐ 1 TÂN UYÊN)"
+    },
     {
       "id": "log-1792222251820-cyk17k",
       "timestamp": 1792222251820,

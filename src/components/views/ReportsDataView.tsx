@@ -44,7 +44,8 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
     exportBackupZip, importBackupZip,
     clearAllData, teacherProfile, updateTeacherProfile,
     teacherRole, setTeacherRole, subjectTeacherConfig, updateSubjectTeacherConfig,
-    currentUser, allUsers, getCurrentUserData, students
+    currentUser, allUsers, getCurrentUserData, students,
+    canEditParentCommittee, canEditClassSlogan
   } = useClassroom();
 
   const isCurrentUserSuperAdmin = currentUser?.username?.toLowerCase() === 'adminquantri' || currentUser?.role === 'admin';
@@ -267,6 +268,10 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
   // Save 2: Chỉ lưu Khẩu hiệu & Ban đại diện cha mẹ học sinh
   const handleSaveParentCommittee = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!canEditParentCommittee || !canEditClassSlogan) {
+      alert('Chỉ Giáo viên chủ nhiệm mới có quyền cấu hình Khẩu hiệu và Ban đại diện cha mẹ học sinh!');
+      return;
+    }
     const targetCls = classes.find(c => c.id === selectedSettingsClassId) || activeClass || classes[0];
     if (!targetCls) return;
     updateClass(targetCls.id, {
@@ -302,8 +307,8 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
       socialLink: profileSocialLink.trim()
     });
 
-    // Lưu ban phụ huynh & slogan & tên GV (Chỉ áp dụng với Giáo viên chủ nhiệm)
-    if (!isSubjectTeacher) {
+    // Lưu ban phụ huynh & slogan & tên GV (Chỉ áp dụng với Giáo viên chủ nhiệm có quyền)
+    if (!isSubjectTeacher && canEditParentCommittee && canEditClassSlogan) {
       const targetCls = classes.find(c => c.id === selectedSettingsClassId) || activeClass || classes[0];
       if (targetCls) {
         updateClass(targetCls.id, {
@@ -2285,7 +2290,7 @@ export const ReportsDataView: React.FC<ReportsDataViewProps> = ({ defaultTab = '
               {/* PHẦN 2: CÀI ĐẶT KHẨU HIỆU & BAN ĐẠI DIỆN CHA MẸ HỌC SINH (LỚP HỌC) */}
               {/* CHỈ DÀNH CHO GIÁO VIÊN CHỦ NHIỆM HOẶC KHI CÓ LỚP HỌC CỤ THỂ */}
               {/* ========================================================================= */}
-              {!isSubjectTeacher && (!isCurrentUserSuperAdmin || classes.length > 0) && (
+              {!isSubjectTeacher && canEditParentCommittee && canEditClassSlogan && classes.length > 0 && (
                 <div className="bg-white rounded-3xl border border-slate-200/90 p-6 md:p-8 shadow-xs space-y-6 hover-zoom-card">
                   {/* Header of Section 2 with Class Selector */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
